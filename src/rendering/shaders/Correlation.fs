@@ -49,7 +49,7 @@ float getSegInteriorAlpha( int texNum, uint seg )
     for ( int i = 0; i < 9; ++i )
     {
         float row = float( mod( i, 3 ) - 1 ); // runs -1 to 1
-        float col = float( floor( i / 3 ) - 1 ); // runs -1 to 1
+        float col = float( floor( float(i / 3) ) - 1 ); // runs -1 to 1
 
         vec3 texSamplingPos = row * texSamplingDirsForSegOutline[0] +
             col * texSamplingDirsForSegOutline[1];

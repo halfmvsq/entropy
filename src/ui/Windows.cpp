@@ -1291,13 +1291,15 @@ void renderSettingsWindow(
                 ImGui::SameLine(); helpMarker( "Disable segmentation outlining" );
 
 
-                ImGui::Spacing();
-                ImGui::Dummy( ImVec2( 0.0f, 1.0f ) );
+                if ( SegmentationOutlineStyle::Disabled != appData.renderData().m_segOutlineStyle )
+                {
+                    ImGui::Spacing();
+                    ImGui::Dummy( ImVec2( 0.0f, 1.0f ) );
 
-                // Modulate opacity of interior of segmentation:
-                mySliderF32( "Opacity of seg. interior", &( appData.renderData().m_segInteriorOpacity ), 0.0f, 1.0f );
-                ImGui::SameLine(); helpMarker( "Modulate opacity of interior of segmentation" );
-
+                    // Modulate opacity of interior of segmentation:
+                    mySliderF32( "Opacity of seg. interior", &( appData.renderData().m_segInteriorOpacity ), 0.0f, 1.0f );
+                    ImGui::SameLine(); helpMarker( "Modulate opacity of interior of segmentation" );
+                }
 
 
 
@@ -1505,11 +1507,19 @@ void renderSettingsWindow(
 
                     ImGui::Text( "View orientation convention:" );
 
+                    static constexpr bool sk_orientChangeRecenterCrosshairs = false;
+                    static constexpr bool sk_orientChangeRecenterOnXhairs = true;
+                    static constexpr bool sk_orientChangeResetObliqueOrientation = false;
+                    static constexpr bool sk_orientChangeResetZoom = false;
+
                     if ( ImGui::RadioButton(
                              "Radiological",
                              ViewConvention::Radiological == appData.windowData().getViewOrientationConvention() ) )
                     {
                         appData.windowData().setViewOrientationConvention( ViewConvention::Radiological );
+
+                        recenterAllViews( sk_orientChangeRecenterCrosshairs, sk_orientChangeRecenterOnXhairs,
+                                          sk_orientChangeResetObliqueOrientation, sk_orientChangeResetZoom );
                     }
                     ImGui::SameLine(); helpMarker( "Anatomical left is on view right; anatomical right is on view left" );
 
@@ -1518,6 +1528,9 @@ void renderSettingsWindow(
                              ViewConvention::Neurological == appData.windowData().getViewOrientationConvention() ) )
                     {
                         appData.windowData().setViewOrientationConvention( ViewConvention::Neurological );
+
+                        recenterAllViews( sk_orientChangeRecenterCrosshairs, sk_orientChangeRecenterOnXhairs,
+                                          sk_orientChangeResetObliqueOrientation, sk_orientChangeResetZoom );
                     }
                     ImGui::SameLine(); helpMarker( "Anatomical left is on view left; anatomical right is on view right" );
 
