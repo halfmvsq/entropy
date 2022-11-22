@@ -114,7 +114,7 @@ void renderAboutDialogModalPopup( bool open )
 
     if ( ImGui::BeginPopupModal( "About Entropy", nullptr, ImGuiWindowFlags_AlwaysAutoResize ) )
     {
-        ImGui::Text( "%s (version %s)", ENTROPY_APPNAME_FULL, ANTROPY_VERSION_FULL );
+        ImGui::Text( "%s (version %s)", ENTROPY_APPNAME_FULL, ENTROPY_VERSION_FULL );
 
         ImGui::Spacing();
         ImGui::Text( "Copyright 2021" );

@@ -93,7 +93,7 @@ int parseCommandLine( const int argc, char* argv[], InputParams& params )
          << ENTROPY_ORGNAME_LINE2 << ", "
          << ENTROPY_ORGNAME_LINE3 << ")";
 
-    argparse::ArgumentParser program( ENTROPY_APPNAME_FULL, ANTROPY_VERSION_FULL );
+    argparse::ArgumentParser program( ENTROPY_APPNAME_FULL, ENTROPY_VERSION_FULL );
 
     program.add_description( desc.str() );
 
