@@ -1217,26 +1217,28 @@ void renderSettingsWindow(
     {
         static const ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
 
+        RenderData& renderData = appData.renderData();
+
         if ( ImGui::BeginTabBar( "##SettingsTabs", tab_bar_flags ) )
         {
             if ( ImGui::BeginTabItem( "Views" ) )
             {
                 // Show image-view intersection border
                 ImGui::Checkbox( "Show image borders",
-                                 &( appData.renderData().m_globalSliceIntersectionParams.renderInactiveImageViewIntersections ) );
+                                 &( renderData.m_globalSliceIntersectionParams.renderInactiveImageViewIntersections ) );
                 ImGui::SameLine();
                 helpMarker( "Show borders of image intersections with views" );
 
 
                 /// @note strokeWidth seems to not work with NanoVG across all platforms
                 /*
-                if ( appData.renderData().m_globalSliceIntersectionParams.renderImageViewIntersections )
+                if ( renderData.m_globalSliceIntersectionParams.renderImageViewIntersections )
                 {
                     constexpr float k_minWidth = 1.0f;
                     constexpr float k_maxWidth = 5.0f;
 
                     ImGui::SliderScalar( "Border width", ImGuiDataType_Float,
-                                         &appData.renderData().m_globalSliceIntersectionParams.strokeWidth,
+                                         &renderData.m_globalSliceIntersectionParams.strokeWidth,
                                          &k_minWidth, &k_maxWidth, "%.1f" );
 
                     ImGui::SameLine(); helpMarker( "Border width" );
@@ -1254,11 +1256,11 @@ void renderSettingsWindow(
 
 
                 // Image masking
-                ImGui::Checkbox( "Mask images by segmentation", &( appData.renderData().m_maskedImages ) );
+                ImGui::Checkbox( "Mask images by segmentation", &( renderData.m_maskedImages ) );
                 ImGui::SameLine(); helpMarker( "Render images only in regions masked by a segmentation label" );
 
                 // Modulate opacity of segmentation with opacity of image:
-                ImGui::Checkbox( "Modulate segmentation with image opacity", &appData.renderData().m_modulateSegOpacityWithImageOpacity );
+                ImGui::Checkbox( "Modulate segmentation with image opacity", &renderData.m_modulateSegOpacityWithImageOpacity );
                 ImGui::SameLine(); helpMarker( "Modulate opacity of segmentation with opacity of image" );
 
 
@@ -1268,40 +1270,38 @@ void renderSettingsWindow(
                 ImGui::Text( "Segmentation outlining:" );
                 if ( ImGui::RadioButton(
                          "Outline outer image voxels",
-                         SegmentationOutlineStyle::ImageVoxel == appData.renderData().m_segOutlineStyle ) )
+                         SegmentationOutlineStyle::ImageVoxel == renderData.m_segOutlineStyle ) )
                 {
-                    appData.renderData().m_segOutlineStyle = SegmentationOutlineStyle::ImageVoxel;
+                    renderData.m_segOutlineStyle = SegmentationOutlineStyle::ImageVoxel;
                 }
                 ImGui::SameLine(); helpMarker( "Outline the outer voxels of the image segmentation regions" );
 
                 if ( ImGui::RadioButton(
                          "Outline outer view pixels",
-                         SegmentationOutlineStyle::ViewPixel == appData.renderData().m_segOutlineStyle ) )
+                         SegmentationOutlineStyle::ViewPixel == renderData.m_segOutlineStyle ) )
                 {
-                    appData.renderData().m_segOutlineStyle = SegmentationOutlineStyle::ViewPixel;
+                    renderData.m_segOutlineStyle = SegmentationOutlineStyle::ViewPixel;
                 }
                 ImGui::SameLine(); helpMarker( "Outline the outer view pixels of the image segmentation regions" );
 
                 if ( ImGui::RadioButton(
                          "Disabled",
-                         SegmentationOutlineStyle::Disabled == appData.renderData().m_segOutlineStyle ) )
+                         SegmentationOutlineStyle::Disabled == renderData.m_segOutlineStyle ) )
                 {
-                    appData.renderData().m_segOutlineStyle = SegmentationOutlineStyle::Disabled;
+                    renderData.m_segOutlineStyle = SegmentationOutlineStyle::Disabled;
                 }
                 ImGui::SameLine(); helpMarker( "Disable segmentation outlining" );
 
 
-                if ( SegmentationOutlineStyle::Disabled != appData.renderData().m_segOutlineStyle )
+                if ( SegmentationOutlineStyle::Disabled != renderData.m_segOutlineStyle )
                 {
                     ImGui::Spacing();
                     ImGui::Dummy( ImVec2( 0.0f, 1.0f ) );
 
                     // Modulate opacity of interior of segmentation:
-                    mySliderF32( "Opacity of seg. interior", &( appData.renderData().m_segInteriorOpacity ), 0.0f, 1.0f );
+                    mySliderF32( "Opacity of seg. interior", &( renderData.m_segInteriorOpacity ), 0.0f, 1.0f );
                     ImGui::SameLine(); helpMarker( "Modulate opacity of interior of segmentation" );
                 }
-
-
 
                 ImGui::Spacing();
                 ImGui::Dummy( ImVec2( 0.0f, 1.0f ) );
@@ -1313,7 +1313,7 @@ void renderSettingsWindow(
                 if ( ImGui::TreeNode( "Crosshairs" ) )
                 {
                     ImGui::ColorEdit4( "Color",
-                                       glm::value_ptr( appData.renderData().m_crosshairsColor ),
+                                       glm::value_ptr( renderData.m_crosshairsColor ),
                                        sk_colorAlphaEditFlags );
 
                     ImGui::Dummy( ImVec2( 0.0f, 1.0f ) );
@@ -1321,25 +1321,25 @@ void renderSettingsWindow(
                     ImGui::Text( "Snap crosshairs:" );
                     if ( ImGui::RadioButton(
                              "To reference image voxels",
-                             CrosshairsSnapping::ReferenceImage == appData.renderData().m_snapCrosshairs ) )
+                             CrosshairsSnapping::ReferenceImage == renderData.m_snapCrosshairs ) )
                     {
-                        appData.renderData().m_snapCrosshairs = CrosshairsSnapping::ReferenceImage;
+                        renderData.m_snapCrosshairs = CrosshairsSnapping::ReferenceImage;
                     }
                     ImGui::SameLine(); helpMarker( "Snap crosshairs to reference image voxel centers" );
 
                     if ( ImGui::RadioButton(
                              "To active image voxels",
-                             CrosshairsSnapping::ActiveImage == appData.renderData().m_snapCrosshairs ) )
+                             CrosshairsSnapping::ActiveImage == renderData.m_snapCrosshairs ) )
                     {
-                        appData.renderData().m_snapCrosshairs = CrosshairsSnapping::ActiveImage;
+                        renderData.m_snapCrosshairs = CrosshairsSnapping::ActiveImage;
                     }
                     ImGui::SameLine(); helpMarker( "Snap crosshairs to active image voxel centers" );
 
                     if ( ImGui::RadioButton(
                              "Disabled",
-                             CrosshairsSnapping::Disabled == appData.renderData().m_snapCrosshairs ) )
+                             CrosshairsSnapping::Disabled == renderData.m_snapCrosshairs ) )
                     {
-                        appData.renderData().m_snapCrosshairs = CrosshairsSnapping::Disabled;
+                        renderData.m_snapCrosshairs = CrosshairsSnapping::Disabled;
                     }
                     ImGui::SameLine(); helpMarker( "Do not snap crosshairs to image voxels" );
 
@@ -1452,11 +1452,11 @@ void renderSettingsWindow(
                 if ( ImGui::TreeNode( "View Backgrounds" ) )
                 {
                     ImGui::ColorEdit3( "2D background color",
-                                       glm::value_ptr( appData.renderData().m_2dBackgroundColor ),
+                                       glm::value_ptr( renderData.m_2dBackgroundColor ),
                                        sk_colorEditFlags );
 
                     ImGui::ColorEdit4( "3D background color",
-                                       glm::value_ptr( appData.renderData().m_3dBackgroundColor ),
+                                       glm::value_ptr( renderData.m_3dBackgroundColor ),
                                        sk_colorAlphaEditFlags );
 
                     ImGui::Spacing();
@@ -1470,7 +1470,7 @@ void renderSettingsWindow(
                 if ( ImGui::TreeNode( "Anatomical Labels" ) )
                 {
                     ImGui::ColorEdit4( "Text color",
-                                       glm::value_ptr( appData.renderData().m_anatomicalLabelColor ),
+                                       glm::value_ptr( renderData.m_anatomicalLabelColor ),
                                        sk_colorAlphaEditFlags );
 
 
@@ -1480,25 +1480,25 @@ void renderSettingsWindow(
 
                     if ( ImGui::RadioButton(
                              "Human",
-                             AnatomicalLabelType::Human == appData.renderData().m_anatomicalLabelType ) )
+                             AnatomicalLabelType::Human == renderData.m_anatomicalLabelType ) )
                     {
-                        appData.renderData().m_anatomicalLabelType = AnatomicalLabelType::Human;
+                        renderData.m_anatomicalLabelType = AnatomicalLabelType::Human;
                     }
                     ImGui::SameLine(); helpMarker( "Left, Right, Posterior, Anterior, Superior, Inferior" );
 
                     if ( ImGui::RadioButton(
                              "Rodent",
-                             AnatomicalLabelType::Rodent == appData.renderData().m_anatomicalLabelType ) )
+                             AnatomicalLabelType::Rodent == renderData.m_anatomicalLabelType ) )
                     {
-                        appData.renderData().m_anatomicalLabelType = AnatomicalLabelType::Rodent;
+                        renderData.m_anatomicalLabelType = AnatomicalLabelType::Rodent;
                     }
                     ImGui::SameLine(); helpMarker( "Left, Right, Dorsal, Ventral, Caudal, Rostral" );
 
                     if ( ImGui::RadioButton(
                              "Disabled",
-                             AnatomicalLabelType::Disabled == appData.renderData().m_anatomicalLabelType ) )
+                             AnatomicalLabelType::Disabled == renderData.m_anatomicalLabelType ) )
                     {
-                        appData.renderData().m_anatomicalLabelType = AnatomicalLabelType::Disabled;
+                        renderData.m_anatomicalLabelType = AnatomicalLabelType::Disabled;
                     }
                     ImGui::SameLine(); helpMarker( "Disable anatomical labels" );
 
@@ -1557,20 +1557,20 @@ void renderSettingsWindow(
                     ImGui::PushID( "diff" );
                     {
                         // Difference type:
-                        if ( ImGui::RadioButton( "Absolute", false == appData.renderData().m_useSquare ) )
+                        if ( ImGui::RadioButton( "Absolute", false == renderData.m_useSquare ) )
                         {
-                            appData.renderData().m_useSquare = false;
+                            renderData.m_useSquare = false;
                         }
 
                         ImGui::SameLine();
-                        if ( ImGui::RadioButton( "Squared difference", true == appData.renderData().m_useSquare ) )
+                        if ( ImGui::RadioButton( "Squared difference", true == renderData.m_useSquare ) )
                         {
-                            appData.renderData().m_useSquare = true;
+                            renderData.m_useSquare = true;
                         }
                         ImGui::SameLine();
                         helpMarker( "Compute absolute or squared difference" );
 
-                        renderMetricSettingsTab( appData.renderData().m_squaredDifferenceParams,
+                        renderMetricSettingsTab( renderData.m_squaredDifferenceParams,
                                                  appData.guiData().m_showDifferenceColormapWindow,
                                                  "sqdiff" );
                     }
@@ -1586,7 +1586,7 @@ void renderSettingsWindow(
                 {
                     ImGui::PushID( "crosscorr" );
                     {
-                        renderMetricSettingsTab( appData.renderData().m_crossCorrelationParams,
+                        renderMetricSettingsTab( renderData.m_crossCorrelationParams,
                                                  appData.guiData().m_showCorrelationColormapWindow,
                                                  "crosscorr" );
                     }
@@ -1609,15 +1609,15 @@ void renderSettingsWindow(
                     // Overlap style:
                     ImGui::Text( "Overlap:" );
 
-                    if ( ImGui::RadioButton( "Magenta/cyan", true == appData.renderData().m_overlayMagentaCyan ) )
+                    if ( ImGui::RadioButton( "Magenta/cyan", true == renderData.m_overlayMagentaCyan ) )
                     {
-                        appData.renderData().m_overlayMagentaCyan = true;
+                        renderData.m_overlayMagentaCyan = true;
                     }
 
                     ImGui::SameLine();
-                    if ( ImGui::RadioButton( "Red/green overlay", false == appData.renderData().m_overlayMagentaCyan ) )
+                    if ( ImGui::RadioButton( "Red/green overlay", false == renderData.m_overlayMagentaCyan ) )
                     {
-                        appData.renderData().m_overlayMagentaCyan = false;
+                        renderData.m_overlayMagentaCyan = false;
                     }
                     ImGui::SameLine();
                     helpMarker( "Color style for 'overlay' views" );
@@ -1628,23 +1628,23 @@ void renderSettingsWindow(
                     // Quadrants style:
                     ImGui::Text( "Quadrants:" );
 
-                    const glm::ivec2 Q = appData.renderData().m_quadrants;
+                    const glm::ivec2 Q = renderData.m_quadrants;
 
                     if ( ImGui::RadioButton( "X", true == ( Q.x && ! Q.y ) ) )
                     {
-                        appData.renderData().m_quadrants = glm::ivec2{ true, false };
+                        renderData.m_quadrants = glm::ivec2{ true, false };
                     }
 
                     ImGui::SameLine();
                     if ( ImGui::RadioButton( "Y", true == ( ! Q.x && Q.y ) ) )
                     {
-                        appData.renderData().m_quadrants = glm::ivec2{ false, true };
+                        renderData.m_quadrants = glm::ivec2{ false, true };
                     }
 
                     ImGui::SameLine();
                     if ( ImGui::RadioButton( "X and Y comparison", true == ( Q.x && Q.y ) ) )
                     {
-                        appData.renderData().m_quadrants = glm::ivec2{ true, true };
+                        renderData.m_quadrants = glm::ivec2{ true, true };
                     }
 
                     ImGui::SameLine();
@@ -1656,12 +1656,12 @@ void renderSettingsWindow(
                     // Checkerboard squares
                     ImGui::Text( "Checkerboard:" );
 
-                    int numSquares = appData.renderData().m_numCheckerboardSquares;
+                    int numSquares = renderData.m_numCheckerboardSquares;
                     if ( ImGui::InputInt( "Number of checkers", &numSquares ) )
                     {
                         if ( 2 <= numSquares && numSquares <= 2048 )
                         {
-                            appData.renderData().m_numCheckerboardSquares = numSquares;
+                            renderData.m_numCheckerboardSquares = numSquares;
                         }
                     }
                     ImGui::SameLine(); helpMarker( "Number of squares in Checkerboard mode" );
@@ -1673,7 +1673,7 @@ void renderSettingsWindow(
                     ImGui::Text( "Flashlight:" );
 
                     // Flashlight radius
-                    const float radius = appData.renderData().m_flashlightRadius;
+                    const float radius = renderData.m_flashlightRadius;
                     int radiusPercent = static_cast<int>( 100 * radius );
                     constexpr int k_minRadius = 1;
                     constexpr int k_maxRadius = 100;
@@ -1681,7 +1681,7 @@ void renderSettingsWindow(
                     if ( ImGui::SliderScalar( "Circle size", ImGuiDataType_S32,
                                               &radiusPercent, &k_minRadius, &k_maxRadius, "%d" ) )
                     {
-                        appData.renderData().m_flashlightRadius = static_cast<float>( radiusPercent ) / 100.0f;
+                        renderData.m_flashlightRadius = static_cast<float>( radiusPercent ) / 100.0f;
                     }
                     ImGui::SameLine();
                     helpMarker( "Circle size (as a percentage of the view size) for Flashlight rendering" );
@@ -1689,15 +1689,15 @@ void renderSettingsWindow(
 
                     ImGui::Spacing();
                     if ( ImGui::RadioButton( "Overlay moving image atop fixed image",
-                                             true == appData.renderData().m_flashlightOverlays ) )
+                                             true == renderData.m_flashlightOverlays ) )
                     {
-                        appData.renderData().m_flashlightOverlays = true;
+                        renderData.m_flashlightOverlays = true;
                     }
 
                     if ( ImGui::RadioButton( "Replace fixed image with moving image",
-                                             false == appData.renderData().m_flashlightOverlays ) )
+                                             false == renderData.m_flashlightOverlays ) )
                     {
-                        appData.renderData().m_flashlightOverlays = false;
+                        renderData.m_flashlightOverlays = false;
                     }
                     ImGui::SameLine();
                     helpMarker( "Mode for Flashlight rendering: overlay or replacement" );
@@ -1712,6 +1712,8 @@ void renderSettingsWindow(
 
             if ( ImGui::BeginTabItem( "Raycasting" ) )
             {
+                ImGui::PushID( "raycasting" ); /*** PushID raycasting ***/
+
                 /// @todo if these are added to the uniforms, then we'll have update uniforms when they change
 
                 static constexpr float sk_factorStep = 0.1f;
@@ -1724,7 +1726,7 @@ void renderSettingsWindow(
                 helpMarker( "Sampling rate as a fraction of the voxel size along the ray path" );
 
                 if ( ImGui::DragFloat(
-                         "##SamplingRate", &( appData.renderData().m_raycastSamplingFactor ),
+                         "##SamplingRate", &( renderData.m_raycastSamplingFactor ),
                          sk_factorStep, sk_minFactor, sk_maxFactor, "%0.1f", ImGuiSliderFlags_AlwaysClamp ) )
                 {
                     // Update uniforms if m_raycastSamplingFactor gets added to uniforms
@@ -1735,14 +1737,14 @@ void renderSettingsWindow(
                 ImGui::Dummy( ImVec2( 0.0f, 1.0f ) );
 
                 // Should the no-hit zone of raycast views be transparent, so that the view background is visible?
-                ImGui::Checkbox( "Transparent background", &appData.renderData().m_3dTransparentIfNoHit );
+                ImGui::Checkbox( "Transparent background", &renderData.m_3dTransparentIfNoHit );
                 ImGui::SameLine(); helpMarker( "Background of view is transparent outside of image volume" );
 
                 // Should the front and back faces be rendered in 3D raycasting?
-                ImGui::Checkbox( "Render front faces", &appData.renderData().m_renderFrontFaces );
+                ImGui::Checkbox( "Render front faces", &renderData.m_renderFrontFaces );
                 ImGui::SameLine(); helpMarker( "Render front faces in raycasting" );
 
-                ImGui::Checkbox( "Render back faces", &appData.renderData().m_renderBackFaces );
+                ImGui::Checkbox( "Render back faces", &renderData.m_renderBackFaces );
                 ImGui::SameLine(); helpMarker( "Render back faces in raycasting" );
 
 
@@ -1756,54 +1758,59 @@ void renderSettingsWindow(
                 helpMarker( "Mask image based on segmentation value" );
 
                 if ( ImGui::RadioButton( "Disabled",
-                                         RenderData::SegMaskingForRaycasting::Disabled == appData.renderData().m_segMasking ) )
+                                         RenderData::SegMaskingForRaycasting::Disabled == renderData.m_segMasking ) )
                 {
-                    appData.renderData().m_segMasking = RenderData::SegMaskingForRaycasting::Disabled;
+                    renderData.m_segMasking = RenderData::SegMaskingForRaycasting::Disabled;
                 }
                 ImGui::SameLine(); helpMarker( "Segmentation masking disabled" );
 
                 if ( ImGui::RadioButton( "Mask in",
-                                         RenderData::SegMaskingForRaycasting::SegMasksIn == appData.renderData().m_segMasking ) )
+                                         RenderData::SegMaskingForRaycasting::SegMasksIn == renderData.m_segMasking ) )
                 {
-                    appData.renderData().m_segMasking = RenderData::SegMaskingForRaycasting::SegMasksIn;
+                    renderData.m_segMasking = RenderData::SegMaskingForRaycasting::SegMasksIn;
                 }
                 ImGui::SameLine(); helpMarker( "Segmentation masks image in" );
 
                 if ( ImGui::RadioButton( "Mask out",
-                                         RenderData::SegMaskingForRaycasting::SegMasksOut == appData.renderData().m_segMasking ) )
+                                         RenderData::SegMaskingForRaycasting::SegMasksOut == renderData.m_segMasking ) )
                 {
-                    appData.renderData().m_segMasking = RenderData::SegMaskingForRaycasting::SegMasksOut;
+                    renderData.m_segMasking = RenderData::SegMaskingForRaycasting::SegMasksOut;
                 }
                 ImGui::SameLine(); helpMarker( "Segmentation masks image out" );
+
+
+                ImGui::PopID(); /*** PopID raycasting ***/
+                ImGui::EndTabItem();
             }
+
 
             if ( ImGui::BeginTabItem( "Annotations" ) )
             {
                 ImGui::PushID( "landmarks" ); /*** PushID landmarks ***/
 
 
-                bool annotOnTop = appData.renderData().m_globalAnnotationParams.renderOnTopOfAllImagePlanes;
+                bool annotOnTop = renderData.m_globalAnnotationParams.renderOnTopOfAllImagePlanes;
                 if ( ImGui::Checkbox( "Annotations on top", &annotOnTop ) )
                 {
-                    appData.renderData().m_globalAnnotationParams.renderOnTopOfAllImagePlanes = annotOnTop;
+                    renderData.m_globalAnnotationParams.renderOnTopOfAllImagePlanes = annotOnTop;
                 }
                 ImGui::SameLine();
                 helpMarker( "Render annotations on top of all image layers" );
 
 
-                bool lmOnTop = appData.renderData().m_globalLandmarkParams.renderOnTopOfAllImagePlanes;
+                bool lmOnTop = renderData.m_globalLandmarkParams.renderOnTopOfAllImagePlanes;
                 if ( ImGui::Checkbox( "Landmarks on top", &lmOnTop ) )
                 {
-                    appData.renderData().m_globalLandmarkParams.renderOnTopOfAllImagePlanes = lmOnTop;
+                    renderData.m_globalLandmarkParams.renderOnTopOfAllImagePlanes = lmOnTop;
                 }
                 ImGui::SameLine();
                 helpMarker( "Render landmarks on top of all image layers" );
 
 
-                bool hideVertices = appData.renderData().m_globalAnnotationParams.hidePolygonVertices;
+                bool hideVertices = renderData.m_globalAnnotationParams.hidePolygonVertices;
                 if ( ImGui::Checkbox( "Hide all annotation vertices", &hideVertices ) )
                 {
-                    appData.renderData().m_globalAnnotationParams.hidePolygonVertices = hideVertices;
+                    renderData.m_globalAnnotationParams.hidePolygonVertices = hideVertices;
                 }
                 ImGui::SameLine();
                 helpMarker( "Hide all annotation vertices" );
@@ -1820,13 +1827,13 @@ void renderSettingsWindow(
                 static constexpr uint32_t sk_maxPrecision = 6;
                 static constexpr uint32_t sk_stepPrecision = 1;
 
-                ImGui::PushID( "other" ); /*** PushID other ***/
+                ImGui::PushID( "precision" ); /*** PushID precision ***/
 
                 uint32_t valuePrecision = appData.guiData().m_imageValuePrecision;
                 uint32_t coordPrecision = appData.guiData().m_coordsPrecision;
                 uint32_t txPrecision = appData.guiData().m_txPrecision;
 
-                ImGui::Text( "Floating-point precision:" );
+                ImGui::Text( "Floating-point precision in user interface:" );
 
                 if ( ImGui::InputScalar( "Image values", ImGuiDataType_U32,
                                          &valuePrecision, &sk_stepPrecision, &sk_stepPrecision, "%d" ) )
@@ -1856,7 +1863,7 @@ void renderSettingsWindow(
                 }
                 ImGui::SameLine(); helpMarker( "Floating-point precision of image transformation parameters" );
 
-                ImGui::PopID(); /*** PopID other ***/
+                ImGui::PopID(); /*** PopID precision ***/
                 ImGui::EndTabItem();
             }
 
@@ -2662,6 +2669,8 @@ void renderOpacityBlenderWindow(
     /// @todo Use the "Drag and drop to copy/swap items" ImGui demo in order to allow reordering image layers
     /// by dragging the opacity sliders
 
+    RenderData& renderData = appData.renderData();
+
     static const char* windowName = "Image Opacity Mixer";
 
     if ( ! appData.guiData().m_showOpacityBlenderWindow ) return;
@@ -2712,7 +2721,7 @@ void renderOpacityBlenderWindow(
         {
             double opacity = imgSettings.globalOpacity();
 
-            if ( mySliderF64( name.c_str(), &opacity, 0.0, 1.0 ) && ! appData.renderData().m_opacityMixMode )
+            if ( mySliderF64( name.c_str(), &opacity, 0.0, 1.0 ) && ! renderData.m_opacityMixMode )
             {
                 imgSettings.setGlobalOpacity( opacity );
                 updateImageUniforms( imageUid );
@@ -2722,7 +2731,7 @@ void renderOpacityBlenderWindow(
         {
             double opacity = imgSettings.opacity();
 
-            if ( mySliderF64( name.c_str(), &opacity, 0.0, 1.0 ) && ! appData.renderData().m_opacityMixMode )
+            if ( mySliderF64( name.c_str(), &opacity, 0.0, 1.0 ) && ! renderData.m_opacityMixMode )
             {
                 imgSettings.setOpacity( opacity );
                 updateImageUniforms( imageUid );
@@ -2747,15 +2756,15 @@ void renderOpacityBlenderWindow(
 
     if ( appData.numImages() > 1 )
     {
-        ImGui::Checkbox( "Comparison blender", &( appData.renderData().m_opacityMixMode ) );
+        ImGui::Checkbox( "Comparison blender", &( renderData.m_opacityMixMode ) );
         ImGui::SameLine(); helpMarker( "Use a single slider to blend across all adjacent image layers" );
     }
     else
     {
-        appData.renderData().m_opacityMixMode = false;
+        renderData.m_opacityMixMode = false;
     }
 
-    if ( appData.renderData().m_opacityMixMode )
+    if ( renderData.m_opacityMixMode )
     {
         mySliderF64( "Blend", &mix, 0.0, static_cast<double>( appData.numImages() - 1 ) );
 
