@@ -79,7 +79,8 @@ createImageTextures( const AppData& appData )
                 maxFilter = tex::MagnificationFilter::Nearest;
                 break;
             }
-            case InterpolationMode::Linear:
+            case InterpolationMode::Trilinear:
+            case InterpolationMode::Tricubic:
             {
                 minFilter = tex::MinificationFilter::Linear;
                 maxFilter = tex::MagnificationFilter::Linear;
@@ -169,7 +170,8 @@ createImageTextures( const AppData& appData )
                     maxFilter = tex::MagnificationFilter::Nearest;
                     break;
                 }
-                case InterpolationMode::Linear:
+                case InterpolationMode::Trilinear:
+                case InterpolationMode::Tricubic:
                 {
                     minFilter = tex::MinificationFilter::Linear;
                     maxFilter = tex::MagnificationFilter::Linear;

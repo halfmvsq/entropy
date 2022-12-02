@@ -61,12 +61,14 @@ struct GuiData
     uint32_t m_imageValuePrecision = 3;
 
     // Pointers to fonts allocated by ImGui
-    ImFont* m_cousineFont = nullptr; //!< Main ImGui font
-    ImFont* m_forkAwesomeFont = nullptr; //!< Icons font
+    // ImFont* m_cousineFont = nullptr; //!< Main ImGui font
+    // ImFont* m_forkAwesomeFont = nullptr; //!< Icons font
+    std::unordered_map< std::string, ImFont* > m_fonts;
 
     // Font data, using raw pointers used because ImGui takes ownership and deletes them.
-    char* m_cousineFontData = nullptr;
-    char* m_forkAwesomeFontData = nullptr;
+    // char* m_cousineFontData = nullptr;
+    // char* m_forkAwesomeFontData = nullptr;
+    // std::unordered_map< std::string, char* > m_fontData;
 
     bool m_showMainMenuBar = true;
     glm::vec2 m_mainMenuBarDims{ 0.0f, 0.0f };

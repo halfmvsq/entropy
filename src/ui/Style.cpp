@@ -97,12 +97,12 @@ void applyCustomDarkStyle()
 {
     ImGuiStyle& style = ImGui::GetStyle();
 
-    style.ChildRounding = 2;
-    style.FrameRounding = 2;
-    style.GrabRounding = 2;
-    style.PopupRounding = 2;
-    style.TabRounding = 2;
-    style.WindowRounding = 4;
+    style.ChildRounding = 3;
+    style.FrameRounding = 4;
+    style.GrabRounding = 3;
+    style.PopupRounding = 4;
+    style.TabRounding = 4;
+    style.WindowRounding = 5;
 
     ImVec4* colors = style.Colors;
     if ( ! colors ) return;
@@ -116,7 +116,7 @@ void applyCustomDarkStyle()
     colors[ImGuiCol_BorderShadow]           = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
     colors[ImGuiCol_FrameBg]                = ImVec4(0.20f, 0.21f, 0.22f, 0.54f);
     colors[ImGuiCol_FrameBgHovered]         = ImVec4(0.40f, 0.40f, 0.40f, 0.40f);
-    colors[ImGuiCol_FrameBgActive]          = ImVec4(0.18f, 0.18f, 0.18f, 0.67f);
+    colors[ImGuiCol_FrameBgActive]          = ImVec4(0.20f, 0.41f, 0.68f, 1.00f);
     colors[ImGuiCol_TitleBg]                = ImVec4(0.04f, 0.04f, 0.04f, 1.00f);
     colors[ImGuiCol_TitleBgActive]          = ImVec4(0.29f, 0.29f, 0.29f, 1.00f);
     colors[ImGuiCol_TitleBgCollapsed]       = ImVec4(0.00f, 0.00f, 0.00f, 0.51f);
@@ -134,7 +134,7 @@ void applyCustomDarkStyle()
     colors[ImGuiCol_ButtonActive]           = ImVec4(0.20f, 0.41f, 0.68f, 1.00f);
     colors[ImGuiCol_Header]                 = ImVec4(0.70f, 0.70f, 0.70f, 0.31f);
     colors[ImGuiCol_HeaderHovered]          = ImVec4(0.70f, 0.70f, 0.70f, 0.80f);
-    colors[ImGuiCol_HeaderActive]           = ImVec4(0.48f, 0.50f, 0.52f, 1.00f);
+    colors[ImGuiCol_HeaderActive]           = ImVec4(0.20f, 0.41f, 0.68f, 1.00f);
     colors[ImGuiCol_Separator]              = ImVec4(0.43f, 0.43f, 0.50f, 0.50f);
     colors[ImGuiCol_SeparatorHovered]       = ImVec4(0.72f, 0.72f, 0.72f, 0.78f);
     colors[ImGuiCol_SeparatorActive]        = ImVec4(0.51f, 0.51f, 0.51f, 1.00f);

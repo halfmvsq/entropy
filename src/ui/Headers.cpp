@@ -85,7 +85,8 @@ void renderImageHeaderInformation(
         AppData& appData,
         const uuids::uuid& imageUid,
         Image& image,
-        const std::function< void(void) >& updateImageUniforms )
+        const std::function< void(void) >& updateImageUniforms,
+        const AllViewsRecenterType& recenterAllViews )
 {
     const char* txFormat = appData.guiData().m_txPrecisionFormat.c_str();
     const char* coordFormat = appData.guiData().m_coordsPrecisionFormat.c_str();
@@ -183,10 +184,10 @@ void renderImageHeaderInformation(
     glm::mat4 s_T_p = glm::transpose( imgTx.subject_T_pixel() );
 
     ImGui::PushItemWidth( -1 );
-    ImGui::InputFloat4( "", glm::value_ptr( s_T_p[0] ), txFormat, ImGuiInputTextFlags_ReadOnly );
-    ImGui::InputFloat4( "", glm::value_ptr( s_T_p[1] ), txFormat, ImGuiInputTextFlags_ReadOnly );
-    ImGui::InputFloat4( "", glm::value_ptr( s_T_p[2] ), txFormat, ImGuiInputTextFlags_ReadOnly );
-    ImGui::InputFloat4( "", glm::value_ptr( s_T_p[3] ), txFormat, ImGuiInputTextFlags_ReadOnly );
+    ImGui::InputFloat4( "##v2s_col0", glm::value_ptr( s_T_p[0] ), txFormat, ImGuiInputTextFlags_ReadOnly );
+    ImGui::InputFloat4( "##v2s_col1", glm::value_ptr( s_T_p[1] ), txFormat, ImGuiInputTextFlags_ReadOnly );
+    ImGui::InputFloat4( "##v2s_col2", glm::value_ptr( s_T_p[2] ), txFormat, ImGuiInputTextFlags_ReadOnly );
+    ImGui::InputFloat4( "##v2s_col3", glm::value_ptr( s_T_p[3] ), txFormat, ImGuiInputTextFlags_ReadOnly );
     ImGui::PopItemWidth();
 
     ImGui::Spacing();
@@ -207,6 +208,11 @@ void renderImageHeaderInformation(
 
     if ( Image::ImageRepresentation::Image == image.imageRep() )
     {
+        static constexpr bool sk_recenterCrosshairs = true;
+        static constexpr bool sk_recenterOnCurrentCrosshairsPosition = true;
+        static constexpr bool sk_doNotResetObliqueOrientation = false;
+        static constexpr bool sk_doNotResetZoom = false;
+
         ImGui::Separator();
         ImGui::Spacing();
 
@@ -222,6 +228,11 @@ void renderImageHeaderInformation(
             image.setHeaderOverrides( overrides );
             applyOverrideToAllSegsOfImage( overrides );
             updateImageUniforms();
+
+            recenterAllViews( sk_recenterCrosshairs,
+                              sk_recenterOnCurrentCrosshairsPosition,
+                              sk_doNotResetObliqueOrientation,
+                              sk_doNotResetZoom );
         }
         ImGui::SameLine(); helpMarker( "Ignore voxel spacing from header: force spacing to (1, 1, 1)mm" );
 
@@ -232,6 +243,11 @@ void renderImageHeaderInformation(
             image.setHeaderOverrides( overrides );
             applyOverrideToAllSegsOfImage( overrides );
             updateImageUniforms();
+
+            recenterAllViews( sk_recenterCrosshairs,
+                              sk_recenterOnCurrentCrosshairsPosition,
+                              sk_doNotResetObliqueOrientation,
+                              sk_doNotResetZoom);
         }
         ImGui::SameLine(); helpMarker( "Ignore image voxel origin from header: force origin to (0, 0, 0)mm" );
 
@@ -241,6 +257,11 @@ void renderImageHeaderInformation(
             image.setHeaderOverrides( overrides );
             applyOverrideToAllSegsOfImage( overrides );
             updateImageUniforms();
+
+            recenterAllViews( sk_recenterCrosshairs,
+                              sk_recenterOnCurrentCrosshairsPosition,
+                              sk_doNotResetObliqueOrientation,
+                              sk_doNotResetZoom );
         }
         ImGui::SameLine(); helpMarker( "Ignore voxel directions from header: force direction cosines matrix to identity" );
 
@@ -334,7 +355,8 @@ void renderImageHeader(
         const std::function< bool ( const uuids::uuid& imageUid ) >& moveImageForward,
         const std::function< bool ( const uuids::uuid& imageUid ) >& moveImageToBack,
         const std::function< bool ( const uuids::uuid& imageUid ) >& moveImageToFront,
-        const std::function< bool ( const uuids::uuid& imageUid, bool locked ) >& setLockManualImageTransformation )
+        const std::function< bool ( const uuids::uuid& imageUid, bool locked ) >& setLockManualImageTransformation,
+        const AllViewsRecenterType& recenterAllViews )
 {
     static const ImGuiColorEditFlags sk_colorNoAlphaEditFlags =
             ImGuiColorEditFlags_NoInputs |
@@ -1004,48 +1026,40 @@ void renderImageHeader(
         }
         ImGui::Spacing();
 
-        // Interpolation radio buttons:
 
-        if ( ! imgSettings.displayImageAsColor() )
+        auto getInterpMode = [&imgSettings] ()
         {
-            int interp = ( InterpolationMode::NearestNeighbor == imgSettings.interpolationMode() ) ? 0 : 1;
+            return ( imgSettings.displayImageAsColor() )
+                ? imgSettings.colorInterpolationMode()
+                : imgSettings.interpolationMode();
+        };
 
-            // Setting affects only the active component:
-
-            if ( ImGui::RadioButton( "Nearest", &interp, 0 ) )
-            {
-                imgSettings.setInterpolationMode( InterpolationMode::NearestNeighbor );
-                updateImageInterpolationMode();
-            }
-
-            ImGui::SameLine();
-            if ( ImGui::RadioButton( "Linear interpolation", &interp, 1 ) )
-            {
-                imgSettings.setInterpolationMode( InterpolationMode::Linear );
-                updateImageInterpolationMode();
-            }
-            ImGui::SameLine(); helpMarker( "Nearest neighbor or trilinear interpolation" );
-        }
-        else
+        auto setInterpMode = [&imgSettings] ( const InterpolationMode& mode )
         {
-            int interp = ( InterpolationMode::NearestNeighbor == imgSettings.colorInterpolationMode() ) ? 0 : 1;
+            ( imgSettings.displayImageAsColor() )
+                ? imgSettings.setColorInterpolationMode( mode )
+                : imgSettings.setInterpolationMode( mode );
+        };
 
-            // Setting affects all components:
 
-            if ( ImGui::RadioButton( "Nearest", &interp, 0 ) )
+        if ( ImGui::BeginCombo( "Interpolation", typeString( getInterpMode() ).c_str() ) )
+        {
+            for ( const auto& mode : AllInterpolationModes )
             {
-                imgSettings.setColorInterpolationMode( InterpolationMode::NearestNeighbor );
-                updateImageInterpolationMode();
-            }
+                if ( ImGui::Selectable( typeString( mode ).c_str(), ( mode == getInterpMode() ) ) )
+                {
+                    setInterpMode( mode );
+                    updateImageInterpolationMode();
 
-            ImGui::SameLine();
-            if ( ImGui::RadioButton( "Linear interpolation", &interp, 1 ) )
-            {
-                imgSettings.setColorInterpolationMode( InterpolationMode::Linear );
-                updateImageInterpolationMode();
+                    if ( mode == getInterpMode() )
+                    {
+                        ImGui::SetItemDefaultFocus();
+                    }
+                }
             }
-            ImGui::SameLine(); helpMarker( "Nearest neighbor or trilinear interpolation" );
+            ImGui::EndCombo();
         }
+        ImGui::SameLine(); helpMarker( "Select the image interpolation type" );
 
 
         if ( ! imgSettings.displayImageAsColor() )
@@ -1158,7 +1172,7 @@ void renderImageHeader(
                 // Recommend linear interpolation:
                 if ( InterpolationMode::NearestNeighbor == imgSettings.interpolationMode() )
                 {
-                    ImGui::Text( "Note: Linear interpolation is recommended when showing edges." );
+                    ImGui::Text( "Note: Linear or cubic interpolation are recommended when showing edges." );
                     //                    imgSettings.setInterpolationMode( InterpolationMode::Linear );
                     //                    updateImageInterpolationMode();
                 }
@@ -1559,7 +1573,7 @@ void renderImageHeader(
 
     if ( ImGui::TreeNode( "Header Information" ) )
     {
-        renderImageHeaderInformation( appData, imageUid, *image, updateImageUniforms );
+        renderImageHeaderInformation( appData, imageUid, *image, updateImageUniforms, recenterAllViews );
         ImGui::TreePop();
     }
 
@@ -1581,7 +1595,8 @@ void renderSegmentationHeader(
         const std::function< void ( size_t labelIndex ) >& moveCrosshairsToSegLabelCentroid,
         const std::function< std::optional<uuids::uuid>( const uuids::uuid& matchingImageUid, const std::string& segDisplayName ) >& createBlankSeg,
         const std::function< bool( const uuids::uuid& segUid ) >& clearSeg,
-        const std::function< bool( const uuids::uuid& segUid ) >& removeSeg )
+        const std::function< bool( const uuids::uuid& segUid ) >& removeSeg,
+        const AllViewsRecenterType& recenterAllViews )
 {
     static const std::string sk_addNewSegString = std::string( ICON_FK_FILE_O ) + std::string( " Create" );
     static const std::string sk_clearSegString = std::string( ICON_FK_ERASER ) + std::string( " Clear" );
@@ -1704,7 +1719,7 @@ void renderSegmentationHeader(
     ImGui::Text( "Active segmentation:" );
 
 //    ImGui::PushItemWidth( -1 );
-    if ( ImGui::BeginCombo( "", activeSeg->settings().displayName().c_str() ) )
+    if ( ImGui::BeginCombo( "Name", activeSeg->settings().displayName().c_str() ) )
     {
         size_t segIndex = 0;
         for ( const auto& segUid : segUids )
@@ -1896,7 +1911,7 @@ void renderSegmentationHeader(
 
     if ( ImGui::TreeNode( "Header Information" ) )
     {
-        renderImageHeaderInformation( appData, imageUid, *activeSeg, updateImageUniforms );
+        renderImageHeaderInformation( appData, imageUid, *activeSeg, updateImageUniforms, recenterAllViews );
 
         ImGui::TreePop();
     }

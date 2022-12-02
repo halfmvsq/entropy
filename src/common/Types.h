@@ -101,7 +101,17 @@ struct ComponentStats
 enum class InterpolationMode
 {
     NearestNeighbor,
-    Linear
+    Trilinear,
+    Tricubic
+};
+
+/**
+ * @brief Array of all available interpolation modes
+ */
+inline std::array<InterpolationMode, 3> const AllInterpolationModes = {
+    InterpolationMode::NearestNeighbor,
+    InterpolationMode::Trilinear,
+    InterpolationMode::Tricubic
 };
 
 
@@ -142,8 +152,12 @@ inline std::array<MouseMode, 9> const AllMouseModes = {
 /// Get the mouse mode as a string
 std::string typeString( const MouseMode& mouseMode );
 
+/// Get the interpolation mode as a string
+std::string typeString( const InterpolationMode& mode );
+
 /// Get the toolbar button corresponding to a mouse mode
 const char* toolbarButtonIcon( const MouseMode& mouseMode );
+
 
 
 /**

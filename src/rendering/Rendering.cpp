@@ -548,7 +548,8 @@ void Rendering::updateImageInterpolation( const uuids::uuid& imageUid )
             maxFilter = tex::MagnificationFilter::Nearest;
             break;
         }
-        case InterpolationMode::Linear:
+        case InterpolationMode::Trilinear:
+        case InterpolationMode::Tricubic:
         {
             minFilter = tex::MinificationFilter::Linear;
             maxFilter = tex::MagnificationFilter::Linear;
@@ -579,7 +580,8 @@ void Rendering::updateImageInterpolation( const uuids::uuid& imageUid )
                 maxFilter = tex::MagnificationFilter::Nearest;
                 break;
             }
-            case InterpolationMode::Linear:
+            case InterpolationMode::Trilinear:
+            case InterpolationMode::Tricubic:
             {
                 minFilter = tex::MinificationFilter::Linear;
                 maxFilter = tex::MagnificationFilter::Linear;
@@ -841,6 +843,10 @@ void Rendering::updateImageUniforms( const uuids::uuid& imageUid )
     // (subject_T_worldDef) of the image.
     uniforms.segTexture_T_world =
         seg->transformations().texture_T_subject() *
+        img->transformations().subject_T_worldDef();
+
+    uniforms.segVoxel_T_world =
+        seg->transformations().pixel_T_subject() *
         img->transformations().subject_T_worldDef();
 
 
@@ -1380,9 +1386,12 @@ void Rendering::renderAllImages(
                 P->setSamplerUniform( "imgCmapTex", msk_imgCmapTexSampler.index );
                 P->setSamplerUniform( "segLabelCmapTex", msk_labelTableTexSampler.index );
 
+                P->setUniform( "useTricubicInterpolation", ( InterpolationMode::Tricubic == img->settings().interpolationMode() ) );
+
                 P->setUniform( "numSquares", static_cast<float>( renderData.m_numCheckerboardSquares ) );
                 P->setUniform( "imgTexture_T_world", U.imgTexture_T_world );
                 P->setUniform( "segTexture_T_world", U.segTexture_T_world );
+                P->setUniform( "segVoxel_T_world", U.segVoxel_T_world );
 
                 if ( ! doXray )
                 {
@@ -1439,9 +1448,12 @@ void Rendering::renderAllImages(
                 P->setSamplerUniform( "imgCmapTex", msk_imgCmapTexSampler.index );
                 P->setSamplerUniform( "segLabelCmapTex", msk_labelTableTexSampler.index );
 
+                P->setUniform( "useTricubicInterpolation", ( InterpolationMode::Tricubic == img->settings().colorInterpolationMode() ) );
+
                 P->setUniform( "numSquares", static_cast<float>( renderData.m_numCheckerboardSquares ) );
                 P->setUniform( "imgTexture_T_world", U.imgTexture_T_world );
                 P->setUniform( "segTexture_T_world", U.segTexture_T_world );
+                P->setUniform( "segVoxel_T_world", U.segVoxel_T_world );
 
                 P->setUniform( "imgSlopeIntercept", U.slopeInterceptRgba_normalized_T_texture );
                 P->setUniform( "imgThresholds", U.thresholdsRgba );
@@ -2030,6 +2042,7 @@ bool Rendering::createImageProgram( GLShaderProgram& program )
 
         vsUniforms.insertUniform( "imgTexture_T_world", UniformType::Mat4, sk_identMat4 );
         vsUniforms.insertUniform( "segTexture_T_world", UniformType::Mat4, sk_identMat4 );
+        vsUniforms.insertUniform( "segVoxel_T_world", UniformType::Mat4, sk_identMat4 );
 
         auto vs = std::make_shared<GLShader>( "vsImage", ShaderType::Vertex, vsSource.c_str() );
         vs->setRegisteredUniforms( std::move( vsUniforms ) );
@@ -2045,6 +2058,8 @@ bool Rendering::createImageProgram( GLShaderProgram& program )
         fsUniforms.insertUniform( "segTex", UniformType::Sampler, msk_segTexSampler );
         fsUniforms.insertUniform( "imgCmapTex", UniformType::Sampler, msk_imgCmapTexSampler );
         fsUniforms.insertUniform( "segLabelCmapTex", UniformType::Sampler, msk_labelTableTexSampler );
+
+        fsUniforms.insertUniform( "useTricubicInterpolation", UniformType::Bool, false );
 
         fsUniforms.insertUniform( "imgSlopeIntercept", UniformType::Vec2, sk_zeroVec2 );
         fsUniforms.insertUniform( "imgCmapSlopeIntercept", UniformType::Vec2, sk_zeroVec2 );
@@ -2129,6 +2144,7 @@ bool Rendering::createImageRgbaProgram( GLShaderProgram& program )
 
         vsUniforms.insertUniform( "imgTexture_T_world", UniformType::Mat4, sk_identMat4 );
         vsUniforms.insertUniform( "segTexture_T_world", UniformType::Mat4, sk_identMat4 );
+        vsUniforms.insertUniform( "segVoxel_T_world", UniformType::Mat4, sk_identMat4 );
 
         auto vs = std::make_shared<GLShader>( "vsImage", ShaderType::Vertex, vsSource.c_str() );
         vs->setRegisteredUniforms( std::move( vsUniforms ) );
@@ -2143,6 +2159,8 @@ bool Rendering::createImageRgbaProgram( GLShaderProgram& program )
         fsUniforms.insertUniform( "imgTex", UniformType::SamplerVector, msk_imgRgbaTexSamplers );
         fsUniforms.insertUniform( "segTex", UniformType::Sampler, msk_segTexSampler );
         fsUniforms.insertUniform( "segLabelCmapTex", UniformType::Sampler, msk_labelTableTexSampler );
+
+        fsUniforms.insertUniform( "useTricubicInterpolation", UniformType::Bool, false );
 
         fsUniforms.insertUniform( "imgSlopeIntercept", UniformType::Vec2Vector, Vec2Vector{ sk_zeroVec2 } );
         fsUniforms.insertUniform( "alphaIsOne", UniformType::Bool, true );
@@ -2218,6 +2236,7 @@ bool Rendering::createXrayProgram( GLShaderProgram& program )
 
         vsUniforms.insertUniform( "imgTexture_T_world", UniformType::Mat4, sk_identMat4 );
         vsUniforms.insertUniform( "segTexture_T_world", UniformType::Mat4, sk_identMat4 );
+        vsUniforms.insertUniform( "segVoxel_T_world", UniformType::Mat4, sk_identMat4 );
 
         auto vs = std::make_shared<GLShader>( "vsImage", ShaderType::Vertex, vsSource.c_str() );
         vs->setRegisteredUniforms( std::move( vsUniforms ) );
@@ -2233,6 +2252,8 @@ bool Rendering::createXrayProgram( GLShaderProgram& program )
         fsUniforms.insertUniform( "segTex", UniformType::Sampler, msk_segTexSampler );
         fsUniforms.insertUniform( "imgCmapTex", UniformType::Sampler, msk_imgCmapTexSampler );
         fsUniforms.insertUniform( "segLabelCmapTex", UniformType::Sampler, msk_labelTableTexSampler );
+
+        fsUniforms.insertUniform( "useTricubicInterpolation", UniformType::Bool, false );
 
         fsUniforms.insertUniform( "imgSlope_native_T_texture", UniformType::Float, 1.0f );
         fsUniforms.insertUniform( "imgCmapSlopeIntercept", UniformType::Vec2, sk_zeroVec2 );
@@ -2325,6 +2346,8 @@ bool Rendering::createRaycastIsoSurfaceProgram( GLShaderProgram& program )
         fsUniforms.insertUniform( "segTex", UniformType::Sampler, msk_segTexSampler );
         fsUniforms.insertUniform( "jumpTex", UniformType::Sampler, msk_jumpTexSampler );
 
+        fsUniforms.insertUniform( "useTricubicInterpolation", UniformType::Bool, false );
+
         fsUniforms.insertUniform( "imgTexture_T_world", UniformType::Mat4, sk_identMat4 );
         fsUniforms.insertUniform( "world_T_imgTexture", UniformType::Mat4, sk_identMat4 );
 
@@ -2404,6 +2427,7 @@ bool Rendering::createEdgeProgram( GLShaderProgram& program )
 
         vsUniforms.insertUniform( "imgTexture_T_world", UniformType::Mat4, sk_identMat4 );
         vsUniforms.insertUniform( "segTexture_T_world", UniformType::Mat4, sk_identMat4 );
+        vsUniforms.insertUniform( "segVoxel_T_world", UniformType::Mat4, sk_identMat4 );
 
         auto vs = std::make_shared<GLShader>( "vsEdge", ShaderType::Vertex, vsSource.c_str() );
         vs->setRegisteredUniforms( std::move( vsUniforms ) );
@@ -2420,6 +2444,8 @@ bool Rendering::createEdgeProgram( GLShaderProgram& program )
         fsUniforms.insertUniform( "imgCmapTex", UniformType::Sampler, msk_imgCmapTexSampler );
         fsUniforms.insertUniform( "segLabelCmapTex", UniformType::Sampler, msk_labelTableTexSampler );
 
+        fsUniforms.insertUniform( "useTricubicInterpolation", UniformType::Bool, false );
+        
         fsUniforms.insertUniform( "imgSlopeIntercept", UniformType::Vec2, sk_zeroVec2 );
         fsUniforms.insertUniform( "imgSlopeInterceptLargest", UniformType::Vec2, sk_zeroVec2 );
         fsUniforms.insertUniform( "imgCmapSlopeIntercept", UniformType::Vec2, sk_zeroVec2 );
@@ -2515,6 +2541,8 @@ bool Rendering::createOverlayProgram( GLShaderProgram& program )
 
         fsUniforms.insertUniform( "segLabelCmapTex", UniformType::SamplerVector, msk_labelTableTexSamplers );
 
+        fsUniforms.insertUniform( "useTricubicInterpolation", UniformType::Bool, false );
+
         fsUniforms.insertUniform( "imgSlopeIntercept", UniformType::Vec2Vector, Vec2Vector{ sk_zeroVec2, sk_zeroVec2 } );
 
         fsUniforms.insertUniform( "imgThresholds", UniformType::Vec2Vector, Vec2Vector{ sk_zeroVec2, sk_zeroVec2 } );
@@ -2590,6 +2618,8 @@ bool Rendering::createDifferenceProgram( GLShaderProgram& program )
         fsUniforms.insertUniform( "segTex", UniformType::SamplerVector, msk_segTexSamplers );
         fsUniforms.insertUniform( "metricCmapTex", UniformType::Sampler, msk_metricCmapTexSampler );
         fsUniforms.insertUniform( "segLabelCmapTex", UniformType::SamplerVector, msk_labelTableTexSamplers );
+
+        fsUniforms.insertUniform( "useTricubicInterpolation", UniformType::Bool, false );
 
         fsUniforms.insertUniform( "imgSlopeIntercept", UniformType::Vec2Vector, Vec2Vector{ sk_zeroVec2, sk_zeroVec2 } );
         fsUniforms.insertUniform( "segOpacity", UniformType::FloatVector, FloatVector{ 0.0f, 0.0f } );
@@ -2674,6 +2704,8 @@ bool Rendering::createCrossCorrelationProgram( GLShaderProgram& program )
         fsUniforms.insertUniform( "segTex", UniformType::SamplerVector, msk_segTexSamplers );
         fsUniforms.insertUniform( "metricCmapTex", UniformType::Sampler, msk_metricCmapTexSampler );
         fsUniforms.insertUniform( "segLabelCmapTex", UniformType::SamplerVector, msk_labelTableTexSamplers );
+
+        fsUniforms.insertUniform( "useTricubicInterpolation", UniformType::Bool, false );
 
         fsUniforms.insertUniform( "segOpacity", UniformType::FloatVector, FloatVector{ 0.0f, 0.0f } );
 

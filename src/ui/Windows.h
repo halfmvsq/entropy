@@ -134,7 +134,8 @@ void renderImagePropertiesWindow(
         const std::function< void ( void ) >& updateAllImageUniforms,
         const std::function< void ( const uuids::uuid& imageUid ) >& updateImageUniforms,
         const std::function< void ( const uuids::uuid& imageUid ) >& updateImageInterpolationMode,
-        const std::function< bool ( const uuids::uuid& imageUid, bool locked ) >& setLockManualImageTransformation );
+        const std::function< bool ( const uuids::uuid& imageUid, bool locked ) >& setLockManualImageTransformation,
+        const AllViewsRecenterType& recenterAllViews );
 
 
 /**
@@ -155,7 +156,8 @@ void renderSegmentationPropertiesWindow(
         const std::function< void ( const uuids::uuid& imageUid, size_t labelIndex ) >& moveCrosshairsToSegLabelCentroid,
         const std::function< std::optional<uuids::uuid> ( const uuids::uuid& matchingImageUid, const std::string& segDisplayName ) >& createBlankSeg,
         const std::function< bool ( const uuids::uuid& segUid ) >& clearSeg,
-        const std::function< bool( const uuids::uuid& segUid ) >& removeSeg );
+        const std::function< bool( const uuids::uuid& segUid ) >& removeSeg,
+        const AllViewsRecenterType& recenterAllViews );
 
 
 /**

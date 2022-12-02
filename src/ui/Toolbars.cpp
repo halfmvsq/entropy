@@ -195,7 +195,7 @@ void renderModeToolbar(
             if ( isHoriz ) ImGui::SameLine();
             ImGui::PushStyleColor( ImGuiCol_Button, ( isModeActive ? activeColor : inactiveColor ) );
             {
-                if ( ImGui::Button( toolbarButtonIcon( mouseMode ), sk_toolbarButtonSize) )
+                if ( ImGui::Button( toolbarButtonIcon( mouseMode ), sk_toolbarButtonSize ) )
                 {
                     isModeActive = ! isModeActive;
                     if ( isModeActive )

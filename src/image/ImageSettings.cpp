@@ -21,7 +21,7 @@ ImageSettings::ImageSettings(
       m_lockedToReference{ true },
       m_displayAsColor{ false },
       m_ignoreAlpha{ false },
-      m_colorInterpolationMode{ InterpolationMode::Linear },
+      m_colorInterpolationMode{ InterpolationMode::Trilinear },
       m_useDistanceMapForRaycasting{ true },
       m_isosurfacesVisible{ true },
       m_applyImageColormapToIsosurfaces{ false },
@@ -83,7 +83,7 @@ ImageSettings::ImageSettings(
         setting.m_edgeColor = glm::vec3{ 1.0f, 0.0f, 1.0f };
         setting.m_edgeOpacity = 1.0;
 
-        setting.m_interpolationMode = InterpolationMode::Linear;
+        setting.m_interpolationMode = InterpolationMode::Trilinear;
 
         // Use the first color map and label table
         setting.m_colorMapIndex = 0;

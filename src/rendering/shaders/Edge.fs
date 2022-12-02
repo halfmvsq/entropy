@@ -18,6 +18,8 @@ uniform usampler3D segTex; // Texture unit 1: segmentation
 uniform sampler1D imgCmapTex; // Texture unit 2: image color map (pre-mult RGBA)
 uniform sampler1D segLabelCmapTex; // Texutre unit 3: label color map (pre-mult RGBA)
 
+uniform bool useTricubicInterpolation; // Whether to use tricubic interpolation
+
 uniform vec2 imgSlopeIntercept; // Slopes and intercepts for image normalization and window-leveling
 uniform vec2 imgSlopeInterceptLargest; // Slopes and intercepts for image normalization
 uniform vec2 imgCmapSlopeIntercept; // Slopes and intercepts for the image color maps
@@ -110,6 +112,63 @@ bool isInsideTexture( vec3 a )
 }
 
 
+
+//! Tricubic interpolated texture lookup, using unnormalized coordinates.
+//! Fast implementation, using 8 trilinear lookups.
+//! @param[in] tex  3D texture
+//! @param[in] coord  normalized 3D texture coordinate
+//! @see https://github.com/DannyRuijters/CubicInterpolationCUDA/blob/master/examples/glCubicRayCast/tricubic.shader
+float interpolateTricubicFast( sampler3D tex, vec3 coord )
+{
+	// Shift the coordinate from [0,1] to [-0.5, nrOfVoxels-0.5]
+    vec3 nrOfVoxels = vec3(textureSize(tex, 0));
+    vec3 coord_grid = coord * nrOfVoxels - 0.5;
+    vec3 index = floor(coord_grid);
+    vec3 fraction = coord_grid - index;
+    vec3 one_frac = 1.0 - fraction;
+
+    vec3 w0 = 1.0/6.0 * one_frac*one_frac*one_frac;
+    vec3 w1 = 2.0/3.0 - 0.5 * fraction*fraction*(2.0-fraction);
+    vec3 w2 = 2.0/3.0 - 0.5 * one_frac*one_frac*(2.0-one_frac);
+    vec3 w3 = 1.0/6.0 * fraction*fraction*fraction;
+
+    vec3 g0 = w0 + w1;
+    vec3 g1 = w2 + w3;
+    vec3 mult = 1.0 / nrOfVoxels;
+
+    // h0 = w1/g0 - 1, move from [-0.5, nrOfVoxels-0.5] to [0,1]
+    vec3 h0 = mult * ((w1 / g0) - 0.5 + index);
+
+    // h1 = w3/g1 + 1, move from [-0.5, nrOfVoxels-0.5] to [0,1]
+    vec3 h1 = mult * ((w3 / g1) + 1.5 + index);
+
+	// Fetch the eight linear interpolations
+	// weighting and fetching is interleaved for performance and stability reasons
+    float tex000 = texture(tex, h0)[0];
+    float tex100 = texture(tex, vec3(h1.x, h0.y, h0.z))[0];
+
+    tex000 = mix(tex100, tex000, g0.x); // weigh along the x-direction
+    float tex010 = texture(tex, vec3(h0.x, h1.y, h0.z))[0];
+    float tex110 = texture(tex, vec3(h1.x, h1.y, h0.z))[0];
+
+    tex010 = mix(tex110, tex010, g0.x); // weigh along the x-direction
+    tex000 = mix(tex010, tex000, g0.y); // weigh along the y-direction
+
+    float tex001 = texture(tex, vec3(h0.x, h0.y, h1.z))[0];
+    float tex101 = texture(tex, vec3(h1.x, h0.y, h1.z))[0];
+
+    tex001 = mix(tex101, tex001, g0.x); // weigh along the x-direction
+
+    float tex011 = texture(tex, vec3(h0.x, h1.y, h1.z))[0];
+    float tex111 = texture(tex, h1)[0];
+
+    tex011 = mix(tex111, tex011, g0.x); // weigh along the x-direction
+    tex001 = mix(tex011, tex001, g0.y); // weigh along the y-direction
+
+    return mix(tex001, tex000, g0.z); // weigh along the z-direction
+}
+
+
 // Compute alpha of fragments based on whether or not they are inside the
 // segmentation boundary. Fragments on the boundary are assigned alpha of 1,
 // whereas fragments inside are assigned alpha of 'segInteriorOpacity'.
@@ -141,6 +200,13 @@ float getSegInteriorAlpha( uint seg )
     }
 
     return segInteriorAlpha;
+}
+
+float getImageValue( vec3 texCoord )
+{
+    return mix( texture( imgTex, texCoord )[0],
+        interpolateTricubicFast( imgTex, texCoord ),
+        float(useTricubicInterpolation) );
 }
 
 
@@ -178,7 +244,8 @@ void main()
             vec3 texSamplingPos = float(i - 1) * texSamplingDirsForEdges[0] +
                 float(j - 1) * texSamplingDirsForEdges[1];
 
-            float v = texture( imgTex, fs_in.ImgTexCoords + texSamplingPos ).r;
+            //float v = texture( imgTex, fs_in.ImgTexCoords + texSamplingPos ).r;
+            float v = getImageValue( fs_in.ImgTexCoords + texSamplingPos );
 
             // Apply maximum window/level to normalize value in [0.0, 1.0]:
             V[i][j] = imgSlopeInterceptLargest[0] * v + imgSlopeInterceptLargest[1];
@@ -215,7 +282,10 @@ void main()
     gradMag = mix( gradMag, float( gradMag > edgeMagnitude ), float(thresholdEdges) );
 
     // Get the image and segmentation label values:
-    float img = texture( imgTex, fs_in.ImgTexCoords ).r;
+    // float img = texture( imgTex, fs_in.ImgTexCoords ).r;
+
+    float img = getImageValue( fs_in.ImgTexCoords );
+
     uint seg = texture( segTex, fs_in.SegTexCoords ).r;
 
     // Apply window/level and normalize value in [0.0, 1.0]:

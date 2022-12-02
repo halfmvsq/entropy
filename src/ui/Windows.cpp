@@ -497,7 +497,8 @@ void renderViewSettingsComboWindow(
             if ( uiControls.m_hasViewTypeComboBox )
             {
                 ImGui::SameLine();
-                ImGui::PushItemWidth( 100.0f + 2.0f * ImGui::GetStyle().FramePadding.x );
+                // ImGui::PushItemWidth( 100.0f + 2.0f * ImGui::GetStyle().FramePadding.x );
+                ImGui::PushItemWidth( ImGui::CalcTextSize("Sagittal").x + 2.0f * ImGui::GetStyle().FramePadding.x + ImGui::GetTextLineHeightWithSpacing() );
 
                 const bool isOblique = ( ViewType::Oblique == viewType );
 
@@ -890,13 +891,16 @@ void renderImagePropertiesWindow(
         const std::function< void ( void ) >& updateAllImageUniforms,
         const std::function< void ( const uuids::uuid& imageUid ) >& updateImageUniforms,
         const std::function< void ( const uuids::uuid& imageUid ) >& updateImageInterpolationMode,
-        const std::function< bool ( const uuids::uuid& imageUid, bool locked ) >& setLockManualImageTransformation )
+        const std::function< bool ( const uuids::uuid& imageUid, bool locked ) >& setLockManualImageTransformation,
+        const AllViewsRecenterType& recenterAllViews )
 {
     static const std::string sk_showOpacityMixer = std::string( ICON_FK_SLIDERS ) + " Show opacity mixer";
 
     if ( ImGui::Begin( "Images##Images",
-                       &( appData.guiData().m_showImagePropertiesWindow ),
-                       ImGuiWindowFlags_AlwaysAutoResize ) )
+                       &( appData.guiData().m_showImagePropertiesWindow ) ) )
+                       // ImGuiWindowFlags_AlwaysAutoResize ) )
+                       /// @todo Do auto resize only on initial loading
+                       /// look at constrained resize demo in imgui
     {
         renderActiveImageSelectionCombo(
                     numImages,
@@ -937,7 +941,8 @@ void renderImagePropertiesWindow(
                             moveImageForward,
                             moveImageToBack,
                             moveImageToFront,
-                            setLockManualImageTransformation );
+                            setLockManualImageTransformation,
+                            recenterAllViews );
             }
         }
 
@@ -957,12 +962,18 @@ void renderSegmentationPropertiesWindow(
         const std::function< void ( const uuids::uuid& imageUid, size_t labelIndex ) >& moveCrosshairsToSegLabelCentroid,
         const std::function< std::optional<uuids::uuid> ( const uuids::uuid& matchingImageUid, const std::string& segDisplayName ) >& createBlankSeg,
         const std::function< bool ( const uuids::uuid& segUid ) >& clearSeg,
-        const std::function< bool( const uuids::uuid& segUid ) >& removeSeg )
+        const std::function< bool( const uuids::uuid& segUid ) >& removeSeg,
+        const AllViewsRecenterType& recenterAllViews )
 {
+    static bool firstRun = false;
+
+    ImGuiWindowFlags flags = firstRun ? ImGuiWindowFlags_AlwaysAutoResize : ImGuiWindowFlags_None;
+
     if ( ImGui::Begin( "Segmentations##Segmentations",
-                       &( appData.guiData().m_showSegmentationsWindow ),
-                       ImGuiWindowFlags_AlwaysAutoResize ) )
+                       &( appData.guiData().m_showSegmentationsWindow ), flags ) )
     {
+        firstRun = false;
+
         size_t imageIndex = 0;
         const auto activeUid = appData.activeImageUid();
 
@@ -984,7 +995,8 @@ void renderSegmentationPropertiesWindow(
                             [&imageUid, moveCrosshairsToSegLabelCentroid] ( size_t labelIndex ) { moveCrosshairsToSegLabelCentroid( imageUid, labelIndex ); },
                             createBlankSeg,
                             clearSeg,
-                            removeSeg );
+                            removeSeg,
+                            recenterAllViews );
             }
         }
 
@@ -1267,9 +1279,9 @@ void renderSettingsWindow(
 
                 ImGui::Dummy( ImVec2( 0.0f, 1.0f ) );
 
-                ImGui::Text( "Segmentation outlining:" );
+                ImGui::Text( "Segmentation boundary outline:" );
                 if ( ImGui::RadioButton(
-                         "Outline outer image voxels",
+                         "Outline image voxels",
                          SegmentationOutlineStyle::ImageVoxel == renderData.m_segOutlineStyle ) )
                 {
                     renderData.m_segOutlineStyle = SegmentationOutlineStyle::ImageVoxel;
@@ -1277,7 +1289,7 @@ void renderSettingsWindow(
                 ImGui::SameLine(); helpMarker( "Outline the outer voxels of the image segmentation regions" );
 
                 if ( ImGui::RadioButton(
-                         "Outline outer view pixels",
+                         "Outline view pixels",
                          SegmentationOutlineStyle::ViewPixel == renderData.m_segOutlineStyle ) )
                 {
                     renderData.m_segOutlineStyle = SegmentationOutlineStyle::ViewPixel;

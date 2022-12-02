@@ -595,8 +595,15 @@ file( GLOB COLORMAPS
 set( FONTS
     ${RES_DIR}/fonts/Cousine/Cousine-Regular.ttf
     ${RES_DIR}/fonts/ForkAwesome/forkawesome-webfont.ttf
+    ${RES_DIR}/fonts/HelveticaNeue/HelveticaNeue-Light.ttf
+    ${RES_DIR}/fonts/Inter/Inter-Light.ttf
     ${RES_DIR}/fonts/Roboto/Roboto-Light.ttf
-    ${RES_DIR}/fonts/Roboto/Roboto-Regular.ttf )
+    ${RES_DIR}/fonts/Roboto/Roboto-Regular.ttf
+    ${RES_DIR}/fonts/Satoshi/Satoshi-Light.ttf
+    ${RES_DIR}/fonts/SFMono/SFMono-Regular.ttf
+    ${RES_DIR}/fonts/SFPro/sf-pro-text-regular.ttf
+    ${RES_DIR}/fonts/SpaceGrotesk/SpaceGrotesk-Light.ttf
+    ${RES_DIR}/fonts/Supreme/Supreme-Light.ttf )
 
 
 #--------------------------------------------------------------------------------
@@ -661,7 +668,7 @@ endif()
 #--------------------------------------------------------------------------------
 # Define main executable target
 #--------------------------------------------------------------------------------
-set( EXEC_NAME entropy )
+set( EXEC_NAME Entropy )
 
 
 # Embed the resources using CMakeRC

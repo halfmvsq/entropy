@@ -196,7 +196,8 @@ void renderSegLabelsChildWindow(
 
         ImGui::SameLine();
 
-        ImGui::PushItemWidth( 175.0f );
+        // ImGui::PushItemWidth( 175.0f );
+        ImGui::PushItemWidth( -1 );
         if ( ImGui::InputText( "##labelName", &labelName ) )
         {
             labelTable->setName( i, labelName );

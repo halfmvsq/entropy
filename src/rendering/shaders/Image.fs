@@ -24,6 +24,7 @@ in VS_OUT
 {
     vec3 ImgTexCoords;
     vec3 SegTexCoords;
+    vec3 SegVoxCoords;
     vec2 CheckerCoord;
     vec2 ClipPos;
 } fs_in;
@@ -45,6 +46,8 @@ uniform float imgOpacity; // Image opacities
 uniform float segOpacity; // Segmentation opacities
 
 uniform bool masking; // Whether to mask image based on segmentation
+
+uniform bool useTricubicInterpolation; // Whether to use tricubic interpolation
 
 uniform vec2 clipCrosshairs; // Crosshairs in Clip space
 
@@ -141,6 +144,62 @@ bool doRender()
 }
 
 
+//! Tricubic interpolated texture lookup, using unnormalized coordinates.
+//! Fast implementation, using 8 trilinear lookups.
+//! @param[in] tex  3D texture
+//! @param[in] coord  normalized 3D texture coordinate
+//! @see https://github.com/DannyRuijters/CubicInterpolationCUDA/blob/master/examples/glCubicRayCast/tricubic.shader
+float interpolateTricubicFast( sampler3D tex, vec3 coord )
+{
+	// Shift the coordinate from [0,1] to [-0.5, nrOfVoxels-0.5]
+    vec3 nrOfVoxels = vec3(textureSize(tex, 0));
+    vec3 coord_grid = coord * nrOfVoxels - 0.5;
+    vec3 index = floor(coord_grid);
+    vec3 fraction = coord_grid - index;
+    vec3 one_frac = 1.0 - fraction;
+
+    vec3 w0 = 1.0/6.0 * one_frac*one_frac*one_frac;
+    vec3 w1 = 2.0/3.0 - 0.5 * fraction*fraction*(2.0-fraction);
+    vec3 w2 = 2.0/3.0 - 0.5 * one_frac*one_frac*(2.0-one_frac);
+    vec3 w3 = 1.0/6.0 * fraction*fraction*fraction;
+
+    vec3 g0 = w0 + w1;
+    vec3 g1 = w2 + w3;
+    vec3 mult = 1.0 / nrOfVoxels;
+
+    // h0 = w1/g0 - 1, move from [-0.5, nrOfVoxels-0.5] to [0,1]
+    vec3 h0 = mult * ((w1 / g0) - 0.5 + index);
+
+    // h1 = w3/g1 + 1, move from [-0.5, nrOfVoxels-0.5] to [0,1]
+    vec3 h1 = mult * ((w3 / g1) + 1.5 + index);
+
+	// Fetch the eight linear interpolations
+	// weighting and fetching is interleaved for performance and stability reasons
+    float tex000 = texture(tex, h0)[0];
+    float tex100 = texture(tex, vec3(h1.x, h0.y, h0.z))[0];
+
+    tex000 = mix(tex100, tex000, g0.x); // weigh along the x-direction
+    float tex010 = texture(tex, vec3(h0.x, h1.y, h0.z))[0];
+    float tex110 = texture(tex, vec3(h1.x, h1.y, h0.z))[0];
+
+    tex010 = mix(tex110, tex010, g0.x); // weigh along the x-direction
+    tex000 = mix(tex010, tex000, g0.y); // weigh along the y-direction
+
+    float tex001 = texture(tex, vec3(h0.x, h0.y, h1.z))[0];
+    float tex101 = texture(tex, vec3(h1.x, h0.y, h1.z))[0];
+
+    tex001 = mix(tex101, tex001, g0.x); // weigh along the x-direction
+
+    float tex011 = texture(tex, vec3(h0.x, h1.y, h1.z))[0];
+    float tex111 = texture(tex, h1)[0];
+
+    tex011 = mix(tex111, tex011, g0.x); // weigh along the x-direction
+    tex001 = mix(tex011, tex001, g0.y); // weigh along the y-direction
+
+    return mix(tex001, tex000, g0.z); // weigh along the z-direction
+}
+
+
 // Compute alpha of fragments based on whether or not they are inside the
 // segmentation boundary. Fragments on the boundary are assigned alpha of 1,
 // whereas fragments inside are assigned alpha of 'segInteriorOpacity'.
@@ -175,6 +234,14 @@ float getSegInteriorAlpha( uint seg )
 }
 
 
+float getImageValue( vec3 texCoord )
+{
+    return mix( texture( imgTex, texCoord )[0],
+        interpolateTricubicFast( imgTex, texCoord ),
+        float(useTricubicInterpolation) );
+}
+
+
 void main()
 {
     if ( ! doRender() ) discard;
@@ -184,7 +251,8 @@ void main()
     bool segMask = isInsideTexture( fs_in.SegTexCoords );
 
     // Look up the image value (after mapping to GL texture units):
-    float img = texture( imgTex, fs_in.ImgTexCoords )[0];
+    //float img = texture( imgTex, fs_in.ImgTexCoords )[0];
+    float img = getImageValue( fs_in.ImgTexCoords );
 
     // Number of samples used for computing the final image value:
     int numSamples = 1;
@@ -195,7 +263,7 @@ void main()
         vec3 tc = fs_in.ImgTexCoords + i * texSamplingDirZ;
         if ( ! isInsideTexture( tc ) ) break;
 
-        float a = texture( imgTex, tc )[0];
+        float a = getImageValue( tc );
 
         img = float( MAX_IP_MODE == mipMode ) * max( img, a ) +
               float( MEAN_IP_MODE == mipMode ) * ( img + a ) +
@@ -210,7 +278,7 @@ void main()
         vec3 tc = fs_in.ImgTexCoords - i * texSamplingDirZ;
         if ( ! isInsideTexture( tc ) ) break;
 
-        float a = texture( imgTex, tc )[0];
+        float a = getImageValue( tc );
 
         img = float( MAX_IP_MODE == mipMode ) * max( img, a ) +
               float( MEAN_IP_MODE == mipMode ) * ( img + a ) +
@@ -225,6 +293,63 @@ void main()
     // Look up segmentation texture label value:
     uint seg = texture( segTex, fs_in.SegTexCoords )[0];
 
+    vec3 c = floor( fs_in.SegVoxCoords );
+
+    vec3 td = pow( vec3( textureSize(segTex, 0) ), vec3(-1) );
+    vec3 tc = vec3( c.x * td.x, c.y * td.y, c.z * td.z ) + 0.5 * td;
+
+    uint s000 = texture( segTex, vec3( tc.x, tc.y, tc.z ) )[0];
+    uint s001 = texture( segTex, vec3( tc.x, tc.y, tc.z + td.z ) )[0];
+    uint s010 = texture( segTex, vec3( tc.x, tc.y + td.y, tc.z ) )[0];
+    uint s011 = texture( segTex, vec3( tc.x, tc.y + td.y, tc.z + td.z ) )[0];
+    uint s100 = texture( segTex, vec3( tc.x + td.x, tc.y, tc.z ) )[0];
+    uint s101 = texture( segTex, vec3( tc.x + td.x, tc.y, tc.z + td.z ) )[0];
+    uint s110 = texture( segTex, vec3( tc.x + td.x, tc.y + td.y, tc.z ) )[0];
+    uint s111 = texture( segTex, vec3( tc.x + td.x, tc.y + td.y, tc.z + td.z ) )[0];
+    
+    seg = 0u;
+    float segInterpOpacity = 0.0;
+
+    vec3 d = fs_in.SegVoxCoords - c;
+    vec3 e = vec3(1) - d;
+
+    for ( uint j = 1u; j <= 4u; ++j )
+    {
+        float h =
+            float(s000 == j) * e.x * e.y * e.z +
+            float(s001 == j) * e.x * e.y * d.z + 
+            float(s010 == j) * e.x * d.y * e.z + 
+            float(s011 == j) * e.x * d.y * d.z + 
+            float(s100 == j) * d.x * e.y * e.z + 
+            float(s101 == j) * d.x * e.y * d.z + 
+            float(s110 == j) * d.x * d.y * e.z + 
+            float(s111 == j) * d.x * d.y * d.z;
+
+        // segInterpOpacity = 1.0;
+        // seg = uint( mix( 0u, j, float(h > isoOpacities[0]) ) );
+
+        segInterpOpacity = cubicPulse( isoOpacities[0], 0.1, h );
+        seg = j;
+
+        // if ( h > isoOpacities[0] )
+        // {
+        //     seg = j;
+        //     segInterpOpacity = 1.0;
+        // }
+        // else
+        // {
+        //     seg = 0u;
+        //     segInterpOpacity = 0.0;
+        // }
+
+        if ( h > 0.0 )
+        {
+            break;
+        }
+    }
+
+    // seg = uint( mix( 0u, 1u, float(segVal >= 0.5) ) );
+
     // Apply window/level to normalize image values in [0.0, 1.0] range:
     float imgNorm = clamp( imgSlopeIntercept[0] * img + imgSlopeIntercept[1], 0.0, 1.0 );
 
@@ -235,7 +360,7 @@ void main()
     float imgAlpha = imgOpacity * mask * hardThreshold( img, imgThresholds );
 
     // Compute segmentation alpha based on opacity and mask:
-    float segAlpha = segOpacity * getSegInteriorAlpha( seg ) * float(segMask);
+    float segAlpha = segInterpOpacity * segOpacity * getSegInteriorAlpha( seg ) * float(segMask);
 
     // Look up image color and apply alpha:
     vec4 imgLayer = texture( imgCmapTex, imgCmapSlopeIntercept[0] * imgNorm + imgCmapSlopeIntercept[1] ) * imgAlpha;

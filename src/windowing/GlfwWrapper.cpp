@@ -14,9 +14,7 @@
 
 namespace
 {
-
 static const std::string s_entropy( "Entropy" );
-
 }
 
 
@@ -126,12 +124,10 @@ GlfwWrapper::GlfwWrapper( EntropyApp* app, int glMajorVersion, int glMinorVersio
     spdlog::debug( "Set GLFW callbacks" );
 
     // Create cursors: not currently used
-    GLFWcursor* cursor = glfwCreateStandardCursor( GLFW_HAND_CURSOR );
+    GLFWcursor* cursor = glfwCreateStandardCursor( GLFW_IBEAM_CURSOR );
     m_mouseModeToCursor.emplace( MouseMode::WindowLevel, cursor );
 
     spdlog::debug( "Created GLFW cursors" );
-
-//    glfwSetWindowIcon( window, 1, GLFWimage() );
 
 //    GLFWimage images[1];
 //    images[0].pixels = stbi_load("PATH", &images[0].width, &images[0].height, 0, 4); //rgba channels
@@ -288,9 +284,15 @@ void GlfwWrapper::processInput()
     //    }
 }
 
+const GLFWwindow* GlfwWrapper::window() const
+{
+    return m_window;
+}
 
-const GLFWwindow* GlfwWrapper::window() const { return m_window; }
-GLFWwindow* GlfwWrapper::window() { return m_window; }
+GLFWwindow* GlfwWrapper::window()
+{
+    return m_window;
+}
 
 GLFWcursor* GlfwWrapper::cursor( MouseMode mode )
 {

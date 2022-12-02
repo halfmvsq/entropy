@@ -15,6 +15,8 @@ uniform sampler3D imgTex; // Texture unit 0: image
 uniform usampler3D segTex; // Texture unit 1: segmentation
 uniform usampler3D jumpTex; // Texture unit 5: distance texture
 
+uniform bool useTricubicInterpolation; // Whether to use tricubic interpolation
+
 uniform mat4 imgTexture_T_world;
 uniform mat4 world_T_imgTexture;
 
@@ -60,6 +62,72 @@ float compMin( vec3 v ) { return min( min(v.x, v.y), v.z ); }
 float when_lt( float x, float y ) { return max( sign(y - x), 0.0 ); }
 float when_ge( float x, float y ) { return 1.0 - when_lt(x, y); }
 
+
+
+//! Tricubic interpolated texture lookup, using unnormalized coordinates.
+//! Fast implementation, using 8 trilinear lookups.
+//! @param[in] tex  3D texture
+//! @param[in] coord  normalized 3D texture coordinate
+//! @see https://github.com/DannyRuijters/CubicInterpolationCUDA/blob/master/examples/glCubicRayCast/tricubic.shader
+float interpolateTricubicFast( sampler3D tex, vec3 coord )
+{
+	// Shift the coordinate from [0,1] to [-0.5, nrOfVoxels-0.5]
+    vec3 nrOfVoxels = vec3(textureSize(tex, 0));
+    vec3 coord_grid = coord * nrOfVoxels - 0.5;
+    vec3 index = floor(coord_grid);
+    vec3 fraction = coord_grid - index;
+    vec3 one_frac = 1.0 - fraction;
+
+    vec3 w0 = 1.0/6.0 * one_frac*one_frac*one_frac;
+    vec3 w1 = 2.0/3.0 - 0.5 * fraction*fraction*(2.0-fraction);
+    vec3 w2 = 2.0/3.0 - 0.5 * one_frac*one_frac*(2.0-one_frac);
+    vec3 w3 = 1.0/6.0 * fraction*fraction*fraction;
+
+    vec3 g0 = w0 + w1;
+    vec3 g1 = w2 + w3;
+    vec3 mult = 1.0 / nrOfVoxels;
+
+    // h0 = w1/g0 - 1, move from [-0.5, nrOfVoxels-0.5] to [0,1]
+    vec3 h0 = mult * ((w1 / g0) - 0.5 + index);
+
+    // h1 = w3/g1 + 1, move from [-0.5, nrOfVoxels-0.5] to [0,1]
+    vec3 h1 = mult * ((w3 / g1) + 1.5 + index);
+
+	// Fetch the eight linear interpolations
+	// weighting and fetching is interleaved for performance and stability reasons
+    float tex000 = texture(tex, h0)[0];
+    float tex100 = texture(tex, vec3(h1.x, h0.y, h0.z))[0];
+
+    tex000 = mix(tex100, tex000, g0.x); // weigh along the x-direction
+    float tex010 = texture(tex, vec3(h0.x, h1.y, h0.z))[0];
+    float tex110 = texture(tex, vec3(h1.x, h1.y, h0.z))[0];
+
+    tex010 = mix(tex110, tex010, g0.x); // weigh along the x-direction
+    tex000 = mix(tex010, tex000, g0.y); // weigh along the y-direction
+
+    float tex001 = texture(tex, vec3(h0.x, h0.y, h1.z))[0];
+    float tex101 = texture(tex, vec3(h1.x, h0.y, h1.z))[0];
+
+    tex001 = mix(tex101, tex001, g0.x); // weigh along the x-direction
+
+    float tex011 = texture(tex, vec3(h0.x, h1.y, h1.z))[0];
+    float tex111 = texture(tex, h1)[0];
+
+    tex011 = mix(tex111, tex011, g0.x); // weigh along the x-direction
+    tex001 = mix(tex011, tex001, g0.y); // weigh along the y-direction
+
+    return mix(tex001, tex000, g0.z); // weigh along the z-direction
+}
+
+
+float getImageValue( sampler3D tex, vec3 texCoord )
+{
+    return mix( texture( tex, texCoord )[0],
+        interpolateTricubicFast( tex, texCoord ),
+        float(useTricubicInterpolation) );
+}
+
+
 vec2 slabs( vec3 texRayPos, vec3 texRayDir )
 {
     vec3 t0 = (MIN_IMAGE_TEXCOORD - texRayPos) / texRayDir;
@@ -72,9 +140,9 @@ vec2 slabs( vec3 texRayPos, vec3 texRayDir )
 vec3 gradient( vec3 texPos )
 {
     return normalize( vec3(
-        texture( imgTex, texPos + texGrads[0] ).r - texture( imgTex, texPos - texGrads[0] ).r,
-        texture( imgTex, texPos + texGrads[1] ).r - texture( imgTex, texPos - texGrads[1] ).r,
-        texture( imgTex, texPos + texGrads[2] ).r - texture( imgTex, texPos - texGrads[2] ).r ) );
+        getImageValue( imgTex, texPos + texGrads[0] ) - getImageValue( imgTex, texPos - texGrads[0] ),
+        getImageValue( imgTex, texPos + texGrads[1] ) - getImageValue( imgTex, texPos - texGrads[1] ),
+        getImageValue( imgTex, texPos + texGrads[2] ) - getImageValue( imgTex, texPos - texGrads[2] ) ) );
 }
 
 vec3 bisect( vec3 pos, vec3 dir, float t0, float t1, float sgn, float iso )
@@ -84,7 +152,7 @@ vec3 bisect( vec3 pos, vec3 dir, float t0, float t1, float sgn, float iso )
 
     for ( int i = 0; i < NUM_BISECTIONS; ++i )
     {
-        float test = sgn * ( texture(imgTex, c).r - iso );
+        float test = sgn * ( getImageValue(imgTex, c) - iso );
         t1 += (t - t1) * when_ge(test, 0.0); // if (test >= 0.0) { t1 = t; }
         t0 += (t - t0) * when_lt(test, 0.0); // else { t0 = t; }
         t = 0.5 * (t0 + t1);
@@ -155,7 +223,7 @@ void main()
     int firstHit = 1;
 
     // Save old value and position
-    float oldValue = texture(imgTex, texPos).r;
+    float oldValue = getImageValue(imgTex, texPos);
     vec3 oldTexPos = texPos;
     float oldT = tMin;
 
@@ -183,7 +251,7 @@ void main()
 //            FIRST = false;
 //        }
 
-        float value = texture(imgTex, texPos).r;
+        float value = getImageValue(imgTex, texPos);
 
         for ( int i = 0; i < NISO; ++i )
         {

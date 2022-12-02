@@ -40,6 +40,59 @@ namespace
 static const glm::quat sk_identityRotation{ 1.0f, 0.0f, 0.0f, 0.0f };
 static const glm::vec3 sk_zeroVec{ 0.0f, 0.0f, 0.0f };
 
+
+ImFont* loadFont(
+    const std::string& fontPath,
+    const ImFontConfig& fontConfig,
+    float fontSize,
+    const ImWchar* glyphRange = nullptr )
+{
+    auto filesystem = cmrc::fonts::get_filesystem();
+
+    cmrc::file fontFile = filesystem.open( fontPath );
+
+    // ImGui will take ownership of the font, so make a copy:
+    char* fontData = new char[fontFile.size()];
+
+    for ( size_t i = 0; i < fontFile.size(); ++i )
+    {
+        fontData[i] = fontFile.cbegin()[i];
+    }
+
+// IMGUI_API ImFont* AddFontFromMemoryTTF(
+//     void* font_data, int font_size, float size_pixels,
+//     const ImFontConfig* font_cfg = NULL,
+//     const ImWchar* glyph_ranges = NULL);
+
+    // Note: Transfer ownership of 'ttf_data' to ImFontAtlas! Will be deleted after destruction of the atlas.
+    // Set font_cfg->FontDataOwnedByAtlas=false to keep ownership of your data and it won't be freed.
+
+    return ImGui::GetIO().Fonts->AddFontFromMemoryTTF(
+            static_cast<void*>( fontData ),
+            static_cast<int32_t>( fontFile.size() ),
+            static_cast<float>( fontSize ),
+            &fontConfig, glyphRange );
+
+    // if ( m_appData.guiData().m_cousineFont )
+    // {
+    //     spdlog::debug( "Loaded font {}", cousineFontPath );
+    // }
+    // else
+    // {
+    //     spdlog::error( "Could not load font {}", cousineFontPath );
+    // }
+
+    // if ( m_appData.guiData().m_forkAwesomeFont )
+    // {
+    //     spdlog::debug( "Loaded font {}", forkAwesomeFontPath );
+    // }
+    // else
+    // {
+    //     spdlog::error( "Could not load font {}", forkAwesomeFontPath );
+    // }
+}
+
+
 }
 
 
@@ -88,6 +141,14 @@ ImGuiWrapper::ImGuiWrapper(
     ImGuiIO& io = ImGui::GetIO();
     io.IniFilename = "entropy_ui.ini";
     io.LogFilename = "logs/entropy_ui.log";
+
+    io.ConfigDragClickToInputText = true;
+    io.MouseDrawCursor = true;
+
+    /// @todo Add window option for unsaved document (a little dot) when project changes
+
+    io.ConfigFlags = io.ConfigFlags & ImGuiConfigFlags_NoMouseCursorChange;
+
 
     // Apply a custom dark style:
     applyCustomDarkStyle();
@@ -172,12 +233,55 @@ void ImGuiWrapper::setCallbacks(
 void ImGuiWrapper::initializeData()
 {   
     static const std::string cousineFontPath( "resources/fonts/Cousine/Cousine-Regular.ttf" );
+    static const std::string helveticaFontPath( "resources/fonts/HelveticaNeue/HelveticaNeue-Light.ttf" );
+    static const std::string spaceGroteskFontPath( "resources/fonts/SpaceGrotesk/SpaceGrotesk-Light.ttf" );
+    static const std::string sfMonoFontPath( "resources/fonts/SFMono/SFMono-Regular.ttf" );
+    static const std::string sfProFontPath( "resources/fonts/SFPro/sf-pro-text-regular.ttf" );
     static const std::string forkAwesomeFontPath = std::string( "resources/fonts/ForkAwesome/" ) + FONT_ICON_FILE_NAME_FK;
 
-    static constexpr double sk_fontSize = 15.0;
+    ImFontConfig cousineFontConfig;
+    const float cousineFontSize = 14.0f;
+
+    myImFormatString( cousineFontConfig.Name, IM_ARRAYSIZE(cousineFontConfig.Name),
+                      "%s, %.0fpx", "Cousine Regular", cousineFontSize );
+
+    ImFontConfig helveticaFontConfig;
+    const float helveticaFontSize = 16.0f;
+
+    myImFormatString( helveticaFontConfig.Name, IM_ARRAYSIZE(helveticaFontConfig.Name),
+                      "%s, %.0fpx", "Helvetica Neue Light", helveticaFontSize );
+
+    ImFontConfig spaceGroteskFontConfig;
+    const float spaceGroteskFontSize = 16.0f;
+
+    myImFormatString( spaceGroteskFontConfig.Name, IM_ARRAYSIZE(spaceGroteskFontConfig.Name),
+                      "%s, %.0fpx", "Space Grotesk Light", spaceGroteskFontSize );
+
+    ImFontConfig sfMonoFontConfig;
+    const float sfMonoFontSize = 14.0f;
+
+    myImFormatString( sfMonoFontConfig.Name, IM_ARRAYSIZE(sfMonoFontConfig.Name),
+                      "%s, %.0fpx", "SF Mono Regular", sfMonoFontSize );
+
+    ImFontConfig sfProFontConfig;
+    const float sfProFontSize = 16.0f;
+
+    myImFormatString( sfProFontConfig.Name, IM_ARRAYSIZE(sfProFontConfig.Name),
+                      "%s, %.0fpx", "SF Pro Regular", sfProFontSize );
+
+    // Merge in icons from Fork Awesome:
+    ImFontConfig forkAwesomeFontConfig;
+    forkAwesomeFontConfig.MergeMode = true;
+    forkAwesomeFontConfig.PixelSnapH = true;
+
+    const float forkAwesomeFontSize = 14.0f;
+
+    myImFormatString( forkAwesomeFontConfig.Name, IM_ARRAYSIZE(forkAwesomeFontConfig.Name),
+                      "%s, %.0fpx", "Fork Awesome", forkAwesomeFontSize );
+
+    /// @see For details about Fork Awesome fonts: https://forkaweso.me/Fork-Awesome/icons/
     static const ImWchar forkAwesomeIconGlyphRange[] = { ICON_MIN_FK, ICON_MAX_FK, 0 };
 
-    ImGuiIO& io = ImGui::GetIO();
 
     // Load fonts: If no fonts are loaded, dear imgui will use the default font.
     // You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
@@ -186,71 +290,31 @@ void ImGuiWrapper::initializeData()
     // Please handle those errors in your application (e.g. use an assertion, or display an error and quit).
     // The fonts will be rasterized at a given size (w/ oversampling) and stored into a texture when
     // calling ImFontAtlas::Build()/GetTexDataAsXXXX(), which ImGui_ImplXXXX_NewFrame below will call.
+/// @todo use Freetype Rasterizer and Small Font Sizes
 
-//    auto font_default = io.Fonts->AddFontDefault();
+    m_appData.guiData().m_fonts[cousineFontPath] = loadFont( cousineFontPath, cousineFontConfig, cousineFontSize, nullptr );
+    m_appData.guiData().m_fonts[cousineFontPath + forkAwesomeFontPath] = loadFont( forkAwesomeFontPath, forkAwesomeFontConfig, forkAwesomeFontSize, forkAwesomeIconGlyphRange );
 
-    auto filesystem = cmrc::fonts::get_filesystem();
+    m_appData.guiData().m_fonts[helveticaFontPath] = loadFont( helveticaFontPath, helveticaFontConfig, helveticaFontSize, nullptr );
+    m_appData.guiData().m_fonts[helveticaFontPath + forkAwesomeFontPath] = loadFont( forkAwesomeFontPath, forkAwesomeFontConfig, forkAwesomeFontSize, forkAwesomeIconGlyphRange );
 
-    /// @see For details about Fork Awesome fonts: https://forkaweso.me/Fork-Awesome/icons/
+    m_appData.guiData().m_fonts[spaceGroteskFontPath] = loadFont( spaceGroteskFontPath, spaceGroteskFontConfig, spaceGroteskFontSize, nullptr );
+    m_appData.guiData().m_fonts[spaceGroteskFontPath + forkAwesomeFontPath] = loadFont( forkAwesomeFontPath, forkAwesomeFontConfig, forkAwesomeFontSize, forkAwesomeIconGlyphRange );
 
-    cmrc::file cousineFontFile = filesystem.open( cousineFontPath );
-    cmrc::file forkAwesomeWebFontFile = filesystem.open( forkAwesomeFontPath );
+    m_appData.guiData().m_fonts[sfMonoFontPath] = loadFont( sfMonoFontPath, sfMonoFontConfig, sfMonoFontSize, nullptr );
+    m_appData.guiData().m_fonts[sfMonoFontPath + forkAwesomeFontPath] = loadFont( forkAwesomeFontPath, forkAwesomeFontConfig, forkAwesomeFontSize, forkAwesomeIconGlyphRange );
 
-    // ImGui will take ownership of the font, so make a copy:
-    m_appData.guiData().m_cousineFontData = new char[cousineFontFile.size()];
-    m_appData.guiData().m_forkAwesomeFontData = new char[forkAwesomeWebFontFile.size()];
+    m_appData.guiData().m_fonts[sfProFontPath] = loadFont( sfProFontPath, sfProFontConfig, sfProFontSize, nullptr );
+    m_appData.guiData().m_fonts[sfProFontPath + forkAwesomeFontPath] = loadFont( forkAwesomeFontPath, forkAwesomeFontConfig, forkAwesomeFontSize, forkAwesomeIconGlyphRange );
 
-    for ( size_t i = 0; i < cousineFontFile.size(); ++i )
-    {
-        m_appData.guiData().m_cousineFontData[i] = cousineFontFile.cbegin()[i];
-    }
-
-    for ( size_t i = 0; i < forkAwesomeWebFontFile.size(); ++i )
-    {
-        m_appData.guiData().m_forkAwesomeFontData[i] = forkAwesomeWebFontFile.cbegin()[i];
-    }
-
-    ImFontConfig cousineFontConfig;
-
-    ImFontConfig forkAwesomeConfig;
-    forkAwesomeConfig.MergeMode = true;
-    forkAwesomeConfig.PixelSnapH = true;
-
-    myImFormatString( cousineFontConfig.Name, IM_ARRAYSIZE(cousineFontConfig.Name),
-                      "%s, %.0fpx", "Cousine", sk_fontSize );
-
-    myImFormatString( forkAwesomeConfig.Name, IM_ARRAYSIZE(forkAwesomeConfig.Name),
-                      "%s, %.0fpx", "Fork Awesome", sk_fontSize );
-
-    m_appData.guiData().m_cousineFont = io.Fonts->AddFontFromMemoryTTF(
-                static_cast<void*>( m_appData.guiData().m_cousineFontData ),
-                static_cast<int32_t>( cousineFontFile.size() ),
-                static_cast<float>( sk_fontSize ), &cousineFontConfig );
-
-    // Merge in icons from Fork Awesome:
-    m_appData.guiData().m_forkAwesomeFont = io.Fonts->AddFontFromMemoryTTF(
-                static_cast<void*>( m_appData.guiData().m_forkAwesomeFontData ),
-                static_cast<int32_t>( forkAwesomeWebFontFile.size() ),
-                static_cast<float>( sk_fontSize ), &forkAwesomeConfig,
-                forkAwesomeIconGlyphRange );
-
-    if ( m_appData.guiData().m_cousineFont )
-    {
-        spdlog::debug( "Loaded font {}", cousineFontPath );
-    }
-    else
-    {
-        spdlog::error( "Could not load font {}", cousineFontPath );
-    }
-
-    if ( m_appData.guiData().m_forkAwesomeFont )
-    {
-        spdlog::debug( "Loaded font {}", forkAwesomeFontPath );
-    }
-    else
-    {
-        spdlog::error( "Could not load font {}", forkAwesomeFontPath );
-    }
+    // if ( m_appData.guiData().m_cousineFont )
+    // {
+    //     spdlog::debug( "Loaded font {}", cousineFontPath );
+    // }
+    // else
+    // {
+    //     spdlog::error( "Could not load font {}", cousineFontPath );
+    // }
 
     spdlog::debug( "Initialized ImGui data" );
 }
@@ -567,7 +631,8 @@ void ImGuiWrapper::render()
                         m_updateAllImageUniforms,
                         m_updateImageUniforms,
                         m_updateImageInterpolationMode,
-                        m_setLockManualImageTransformation );
+                        m_setLockManualImageTransformation,
+                        m_recenterAllViews );
         }
 
         if ( m_appData.guiData().m_showSegmentationsWindow )
@@ -580,7 +645,8 @@ void ImGuiWrapper::render()
                         m_moveCrosshairsToSegLabelCentroid,
                         m_createBlankSeg,
                         m_clearSeg,
-                        m_removeSeg );
+                        m_removeSeg,
+                        m_recenterAllViews );
         }
 
         if ( m_appData.guiData().m_showLandmarksWindow )

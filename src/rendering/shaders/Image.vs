@@ -16,12 +16,14 @@ uniform float numSquares;
 // Image transformation data:
 uniform mat4 imgTexture_T_world;
 uniform mat4 segTexture_T_world;
+uniform mat4 segVoxel_T_world;
 
 // Vertex shader outputs:
 out VS_OUT
 {
     vec3 ImgTexCoords; // Image texture coords
     vec3 SegTexCoords; // Seg texture coords
+    vec3 SegVoxCoords; // Seg voxel coords
     vec2 CheckerCoord; // 2D clip position
     vec2 ClipPos; // 2D clip position
 } vs_out;
@@ -44,7 +46,9 @@ void main()
 
     vec4 imgTexPos = imgTexture_T_world * worldPos;
     vec4 segTexPos = segTexture_T_world * worldPos;
+    vec4 segVoxPos = segVoxel_T_world * worldPos;
 
     vs_out.ImgTexCoords = vec3( imgTexPos / imgTexPos.w );
     vs_out.SegTexCoords = vec3( segTexPos / segTexPos.w );
+    vs_out.SegVoxCoords = vec3( segVoxPos / segVoxPos.w );
 }

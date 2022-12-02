@@ -14,8 +14,6 @@ class GlfwWrapper;
 class Rendering;
 class View;
 
-struct GLFWcursor;
-
 
 /**
  * @brief Handles UI callbacks to the application
