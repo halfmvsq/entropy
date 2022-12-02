@@ -764,6 +764,10 @@ void Rendering::updateImageUniforms( const uuids::uuid& imageUid )
                     static_cast<float>( imgSettings.mapNativeIntensityToTexture( imgSettings.thresholds( i ).first ) ),
                     static_cast<float>( imgSettings.mapNativeIntensityToTexture( imgSettings.thresholds( i ).second ) ) };
 
+            uniforms.minMaxRgba[i] = glm::vec2{
+                    static_cast<float>( imgSettings.mapNativeIntensityToTexture( imgSettings.minMaxImageRange( i ).first ) ),
+                    static_cast<float>( imgSettings.mapNativeIntensityToTexture( imgSettings.minMaxImageRange( i ).second ) ) };
+
             uniforms.imgOpacityRgba[i] = static_cast<float>(
                         ( ( imgSettings.globalVisibility() && imgSettings.visibility( i ) ) ? 1.0 : 0.0 ) *
                         imgSettings.globalOpacity() * imgSettings.opacity( i ) );
@@ -774,7 +778,8 @@ void Rendering::updateImageUniforms( const uuids::uuid& imageUid )
             // These two will be ignored for RGB images:
             uniforms.slopeInterceptRgba_normalized_T_texture[3] = glm::vec2{ 1.0f, 0.0f };
             uniforms.thresholdsRgba[3] = glm::vec2{ 0.0f, 1.0f };
-
+            uniforms.minMaxRgba[3] = glm::vec2{ 0.0f, 1.0f };
+                    
             uniforms.imgOpacityRgba[3] = static_cast<float>(
                         ( imgSettings.globalVisibility() ? 1.0 : 0.0 ) *
                         imgSettings.globalOpacity() );
@@ -802,6 +807,11 @@ void Rendering::updateImageUniforms( const uuids::uuid& imageUid )
     uniforms.thresholds = glm::vec2{
             static_cast<float>( imgSettings.mapNativeIntensityToTexture( imgSettings.thresholds().first ) ),
             static_cast<float>( imgSettings.mapNativeIntensityToTexture( imgSettings.thresholds().second ) ) };
+
+    // Map the native image values to OpenGL texture values:
+    uniforms.minMax = glm::vec2{
+        static_cast<float>( imgSettings.mapNativeIntensityToTexture( imgSettings.minMaxImageRange().first ) ),
+        static_cast<float>( imgSettings.mapNativeIntensityToTexture( imgSettings.minMaxImageRange().second ) ) };
 
     uniforms.imgOpacity =
             ( static_cast<float>( imgSettings.globalVisibility() && imgSettings.visibility() ) ? 1.0 : 0.0 ) *
@@ -1386,7 +1396,8 @@ void Rendering::renderAllImages(
                 P->setSamplerUniform( "imgCmapTex", msk_imgCmapTexSampler.index );
                 P->setSamplerUniform( "segLabelCmapTex", msk_labelTableTexSampler.index );
 
-                P->setUniform( "useTricubicInterpolation", ( InterpolationMode::Tricubic == img->settings().interpolationMode() ) );
+                // P->setUniform( "useTricubicInterpolation",
+                //     ( InterpolationMode::Tricubic == img->settings().interpolationMode() ) );
 
                 P->setUniform( "numSquares", static_cast<float>( renderData.m_numCheckerboardSquares ) );
                 P->setUniform( "imgTexture_T_world", U.imgTexture_T_world );
@@ -1417,6 +1428,7 @@ void Rendering::renderAllImages(
 
                 P->setUniform( "imgCmapSlopeIntercept", U.cmapSlopeIntercept );
                 P->setUniform( "imgThresholds", U.thresholds );
+                P->setUniform( "imgMinMax", U.minMax );
 
                 P->setUniform( "imgOpacity", U.imgOpacity );
                 P->setUniform( "segOpacity", U.segOpacity * ( modSegOpacity ? U.imgOpacity : 1.0f ) );
@@ -1457,6 +1469,7 @@ void Rendering::renderAllImages(
 
                 P->setUniform( "imgSlopeIntercept", U.slopeInterceptRgba_normalized_T_texture );
                 P->setUniform( "imgThresholds", U.thresholdsRgba );
+                P->setUniform( "imgMinMax", U.minMaxRgba );
 
                 const bool forceAlphaToOne = ( img->settings().ignoreAlpha() ||
                                                3 == img->header().numComponentsPerPixel() );
@@ -1563,6 +1576,7 @@ void Rendering::renderAllImages(
                 P.setUniform( "segTexture_T_world", std::vector<glm::mat4>{ U0.segTexture_T_world, U1.segTexture_T_world } );
                 P.setUniform( "imgSlopeIntercept", std::vector<glm::vec2>{ U0.slopeIntercept_normalized_T_texture, U1.slopeIntercept_normalized_T_texture } );
                 P.setUniform( "imgThresholds", std::vector<glm::vec2>{ U0.thresholds, U1.thresholds } );
+                P.setUniform( "imgMinMax", std::vector<glm::vec2>{ U0.minMax, U1.minMax } );
                 P.setUniform( "imgOpacity", std::vector<float>{ U0.imgOpacity, U1.imgOpacity } );
 
                 P.setUniform( "segOpacity", std::vector<float>{
@@ -2059,10 +2073,9 @@ bool Rendering::createImageProgram( GLShaderProgram& program )
         fsUniforms.insertUniform( "imgCmapTex", UniformType::Sampler, msk_imgCmapTexSampler );
         fsUniforms.insertUniform( "segLabelCmapTex", UniformType::Sampler, msk_labelTableTexSampler );
 
-        fsUniforms.insertUniform( "useTricubicInterpolation", UniformType::Bool, false );
-
         fsUniforms.insertUniform( "imgSlopeIntercept", UniformType::Vec2, sk_zeroVec2 );
         fsUniforms.insertUniform( "imgCmapSlopeIntercept", UniformType::Vec2, sk_zeroVec2 );
+        fsUniforms.insertUniform( "imgMinMax", UniformType::Vec2, sk_zeroVec2 );
         fsUniforms.insertUniform( "imgThresholds", UniformType::Vec2, sk_zeroVec2 );
         fsUniforms.insertUniform( "imgOpacity", UniformType::Float, 0.0f );
         fsUniforms.insertUniform( "segOpacity", UniformType::Float, 0.0f );
@@ -2171,6 +2184,7 @@ bool Rendering::createImageRgbaProgram( GLShaderProgram& program )
         fsUniforms.insertUniform( "segInteriorOpacity", UniformType::Float, 1.0f );
         fsUniforms.insertUniform( "texSamplingDirsForSegOutline", UniformType::Vec3Vector, Vec3Vector{ sk_zeroVec3 } );
 
+        fsUniforms.insertUniform( "imgMinMax", UniformType::Vec2Vector, Vec2Vector{ sk_zeroVec2 } );
         fsUniforms.insertUniform( "imgThresholds", UniformType::Vec2Vector, Vec2Vector{ sk_zeroVec2 } );
 
         fsUniforms.insertUniform( "masking", UniformType::Bool, false );
@@ -2257,6 +2271,7 @@ bool Rendering::createXrayProgram( GLShaderProgram& program )
 
         fsUniforms.insertUniform( "imgSlope_native_T_texture", UniformType::Float, 1.0f );
         fsUniforms.insertUniform( "imgCmapSlopeIntercept", UniformType::Vec2, sk_zeroVec2 );
+        fsUniforms.insertUniform( "imgMinMax", UniformType::Vec2, sk_zeroVec2 );
         fsUniforms.insertUniform( "imgThresholds", UniformType::Vec2, sk_zeroVec2 );
         fsUniforms.insertUniform( "slopeInterceptWindowLevel", UniformType::Vec2, sk_zeroVec2 );
 
@@ -2449,6 +2464,7 @@ bool Rendering::createEdgeProgram( GLShaderProgram& program )
         fsUniforms.insertUniform( "imgSlopeIntercept", UniformType::Vec2, sk_zeroVec2 );
         fsUniforms.insertUniform( "imgSlopeInterceptLargest", UniformType::Vec2, sk_zeroVec2 );
         fsUniforms.insertUniform( "imgCmapSlopeIntercept", UniformType::Vec2, sk_zeroVec2 );
+        fsUniforms.insertUniform( "imgMinMax", UniformType::Vec2, sk_zeroVec2 );
         fsUniforms.insertUniform( "imgThresholds", UniformType::Vec2, sk_zeroVec2 );
         fsUniforms.insertUniform( "imgOpacity", UniformType::Float, 0.0f );
         fsUniforms.insertUniform( "segOpacity", UniformType::Float, 0.0f );
@@ -2545,6 +2561,7 @@ bool Rendering::createOverlayProgram( GLShaderProgram& program )
 
         fsUniforms.insertUniform( "imgSlopeIntercept", UniformType::Vec2Vector, Vec2Vector{ sk_zeroVec2, sk_zeroVec2 } );
 
+        fsUniforms.insertUniform( "imgMinMax", UniformType::Vec2Vector, Vec2Vector{ sk_zeroVec2, sk_zeroVec2 } );
         fsUniforms.insertUniform( "imgThresholds", UniformType::Vec2Vector, Vec2Vector{ sk_zeroVec2, sk_zeroVec2 } );
         fsUniforms.insertUniform( "imgOpacity", UniformType::FloatVector, FloatVector{ 0.0f, 0.0f } );
         fsUniforms.insertUniform( "segOpacity", UniformType::FloatVector, FloatVector{ 0.0f, 0.0f } );

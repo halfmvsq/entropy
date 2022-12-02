@@ -21,6 +21,7 @@ uniform bool useTricubicInterpolation; // Whether to use tricubic interpolation
 
 uniform vec2 imgSlopeIntercept[N]; // Slopes and intercepts for image window-leveling
 
+uniform vec2 imgMinMax[N]; // Min and max image values
 uniform vec2 imgThresholds[N]; // Image lower and upper thresholds, mapped to OpenGL texture intensity
 uniform float imgOpacity[N]; // Image opacities
 uniform float segOpacity[N]; // Segmentation opacities
@@ -137,11 +138,12 @@ float getSegInteriorAlpha( int texNum, uint seg )
 }
 
 
-float getImageValue( sampler3D tex, vec3 texCoord )
+float getImageValue( sampler3D tex, vec3 texCoord, vec2 minMax )
 {
-    return mix( texture( tex, texCoord )[0],
+    return clamp( mix(
+        texture( tex, texCoord )[0],
         interpolateTricubicFast( tex, texCoord ),
-        float(useTricubicInterpolation) );
+        float(useTricubicInterpolation) ), minMax[0], minMax[1] );
 }
 
 
@@ -160,7 +162,7 @@ void main()
                            any( greaterThan( fs_in.SegTexCoords[i], MAX_IMAGE_TEXCOORD ) ) );
 
         // float val = texture( imgTex[i], fs_in.ImgTexCoords[i] ).r; // Image value
-        float val = getImageValue( imgTex[i], fs_in.ImgTexCoords[i] );
+        float val = getImageValue( imgTex[i], fs_in.ImgTexCoords[i], imgMinMax[i] );
 
         uint label = texture( segTex[i], fs_in.SegTexCoords[i] ).r; // Label value
         float norm = clamp( imgSlopeIntercept[i][0] * val + imgSlopeIntercept[i][1], 0.0, 1.0 ); // Apply W/L

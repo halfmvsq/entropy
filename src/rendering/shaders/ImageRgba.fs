@@ -42,6 +42,7 @@ uniform vec3 texSamplingDirsForSegOutline[2];
 // Opacity of the interior of the segmentation
 uniform float segInteriorOpacity;
 
+uniform vec2 imgMinMax[4]; // Min and max image values
 uniform vec2 imgThresholds[4]; // Image lower and upper thresholds, mapped to OpenGL texture intensity
 
 uniform bool masking; // Whether to mask image based on segmentation
@@ -145,11 +146,12 @@ float interpolateTricubicFast( sampler3D tex, vec3 coord )
     return mix(tex001, tex000, g0.z); // weigh along the z-direction
 }
 
-float getImageValue( sampler3D tex, vec3 texCoord )
+float getImageValue( sampler3D tex, vec3 texCoord, vec2 minMax )
 {
-    return mix( texture( tex, texCoord )[0],
+    return clamp( mix(
+        texture( tex, texCoord )[0],
         interpolateTricubicFast( tex, texCoord ),
-        float(useTricubicInterpolation) );
+        float(useTricubicInterpolation) ), minMax[0], minMax[1] );
 }
 
 
@@ -234,10 +236,10 @@ void main()
     //                  texture( imgTex[3], fs_in.ImgTexCoords )[0] );
 
     vec4 img =
-        vec4( getImageValue( imgTex[0], fs_in.ImgTexCoords ),
-              getImageValue( imgTex[1], fs_in.ImgTexCoords ),
-              getImageValue( imgTex[2], fs_in.ImgTexCoords ),
-              getImageValue( imgTex[3], fs_in.ImgTexCoords ) );
+        vec4( getImageValue( imgTex[0], fs_in.ImgTexCoords, imgMinMax[0] ),
+              getImageValue( imgTex[1], fs_in.ImgTexCoords, imgMinMax[1] ),
+              getImageValue( imgTex[2], fs_in.ImgTexCoords, imgMinMax[2] ),
+              getImageValue( imgTex[3], fs_in.ImgTexCoords, imgMinMax[3] ) );
 
     // Look up segmentation texture label value:
     uint seg = texture( segTex, fs_in.SegTexCoords )[0];

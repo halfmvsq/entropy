@@ -122,7 +122,8 @@ float interpolateTricubicFast( sampler3D tex, vec3 coord )
 
 float getImageValue( sampler3D tex, vec3 texCoord )
 {
-    return mix( texture( tex, texCoord )[0],
+    return mix(
+        texture( tex, texCoord )[0],
         interpolateTricubicFast( tex, texCoord ),
         float(useTricubicInterpolation) );
 }

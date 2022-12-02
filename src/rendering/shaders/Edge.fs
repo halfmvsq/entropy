@@ -24,6 +24,7 @@ uniform vec2 imgSlopeIntercept; // Slopes and intercepts for image normalization
 uniform vec2 imgSlopeInterceptLargest; // Slopes and intercepts for image normalization
 uniform vec2 imgCmapSlopeIntercept; // Slopes and intercepts for the image color maps
 
+uniform vec2 imgMinMax; // Min and max image values
 uniform vec2 imgThresholds; // Image lower and upper thresholds, mapped to OpenGL texture intensity
 uniform float imgOpacity; // Image opacities
 uniform float segOpacity; // Segmentation opacities
@@ -204,9 +205,10 @@ float getSegInteriorAlpha( uint seg )
 
 float getImageValue( vec3 texCoord )
 {
-    return mix( texture( imgTex, texCoord )[0],
+    return clamp( mix(
+        texture( imgTex, texCoord )[0],
         interpolateTricubicFast( imgTex, texCoord ),
-        float(useTricubicInterpolation) );
+        float(useTricubicInterpolation) ), imgMinMax[0], imgMinMax[1] );
 }
 
 

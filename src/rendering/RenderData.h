@@ -56,10 +56,16 @@ struct RenderData
         float slope_native_T_texture{ 1.0f }; // Map texture to native intensity (NO W-L)
         glm::vec2 largestSlopeIntercept{ 1.0f, 0.0f }; // Image intensity slope and intercept (giving the largest window)
 
-        // Image intensity lower & upper thresholds for color images:
+        // Image min and max:
+        glm::vec2 minMax{ 0.0f, 1.0f };
+
+        // Image intensity lower & upper thresholds:
         glm::vec2 thresholds{ 0.0f, 1.0f };
 
         std::vector< glm::vec2 > thresholdsRgba{
+            { 0.0f, 1.0f }, { 0.0f, 1.0f }, { 0.0f, 1.0f }, { 0.0f, 1.0f } };
+
+        std::vector< glm::vec2 > minMaxRgba{
             { 0.0f, 1.0f }, { 0.0f, 1.0f }, { 0.0f, 1.0f }, { 0.0f, 1.0f } };
 
         float imgOpacity{ 0.0f }; // Image opacity

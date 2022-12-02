@@ -32,6 +32,8 @@ uniform bool useTricubicInterpolation; // Whether to use tricubic interpolation
 // Slope for mapping texture intensity to native image intensity, NOT accounting for window-leveling
 uniform float imgSlope_native_T_texture;
 
+uniform vec2 imgMinMax; // Min and max image values
+
 // Low and high image thresholds, expressed in image texture values
 uniform vec2 imgThresholds;
 
@@ -153,9 +155,10 @@ float interpolateTricubicFast( sampler3D tex, vec3 coord )
 
 float getImageValue( vec3 texCoord )
 {
-    return mix( texture( imgTex, texCoord )[0],
+    return clamp( mix(
+        texture( imgTex, texCoord )[0],
         interpolateTricubicFast( imgTex, texCoord ),
-        float(useTricubicInterpolation) );
+        float(useTricubicInterpolation) ), imgMinMax[0], imgMinMax[1] );
 }
 
 

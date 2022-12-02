@@ -761,6 +761,7 @@ double ImageSettings::mapNativeIntensityToTexture( double nativeImageValue ) con
     {
         const double M = static_cast<double>( std::numeric_limits<int16_t>::max() );
         return std::max( nativeImageValue / M, -1.0 );
+        // return ( 2.0 * nativeImageValue + 1.0 ) / 65535.0;
     }
     case ComponentType::Int32:
     {
