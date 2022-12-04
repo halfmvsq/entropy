@@ -94,8 +94,6 @@ uniform vec3 isoColors[NISO]; // Isosurface colors
 uniform float isoWidth; // Width of isosurface
 
 
-bool labelZeroTransparent = true;
-
 float hardThreshold( float value, vec2 thresholds )
 {
     return float( thresholds[0] <= value && value <= thresholds[1] );
@@ -265,11 +263,11 @@ float computeProjection( float img )
 
 
 /// Look up segmentation texture label value:
-// uint getSegValue( vec3 texCoords, vec3 texOffset, float cutoff, out float opacity )
-// {
-//     opacity = 1.0 + texSamplingDirsForSmoothSeg[0].x;
-//     return texture( segTex, texCoords + texOffset )[0];
-// }
+uint getSegValue_N( vec3 texCoords, vec3 texOffset, float cutoff, out float opacity )
+{
+    opacity = 1.0 + texSamplingDirsForSmoothSeg[0].x;
+    return texture( segTex, texCoords + texOffset )[0];
+}
 
 
 uint getSegValue( vec3 texCoords, vec3 texOffset, float cutoff, out float opacity )
@@ -310,7 +308,7 @@ uint getSegValue( vec3 texCoords, vec3 texOffset, float cutoff, out float opacit
 
         // Segmentation value of neighbor at (row, col) offset
         float ignore;
-        nseg[i] = getSegValue( fs_in.SegTexCoords, texSamplingPos, ignore, ignore );
+        nseg[i] = getSegValue_N( fs_in.SegTexCoords, texSamplingPos, ignore, ignore );
     }
 
 
@@ -338,17 +336,13 @@ uint getSegValue( vec3 texCoords, vec3 texOffset, float cutoff, out float opacit
         opacity = 1.0;
         // opacity = cubicPulse( cutoff, segEdgeWidth, interp );
 
-        if (
-                interp > maxInterp &&
-                // interp != 0.0 &&
-                interp >= cutoff &&
-                ( labelZeroTransparent ? label != 0u : true )
-            )
+        if ( interp > maxInterp && interp >= cutoff &&
+             ( texelFetch( segLabelCmapTex, int(label), 0 ).a > 0.0 ) )
         {
             seg = label;
             maxInterp = interp;
 
-            if ( seg != 0u && cutoff >= 0.5 )
+            if ( cutoff >= 0.5 )
             {
                 break;
             }
@@ -404,8 +398,6 @@ float getSegInteriorAlpha( uint seg )
 void main()
 {
     if ( ! doRender() ) discard;
-
-    labelZeroTransparent = ( texelFetch( segLabelCmapTex, int(0), 0 ).a == 0.0 );
 
     float img = getImageValue( imgTex, fs_in.ImgTexCoords, imgMinMax[0], imgMinMax[1] );
     img = computeProjection( img );
