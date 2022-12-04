@@ -236,8 +236,8 @@ bool Camera::isOrthographic() const
 
 void Camera::setZoom( float factor )
 {
-    static constexpr float sk_minZoom = 0.01f;
-    static constexpr float sk_maxZoom = 100.0f;
+    static constexpr float sk_minZoom = 0.001f;
+    static constexpr float sk_maxZoom = 1000.0f;
 
     if ( sk_minZoom <= factor && factor <= sk_maxZoom )
     {

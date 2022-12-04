@@ -217,6 +217,7 @@ RenderData::RenderData()
 
       m_segOutlineStyle( SegmentationOutlineStyle::Disabled ),
       m_segInteriorOpacity( 0.10f ),
+      m_segInterpCutoff( 0.50f ),
 
       m_squaredDifferenceParams(),
       m_crossCorrelationParams(),

@@ -227,6 +227,9 @@ struct RenderData
     // Opacity of interior of segmentation, when outlining is applied
     float m_segInteriorOpacity;
 
+    // Cutoff for segmentation with interpolation used
+    float m_segInterpCutoff;
+
 
 
     /// @brief Metric parameters

@@ -10,7 +10,7 @@
 namespace
 {
 
-static constexpr std::pair< float, float > sk_minMaxZoom( 0.01f, 100.0f );
+static constexpr std::pair< float, float > sk_minMaxZoom( 0.001f, 1000.0f );
 
 glm::vec2 computeCameraFov( const glm::vec2& minFov, float aspectRatio, float zoom )
 {

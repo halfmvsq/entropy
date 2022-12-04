@@ -1245,7 +1245,8 @@ void Rendering::renderOneImage(
                    getImage,
                    showEdges,
                    renderData.m_segOutlineStyle,
-                   renderData.m_segInteriorOpacity );
+                   renderData.m_segInteriorOpacity,
+                   renderData.m_segInterpCutoff );
 
     if ( ! renderData.m_globalLandmarkParams.renderOnTopOfAllImagePlanes )
     {
@@ -2097,7 +2098,9 @@ bool Rendering::createImageProgram( GLShaderProgram& program )
         fsUniforms.insertUniform( "texSamplingDirZ", UniformType::Vec3, sk_zeroVec3 );
 
         fsUniforms.insertUniform( "segInteriorOpacity", UniformType::Float, 1.0f );
+        fsUniforms.insertUniform( "segInterpCutoff", UniformType::Float, 0.5f );
         fsUniforms.insertUniform( "texSamplingDirsForSegOutline", UniformType::Vec3Vector, Vec3Vector{ sk_zeroVec3 } );
+        fsUniforms.insertUniform( "texSamplingDirsForSmoothSeg", UniformType::Vec3Vector, Vec3Vector{ sk_zeroVec3 } );
 
         fsUniforms.insertUniform( "isoValues", UniformType::FloatVector, FloatVector{ 0.0f } );
         fsUniforms.insertUniform( "isoOpacities", UniformType::FloatVector, FloatVector{ 1.0f } );

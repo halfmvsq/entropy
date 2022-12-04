@@ -1315,6 +1315,17 @@ void renderSettingsWindow(
                     ImGui::SameLine(); helpMarker( "Modulate opacity of interior of segmentation" );
                 }
 
+
+                // check if using interpolation of segs
+                // if (  )
+                {
+                    ImGui::Spacing();
+                    ImGui::Dummy( ImVec2( 0.0f, 1.0f ) );
+
+                    mySliderF32( "Seg. interpolation cutoff", &( renderData.m_segInterpCutoff ), 0.05f, 0.95f );
+                    ImGui::SameLine(); helpMarker( "Interpolation cutoff" );
+                }
+
                 ImGui::Spacing();
                 ImGui::Dummy( ImVec2( 0.0f, 1.0f ) );
 

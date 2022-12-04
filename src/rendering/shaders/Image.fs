@@ -77,9 +77,13 @@ uniform int halfNumMipSamples;
 
 // Texture sampling directions (horizontal and vertical) for calculating the segmentation outline
 uniform vec3 texSamplingDirsForSegOutline[2];
+uniform vec3 texSamplingDirsForSmoothSeg[2];
 
 // Opacity of the interior of the segmentation
 uniform float segInteriorOpacity;
+
+// Interpolation cut-off for segmentation (in [0, 1])
+uniform float segInterpCutoff;
 
 // Z view camera direction, represented in texture sampling space
 uniform vec3 texSamplingDirZ;
@@ -89,6 +93,8 @@ uniform float isoOpacities[NISO]; // Isosurface opacities
 uniform vec3 isoColors[NISO]; // Isosurface colors
 uniform float isoWidth; // Width of isosurface
 
+
+bool labelZeroTransparent = true;
 
 float hardThreshold( float value, vec2 thresholds )
 {
@@ -259,19 +265,14 @@ float computeProjection( float img )
 
 
 /// Look up segmentation texture label value:
-// uint getSegValue( vec3 texCoords, vec3 texOffset, out float opacity )
+// uint getSegValue( vec3 texCoords, vec3 texOffset, float cutoff, out float opacity )
 // {
-//     opacity = 1.0;
-    
-//     // vec3 c = floor( fs_in.SegVoxCoords );
-//     // vec3 d = pow( vec3( textureSize(segTex, 0) ), vec3(-1) );
-//     // vec3 t = vec3( c.x * d.x, c.y * d.y, c.z * d.z ) + 0.5 * d;
-
+//     opacity = 1.0 + texSamplingDirsForSmoothSeg[0].x;
 //     return texture( segTex, texCoords + texOffset )[0];
 // }
 
 
-uint getSegValue( vec3 texCoords, vec3 texOffset, out float opacity )
+uint getSegValue( vec3 texCoords, vec3 texOffset, float cutoff, out float opacity )
 {
     const uvec3 neigh[8] = uvec3[8](
         uvec3(0, 0, 0), uvec3(0, 0, 1), uvec3(0, 1, 0), uvec3(0, 1, 1),
@@ -282,7 +283,7 @@ uint getSegValue( vec3 texCoords, vec3 texOffset, out float opacity )
 
     vec3 c = floor( fs_in.SegVoxCoords );
     vec3 d = pow( vec3( textureSize(segTex, 0) ), vec3(-1) );
-    vec3 t = vec3( c.x * d.x, c.y * d.y, c.z * d.z ) + 0.5 * d;
+    vec3 t = vec3(c.x * d.x, c.y * d.y, c.z * d.z) + 0.5 * d;
 
     uint s[8];
     for ( int i = 0; i < 8; ++i )
@@ -292,44 +293,65 @@ uint getSegValue( vec3 texCoords, vec3 texOffset, out float opacity )
 
     vec3 b = fs_in.SegVoxCoords + texOffset * vec3( textureSize(segTex, 0) ) - c;
 
-    vec3 g[2] = vec3[2] ( vec3(1) - b, b );
+    vec3 g[2] = vec3[2]( vec3(1) - b, b );
 
-    float cutoff = 0.5;
-    float segWidth = 0.05;
+    // float segEdgeWidth = 0.02;
 
-    for ( uint j = 1u; j <= 4u; ++j )
+
+    uint nseg[9];
+    for ( int i = 0; i < 9; ++i )
     {
-        float h = 0.0;
+        float row = float( mod( i, 3 ) - 1 ); // runs -1 to 1
+        float col = float( floor( float(i / 3) ) - 1 ); // runs -1 to 1
+
+        vec3 texSamplingPos =
+            row * texSamplingDirsForSmoothSeg[0] +
+            col * texSamplingDirsForSmoothSeg[1];
+
+        // Segmentation value of neighbor at (row, col) offset
+        float ignore;
+        nseg[i] = getSegValue( fs_in.SegTexCoords, texSamplingPos, ignore, ignore );
+    }
+
+
+    float maxInterp = 0.0;
+
+    // uint startLabel = uint( mix( 0u, 1u, float(cutoff < 0.5) ) );
+    // uint endLabel = 5u;
+
+    // for ( uint label = startLabel; label <= endLabel; ++label )
+    for ( int j = 0; j < 9; ++j )
+    {
+        uint label = nseg[j];
+
+        float interp = 0.0;
         for ( int i = 0; i < 8; ++i )
         {
-            h += float(s[i] == j) * g[neigh[i].x].x * g[neigh[i].y].y * g[neigh[i].z].z;
+            interp += float(s[i] == label) * g[neigh[i].x].x * g[neigh[i].y].y * g[neigh[i].z].z;
         }
 
-        // solid:
-        // opacity = h; // or 1.0
+        // This feathers the edges:
+        // opacity = smoothstep(
+        //     clamp( cutoff - segEdgeWidth/2.0, 0.0, 1.0 ),
+        //     clamp( cutoff + segEdgeWidth/2.0, 0.0, 1.0 ), interp );
+
         opacity = 1.0;
-        seg = uint( mix( 0u, j, float( h > cutoff ) ) );
+        // opacity = cubicPulse( cutoff, segEdgeWidth, interp );
 
-        // edges:
-        // opacity = cubicPulse( cutoff + segWidth / 2.0, segWidth, h );
-        // seg = uint( mix( 0u, j, float( h > 0 ) ) );
-
-        // seg = j;
-
-        // if ( h > 0.50 )
-        // {
-        //     seg = j;
-        //     segInterpOpacity = 1.0;
-        // }
-        // else
-        // {
-        //     seg = 0u;
-        //     segInterpOpacity = 0.0;
-        // }
-
-        if ( h > 0 )
+        if (
+                interp > maxInterp &&
+                // interp != 0.0 &&
+                interp >= cutoff &&
+                ( labelZeroTransparent ? label != 0u : true )
+            )
         {
-            break;
+            seg = label;
+            maxInterp = interp;
+
+            if ( seg != 0u && cutoff >= 0.5 )
+            {
+                break;
+            }
         }
     }
 
@@ -352,7 +374,7 @@ float getSegInteriorAlpha( uint seg )
 
     // Look up texture values in 8 neighbors surrounding the center fragment.
     // These may be either neighboring image voxels or neighboring view pixels.
-    // The center fragment has index i = 4 (row = 0, col = 0).
+    // The center fragment (row = 0, col = 0) has index i = 4.
     for ( int i = 0; i < 9; ++i )
     {
         float row = float( mod( i, 3 ) - 1 ); // runs -1 to 1
@@ -363,10 +385,8 @@ float getSegInteriorAlpha( uint seg )
             col * texSamplingDirsForSegOutline[1];
 
         // Segmentation value of neighbor at (row, col) offset
-        //uint nseg = texture( segTex, fs_in.SegTexCoords + texSamplingPos )[0];
-
-        float segInterpOpacity = 1.0;
-        uint nseg = getSegValue( fs_in.SegTexCoords, texSamplingPos, segInterpOpacity );
+        float ignore;
+        uint nseg = getSegValue( fs_in.SegTexCoords, texSamplingPos, segInterpCutoff, ignore );
 
         // Fragment (with segmentation 'seg') is on the boundary (and hence gets
         // full alpha) if its value is not equal to one of its neighbors.
@@ -385,11 +405,13 @@ void main()
 {
     if ( ! doRender() ) discard;
 
+    labelZeroTransparent = ( texelFetch( segLabelCmapTex, int(0), 0 ).a == 0.0 );
+
     float img = getImageValue( imgTex, fs_in.ImgTexCoords, imgMinMax[0], imgMinMax[1] );
     img = computeProjection( img );
 
     float segInterpOpacity = 1.0;
-    uint seg = getSegValue( fs_in.SegTexCoords, vec3(0, 0, 0), segInterpOpacity );
+    uint seg = getSegValue( fs_in.SegTexCoords, vec3(0, 0, 0), segInterpCutoff, segInterpOpacity );
 
     // Apply window/level to normalize image values in [0.0, 1.0] range:
     float imgNorm = clamp( imgSlopeIntercept[0] * img + imgSlopeIntercept[1], 0.0, 1.0 );

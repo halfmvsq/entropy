@@ -36,7 +36,8 @@ void drawImageQuad(
         const std::function< const Image* ( const std::optional<uuids::uuid>& imageUid ) > getImage,
         bool showEdges,
         const SegmentationOutlineStyle& setOutlineStyle,
-        float segInteriorOpacity );
+        float segInteriorOpacity,
+        float segInterpCutoff );
 
 void drawRaycastQuad(
         GLShaderProgram& program,

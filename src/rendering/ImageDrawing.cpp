@@ -147,7 +147,8 @@ void drawImageQuad(
         const std::function< const Image* ( const std::optional<uuids::uuid>& imageUid ) > getImage,
         bool showEdges,
         const SegmentationOutlineStyle& setOutlineStyle,
-        float segInteriorOpacity )
+        float segInteriorOpacity,
+        float segInterpCutoff )
 {
     static const glm::vec4 sk_clipO{ 0.0f, 0.0f, -1.0f, 1.0 };
     static const glm::vec4 sk_clipX{ 1.0f, 0.0f, -1.0f, 1.0 };
@@ -193,10 +194,11 @@ void drawImageQuad(
     }
 
 
+    std::vector<glm::vec3> voxelSamplingDirs{ glm::vec3{ 0.0f }, glm::vec3{ 0.0f } };
     std::vector<glm::vec3> texSamplingDirsForSegOutline{ glm::vec3{ 0.0f }, glm::vec3{ 0.0f } };
+    std::vector<glm::vec3> texSamplingDirsForSmoothSeg{ glm::vec3{ 0.0f }, glm::vec3{ 0.0f } };
     std::vector<glm::vec3> texSamplingDirsForEdges{ glm::vec3{ 0.0f }, glm::vec3{ 0.0f } };
 
-    if ( SegmentationOutlineStyle::ImageVoxel == setOutlineStyle || showEdges )
     {
         const auto posInfo = math::computeAnatomicalLabelsForView(
                 view.camera().camera_T_world(),
@@ -206,16 +208,23 @@ void drawImageQuad(
 
         for ( int i = 0; i < 2; ++i )
         {
-            texSamplingDirsForSegOutline[i] =
+            voxelSamplingDirs[i] =
                 computeTextureSamplingDirectionForImageVoxelOffset(
                         voxel_T_viewClip,
                         windowViewport,
                         view.viewClip_T_windowClip(),
                         image0->transformations().invPixelDimensions(),
                         posInfo[i].viewClipDir );
+
+            if ( SegmentationOutlineStyle::ImageVoxel == setOutlineStyle )
+            {
+                texSamplingDirsForSegOutline = voxelSamplingDirs;
+            }
             
-            // For edges, always use sampling directions based on image voxels:
-            texSamplingDirsForEdges = texSamplingDirsForSegOutline;
+            // For edges and smooth segmentation sampling,
+            // use sampling directions based on image voxels:
+            texSamplingDirsForEdges = voxelSamplingDirs;
+            texSamplingDirsForSmoothSeg = voxelSamplingDirs;
         }
     }
     
@@ -246,8 +255,11 @@ void drawImageQuad(
     program.setUniform( "clipDepth", view.clipPlaneDepth() );
 
     program.setUniform( "texSamplingDirsForSegOutline", texSamplingDirsForSegOutline );
+    program.setUniform( "texSamplingDirsForSmoothSeg", texSamplingDirsForSmoothSeg );
+
     program.setUniform( "segInteriorOpacity",
         ( SegmentationOutlineStyle::Disabled == setOutlineStyle ) ? 1.0f : segInteriorOpacity );
+    program.setUniform( "segInterpCutoff", segInterpCutoff );
 
 
     if ( camera::ViewRenderMode::Image == renderMode ||
