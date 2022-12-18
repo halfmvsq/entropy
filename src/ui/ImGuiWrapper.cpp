@@ -143,7 +143,7 @@ ImGuiWrapper::ImGuiWrapper(
     io.LogFilename = "logs/entropy_ui.log";
 
     io.ConfigDragClickToInputText = true;
-    io.MouseDrawCursor = true;
+//    io.MouseDrawCursor = true;
 
     /// @todo Add window option for unsaved document (a little dot) when project changes
 

@@ -136,7 +136,13 @@ bool GLShaderProgram::link()
     };
 
     /// Get locations for all of the program's registered uniforms
-    m_registeredUniforms.queryAndSetAllLocations( locationGetter );
+    const int ret = m_registeredUniforms.queryAndSetAllLocations( locationGetter );
+
+    if ( 1 == ret )
+    {
+        std::cerr << "Setting uniform(s) in program '" << m_name << "' failed" << std::endl;
+        throw_debug( "Error" );
+    }
 
     return true;
 }

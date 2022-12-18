@@ -7,6 +7,7 @@ in VS_OUT // Redeclared vertex shader outputs: now the fragment shader inputs
 {
     vec3 ImgTexCoords;
     vec3 SegTexCoords;
+    vec3 SegVoxCoords;
     vec2 CheckerCoord;
     vec2 ClipPos;
 } fs_in;
@@ -313,8 +314,9 @@ void main()
     // Look up label colors:
     vec4 segColor = texelFetch( segLabelCmapTex, int(seg), 0 ) * getSegInteriorAlpha( seg ) * segOpacity * float(segMask);
 
+
     // Blend colors:
-    OutColor = vec4( 0.0, 0.0, 0.0, 0.0 );
+    OutColor = vec4( 0.0, 0.0, 0.0, fs_in.SegVoxCoords.x * 0.000000001 );
     OutColor = imageLayer + ( 1.0 - imageLayer.a ) * OutColor;
     OutColor = edgeLayer + ( 1.0 - edgeLayer.a ) * OutColor;
     OutColor = segColor + ( 1.0 - segColor.a ) * OutColor;

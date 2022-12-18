@@ -16,6 +16,7 @@ in VS_OUT
 {
     vec3 ImgTexCoords;
     vec3 SegTexCoords;
+    vec3 SegVoxCoords;
     vec2 CheckerCoord;
     vec2 ClipPos;
 } fs_in;
@@ -311,7 +312,7 @@ void main()
     vec4 segColor = texelFetch( segLabelCmapTex, int(seg), 0 ) * segAlpha;
 
     // Blend colors:
-    OutColor = vec4( 0.0, 0.0, 0.0, 0.0 );
+    OutColor = vec4( 0.0, 0.0, 0.0, fs_in.SegVoxCoords.x * 0.000000001 );
     OutColor = imgColor + ( 1.0 - imgColor.a ) * OutColor;
     OutColor = segColor + ( 1.0 - segColor.a ) * OutColor;
 }

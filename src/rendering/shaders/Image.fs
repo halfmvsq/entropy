@@ -217,16 +217,16 @@ float interpolateTricubicFast( sampler3D tex, vec3 coord )
 
 
 /// Look up the image value (after mapping to GL texture units)
-float getImageValue( sampler3D tex, vec3 texCoords, float minVal, float maxVal )
-{
-    return clamp( texture( tex, texCoords )[0], minVal, maxVal );
-}
+//float getImageValue( sampler3D tex, vec3 texCoords, float minVal, float maxVal )
+//{
+//    return clamp( texture( tex, texCoords )[0], minVal, maxVal );
+//}
 
 
-// float getImageValue( sampler3D tex, vec3 texCoords, float minVal, float maxVal )
-// {
-//     return clamp( interpolateTricubicFast(tex, texCoords), minVal, maxVal );
-// }
+ float getImageValue( sampler3D tex, vec3 texCoords, float minVal, float maxVal )
+ {
+     return clamp( interpolateTricubicFast(tex, texCoords), minVal, maxVal );
+ }
 
 // float computeProjection( float img )
 // {
@@ -265,7 +265,7 @@ float computeProjection( float img )
 /// Look up segmentation texture label value:
 uint getSegValue_N( vec3 texCoords, vec3 texOffset, float cutoff, out float opacity )
 {
-    opacity = 1.0 + texSamplingDirsForSmoothSeg[0].x;
+    opacity = 1.0;
     return texture( segTex, texCoords + texOffset )[0];
 }
 
@@ -296,36 +296,37 @@ uint getSegValue( vec3 texCoords, vec3 texOffset, float cutoff, out float opacit
     // float segEdgeWidth = 0.02;
 
 
-    uint nseg[9];
-    for ( int i = 0; i < 9; ++i )
-    {
-        float row = float( mod( i, 3 ) - 1 ); // runs -1 to 1
-        float col = float( floor( float(i / 3) ) - 1 ); // runs -1 to 1
+    uint neighSegs[9];
 
-        vec3 texSamplingPos =
-            row * texSamplingDirsForSmoothSeg[0] +
-            col * texSamplingDirsForSmoothSeg[1];
+    // Look up texture values in the fragment and its 8 neighbors.
+    // The center fragment (row = 0, col = 0) has index i = 4.
+    for ( int i = 0; i <= 8; ++i )
+    {
+        int j = int( mod( i + 4, 9 ) ); // j = [4,5,6,7,8,0,1,2,3]
+
+        float row = float( mod( j, 3 ) - 1 ); // [-1,0,1]
+        float col = float( floor( float(j / 3) ) - 1 ); // [-1,0,1]
+
+        vec3 texPos = row * texSamplingDirsForSmoothSeg[0] +
+                      col * texSamplingDirsForSmoothSeg[1];
 
         // Segmentation value of neighbor at (row, col) offset
         float ignore;
-        nseg[i] = getSegValue_N( fs_in.SegTexCoords, texSamplingPos, ignore, ignore );
+        neighSegs[i] = getSegValue_N( fs_in.SegTexCoords, texPos, ignore, ignore );
     }
 
 
     float maxInterp = 0.0;
 
-    // uint startLabel = uint( mix( 0u, 1u, float(cutoff < 0.5) ) );
-    // uint endLabel = 5u;
-
-    // for ( uint label = startLabel; label <= endLabel; ++label )
-    for ( int j = 0; j < 9; ++j )
+    for ( int i = 0; i <= 8; ++i )
     {
-        uint label = nseg[j];
+        uint label = neighSegs[i];
 
         float interp = 0.0;
-        for ( int i = 0; i < 8; ++i )
+        for ( int j = 0; j <= 7; ++j )
         {
-            interp += float(s[i] == label) * g[neigh[i].x].x * g[neigh[i].y].y * g[neigh[i].z].z;
+            interp += float(s[j] == label) *
+                g[neigh[j].x].x * g[neigh[j].y].y * g[neigh[j].z].z;
         }
 
         // This feathers the edges:
@@ -364,34 +365,29 @@ uint getSegValue( vec3 texCoords, vec3 texOffset, float cutoff, out float opacit
 
 float getSegInteriorAlpha( uint seg )
 {
-    float segInteriorAlpha = segInteriorOpacity;
-
     // Look up texture values in 8 neighbors surrounding the center fragment.
     // These may be either neighboring image voxels or neighboring view pixels.
     // The center fragment (row = 0, col = 0) has index i = 4.
-    for ( int i = 0; i < 9; ++i )
+    for ( int i = 0; i <= 8; ++i )
     {
-        float row = float( mod( i, 3 ) - 1 ); // runs -1 to 1
-        float col = float( floor( float(i / 3) ) - 1 ); // runs -1 to 1
+        float row = float( mod( i, 3 ) - 1 ); // [-1,0,1]
+        float col = float( floor( float(i / 3) ) - 1 ); // [-1,0,1]
 
-        vec3 texSamplingPos =
-            row * texSamplingDirsForSegOutline[0] +
-            col * texSamplingDirsForSegOutline[1];
+        vec3 texPos = row * texSamplingDirsForSegOutline[0] +
+                      col * texSamplingDirsForSegOutline[1];
 
-        // Segmentation value of neighbor at (row, col) offset
+        // Segmentation value of neighbor at (row, col) offset:
         float ignore;
-        uint nseg = getSegValue( fs_in.SegTexCoords, texSamplingPos, segInterpCutoff, ignore );
-
-        // Fragment (with segmentation 'seg') is on the boundary (and hence gets
-        // full alpha) if its value is not equal to one of its neighbors.
-        if ( nseg != seg )
+        if ( seg != getSegValue( fs_in.SegTexCoords, texPos, segInterpCutoff, ignore ) )
         {
-            segInteriorAlpha = 1.0;
-            break;
+            // Fragment (with segmentation 'seg') is on the segmentation boundary,
+            // since its value is not equal to one of its neighbors. Therefore, it get
+            // full alpha.
+            return 1.0;
         }
     }
 
-    return segInteriorAlpha;
+    return segInteriorOpacity;
 }
 
 

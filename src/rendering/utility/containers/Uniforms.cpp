@@ -138,19 +138,29 @@ GLint Uniforms::queryAndSetLocation(
     {
         std::ostringstream msg;
         msg << "Unrecognized uniform \"" << name << "\"" << std::ends;
-        throw_debug( msg.str() )
+//        throw_debug( name )
+        return loc;
     }
 
     setLocation( name, loc );
     return loc;
 }
 
-void Uniforms::queryAndSetAllLocations( std::function< GLint ( const std::string& ) > locationGetter )
+int Uniforms::queryAndSetAllLocations( std::function< GLint ( const std::string& ) > locationGetter )
 {
     for ( auto& uniform : m_uniformsMap )
     {
-        queryAndSetLocation( uniform.first, locationGetter );
+        GLint loc = queryAndSetLocation( uniform.first, locationGetter );
+
+        if ( -1 == loc )
+        {
+            std::ostringstream msg;
+            msg << "Unrecognized uniform \"" << uniform.first << "\"" << std::ends;
+            return 1;
+        }
     }
+
+    return 0;
 }
 
 void Uniforms::setDirty( const std::string& name, bool dirty )

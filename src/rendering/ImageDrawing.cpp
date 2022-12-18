@@ -255,7 +255,6 @@ void drawImageQuad(
     program.setUniform( "clipDepth", view.clipPlaneDepth() );
 
     program.setUniform( "texSamplingDirsForSegOutline", texSamplingDirsForSegOutline );
-    program.setUniform( "texSamplingDirsForSmoothSeg", texSamplingDirsForSmoothSeg );
 
     program.setUniform( "segInteriorOpacity",
         ( SegmentationOutlineStyle::Disabled == setOutlineStyle ) ? 1.0f : segInteriorOpacity );
@@ -281,6 +280,8 @@ void drawImageQuad(
         }
         else
         {
+            program.setUniform( "texSamplingDirsForSmoothSeg", texSamplingDirsForSmoothSeg );
+
             // Only render with intensity projection when edges are not visible:
             program.setUniform( "halfNumMipSamples", halfNumMipSamples );
             program.setUniform( "texSamplingDirZ", texSamplingDirZ );

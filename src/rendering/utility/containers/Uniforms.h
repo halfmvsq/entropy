@@ -128,7 +128,7 @@ public:
             const std::string& name,
             std::function< GLint ( const std::string& ) > locationGetter );
 
-    void queryAndSetAllLocations( std::function< GLint ( const std::string& ) > locationGetter );
+    int queryAndSetAllLocations( std::function< GLint ( const std::string& ) > locationGetter );
 
     void setDirty( const std::string& name, bool set );
     bool isDirty( const std::string& name ) const;
