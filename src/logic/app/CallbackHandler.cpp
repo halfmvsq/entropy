@@ -936,7 +936,7 @@ void CallbackHandler::doCameraZoomDrag(
     auto getCenterViewClipPos = [this, &zoomBehavior, &startHit]
             ( const View* view ) -> glm::vec2
     {
-        glm::vec2 viewClipCenterPos;
+        glm::vec2 viewClipCenterPos{ 0.0f };
 
         switch ( zoomBehavior )
         {
@@ -1014,7 +1014,7 @@ void CallbackHandler::doCameraZoomScroll(
 
     auto getCenterViewClipPos = [this, &zoomBehavior, &hit] ( const View* view ) -> glm::vec2
     {
-        glm::vec2 viewClipCenterPos;
+        glm::vec2 viewClipCenterPos{ 0.0f };
 
         switch ( zoomBehavior )
         {

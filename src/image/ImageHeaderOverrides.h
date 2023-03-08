@@ -30,11 +30,11 @@ struct ImageHeaderOverrides
     bool m_useIdentityPixelDirections = false; //!< Flag to use an identity direction matrix
     bool m_snapToClosestOrthogonalPixelDirections = false; //!< Flag to snap to the closest orthogonal direction matrix
 
-    glm::uvec3 m_originalDimensions; //!< Original voxel dimensions
-    glm::vec3 m_originalSpacing; //!< Original voxel spacing
-    glm::vec3 m_originalOrigin; //!< Original voxel origin
-    glm::mat3 m_originalDirections; //!< Original voxel direction cosines
-    bool m_originalIsOblique; //!< Is the original direction matrix oblique?
+    glm::uvec3 m_originalDimensions{ 0u }; //!< Original voxel dimensions
+    glm::vec3 m_originalSpacing{ 1.0f }; //!< Original voxel spacing
+    glm::vec3 m_originalOrigin{ 0.0f }; //!< Original voxel origin
+    glm::mat3 m_originalDirections{ 1.0f }; //!< Original voxel direction cosines
+    bool m_originalIsOblique = false; //!< Is the original direction matrix oblique?
 
     /// Closest orthogonal directions to the original voxel direction cosines
     glm::mat3 m_closestOrthogonalDirections;

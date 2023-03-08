@@ -19,11 +19,11 @@ struct ViewHit
     View* view = nullptr; //!< A non-owning pointer to the view that was hit
     uuids::uuid viewUid; //!< UID of the view
 
-    glm::vec2 windowClipPos;
-    glm::vec2 viewClipPos;
-    glm::vec4 worldPos;
-    glm::vec4 worldPos_offsetApplied;
-    glm::vec3 worldFrontAxis;
+    glm::vec2 windowClipPos{ 0.0f };
+    glm::vec2 viewClipPos{ 0.0f };
+    glm::vec4 worldPos{ 0.0f };
+    glm::vec4 worldPos_offsetApplied{ 0.0f };
+    glm::vec3 worldFrontAxis{ 0.0f, 0.0f, 1.0f };
 };
 
 

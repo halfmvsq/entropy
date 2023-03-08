@@ -26,8 +26,8 @@ public:
     GLBufferTexture( const GLBufferTexture& ) = delete;
     GLBufferTexture& operator=( const GLBufferTexture& ) = delete;
 
-    GLBufferTexture( GLBufferTexture&& );
-    GLBufferTexture& operator=( GLBufferTexture&& );
+    GLBufferTexture( GLBufferTexture&& ) noexcept;
+    GLBufferTexture& operator=( GLBufferTexture&& ) noexcept;
 
     ~GLBufferTexture();
 

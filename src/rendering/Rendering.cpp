@@ -424,7 +424,10 @@ void Rendering::updateSegTexture(
         return;
     }
 
-    const size_t N = sizeInVoxels.x * sizeInVoxels.y * sizeInVoxels.z;
+    const size_t N =
+        static_cast<size_t>( sizeInVoxels.x ) *
+        static_cast<size_t>( sizeInVoxels.y ) *
+        static_cast<size_t>( sizeInVoxels.z );
 
     switch ( compType )
     {
@@ -1608,7 +1611,7 @@ void Rendering::renderAllImages(
         // Only volume render the first image:
         /// @todo Either 1) let use only select one image or
         /// 2) enable rendering more than one image
-        const auto imgSegPair = I.front();
+        const auto& imgSegPair = I.front();
 
         const Image* image = m_appData.image( *imgSegPair.first );
 

@@ -123,12 +123,6 @@ public:
     float isosurfaceOpacityModulator() const;
 
 
-
-    /// Set/get the dirty flag
-    void setDirty( bool set );
-    bool isDirty() const;
-
-
     /// Get the min/max image intensities for a given component
     std::pair<double, double> minMaxImageRange( uint32_t component ) const;
     std::pair<double, double> minMaxImageRange() const;
@@ -490,8 +484,6 @@ private:
     std::vector<ComponentSettings> m_componentSettings; //!< Per-component settings
 
     uint32_t m_activeComponent; //!< Active component
-
-    bool m_dirty; //!< Flag that the settings have changed since the image was last saved
 };
 
 

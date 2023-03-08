@@ -229,8 +229,8 @@ void applyCustomSoftStyle( ImGuiStyle* dst )
     ImGuiStyle* style = dst ? dst : &ImGui::GetStyle();
     if ( ! style ) return;
 
-    int hspacing = 8;
-    int vspacing = 6;
+    float hspacing = 8;
+    float vspacing = 6;
 
     style->DisplaySafeAreaPadding = ImVec2(0, 0);
     style->WindowPadding = ImVec2(hspacing/2, vspacing);

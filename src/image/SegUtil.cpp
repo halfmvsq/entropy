@@ -307,7 +307,10 @@ void updateSeg(
     const glm::uvec3 dataSize{ maxVoxel - minVoxel + sk_voxelOne };
 
     // Safety check:
-    const size_t N = dataSize.x * dataSize.y * dataSize.z;
+    const size_t N =
+        static_cast<size_t>( dataSize.x ) *
+        static_cast<size_t>( dataSize.y ) *
+        static_cast<size_t>( dataSize.z );
 
     if ( N != voxelPositions.size() || N != voxelValues.size() )
     {

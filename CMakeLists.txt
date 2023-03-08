@@ -193,7 +193,7 @@ target_compile_options( implot PRIVATE
           /W4> )
 
 set_target_properties( implot PROPERTIES
-    CXX_STANDARD 17
+    CXX_STANDARD 20
     CXX_STANDARD_REQUIRED ON
     CXX_EXTENSIONS ON )
 
@@ -738,6 +738,6 @@ target_compile_options( ${EXEC_NAME} PRIVATE
           /W4> )
 
 set_target_properties( ${EXEC_NAME} PROPERTIES
-    CXX_STANDARD 17
+    CXX_STANDARD 20
     CXX_STANDARD_REQUIRED ON
     CXX_EXTENSIONS ON )

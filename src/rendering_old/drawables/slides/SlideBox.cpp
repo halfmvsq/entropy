@@ -35,7 +35,7 @@ SlideBox::SlideBox(
         QuerierType<bool, uuids::uuid> activeSlideQuerier,
         GetterType<float> image3dLayerOpacityProvider )
     :
-      DrawableBase( std::move( name ), DrawableType::Slide ),
+      DrawableBase( name, DrawableType::Slide ),
 
       m_activeSlideQuerier( activeSlideQuerier ),
       m_image3dLayerOpacityProvider( image3dLayerOpacityProvider ),

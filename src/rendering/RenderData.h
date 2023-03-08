@@ -288,7 +288,7 @@ struct RenderData
     struct LandmarkParams
     {
         float strokeWidth = 1.0f;
-        glm::vec3 textColor;
+        glm::vec3 textColor{ 0.0f };
 
         /// Flag to either render landmarks on top of all image planes (true)
         /// or interspersed with each image plane (false)

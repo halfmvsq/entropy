@@ -21,7 +21,7 @@ GLBufferObject::~GLBufferObject()
     destroy();
 }
 
-GLBufferObject::GLBufferObject( GLBufferObject&& other )
+GLBufferObject::GLBufferObject( GLBufferObject&& other ) noexcept
     : m_id( other.m_id ),
       m_type( other.m_type ),
       m_typeEnum( underlyingType( other.m_type ) ),
@@ -32,7 +32,7 @@ GLBufferObject::GLBufferObject( GLBufferObject&& other )
     other.m_bufferSize = 0;
 }
 
-GLBufferObject& GLBufferObject::operator=( GLBufferObject&& other )
+GLBufferObject& GLBufferObject::operator=( GLBufferObject&& other ) noexcept
 {
     if ( this != &other )
     {

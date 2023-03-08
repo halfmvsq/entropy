@@ -82,13 +82,13 @@ enum class PixelType
 template< typename T >
 struct ComponentStats
 {
-    T m_minimum;
-    T m_maximum;
+    T m_minimum = 0;
+    T m_maximum = 0;
 
-    T m_mean;
-    T m_stdDeviation;
-    T m_variance;
-    T m_sum;
+    T m_mean = 0;
+    T m_stdDeviation = 0;
+    T m_variance = 0;
+    T m_sum = 0;
 
     std::vector<double> m_histogram;
     std::array<T, 1001> m_quantiles;

@@ -375,10 +375,10 @@ GLTexture::GLTexture(
 {
 }
 
-GLTexture::GLTexture( GLTexture&& other )
+GLTexture::GLTexture( GLTexture&& other ) noexcept
     :
-      m_target( std::move( other.m_target ) ),
-      m_targetEnum( std::move( other.m_targetEnum ) ),
+      m_target( other.m_target ),
+      m_targetEnum( other.m_targetEnum ),
       m_id( std::move( other.m_id ) ),
       m_size( std::move( other.m_size ) ),
       m_autoGenerateMipmaps( std::move( other.m_autoGenerateMipmaps ) ),
@@ -394,7 +394,7 @@ GLTexture::GLTexture( GLTexture&& other )
     other.m_pixelUnpackSettings = PixelStoreSettings();
 }
 
-GLTexture& GLTexture::operator=( GLTexture&& other )
+GLTexture& GLTexture::operator=( GLTexture&& other ) noexcept
 {
     if ( this != &other )
     {

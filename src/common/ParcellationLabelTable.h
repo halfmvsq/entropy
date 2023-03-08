@@ -134,7 +134,7 @@ private:
     {
         std::string m_name; //!< Name
         glm::vec3 m_color; //!< RGB color (non-pre-multiplied) in [0, 1]
-        float m_alpha; //!< Alpha channel opacity in [0, 1]
+        float m_alpha = 1.0f; //!< Alpha channel opacity in [0, 1]
         bool m_visible = true; //!< Global visibility of label in all view types
         bool m_showMesh = false; //!< Mesh visibility in 3D views
     };

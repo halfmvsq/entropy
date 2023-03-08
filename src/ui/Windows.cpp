@@ -2436,7 +2436,8 @@ void renderInspectionWindowWithTable(
 
                 const auto segUid = appData.imageToActiveSegUid( *imageUid );
                 const Image* seg = ( segUid ? appData.seg( *segUid ) : nullptr );
-                ParcellationLabelTable* table = getLabelTable( seg->settings().labelTableIndex() );
+
+                ParcellationLabelTable* table = ( seg ? getLabelTable( seg->settings().labelTableIndex() ) : nullptr );
 
                 // Get all image component values
                 static constexpr bool sk_getOnlyActiveComponent = false;

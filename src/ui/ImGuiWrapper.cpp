@@ -51,7 +51,7 @@ ImFont* loadFont(
 
     cmrc::file fontFile = filesystem.open( fontPath );
 
-    // ImGui will take ownership of the font, so make a copy:
+    // ImGui will take ownership of the font (and be responsible for deleting it), so make a copy:
     char* fontData = new char[fontFile.size()];
 
     for ( size_t i = 0; i < fontFile.size(); ++i )
@@ -91,7 +91,6 @@ ImFont* loadFont(
     //     spdlog::error( "Could not load font {}", forkAwesomeFontPath );
     // }
 }
-
 
 }
 

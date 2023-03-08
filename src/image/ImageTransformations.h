@@ -179,7 +179,7 @@ private:
 
     // Parameters of the user-applied manual transformation:
     glm::vec3 m_worldDef_T_affine_translation; //!< Translation component of worldDef_T_affine (applied 3rd)
-    glm::quat m_worldDef_T_affine_rotation; //!< Rotation component of worldDef_T_affine  (applied 2nd)
+    glm::quat m_worldDef_T_affine_rotation{ 1.0f, 0.0f, 0.0f, 0.0f }; //!< Rotation component of worldDef_T_affine  (applied 2nd)
     glm::vec3 m_worldDef_T_affine_scale; //!< Scale component of worldDef_T_affine (applied 1st)
 
     glm::mat4 m_worldDef_T_affine; //!< User-applied manual transformation (defined by the above parameters)

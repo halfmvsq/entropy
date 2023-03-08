@@ -109,9 +109,9 @@ private:
     ImageIoInfo m_ioInfoInMemory;
 
     /// Are the pixel components interleaved? This flag is always false for 1-component images
-    bool m_interleavedComponents;
+    bool m_interleavedComponents = false;
 
-    bool m_existsOnDisk; //!< Flag that the image exists on disk
+    bool m_existsOnDisk = true; //!< Flag that the image exists on disk
     std::string m_fileName; //!< File name
 
     uint32_t m_numComponentsPerPixel; //!< Number of components per pixel

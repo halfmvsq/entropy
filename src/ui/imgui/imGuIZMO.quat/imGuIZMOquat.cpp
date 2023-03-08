@@ -889,7 +889,7 @@ void imguiGizmo::buildSphere(const float radius, const int tessFactor)
             const float x0 = x1; x1 = cosf(angleJ);
             const float y0 = y1; y1 = sinf(angleJ);
 
-            const int tType = ((i>>div)&1) ? ((j>>div)&1) : !((j>>div)&1); 
+            const int tType = ((i>>div)&1) ? ((j>>div)&1) : ~((j>>div)&1); 
 
             V(x0*r1, -y0*r1, z1); T(tType);
             V(x0*r0, -y0*r0, z0); T(tType);

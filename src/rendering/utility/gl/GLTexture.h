@@ -107,10 +107,10 @@ public:
                std::optional<PixelStoreSettings> pixelUnpackSettings = std::nullopt );
 
     GLTexture( const GLTexture& ) = delete;
-    GLTexture( GLTexture&& );
+    GLTexture( GLTexture&& ) noexcept;
 
     GLTexture& operator=( const GLTexture& ) = delete;
-    GLTexture& operator=( GLTexture&& );
+    GLTexture& operator=( GLTexture&& ) noexcept;
 
     ~GLTexture();
 
@@ -343,10 +343,10 @@ private:
     const tex::Target m_target;
     const GLenum m_targetEnum;
     GLuint m_id;
-    glm::uvec3 m_size;
-    bool m_autoGenerateMipmaps;
+    glm::uvec3 m_size{ 0u };
+    bool m_autoGenerateMipmaps = false;
 
-    GLuint m_samplerID;
+    GLuint m_samplerID = 0u;
 
     MultisampleSettings m_multisampleSettings;
     std::optional<PixelStoreSettings> m_pixelPackSettings;

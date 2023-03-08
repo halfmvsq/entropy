@@ -24,8 +24,8 @@ public:
     GLBufferObject( const GLBufferObject& ) = delete;
     GLBufferObject& operator=( const GLBufferObject& ) = delete;
 
-    GLBufferObject( GLBufferObject&& );
-    GLBufferObject& operator=( GLBufferObject&& );
+    GLBufferObject( GLBufferObject&& ) noexcept;
+    GLBufferObject& operator=( GLBufferObject&& ) noexcept;
 
     /**
      * @brief Deletes the buffer object, including storage on GPU

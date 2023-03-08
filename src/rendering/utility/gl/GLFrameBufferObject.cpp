@@ -13,7 +13,7 @@ GLFrameBufferObject::GLFrameBufferObject( const std::string& name )
 //    initializeOpenGLFunctions();
 }
 
-GLFrameBufferObject::GLFrameBufferObject( GLFrameBufferObject&& other )
+GLFrameBufferObject::GLFrameBufferObject( GLFrameBufferObject&& other ) noexcept
     : m_name( other.m_name ),
       m_id( other.m_id )
 {
@@ -23,7 +23,7 @@ GLFrameBufferObject::GLFrameBufferObject( GLFrameBufferObject&& other )
     other.m_id = 0u;
 }
 
-GLFrameBufferObject& GLFrameBufferObject::operator=( GLFrameBufferObject&& other )
+GLFrameBufferObject& GLFrameBufferObject::operator=( GLFrameBufferObject&& other ) noexcept
 {
     if ( this != &other )
     {

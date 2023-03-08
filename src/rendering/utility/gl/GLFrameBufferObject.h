@@ -24,8 +24,8 @@ public:
     GLFrameBufferObject( const GLFrameBufferObject& ) = delete;
     GLFrameBufferObject& operator=( const GLFrameBufferObject& ) = delete;
 
-    GLFrameBufferObject( GLFrameBufferObject&& );
-    GLFrameBufferObject& operator=( GLFrameBufferObject&& );
+    GLFrameBufferObject( GLFrameBufferObject&& ) noexcept;
+    GLFrameBufferObject& operator=( GLFrameBufferObject&& ) noexcept;
 
     /**
      * @brief Deletes the FBO, including storage on GPU

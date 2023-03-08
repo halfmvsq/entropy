@@ -105,7 +105,7 @@ GLBufferTexture::GLBufferTexture(
 {
 }
 
-GLBufferTexture::GLBufferTexture( GLBufferTexture&& other )
+GLBufferTexture::GLBufferTexture( GLBufferTexture&& other ) noexcept
     :
       m_buffer( std::move( other.m_buffer ) ),
       m_texture( std::move( other.m_texture ) ),
@@ -113,7 +113,7 @@ GLBufferTexture::GLBufferTexture( GLBufferTexture&& other )
 {
 }
 
-GLBufferTexture& GLBufferTexture::operator=( GLBufferTexture&& other )
+GLBufferTexture& GLBufferTexture::operator=( GLBufferTexture&& other ) noexcept
 {
     if ( this != &other )
     {

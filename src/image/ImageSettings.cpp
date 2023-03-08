@@ -31,8 +31,7 @@ ImageSettings::ImageSettings(
       m_numComponents( numComponents ),
       m_componentType( std::move( componentType ) ),
       m_componentStats( std::move( componentStats ) ),
-      m_activeComponent( 0 ),
-      m_dirty( false )
+      m_activeComponent( 0 )
 {
     // Default window covers 1st to 99th quantile intensity range of the first pixel component
     static constexpr int qLow = 10; // 1%
@@ -132,10 +131,6 @@ double ImageSettings::isosurfaceWidthIn2d() const { return m_isosurfaceWidthIn2d
 
 void ImageSettings::setIsosurfaceOpacityModulator( float opacityMod ) { m_isosurfaceOpacityModulator = opacityMod; }
 float ImageSettings::isosurfaceOpacityModulator() const { return m_isosurfaceOpacityModulator; }
-
-
-bool ImageSettings::isDirty() const { return m_dirty; }
-void ImageSettings::setDirty( bool set ) { m_dirty = set; }
 
 
 std::pair<double, double> ImageSettings::minMaxImageRange( uint32_t i ) const
@@ -754,33 +749,33 @@ double ImageSettings::mapNativeIntensityToTexture( double nativeImageValue ) con
     {
     case ComponentType::Int8:
     {
-        const double M = static_cast<double>( std::numeric_limits<int8_t>::max() );
+        constexpr double M = static_cast<double>( std::numeric_limits<int8_t>::max() );
         return std::max( nativeImageValue / M, -1.0 );
     }
     case ComponentType::Int16:
     {
-        const double M = static_cast<double>( std::numeric_limits<int16_t>::max() );
+        constexpr double M = static_cast<double>( std::numeric_limits<int16_t>::max() );
         return std::max( nativeImageValue / M, -1.0 );
         // return ( 2.0 * nativeImageValue + 1.0 ) / 65535.0;
     }
     case ComponentType::Int32:
     {
-        const double M = static_cast<double>( std::numeric_limits<int32_t>::max() );
+        constexpr double M = static_cast<double>( std::numeric_limits<int32_t>::max() );
         return std::max( nativeImageValue / M, -1.0 );
     }
     case ComponentType::UInt8:
     {
-        const double M = static_cast<double>( std::numeric_limits<uint8_t>::max() );
+        constexpr double M = static_cast<double>( std::numeric_limits<uint8_t>::max() );
         return nativeImageValue / M;
     }
     case ComponentType::UInt16:
     {
-        const double M = static_cast<double>( std::numeric_limits<uint16_t>::max() );
+        constexpr double M = static_cast<double>( std::numeric_limits<uint16_t>::max() );
         return nativeImageValue / M;
     }
     case ComponentType::UInt32:
     {
-        const double M = static_cast<double>( std::numeric_limits<uint32_t>::max() );
+        constexpr double M = static_cast<double>( std::numeric_limits<uint32_t>::max() );
         return nativeImageValue / M;
     }
     case ComponentType::Float32:

@@ -11,10 +11,11 @@ namespace camera
 
 Projection::Projection()
     :
-      m_nearDistance( 0.1f ),
-      m_farDistance( 1000.0f ),
-      m_defaultFov( 5.0f ),
-      m_zoom( 1.0f )
+    m_aspectRatio(1.0f ),
+    m_nearDistance( 0.1f ),
+    m_farDistance( 1000.0f ),
+    m_defaultFov( 5.0f ),
+    m_zoom( 1.0f )
 {
 }
 

@@ -29,13 +29,13 @@ struct ImageSettings
 {
     std::string m_displayName;
 
-    double m_level; //! Window center value in image units
-    double m_window; //! Window width in image units
+    double m_level = 0.0f; //! Window center value in image units
+    double m_window = 1.0f; //! Window width in image units
 
-    double m_thresholdLow; //!< Values below threshold not displayed
-    double m_thresholdHigh; //!< Values above threshold not displayed
+    double m_thresholdLow = 0.0f; //!< Values below threshold not displayed
+    double m_thresholdHigh = 0.0f; //!< Values above threshold not displayed
 
-    double m_opacity; //!< Opacity [0, 1]
+    double m_opacity = 1.0f; //!< Opacity [0, 1]
 
     /// @todo Add isosurfaces
 };
@@ -44,7 +44,7 @@ struct ImageSettings
 /// Serialized data for image segmentation settings
 struct SegSettings
 {
-    double m_opacity;
+    double m_opacity = 1.0f;
 
     /// @todo Add rest of the segmentation options, e.g.
     /// visibility, color label table, etc.

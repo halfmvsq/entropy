@@ -856,7 +856,7 @@ Image::getComponentAndOffsetForBuffer( uint32_t comp, int i, int j, int k ) cons
     // 2) offset into that buffer
     std::optional< std::pair< size_t, size_t > > ret;
 
-    const glm::uvec3 dims = m_header.pixelDimensions();
+    const glm::u64vec3 dims = m_header.pixelDimensions();
     const auto ncomps = m_header.numComponentsPerPixel();
 
     if ( comp > ncomps )
@@ -892,7 +892,7 @@ Image::getComponentAndOffsetForBuffer( uint32_t comp, int i, int j, int k ) cons
         c = 0;
 
         // Offset into the buffer accounts for the desired component:
-        offset = ( comp + 1 ) * offset;
+        offset = static_cast<size_t>( comp + 1 ) * offset;
         break;
     }
     }

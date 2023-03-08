@@ -74,9 +74,9 @@ private:
     struct LabelData
     {
         std::weak_ptr<GLTexture> m_texture; //!< Label texture
-        glm::mat4 m_world_O_model; //!< Transformation from label quad to world space
-        glm::vec3 m_solidColor; //!< Label color (currently not used)
-        bool m_visible; //!< Visibility flag for label: only visible labels are rendered
+        glm::mat4 m_world_O_model{ 1.0f }; //!< Transformation from label quad to world space
+        glm::vec3 m_solidColor{ 0.0f }; //!< Label color (currently not used)
+        bool m_visible = true; //!< Visibility flag for label: only visible labels are rendered
     };
 
     void doRender( const RenderStage& ) override;
