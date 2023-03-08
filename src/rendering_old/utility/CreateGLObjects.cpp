@@ -3,7 +3,7 @@
 #include "rendering_old/utility/vtk/PolyDataGenerator.h"
 
 #include "common/Exception.hpp"
-#include "logic_old/annotation/Polygon.h"
+#include "logic_old/annotation/PlanarPolygon.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/packing.hpp>
@@ -727,7 +727,7 @@ std::unique_ptr<SlideGpuRecord> createSlideGpuRecord( const slideio::SlideCpuRec
 }
 
 
-std::unique_ptr<SlideAnnotationGpuRecord> createSlideAnnotationGpuRecord( const Polygon& polygon )
+std::unique_ptr<SlideAnnotationGpuRecord> createSlideAnnotationGpuRecord( const PlanarPolygon& polygon )
 {
     static const uint32_t sk_upNormal = glm::packSnorm3x10_1x2( glm::vec4{ 0.0f, 0.0f, 1.0f, 0.0f } );
     static const uint32_t sk_downNormal = glm::packSnorm3x10_1x2( glm::vec4{ 0.0f, 0.0f, -1.0f, 0.0f } );
@@ -751,7 +751,7 @@ std::unique_ptr<SlideAnnotationGpuRecord> createSlideAnnotationGpuRecord( const 
             return nullptr;
         }
 
-        for ( const Polygon::PointType& v : boundary )
+        for ( const PlanarPolygon::PointType& v : boundary )
         {
             vertices.emplace_back( glm::vec3{ v.x, v.y, 0.0f } );
         }
@@ -775,7 +775,7 @@ std::unique_ptr<SlideAnnotationGpuRecord> createSlideAnnotationGpuRecord( const 
 
 
     // Add indices for bottom face, flipping orientation from clockwise to counter-clockwise:
-    std::vector< Polygon::IndexType > indices;
+    std::vector< PlanarPolygon::IndexType > indices;
 
     for ( size_t i = 0; i < polygon.numTriangles(); ++i )
     {

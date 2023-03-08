@@ -416,7 +416,7 @@ bool ImageSettings::globalVisibility() const
 
 void ImageSettings::setGlobalOpacity( double opacity )
 {
-    m_globalOpacity = std::max( std::min( opacity, 1.0 ), 0.0 );
+    m_globalOpacity = static_cast<float>( std::max( std::min( opacity, 1.0 ), 0.0 ) );
 }
 
 double ImageSettings::globalOpacity() const
@@ -613,7 +613,7 @@ uint32_t ImageSettings::activeComponent() const
 
 void ImageSettings::updateInternals()
 {
-    for ( size_t i = 0; i < m_componentSettings.size(); ++i )
+    for ( uint32_t i = 0; i < m_componentSettings.size(); ++i )
     {
         auto& S = m_componentSettings[i];
 

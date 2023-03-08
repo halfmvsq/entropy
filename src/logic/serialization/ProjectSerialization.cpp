@@ -13,6 +13,7 @@
 #include <exception>
 #include <fstream>
 #include <sstream>
+#include <string>
 #include <vector>
 
 // On Apple platforms, we must use the alternative ghc::filesystem,
@@ -86,6 +87,94 @@ void applyToImagePaths(
     {
         func( image, projectBasePath );
     }
+}
+
+
+/**
+ Safe C Library
+ @see https://github.com/rurban/safeclib
+ 
+ Copyright (C) 2012, 2013 Cisco Systems
+ Copyright (C) 2017 Reini Urban
+ All rights reserved.
+ 
+ Permission is hereby granted, free of charge, to any person
+ obtaining a copy of this software and associated documentation
+ files (the "Software"), to deal in the Software without
+ restriction, including without limitation the rights to use,
+ copy, modify, merge, publish, distribute, sublicense, and/or
+ sell copies of the Software, and to permit persons to whom the
+ Software is furnished to do so, subject to the following
+ conditions:
+ 
+ The above copyright notice and this permission notice shall be
+ included in all copies or substantial portions of the Software.
+ 
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ NONINFRINGEMENT.  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ OTHER DEALINGS IN THE SOFTWARE.
+**/
+size_t strerrorlen_s(errno_t errnum)
+{
+#ifndef ESNULLP
+#define ESNULLP         ( 400 )       /* null ptr */
+#endif
+
+#ifndef ESLEWRNG
+#define ESLEWRNG        ( 410 )       /* wrong size */
+#endif
+
+#ifndef ESLAST
+#define ESLAST ESLEWRNG
+#endif
+
+    static const int len_errmsgs_s[] = {
+        sizeof "null ptr",               /* ESNULLP */
+        sizeof "length is zero",         /* ESZEROL */
+        sizeof "length is below min",    /* ESLEMIN */
+        sizeof "length exceeds RSIZE_MAX",/* ESLEMAX */
+        sizeof "overlap undefined",      /* ESOVRLP */
+        sizeof "empty string",           /* ESEMPTY */
+        sizeof "not enough space",       /* ESNOSPC */
+        sizeof "unterminated string",    /* ESUNTERM */
+        sizeof "no difference",          /* ESNODIFF */
+        sizeof "not found",              /* ESNOTFND */
+        sizeof "wrong size",             /* ESLEWRNG */
+    };
+
+    if (errnum >= ESNULLP && errnum <= ESLAST)
+    {
+        return len_errmsgs_s[errnum - ESNULLP] - 1;
+    }
+    else
+    {
+        const char* buf = strerror(errnum);
+        return buf ? strlen(buf) : 0;
+    }
+}
+
+
+/**
+ * @brief Use \c spdlog to log the errno.
+ * 
+ * @note Several standard library functions indicate errors by writing positive integers to errno.
+ * Typically, the value of errno is set to one of the error codes listed in <errno.h> as macro constants
+ * beginning with the letter E followed by uppercase letters or digits.
+ * 
+ * @see https://en.cppreference.com/w/c/error/errno
+*/
+void logStdErrno()
+{
+    const size_t errmsglen = strerrorlen_s( errno ) + 1;
+    std::unique_ptr<char[]> errmsg( new char[errmsglen] );
+    strerror_s( errmsg.get(), errmsglen, errno);
+
+    spdlog::error( "Error #{}: {}", errno, errmsg );
 }
 
 } // anonymous
@@ -420,7 +509,7 @@ bool open( EntropyProject& project, const std::string& fileName )
             spdlog::error( "Unknown failure opening file" );
         }
 #else
-        spdlog::error( "Error #{}: {}", errno, ::strerror(errno) );
+        logStdErrno();
 #endif
 
         spdlog::error( "Failure while project from JSON file {}: {}",
@@ -583,7 +672,7 @@ bool openAffineTxFile( glm::dmat4& matrix, const std::string& fileName )
             spdlog::error( "Unknown failure opening file {}", fileName );
         }
 #else
-        spdlog::error( "Error #{}: {}", errno, ::strerror(errno) );
+        logStdErrno();
 #endif
 
         spdlog::error( "Failure while reading affine transformation from file {}: {}",
@@ -642,7 +731,7 @@ bool saveAffineTxFile( const glm::dmat4& matrix, const std::string& fileName )
             spdlog::error( "Unknown failure opening file {}", fileName );
         }
 #else
-        spdlog::error( "Error #{}: {}", errno, ::strerror(errno) );
+        logStdErrno();
 #endif
 
         spdlog::error( "Failure while writing affine transformation to file {}: {}",
@@ -818,7 +907,7 @@ bool openLandmarkGroupCsvFile(
             spdlog::error( "Unknown failure opening CSV file {}", csvFileName );
         }
 #else
-        spdlog::error( "Error #{}: {}", errno, ::strerror(errno) );
+        logStdErrno();
 #endif
 
         spdlog::error( "Failure while reading landmark CSV file {}: {}",
@@ -884,7 +973,7 @@ bool saveLandmarkGroupCsvFile(
             spdlog::error( "Unknown failure opening CSV file {}", csvFileName );
         }
 #else
-        spdlog::error( "Error #{}: {}", errno, ::strerror(errno) );
+        logStdErrno();
 #endif
 
         spdlog::error( "Failure while writing landmarks to CSV file {}: {}",
@@ -945,7 +1034,7 @@ bool openAnnotationsFromJsonFile(
             spdlog::error( "Unknown failure opening annotations JSON file {}", jsonFileName );
         }
 #else
-        spdlog::error( "Error #{}: {}", errno, ::strerror(errno) );
+        logStdErrno();
 #endif
 
         spdlog::error( "Failure while reading annotations JSON file {}: {}",
@@ -1006,7 +1095,7 @@ bool saveToJsonFile(
             spdlog::error( "Unknown failure opening JSON file {}", jsonFileName );
         }
 #else
-        spdlog::error( "Error #{}: {}", errno, ::strerror(errno) );
+        logStdErrno();
 #endif
 
         spdlog::error( "Failure while writing to JSON file {}: {}",

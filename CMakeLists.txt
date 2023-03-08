@@ -38,7 +38,7 @@ set_property( CACHE GLAD_GL_VERSION PROPERTY STRINGS ${GL_VERSION_VALUES} )
 #--------------------------------------------------------------------------------
 # Insight Toolkit (ITK) library
 #--------------------------------------------------------------------------------
-find_package( ITK 5.2.1 REQUIRED )
+find_package( ITK 5.3.0 REQUIRED )
 
 if( ITK_FOUND )
     include( ${ITK_USE_FILE} )
@@ -51,7 +51,7 @@ endif()
 # Visualization Toolkit (VTK) library
 # Note: VTK is NOT currently used in this project.
 #--------------------------------------------------------------------------------
-find_package( VTK 9.2.2 REQUIRED )
+find_package( VTK 9.2.6 REQUIRED )
 
 if( VTK_FOUND )
     # no longer used after VTK 8.9
@@ -64,7 +64,7 @@ endif()
 #--------------------------------------------------------------------------------
 # Boost library
 #--------------------------------------------------------------------------------
-find_package( Boost 1.66 REQUIRED )
+find_package( Boost 1.81.0 REQUIRED )
 
 if( NOT Boost_FOUND )
     message( FATAL_ERROR "Boost was not found." )
@@ -150,7 +150,7 @@ target_compile_options( imgui PRIVATE
           /W4> )
 
 set_target_properties( imgui PROPERTIES
-    CXX_STANDARD 17
+    CXX_STANDARD 20
     CXX_STANDARD_REQUIRED ON
     CXX_EXTENSIONS ON )
 
@@ -409,7 +409,7 @@ set( ENTROPY_SOURCES
 #    ${SRC_DIR}/logic_old/AppInitializer.cpp
 #    ${SRC_DIR}/logic_old/annotation/AnnotationHelper.cpp
     ${SRC_DIR}/logic_old/annotation/LandmarkGroupCpuRecord.cpp
-    ${SRC_DIR}/logic_old/annotation/Polygon.cpp
+    ${SRC_DIR}/logic_old/annotation/PlanarPolygon.cpp
     ${SRC_DIR}/logic_old/annotation/SlideAnnotationCpuRecord.cpp
 #    ${SRC_DIR}/logic_old/camera/OrthogonalProjection.cpp
 #    ${SRC_DIR}/logic_old/camera/PerspectiveProjection.cpp

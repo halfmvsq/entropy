@@ -82,7 +82,7 @@ distancesFromCrosshairToFrustumPlanes(
     // Largest distances from the crosshair's x, y, and z axes
     std::array< float, 3 > distances;
 
-    for ( uint i = 0; i < 3; ++i )
+    for (uint32_t i = 0; i < 3; ++i )
     {
         const glm::vec3 rayDir{ world_T_frame_invT[ static_cast<int>( i ) ] };
 
@@ -169,7 +169,7 @@ void Crosshairs::setupChildren()
 {
     const auto offset = PolygonOffset::crosshairs;
 
-    for ( uint i = 0; i < 3; ++i )
+    for ( uint32_t i = 0; i < 3; ++i )
     {
         addChild( m_txs[i] );
 

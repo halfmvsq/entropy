@@ -408,7 +408,7 @@ void DepthPeelRenderer::Impl::ddp_clearTargets( bool currentId )
     // Maximum depth that is used for clearing the depth buffer texture
     static constexpr float sk_maxDepth = 1.0f;
 
-    const uint bufferOffset = 3 * currentId;
+    const uint32_t bufferOffset = 3 * currentId;
 
     m_depthPeelFbo.bind( fbo::TargetType::DrawAndRead );
 
@@ -442,8 +442,8 @@ void DepthPeelRenderer::Impl::ddp_initializeDepths()
 /// Step 6: Peel away frontmost and backmost depth layers
 void DepthPeelRenderer::Impl::ddp_peelFrontBack( bool currentId )
 {
-    const uint bufferOffset = 3 * currentId;
-    const uint previousId = 1 - currentId;
+    const uint32_t bufferOffset = 3 * currentId;
+    const uint32_t previousId = 1 - currentId;
 
     // Writes to { m_depthTextures[1/0], m_frontBlenderTextures[1/0], m_backTempTextures[1/0] }
     // when peel is even/odd:
@@ -640,7 +640,7 @@ void DepthPeelRenderer::Impl::initializeTextureAttachments()
     generateDefaultTextureAttachment( m_objectDepthTexture );
     generateDefaultTextureAttachment( m_resolvedDepthTexture );
 
-    for ( uint i = 0; i < 2; ++i )
+    for (uint32_t i = 0; i < 2; ++i )
     {
         generateDefaultTextureAttachment( m_depthTextures[i] );
         generateDefaultTextureAttachment( m_frontBlenderTextures[i] );
@@ -680,7 +680,7 @@ void DepthPeelRenderer::Impl::resizeTextures()
     const std::vector<float> sk_emptyObjectDepthData( k_textureSize.x * k_textureSize.y, 1.0f );
 
     // Total: F32: 640 bits; U8: 256 bits
-    for ( uint i = 0; i < 2; ++i )
+    for ( uint32_t i = 0; i < 2; ++i )
     {
         m_depthTextures[i].setSize( k_textureSize );
         m_frontBlenderTextures[i].setSize( k_textureSize );
@@ -842,7 +842,7 @@ void DepthPeelRenderer::Impl::render()
 
 //    std::cout << "\nname = " << m_name << std::endl;
 
-    for ( uint peel = 0; ( m_useOccQueries || peel < m_maxNumPeels ); ++peel )
+    for (uint32_t peel = 0; ( m_useOccQueries || peel < m_maxNumPeels ); ++peel )
     {
 //        std::cout << "peel = " << peel << std::endl;
 

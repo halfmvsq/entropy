@@ -335,7 +335,7 @@ void SlideSlice::doUpdate(
 
     std::array< glm::vec2, sk_numVerts > texCoords;
 
-    for ( uint i = 0; i < sk_numVerts; ++i )
+    for ( uint32_t i = 0; i < sk_numVerts; ++i )
     {
         texCoords[i] = glm::vec2{ (*slideIntersectionPositions)[i] - p000 };
     }

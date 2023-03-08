@@ -27,7 +27,7 @@ public:
 
     ~DdpFinalPassQuad() override = default;
 
-    void setCurrentTextureID( uint i );
+    void setCurrentTextureID( uint32_t i );
 
 
 private:
@@ -42,7 +42,7 @@ private:
     std::array<GLTexture, 2>& m_frontBlenderTextures;
     GLTexture& m_backBlenderTexture;
 
-    uint m_currentTextureID;
+    uint32_t m_currentTextureID;
 };
 
 #endif // DDPFINALPASSQUAD_H

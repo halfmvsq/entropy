@@ -1095,7 +1095,7 @@ void renderImageHeader(
             char label[128];
             if ( const ImageColorMap* cmap = getImageColorMap( getCurrentImageColormapIndex() ) )
             {
-                snprintf( label, 128, "%s##cmap_%lu", cmap->name().c_str(), imageIndex );
+                snprintf( label, 128, "%s##cmap_%zu", cmap->name().c_str(), imageIndex );
 
                 ImGui::paletteButton(
                             label, static_cast<int>( cmap->numColors() ),

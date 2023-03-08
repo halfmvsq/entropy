@@ -4,7 +4,7 @@
 #include <uuid.h>
 
 class AppData;
-class Polygon;
+class PlanarPolygon;
 
 
 /**
@@ -16,7 +16,7 @@ class Polygon;
  *
  * @param[in,out] polygon Polygon to triangulate.
  */
-void triangulatePolygon( Polygon& polygon );
+void triangulatePolygon( PlanarPolygon& polygon );
 
 
 #endif // ANNOTATION_HELPER_H

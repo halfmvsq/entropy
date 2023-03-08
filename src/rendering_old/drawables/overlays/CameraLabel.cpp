@@ -82,7 +82,7 @@ CameraLabel::CameraLabel(
         throw_debug( "Unable to access UniformsProvider" );
     }
 
-    for ( uint i = 0; i < m_labels.size(); ++i )
+    for ( uint32_t i = 0; i < m_labels.size(); ++i )
     {
         m_labels[i].m_texture = letterTextures[i];
         m_labels[i].m_world_O_model = sk_ident;

@@ -19,7 +19,7 @@
 #include <memory>
 
 
-class Polygon;
+class PlanarPolygon;
 
 
 namespace gpuhelper
@@ -65,7 +65,7 @@ std::unique_ptr<SlideGpuRecord> createSlideGpuRecord( const slideio::SlideCpuRec
  *
  * @return
  */
-std::unique_ptr<SlideAnnotationGpuRecord> createSlideAnnotationGpuRecord( const Polygon& polygon );
+std::unique_ptr<SlideAnnotationGpuRecord> createSlideAnnotationGpuRecord( const PlanarPolygon& polygon );
 
 std::unique_ptr<GLTexture> createImageColorMapTexture( const ImageColorMap* );
 

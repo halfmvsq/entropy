@@ -104,7 +104,7 @@ MetaDataMap getMetaDataMap( const ::itk::ImageIOBase::Pointer imageIo )
         std::string value;
 
         itk::SpatialOrientation::ValidCoordinateOrientationFlags orientFlagsValue =
-                itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_INVALID;
+            itk::SpatialOrientationEnums::ValidCoordinateOrientations::ITK_COORDINATE_ORIENTATION_INVALID;
 
         if ( itk::ExposeMetaData< std::string >( dictionary, key, value ) )
         {

@@ -26,7 +26,7 @@ public:
 
     ~DdpBlendPassQuad() override = default;
 
-    void setCurrentTextureID( uint i );
+    void setCurrentTextureID( uint32_t i );
 
 
 private:
@@ -39,7 +39,7 @@ private:
     Uniforms m_uniforms;
 
     std::array<GLTexture, 2>& m_backTempTextures;
-    uint m_currentTextureID;
+    uint32_t m_currentTextureID;
 };
 
 #endif // DDPBLENDPASSQUAD_H

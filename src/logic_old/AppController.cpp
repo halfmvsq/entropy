@@ -23,7 +23,7 @@
 
 /////// START INCLUDES FOR TESTING ////////
 #include "rendering/utility/CreateGLObjects.h"
-#include "logic/annotation/Polygon.h"
+#include "logic/annotation/PlanarPolygon.h"
 #include "logic/annotation/AnnotationHelper.h"
 #include "logic/records/LandmarkGroupRecord.h"
 #include "logic/records/SlideAnnotationRecord.h"
@@ -75,9 +75,9 @@ CoordinateFrame makeTestSlideStackFrame( const imageio::ImageHeader& header )
 
 
 /// @test Make a polygon to test slide annotations
-std::unique_ptr<Polygon> makeTestPolygon( const glm::vec2& center )
+std::unique_ptr<PlanarPolygon> makeTestPolygon( const glm::vec2& center )
 {
-    auto polygon3 = std::make_unique<Polygon>();
+    auto polygon3 = std::make_unique<PlanarPolygon>();
 
     std::vector< glm::vec2 > outerBoundary;
 

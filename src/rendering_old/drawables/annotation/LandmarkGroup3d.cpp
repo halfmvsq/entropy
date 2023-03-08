@@ -191,7 +191,7 @@ void LandmarkGroup3d::doUpdate(
 
         glm::vec3 scaleFactors;
 
-        for ( uint i = 0; i < 3; ++i )
+        for ( uint32_t i = 0; i < 3; ++i )
         {
             switch ( (*scaling)[i].m_scalingMode )
             {

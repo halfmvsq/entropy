@@ -1,11 +1,11 @@
-#include "logic_old/annotation/Polygon.h"
+#include "logic_old/annotation/PlanarPolygon.h"
 
 #include "common/Exception.hpp"
 
 #include <glm/glm.hpp>
 
 
-Polygon::Polygon()
+PlanarPolygon::PlanarPolygon()
     :
       m_vertices(),
       m_triangulation(),
@@ -14,7 +14,7 @@ Polygon::Polygon()
 {}
 
 
-void Polygon::setAllVertices( std::vector< std::vector<PointType> > vertices )
+void PlanarPolygon::setAllVertices( std::vector< std::vector<PointType> > vertices )
 {
     m_vertices = std::move( vertices );
     m_triangulation.clear();
@@ -24,14 +24,14 @@ void Polygon::setAllVertices( std::vector< std::vector<PointType> > vertices )
 }
 
 
-const std::vector< std::vector<Polygon::PointType> >&
-Polygon::getAllVertices() const
+const std::vector< std::vector<PlanarPolygon::PointType> >&
+PlanarPolygon::getAllVertices() const
 {
     return m_vertices;
 }
 
 
-void Polygon::setBoundaryVertices( size_t boundary, std::vector<PointType> vertices )
+void PlanarPolygon::setBoundaryVertices( size_t boundary, std::vector<PointType> vertices )
 {
     m_vertices.at( boundary ) = std::move( vertices );
     m_triangulation.clear();
@@ -44,7 +44,7 @@ void Polygon::setBoundaryVertices( size_t boundary, std::vector<PointType> verti
 }
 
 
-void Polygon::setOuterBoundary( std::vector<PointType> vertices )
+void PlanarPolygon::setOuterBoundary( std::vector<PointType> vertices )
 {
     if ( m_vertices.size() >= 1 )
     {
@@ -62,7 +62,7 @@ void Polygon::setOuterBoundary( std::vector<PointType> vertices )
 }
 
 
-void Polygon::addHole( std::vector<PointType> vertices )
+void PlanarPolygon::addHole( std::vector<PointType> vertices )
 {
     if ( m_vertices.size() >= 1 )
     {
@@ -74,20 +74,20 @@ void Polygon::addHole( std::vector<PointType> vertices )
 }
 
 
-const std::vector< Polygon::PointType >&
-Polygon::getBoundaryVertices( size_t boundary ) const
+const std::vector< PlanarPolygon::PointType >&
+PlanarPolygon::getBoundaryVertices( size_t boundary ) const
 {
     return m_vertices.at( boundary );
 }
 
 
-size_t Polygon::numBoundaries() const
+size_t PlanarPolygon::numBoundaries() const
 {
     return m_vertices.size();
 }
 
 
-size_t Polygon::numVertices() const
+size_t PlanarPolygon::numVertices() const
 {
     size_t N = 0;
 
@@ -100,13 +100,13 @@ size_t Polygon::numVertices() const
 }
 
 
-const Polygon::PointType& Polygon::getBoundaryVertex( size_t boundary, size_t i ) const
+const PlanarPolygon::PointType& PlanarPolygon::getBoundaryVertex( size_t boundary, size_t i ) const
 {
     return m_vertices.at( boundary ).at( i );
 }
 
 
-const Polygon::PointType& Polygon::getVertex( size_t i ) const
+const PlanarPolygon::PointType& PlanarPolygon::getVertex( size_t i ) const
 {
     size_t j = i;
 
@@ -126,28 +126,28 @@ const Polygon::PointType& Polygon::getVertex( size_t i ) const
 }
 
 
-void Polygon::setTriangulation( std::vector<IndexType> indices )
+void PlanarPolygon::setTriangulation( std::vector<IndexType> indices )
 {
     m_triangulation = std::move( indices );
     m_currentUid = uuids::uuid();
 }
 
 
-bool Polygon::hasTriangulation() const
+bool PlanarPolygon::hasTriangulation() const
 {
     return ( ! m_triangulation.empty() );
 }
 
 
-const std::vector< Polygon::IndexType >&
-Polygon::getTriangulation() const
+const std::vector< PlanarPolygon::IndexType >&
+PlanarPolygon::getTriangulation() const
 {
     return m_triangulation;
 }
 
 
-std::tuple< Polygon::IndexType, Polygon::IndexType, Polygon::IndexType >
-Polygon::getTriangle( size_t i ) const
+std::tuple< PlanarPolygon::IndexType, PlanarPolygon::IndexType, PlanarPolygon::IndexType >
+PlanarPolygon::getTriangle( size_t i ) const
 {
     return std::make_tuple( m_triangulation.at( 3*i + 0 ),
                             m_triangulation.at( 3*i + 1 ),
@@ -155,32 +155,32 @@ Polygon::getTriangle( size_t i ) const
 }
 
 
-std::optional< Polygon::AABBoxType > Polygon::getAABBox() const
+std::optional< PlanarPolygon::AABBoxType > PlanarPolygon::getAABBox() const
 {
     return m_aabb;
 }
 
 
-size_t Polygon::numTriangles() const
+size_t PlanarPolygon::numTriangles() const
 {
     // Every three indices make a triangle
     return m_triangulation.size() / 3;
 }
 
 
-uuids::uuid Polygon::getCurrentUid() const
+uuids::uuid PlanarPolygon::getCurrentUid() const
 {
     return m_currentUid;
 }
 
 
-bool Polygon::equals( const uuids::uuid& otherPolygonUid ) const
+bool PlanarPolygon::equals( const uuids::uuid& otherPlanarPolygonUid ) const
 {
-    return ( m_currentUid == otherPolygonUid );
+    return ( m_currentUid == otherPlanarPolygonUid );
 }
 
 
-void Polygon::computeAABBox()
+void PlanarPolygon::computeAABBox()
 {
     if ( m_vertices.empty() || m_vertices[0].empty() )
     {

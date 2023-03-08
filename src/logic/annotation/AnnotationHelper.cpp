@@ -1,6 +1,6 @@
 #include "logic/annotation/AnnotationHelper.h"
 #include "logic/annotation/AnnotationGroup.h"
-#include "logic/annotation/Polygon.h"
+#include "logic/annotation/PlanarPolygon.h"
 
 #include "logic/AppData.h"
 
@@ -20,9 +20,9 @@ namespace util
 {
 
 template <>
-struct nth<0, Polygon::PointType>
+struct nth<0, PlanarPolygon::PointType>
 {
-    inline static auto get( const Polygon::PointType& point )
+    inline static auto get( const PlanarPolygon::PointType& point )
     {
         return point[0];
     }
@@ -31,7 +31,7 @@ struct nth<0, Polygon::PointType>
 template <>
 struct nth<1, Polygon::PointType>
 {
-    inline static auto get( const Polygon::PointType& point )
+    inline static auto get( const PlanarPolygon::PointType& point )
     {
         return point[1];
     }
@@ -41,7 +41,7 @@ struct nth<1, Polygon::PointType>
 } // namespace mapbox
 
 
-void triangulatePolygon( Polygon& polygon )
+void triangulatePolygon( PlanarPolygon& polygon )
 {
-    polygon.setTriangulation( mapbox::earcut<Polygon::IndexType>( polygon.getAllVertices() ) );
+    polygon.setTriangulation( mapbox::earcut<PlanarPolygon::IndexType>( polygon.getAllVertices() ) );
 }

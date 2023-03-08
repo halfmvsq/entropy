@@ -24,7 +24,7 @@
 namespace
 {
 
-static constexpr uint sk_imageComp = 0;
+static constexpr uint32_t sk_imageComp = 0;
 
 static const glm::mat4 sk_ident{ 1.0f };
 
@@ -626,7 +626,7 @@ void TexturedMesh::doRender( const RenderStage& stage )
         m_initUniforms.setValue( vert::camera_O_world, m_camera_O_world );
         m_initUniforms.setValue( vert::clip_O_camera, m_clip_O_camera );
 
-        for ( uint i = 0; i < 3; ++i )
+        for ( uint32_t i = 0; i < 3; ++i )
         {
             m_initUniforms.setValue( vert::worldClipPlanes[i], m_worldClipPlanes[i] );
         }
@@ -646,7 +646,7 @@ void TexturedMesh::doRender( const RenderStage& stage )
         uniforms->setValue( vert::camera_O_world, m_camera_O_world );
         uniforms->setValue( vert::clip_O_camera, m_clip_O_camera );
 
-        for ( uint i = 0; i < 3; ++i )
+        for ( uint32_t i = 0; i < 3; ++i )
         {
             uniforms->setValue( vert::worldClipPlanes[i], m_worldClipPlanes[i] );
         }
@@ -907,7 +907,7 @@ void TexturedMesh::doUpdate(
 
     if ( m_useOctantClipPlanes )
     {
-        for ( uint i = 0; i < 3; ++i )
+        for ( uint32_t i = 0; i < 3; ++i )
         {
             // Orient the plane to clip toward the camera normal direction
             const glm::vec3 worldNormalDir =
@@ -924,7 +924,7 @@ void TexturedMesh::doUpdate(
     {
         static const glm::vec4 k_zero{ 0.0f };
 
-        for ( uint i = 0; i < 3; ++i )
+        for ( uint32_t i = 0; i < 3; ++i )
         {
             m_worldClipPlanes[i] = k_zero;
         }

@@ -487,7 +487,7 @@ void BasicMesh::doRender( const RenderStage& stage )
         m_initUniforms.setValue( vert::camera_O_world, m_camera_O_world );
         m_initUniforms.setValue( vert::clip_O_camera, m_clip_O_camera );
 
-        for ( uint i = 0; i < 3; ++i )
+        for ( uint32_t i = 0; i < 3; ++i )
         {
             m_initUniforms.setValue( vert::worldClipPlanes[i], m_worldClipPlanes[i] );
         }
@@ -507,7 +507,7 @@ void BasicMesh::doRender( const RenderStage& stage )
         uniforms->setValue( vert::camera_O_world, m_camera_O_world );
         uniforms->setValue( vert::clip_O_camera, m_clip_O_camera );
 
-        for ( uint i = 0; i < 3; ++i )
+        for ( uint32_t i = 0; i < 3; ++i )
         {
             uniforms->setValue( vert::worldClipPlanes[i], m_worldClipPlanes[i] );
         }
@@ -600,7 +600,7 @@ void BasicMesh::doUpdate( double, const Viewport&, const camera::Camera& camera,
 
     if ( m_useOctantClipPlanes )
     {
-        for ( uint i = 0; i < 3; ++i )
+        for ( uint32_t i = 0; i < 3; ++i )
         {
             // Orient the plane to clip toward the camera normal direction
             const glm::vec3 worldNormalDir =
@@ -617,7 +617,7 @@ void BasicMesh::doUpdate( double, const Viewport&, const camera::Camera& camera,
     {
         static const glm::vec4 k_zero{ 0.0f };
 
-        for ( uint i = 0; i < 3; ++i )
+        for ( uint32_t i = 0; i < 3; ++i )
         {
             m_worldClipPlanes[i] = k_zero;
         }

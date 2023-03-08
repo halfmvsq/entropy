@@ -2,7 +2,7 @@
 
 #include "common/Exception.hpp"
 
-#include "logic_old/annotation/Polygon.h"
+#include "logic_old/annotation/PlanarPolygon.h"
 #include "logic/camera/CameraHelpers.h"
 #include "logic/camera/MathUtility.h"
 

@@ -1,5 +1,5 @@
-#ifndef POLYGON_H
-#define POLYGON_H
+#ifndef PLANAR_POLYGON_H
+#define PLANAR_POLYGON_H
 
 #include "common/AABB.h"
 
@@ -16,7 +16,7 @@
  * @brief A planar, closed polygon of any winding order that can have holes. Each vertex is 2D.
  * The polygon can have a triangulation that uses only its original vertices.
  */
-class Polygon
+class PlanarPolygon
 {
 public:
 
@@ -34,9 +34,9 @@ public:
 
 
     /// Construct empty polygon with no triangulation
-    explicit Polygon();
+    explicit PlanarPolygon();
 
-    ~Polygon() = default;
+    ~PlanarPolygon() = default;
 
 
     /// Set all vertices of the polygon. The first vector defines the main (outer) polygon boundary;
@@ -134,4 +134,4 @@ private:
     std::optional< AABBoxType > m_aabb;
 };
 
-#endif // POLYGON_H
+#endif // PLANAR_POLYGON_H

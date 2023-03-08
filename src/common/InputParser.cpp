@@ -2,6 +2,8 @@
 #include "common/InputParser.h"
 #include "common/Exception.hpp"
 
+#undef max
+
 #include <argparse/argparse.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <spdlog/spdlog.h>

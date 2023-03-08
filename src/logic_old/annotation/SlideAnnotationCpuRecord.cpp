@@ -1,5 +1,5 @@
 #include "logic_old/annotation/SlideAnnotationCpuRecord.h"
-#include "logic_old/annotation/Polygon.h"
+#include "logic_old/annotation/PlanarPolygon.h"
 
 #include <glm/glm.hpp>
 
@@ -25,7 +25,7 @@ SlideAnnotationCpuRecord::SlideAnnotationCpuRecord()
 }
 
 
-SlideAnnotationCpuRecord::SlideAnnotationCpuRecord( std::unique_ptr<Polygon> polygon )
+SlideAnnotationCpuRecord::SlideAnnotationCpuRecord( std::unique_ptr<PlanarPolygon> polygon )
     :
       m_polygon( std::move( polygon ) ),
       m_layer( 0 ),
@@ -36,13 +36,13 @@ SlideAnnotationCpuRecord::SlideAnnotationCpuRecord( std::unique_ptr<Polygon> pol
 }
 
 
-void SlideAnnotationCpuRecord::setPolygon( std::unique_ptr<Polygon> polygon )
+void SlideAnnotationCpuRecord::setPolygon( std::unique_ptr<PlanarPolygon> polygon )
 {
     m_polygon = std::move( polygon );
 }
 
 
-Polygon* SlideAnnotationCpuRecord::polygon()
+PlanarPolygon* SlideAnnotationCpuRecord::polygon()
 {
     if ( m_polygon )
     {

@@ -88,7 +88,7 @@ createTriaxialSliceDrawables(
 {
     std::array< std::shared_ptr<ImageSlice>, 3 > slices;
 
-    for ( uint i = 0; i < 3; ++i )
+    for ( uint32_t i = 0; i < 3; ++i )
     {
         std::ostringstream name;
         name << baseName << i << std::ends;

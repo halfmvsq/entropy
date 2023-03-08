@@ -290,7 +290,7 @@ void ImageSlice::doUpdate(
 
     const auto& H = image3dRecord->cpuData()->header();
 
-    for ( uint i = 0; i < 8; ++i )
+    for ( uint32_t i = 0; i < 8; ++i )
     {
         subjectCorners[i] = glm::vec3{ H.subjectBBoxCorners()[i] };
     }
@@ -329,7 +329,7 @@ void ImageSlice::doUpdate(
     // Convert Subject intersection positions and normal vector to World space
     intersection::IntersectionVertices worldIntersectionPositions;
 
-    for ( uint i = 0; i < SliceIntersector::s_numVertices; ++i )
+    for ( uint32_t i = 0; i < SliceIntersector::s_numVertices; ++i )
     {
         const glm::vec4 subjectPos{ (*subjectIntersectionPositions)[i], 1.0f };
         worldIntersectionPositions[i] = glm::vec3{ world_O_subject * subjectPos };

@@ -98,7 +98,7 @@ std::array< glm::vec3, 8 > slideCornersInStack( const SlideCpuRecord& record )
 
     std::array< glm::vec3, 8 > stackCorners;
 
-    for ( uint i = 0; i < 8; ++i )
+    for ( uint32_t i = 0; i < 8; ++i )
     {
         glm::vec4 c = M * sk_slideCorners[i];
         stackCorners[i] = ( c / c.w );
@@ -134,7 +134,7 @@ std::optional< AABB<float> > slideStackAABBoxInWorld(
 
         std::array< glm::vec3, 8 > worldCornersOfSlide;
 
-        for ( uint i = 0; i < 8; ++i )
+        for ( uint32_t i = 0; i < 8; ++i )
         {
             glm::vec4 c = world_O_slideStack * glm::vec4{ stackCornersOfSlide[i], 1.0f };
             worldCornersOfSlide[i] = ( c / c.w );

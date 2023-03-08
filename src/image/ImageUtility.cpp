@@ -142,8 +142,6 @@ ComponentType fromItkComponentType( const ::itk::IOComponentEnum& componentType 
     default:
     case itk::IOComponentEnum::UNKNOWNCOMPONENTTYPE: return ComponentType::Undefined;
     }
-
-    return ComponentType::Undefined;
 }
 
 
@@ -168,8 +166,6 @@ ComponentType fromItkComponentType( const ::itk::IOComponentEnum& componentType 
     default:
     case ComponentType::Undefined: return ::itk::IOComponentEnum::UNKNOWNCOMPONENTTYPE;
     }
-
-    return ::itk::IOComponentEnum::UNKNOWNCOMPONENTTYPE;
 }
 
 

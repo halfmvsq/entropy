@@ -2,13 +2,14 @@
 #define SLIDE_ANNOTATION_CPU_RECORD_H
 
 #include <glm/vec3.hpp>
+#include <uuid.h>
 
 #include <memory>
 
 class DataManager;
+class PlanarPolygon;
+
 enum class LayerChangeType;
-class Polygon;
-class UID;
 
 
 /**
@@ -21,7 +22,7 @@ class SlideAnnotationCpuRecord
     friend void setUniqueSlideAnnotationLayers( DataManager& );
 
     /// Friend helper function that changes the layer depth of annotations
-    friend void changeSlideAnnotationLayering( DataManager&, const UID&, const LayerChangeType& );
+    friend void changeSlideAnnotationLayering( DataManager&, const uuids::uuid&, const LayerChangeType& );
 
 
 public:
@@ -30,16 +31,16 @@ public:
     explicit SlideAnnotationCpuRecord();
 
     /// Construct annotation with a polygon
-    explicit SlideAnnotationCpuRecord( std::unique_ptr<Polygon> );
+    explicit SlideAnnotationCpuRecord( std::unique_ptr<PlanarPolygon> );
 
     ~SlideAnnotationCpuRecord() = default;
 
 
     /// Set the annotation's polygon
-    void setPolygon( std::unique_ptr<Polygon> );
+    void setPolygon( std::unique_ptr<PlanarPolygon> );
 
     /// Get non-const access to the annotation's polygon
-    Polygon* polygon();
+    PlanarPolygon* polygon();
 
 
     /// Get the annotation layer, with 0 being the backmost layer and layers increasing in value
@@ -66,7 +67,7 @@ public:
 private:
 
     /// Annotation polygon, which can include holes
-    std::unique_ptr<Polygon> m_polygon;
+    std::unique_ptr<PlanarPolygon> m_polygon;
 
     /// Internal layer of the annotation: 0 is the backmost layer and higher layers are more
     /// frontwards.

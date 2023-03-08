@@ -149,7 +149,7 @@ void renderSegLabelsChildWindow(
     for ( size_t i = 0; i < labelTable->numLabels(); ++i )
     {
         char labelIndexBuffer[8];
-        snprintf( labelIndexBuffer, 8, "%03lu", i );
+        snprintf( labelIndexBuffer, 8, "%03zu", i );
 
         bool labelVisible = labelTable->getVisible( i );
         std::string labelName = labelTable->getName( i );
@@ -401,7 +401,7 @@ void renderLandmarkChildWindow(
         const size_t pointIndex = p.first;
         auto& point = p.second;
 
-        snprintf( pointIndexBuffer, 8, "%03lu", pointIndex );
+        snprintf( pointIndexBuffer, 8, "%03zu", pointIndex );
 
         bool pointVisible = point.getVisibility();
         std::string pointName = point.getName();

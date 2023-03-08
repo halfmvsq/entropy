@@ -2,7 +2,7 @@
 
 #include "common/Exception.hpp"
 
-#include "logic_old/annotation/Polygon.h"
+#include "logic_old/annotation/PlanarPolygon.h"
 #include "logic/camera/CameraHelpers.h"
 #include "logic/camera/MathUtility.h"
 
@@ -219,7 +219,7 @@ bool AnnotationSlice::isMeshGpuRecordCurrent() const
         throw_debug( "Null slide annotation record" );
     }
 
-    const Polygon* polygon = annot->cpuData()->polygon();
+    const PlanarPolygon* polygon = annot->cpuData()->polygon();
     return ( m_currentAnnotationUid && polygon->equals( *m_currentAnnotationUid ) );
 }
 
@@ -239,7 +239,7 @@ void AnnotationSlice::updateMeshGpuRecord()
         throw_debug( "Null slide annotation record" );
     }
 
-    Polygon* polygon = annot->cpuData()->polygon();
+    PlanarPolygon* polygon = annot->cpuData()->polygon();
 
     // Save the new UID and reallocate a new GPU record:
     m_currentAnnotationUid = polygon->getCurrentUid();
@@ -346,7 +346,7 @@ void AnnotationSlice::doUpdate(
     std::vector< glm::vec3 > positions;
     std::vector< uint32_t > indices;
 
-    Polygon* polygon = annot->polygon();
+    PlanarPolygon* polygon = annot->polygon();
 
     for ( uint32_t i = 0; i < polygon->numTriangles(); ++i )
     {

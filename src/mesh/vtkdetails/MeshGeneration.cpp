@@ -69,7 +69,7 @@ vnl_matrix_fixed< double, 4, 4 > constructVTKImageToVoxelsMatrix(
     vnl_matrix_fixed< double, 4, 4 > voxels_O_VTK;
     voxels_O_VTK.set_identity();
 
-    for ( uint i = 0; i < 3; ++i )
+    for ( uint32_t i = 0; i < 3; ++i )
     {
         voxels_O_VTK( i, i ) = 1.0 / spacing[i];
         voxels_O_VTK( i, 3 ) = -origin[i] / spacing[i];

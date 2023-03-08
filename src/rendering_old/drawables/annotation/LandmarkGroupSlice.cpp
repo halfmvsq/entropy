@@ -1,7 +1,7 @@
 #include "rendering/drawables/annotation/LandmarkGroupSlice.h"
 
 #include "common/HZeeException.hpp"
-#include "logic/annotation/Polygon.h"
+#include "logic/annotation/PlanarPolygon.h"
 #include "logic/camera/CameraHelpers.h"
 
 #include "rendering/common/MeshPolygonOffset.h"
@@ -218,7 +218,7 @@ bool LandmarkSlice::isMeshGpuRecordCurrent() const
         throw_debug( "Null slide annotation record" );
     }
 
-    const Polygon* polygon = annot->cpuRecord()->polygon();
+    const PlanarPolygon* polygon = annot->cpuRecord()->polygon();
     return ( m_currentAnnotationUid && polygon->equals( *m_currentAnnotationUid ) );
 }
 
@@ -238,7 +238,7 @@ void LandmarkSlice::updateMeshGpuRecord()
         throw_debug( "Null slide annotation record" );
     }
 
-    Polygon* polygon = annot->cpuRecord()->polygon();
+    PlanarPolygon* polygon = annot->cpuRecord()->polygon();
 
     // Save the new UID and reallocate a new GPU record:
     m_currentAnnotationUid = polygon->getCurrentUid();
@@ -345,7 +345,7 @@ void LandmarkSlice::doUpdate(
     std::vector< glm::vec3 > positions;
     std::vector< uint32_t > indices;
 
-    Polygon* polygon = annot->polygon();
+    PlanarPolygon* polygon = annot->polygon();
 
     for ( uint32_t i = 0; i < polygon->numTriangles(); ++i )
     {
