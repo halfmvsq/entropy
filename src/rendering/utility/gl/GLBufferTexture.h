@@ -43,7 +43,7 @@ public:
     GLuint id() const;
 
     // Allocate buffer
-    void allocate( size_t numTexels, const GLvoid* data );
+    void allocate( std::size_t numTexels, const GLvoid* data );
 
     // Write to buffer
     void write( GLintptr offset, GLsizeiptr numTexels, const GLvoid* data );
@@ -59,8 +59,8 @@ public:
      *
      * @return Number of texels in the buffer texture's texel array
      */
-    size_t numTexels() const;
-    size_t numBytes() const;
+    std::size_t numTexels() const;
+    std::size_t numBytes() const;
 
     /**
      * @brief Attach buffer object's data store to a buffer texture object.

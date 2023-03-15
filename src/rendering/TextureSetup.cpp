@@ -426,7 +426,7 @@ createImageColorMapTextures( const AppData& appData )
     spdlog::debug( "Begin creating image color map textures" );
 
     // Loop through color maps in order of index
-    for ( size_t i = 0; i < appData.numImageColorMaps(); ++i )
+    for ( std::size_t i = 0; i < appData.numImageColorMaps(); ++i )
     {
         const auto cmapUid = appData.imageColorMapUid( i );
         if ( ! cmapUid )
@@ -487,7 +487,7 @@ createLabelColorTableTextures( const AppData& appData )
     spdlog::debug( "Begin creating 1D label color map textures" );
 
     // Loop through label tables in order of index
-    for ( size_t i = 0; i < appData.numLabelTables(); ++i )
+    for ( std::size_t i = 0; i < appData.numLabelTables(); ++i )
     {
         const auto tableUid = appData.labelTableUid( i );
         if ( ! tableUid )

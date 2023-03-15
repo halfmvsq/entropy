@@ -70,7 +70,7 @@ public:
      *
      * @note This calls bind() to first bind the texture
      */
-    void allocate( size_t size, const GLvoid* data );
+    void allocate( std::size_t size, const GLvoid* data );
 
     /**
      * @brief Updates a subset of a buffer object's data store
@@ -85,7 +85,7 @@ public:
      *
      * @note This calls bind()
      */
-    void write( size_t offset, size_t size, const GLvoid* data );
+    void write( std::size_t offset, std::size_t size, const GLvoid* data );
 
     /**
      * @brief returns a subset of a buffer object's data store.
@@ -101,7 +101,7 @@ public:
      * @param data Specifies a pointer to the location where buffer object data is returned
      * @return
      */
-    void read( size_t offset, size_t size, GLvoid* data );
+    void read( std::size_t offset, std::size_t size, GLvoid* data );
 
 
     /**
@@ -137,7 +137,7 @@ public:
      */
     bool unmap();
 
-    /// @todo Change GLsizeiptr and GLintptr to size_t
+    /// @todo Change GLsizeiptr and GLintptr to std::size_t
     void copyData( GLBufferObject& readBuffer, GLBufferObject& writeBuffer,
                    GLintptr readOffset, GLintptr writeOffset,
                    GLsizeiptr size );
@@ -146,7 +146,7 @@ public:
     BufferType type() const;
     BufferUsagePattern usagePattern() const;
 
-    size_t size() const;
+    std::size_t size() const;
 
 
 private:
@@ -159,7 +159,7 @@ private:
     GLenum m_typeEnum;
     BufferUsagePattern m_usagePattern;
 
-    size_t m_bufferSize;
+    std::size_t m_bufferSize;
 };
 
 #endif // GLBUFFEROBJECT_H

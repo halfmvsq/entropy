@@ -134,9 +134,9 @@ void GLVertexArrayObject::drawElements( const IndexedDrawParams& params )
 
 GLVertexArrayObject::IndexedDrawParams::IndexedDrawParams(
         const PrimitiveMode& primitiveMode,
-        size_t elementCount,
+        std::size_t elementCount,
         const IndexType& indexType,
-        size_t indexOffset )
+        std::size_t indexOffset )
     :
       m_primitiveMode( underlyingType( primitiveMode ) ),
       m_elementCount( 0 ),

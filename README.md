@@ -6,18 +6,22 @@ Copyright 2022 Penn Image Computing and Science Lab, Department of Radiology, Un
 
 ## Building
 
-Entropy requires C++17 and build generation uses CMake 3.16.0+. It builds on Linux, Mac, and Windows. Specifically, it has been built on the following OS versions:
+Entropy requires C++20 and build generation uses CMake 3.24.0+.
 
-* Ubuntu 20.04 (with gcc 9.3.0)
+### Operating systems
+Entropy builds on Linux, Windows, and macOS. Specifically, it has been built on the following OS versions:
+
+* Ubuntu 22.04 (with gcc 12.2.0)
+* Windows 8.1, 10, and 11 (with MSVC++ 17.3.4)
 * macOS 10.14.6, Intel x86_64 architecture (with clang 11.0.0)
 * macOS 13.0.1, Apple Silicon arm64 architecture (with clang 15.0.4)
-* Windows 8.1 and 10 (with MSVC++ 14.26)
 
+### External libraries
 Please download and install these libraries:
 
-* Boost, header libraries only (1.66.0+)
-* ITK (5.2.1+)
-* VTK (9.2.2+)
+* Boost, header libraries only (1.81.0)
+* Insight Toolkit, ITK (5.3.0)
+* Visualization Toolkit, VTK (9.2.6)
 
 More recent versions of ITK and Boost should also work with potentially minor modification to Entropy code. Please note that from Boost, only the header-only libraries (none of the compiled libraries) are required.
 
@@ -40,7 +44,10 @@ The following libraries and dependencies are brought in as Git submodules to the
 * stduuid (https://github.com/mariusbancila/stduuid)
 * TinyFSM (https://github.com/digint/tinyfsm)
 
-Please run `git submodule update --init --recursive` after cloning to get these submodules.
+After cloning the Entropy repository, run the folllowing command to clone the submodules:
+
+`git submodule update --init --recursive`
+
 
 The following external sources and libraries have been committed directly to the Entropy repository:
 
@@ -49,6 +56,15 @@ The following external sources and libraries have been committed directly to the
 * Local modifications to the ImGui bindings for GLFW and OpenGL 3 (see originals in externals/imgui/backends)
 * Local modifications to the ImGui file browser (https://github.com/AirGuanZ/imgui-filebrowser)
 
+
+### Development libraries (Linux)
+
+You may need to install additional development libraries for xrandr, xinerama, xcursor, and xi on Linux. On Debian, this can be done using
+
+`sudo apt-get install libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev`
+
+
+### External resources
 The following external resources have been committed directly to the Entropy repository:
 
 * Cousine font (https://fonts.google.com/specimen/Cousine)

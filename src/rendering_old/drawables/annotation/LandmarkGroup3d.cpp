@@ -189,7 +189,7 @@ void LandmarkGroup3d::doUpdate(
         // Size of one pixel in World space
         const float worldPixelSize = glm::compMax( worldPixelSizeAtWorldPosition( viewport, camera, worldPos ) );
 
-        glm::vec3 scaleFactors;
+        glm::vec3 scaleFactors{ 1.0f };
 
         for ( uint32_t i = 0; i < 3; ++i )
         {

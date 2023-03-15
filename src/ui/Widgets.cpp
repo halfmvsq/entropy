@@ -148,15 +148,14 @@ void renderSegLabelsChildWindow(
 
     for ( size_t i = 0; i < labelTable->numLabels(); ++i )
     {
-        char labelIndexBuffer[8];
-        snprintf( labelIndexBuffer, 8, "%03zu", i );
+        char labelIndexBuffer[32];
+        snprintf( labelIndexBuffer, 32, "%03zu", i );
 
         bool labelVisible = labelTable->getVisible( i );
         std::string labelName = labelTable->getName( i );
 
         // ImGui::ColorEdit represents color as non-pre-multiplied colors
-        glm::vec4 labelColor = glm::vec4{ labelTable->getColor( i ),
-                labelTable->getAlpha( i ) };
+        glm::vec4 labelColor = glm::vec4{ labelTable->getColor( i ), labelTable->getAlpha( i ) };
 
         ImGui::PushID( static_cast<int>( i ) ); /*** PushID i ***/
 
@@ -167,9 +166,7 @@ void renderSegLabelsChildWindow(
         }
 
         ImGui::SameLine();
-        if ( ImGui::ColorEdit4( labelIndexBuffer,
-                                glm::value_ptr( labelColor ),
-                                sk_colorEditFlags ) )
+        if ( ImGui::ColorEdit4( labelIndexBuffer, glm::value_ptr( labelColor ), sk_colorEditFlags ) )
         {
             labelTable->setColor( i, glm::vec3{ labelColor } );
             labelTable->setAlpha( i, labelColor.a );

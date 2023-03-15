@@ -3,6 +3,7 @@
 
 #include "common/Exception.hpp"
 
+#include <limits>
 
 GLBufferObject::GLBufferObject(
         const BufferType& type,
@@ -79,7 +80,7 @@ void GLBufferObject::unbind()
     CHECK_GL_ERROR( m_errorChecker );
 }
 
-void GLBufferObject::allocate( size_t size, const GLvoid* data )
+void GLBufferObject::allocate( std::size_t size, const GLvoid* data )
 {
     if ( size > static_cast<size_t>( std::numeric_limits<GLsizeiptr>::max() ) )
     {
@@ -96,7 +97,7 @@ void GLBufferObject::allocate( size_t size, const GLvoid* data )
     CHECK_GL_ERROR( m_errorChecker );
 }
 
-void GLBufferObject::write( size_t offset, size_t size, const GLvoid* data )
+void GLBufferObject::write( std::size_t offset, std::size_t size, const GLvoid* data )
 {
     if ( offset > static_cast<size_t>( std::numeric_limits<GLsizeiptr>::max() ) ||
          size > static_cast<size_t>( std::numeric_limits<GLsizeiptr>::max() ) )
@@ -111,7 +112,7 @@ void GLBufferObject::write( size_t offset, size_t size, const GLvoid* data )
     CHECK_GL_ERROR( m_errorChecker );
 }
 
-void GLBufferObject::read( size_t offset, size_t size, GLvoid* data )
+void GLBufferObject::read( std::size_t offset, std::size_t size, GLvoid* data )
 {
     glGetBufferSubData( m_typeEnum, static_cast<GLsizeiptr>( offset ),
                         static_cast<GLsizeiptr>( size ), data );

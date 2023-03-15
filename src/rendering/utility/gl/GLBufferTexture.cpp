@@ -158,12 +158,12 @@ void GLBufferTexture::unbind()
     m_texture.unbind();
 }
 
-void GLBufferTexture::allocate( size_t size, const GLvoid* data )
+void GLBufferTexture::allocate( std::size_t size, const GLvoid* data )
 {
     GLint maxSize;
     glGetIntegerv( GL_MAX_TEXTURE_BUFFER_SIZE, &maxSize );
 
-    if ( size > static_cast<size_t>( maxSize ) )
+    if ( size > static_cast<std::size_t>( maxSize ) )
     {
         std::ostringstream ss;
         ss << "Attempting to allocate " << size

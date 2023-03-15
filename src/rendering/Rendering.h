@@ -94,7 +94,7 @@ public:
 private:
 
     // Number of images rendered per metric view
-    static constexpr size_t NUM_METRIC_IMAGES = 2;
+    static constexpr std::size_t NUM_METRIC_IMAGES = 2;
 
     using ImgSegPair = std::pair< std::optional<uuids::uuid>, std::optional<uuids::uuid> >;
 

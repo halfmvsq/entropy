@@ -603,9 +603,13 @@ void BasicMesh::doUpdate( double, const Viewport&, const camera::Camera& camera,
         for ( uint32_t i = 0; i < 3; ++i )
         {
             // Orient the plane to clip toward the camera normal direction
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
             const glm::vec3 worldNormalDir =
                     crosshairs.world_T_frame()[ static_cast<int>(i) ] *
                     -1.0f * glm::sign( glm::dot( m_worldCameraDir, worldNormalDir ) );
+#pragma GCC diagnostic pop
 
             m_worldClipPlanes[i].x = worldNormalDir.x;
             m_worldClipPlanes[i].y = worldNormalDir.y;

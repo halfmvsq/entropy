@@ -392,7 +392,7 @@ void drawAnatomicalLabels(
                     label.miewportLabelPositions[1],
                     miewportMinCorner + inwardFontShift, miewportMaxCorner - inwardFontShift ) + vertFontShift;
 
-        const size_t idx = static_cast<size_t>( label.labelIndex );
+        const std::size_t idx = static_cast<size_t>( label.labelIndex );
 
         // Draw the text shadow:
         nvgFontBlur( nvg, 2.0f );
@@ -550,7 +550,7 @@ void drawLandmarks(
 
             for ( const auto& p : lmGroup->getPoints() )
             {
-                const size_t index = p.first;
+                const std::size_t index = p.first;
                 const PointRecord<glm::vec3>& point = p.second;
 
                 if ( ! point.getVisibility() ) continue;
@@ -646,7 +646,7 @@ void drawAnnotations(
     /// @todo Should annotation opacity be modulated with image opacity? Landmarks opacity is not.
     /// img->settings().opacity()
 
-    static constexpr size_t OUTER_BOUNDARY = 0;
+    static constexpr std::size_t OUTER_BOUNDARY = 0;
 
     // Color of selected vertices, edges, and the selection bounding box:
     static const glm::vec4 sk_green{ 0.0f, 1.0f, 0.0f, 0.75f };
@@ -884,8 +884,8 @@ void drawAnnotations(
             {
                 for ( const auto& highlightedVertex : annot->highlightedVertices() )
                 {
-                    const size_t boundary = highlightedVertex.first;
-                    const size_t vertexIndex = highlightedVertex.second;
+                    const std::size_t boundary = highlightedVertex.first;
+                    const std::size_t vertexIndex = highlightedVertex.second;
 
                     const auto selectedVertexCoords =
                             annot->polygon().getBoundaryVertex( boundary, vertexIndex );
@@ -996,7 +996,7 @@ void drawCrosshairs(
         else
         {
             // Oblique views get stippled crosshairs:
-            for ( size_t line = 0; line < 2; ++line )
+            for ( std::size_t line = 0; line < 2; ++line )
             {
                 const uint32_t numLines = static_cast<uint32_t>(
                             glm::distance( hits[line], pos.miewportXhairCenterPos ) / sk_stippleLen );

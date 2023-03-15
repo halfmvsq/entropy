@@ -90,8 +90,8 @@ void SliceIntersector::updatePlaneEquation(
         const glm::mat4& model_T_camera,
         const glm::mat4& model_T_frame )
 {
-    glm::vec3 position;
-    glm::vec3 normal;
+    glm::vec3 position{ 0.0f };
+    glm::vec3 normal{ 0.0f, 0.0f, 1.0f };
 
     switch ( m_positioningMethod )
     {
@@ -108,6 +108,7 @@ void SliceIntersector::updatePlaneEquation(
         break;
     }
     case intersection::PositioningMethod::UserDefined :
+    default:
     {
         position = m_userSlicePosition;
         break;
@@ -117,6 +118,7 @@ void SliceIntersector::updatePlaneEquation(
     switch ( m_alignmentMethod )
     {
     case intersection::AlignmentMethod::CameraZ :
+    default:
     {
         normal = glm::vec3( glm::inverseTranspose( model_T_camera )[2] );
         break;

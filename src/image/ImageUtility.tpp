@@ -56,8 +56,8 @@ ComponentStats<U> computeImageStatistics( const typename itk::Image<T, NDim>::Po
     statsFilter->SetInput( image );
     statsFilter->Update();
 
-    static constexpr size_t sk_numComponents = 1;
-    static constexpr size_t sk_numBins = 1001;
+    static constexpr std::size_t sk_numComponents = 1;
+    static constexpr std::size_t sk_numBins = 1001;
 
     typename HistogramType::SizeType size( sk_numComponents );
     size.Fill( sk_numBins );
@@ -101,13 +101,13 @@ ComponentStats<U> computeImageStatistics( const typename itk::Image<T, NDim>::Po
 
     while ( itr != end )
     {
-        stats.m_histogram.push_back( static_cast<U>( itr.GetFrequency() ) );
+        stats.m_histogram.push_back( static_cast<double>( itr.GetFrequency() ) );
         ++itr;
     }
 
     const double B = static_cast<double>( sk_numBins - 1 );
 
-    for ( size_t i = 0; i < sk_numBins; ++i )
+    for ( std::size_t i = 0; i < sk_numBins; ++i )
     {
         stats.m_quantiles[i] = histogram->Quantile( 0, i / B );
     }
@@ -117,9 +117,9 @@ ComponentStats<U> computeImageStatistics( const typename itk::Image<T, NDim>::Po
 
 
 template< typename T, typename U, uint32_t NDim >
-ComponentStats<U> createDefaultImageStatistics( T defaultValue, size_t numPixels )
+ComponentStats<U> createDefaultImageStatistics( T defaultValue, std::size_t numPixels )
 {
-    static constexpr size_t sk_numBins = 101;
+    static constexpr std::size_t sk_numBins = 101;
 
     ComponentStats<U> stats;
     stats.m_minimum = static_cast<U>( defaultValue );
@@ -128,9 +128,9 @@ ComponentStats<U> createDefaultImageStatistics( T defaultValue, size_t numPixels
     stats.m_stdDeviation = static_cast<U>( 0 );
     stats.m_variance = static_cast<U>( 0 );
     stats.m_sum = static_cast<U>( defaultValue * numPixels );
-    stats.m_histogram.resize( sk_numBins, static_cast<U>( 1.0 / sk_numBins ) );
+    stats.m_histogram.resize( sk_numBins, 0.0 );
 
-    for ( size_t i = 0; i < sk_numBins; ++i )
+    for ( std::size_t i = 0; i < sk_numBins; ++i )
     {
         stats.m_quantiles[i] = defaultValue;
     }
@@ -209,7 +209,7 @@ splitImageIntoComponents( const typename ::itk::ImageBase<NDim>::Pointer& imageB
             return splitImages;
         }
 
-        const size_t numPixels = vectorImage->GetBufferedRegion().GetNumberOfPixels();
+        const std::size_t numPixels = vectorImage->GetBufferedRegion().GetNumberOfPixels();
         const uint32_t numComponents = vectorImage->GetVectorLength();
 
         splitImages.resize( numComponents );
@@ -296,7 +296,7 @@ makeScalarImage(
         }
     }
 
-    const size_t numPixels = size[0] * size[1] * size[2];
+    const std::size_t numPixels = size[0] * size[1] * size[2];
 
     if ( 0 == numPixels )
     {
@@ -605,7 +605,7 @@ bool writeImage(
 
 
 template< class ComponentType >
-std::vector<ComponentType> createBuffer( const float* buffer, size_t numElements )
+std::vector<ComponentType> createBuffer( const float* buffer, std::size_t numElements )
 {
     std::vector<ComponentType> data;
     data.resize( numElements );
@@ -614,14 +614,14 @@ std::vector<ComponentType> createBuffer( const float* buffer, size_t numElements
     {
         // If casting to an unsigned integer type,
         // then set all negative values to 0 prior to casting
-        for ( size_t i = 0; i < numElements; ++i )
+        for ( std::size_t i = 0; i < numElements; ++i )
         {
             data[i] = static_cast<ComponentType>( std::max( buffer[i], 0.0f ) );
         }
     }
     else
     {
-        for ( size_t i = 0; i < numElements; ++i )
+        for ( std::size_t i = 0; i < numElements; ++i )
         {
             data[i] = static_cast<ComponentType>( buffer[i] );
         }
@@ -711,7 +711,7 @@ typename itk::Image<U, 3>::Pointer computeEuclideanDistanceMap(
     for ( uint32_t i = 0; i < 3; ++i )
     {
         // 1 is the minimum value for any dimension:
-        outputSize[i] = std::max( static_cast<size_t>( inputSize[i] * scale ), static_cast<size_t>(1ul) );
+        outputSize[i] = std::max( static_cast<std::size_t>( inputSize[i] * scale ), static_cast<std::size_t>(1ul) );
 
         // Adjust the scale factor
         scale = std::max( scale, static_cast<float>( outputSize[i] ) / static_cast<float>( inputSize[i] ) );

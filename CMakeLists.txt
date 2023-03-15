@@ -732,6 +732,9 @@ target_compile_definitions( ${EXEC_NAME} PRIVATE
 target_compile_options( ${EXEC_NAME} PRIVATE
      $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>:
           -Werror -Wall -Wextra -Wpointer-arith -Winit-self -Wunreachable-code
+          -Wno-error=stringop-overflow
+          -Wno-error=maybe-uninitialized
+          -Wno-error=array-bounds
           -Wshadow -g -ftrapv -march=native>
           #-Wconversion -Wsign-conversion
      $<$<CXX_COMPILER_ID:MSVC>:

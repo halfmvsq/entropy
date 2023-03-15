@@ -25,24 +25,24 @@ public:
 
         IndexedDrawParams(
                 const PrimitiveMode& primitiveMode,
-                size_t elementCount,
+                std::size_t elementCount,
                 const IndexType& indexType,
-                size_t indexOffset );
+                std::size_t indexOffset );
 
         IndexedDrawParams( const VertexIndicesInfo& indicesInfo );
 
         GLenum primitiveMode() const;
-        size_t elementCount() const;
+        std::size_t elementCount() const;
         GLenum indexType() const;
         GLvoid* indices() const;
 
-        void setElementCount( size_t c );
+        void setElementCount( std::size_t c );
 
 
     private:
 
         GLenum m_primitiveMode;
-        size_t m_elementCount;
+        std::size_t m_elementCount;
         GLenum m_indexType;
         GLvoid* m_indices;
     };
