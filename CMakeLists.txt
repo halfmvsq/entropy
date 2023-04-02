@@ -4,13 +4,12 @@ cmake_minimum_required( VERSION 3.10 FATAL_ERROR )
 # Versioning
 #--------------------------------------------------------------------------------
 set( APPNAME_FULL "Entropy" )
-set( ORGNAME_LINE_1 "Daniel H. Adler and the Penn Image Computing and Science Lab (PICSL)" )
-set( ORGNAME_LINE_2 "Department of Radiology" )
-set( ORGNAME_LINE_3 "University of Pennsylvania" )
+set( ORGNAME_LINE_1 "Copyright Daniel H. Adler and the Penn Image Computing and Science Lab (PICSL)" )
+set( ORGNAME_LINE_2 "Department of Radiology, University of Pennsylvania" )
 
 set( VERSION_MAJOR 0 )
 set( VERSION_MINOR 6 )
-set( VERSION_FEATURE 0 )
+set( VERSION_FEATURE 1 )
 set( VERSION_PATCH 0 )
 set( VERSION_FULL "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_FEATURE}.${VERSION_PATCH}" )
 
