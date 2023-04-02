@@ -16,6 +16,8 @@
 
 #include <IconFontCppHeaders/IconsForkAwesome.h>
 
+#define IMGUI_USER_CONFIG "ui/entropy_imgui_config.h"
+
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include <imgui/imgui.h>
 
