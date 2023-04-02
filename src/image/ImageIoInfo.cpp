@@ -128,19 +128,32 @@ MetaDataMap getMetaDataMap( const ::itk::ImageIOBase::Pointer imageIo )
         }
         else
         {
-            if ( setMetaDataEntry<   int8_t >( metaDataMap, dictionary, key ) ) { continue; }
-            if ( setMetaDataEntry<  uint8_t >( metaDataMap, dictionary, key ) ) { continue; }
-            if ( setMetaDataEntry<  int16_t >( metaDataMap, dictionary, key ) ) { continue; }
-            if ( setMetaDataEntry< uint16_t >( metaDataMap, dictionary, key ) ) { continue; }
-            if ( setMetaDataEntry<  int32_t >( metaDataMap, dictionary, key ) ) { continue; }
-            if ( setMetaDataEntry< uint32_t >( metaDataMap, dictionary, key ) ) { continue; }
-            if ( setMetaDataEntry<  int64_t >( metaDataMap, dictionary, key ) ) { continue; }
-            if ( setMetaDataEntry< uint64_t >( metaDataMap, dictionary, key ) ) { continue; }
-            if ( setMetaDataEntry<    float >( metaDataMap, dictionary, key ) ) { continue; }
-            if ( setMetaDataEntry<   double >( metaDataMap, dictionary, key ) ) { continue; }
+            if ( setMetaDataEntry< bool >( metaDataMap, dictionary, key ) ) { continue; }
+            if ( setMetaDataEntry< unsigned char >( metaDataMap, dictionary, key ) ) { continue; }
+            if ( setMetaDataEntry< char >( metaDataMap, dictionary, key ) ) { continue; }
+            if ( setMetaDataEntry< signed char >( metaDataMap, dictionary, key ) ) { continue; }
+            if ( setMetaDataEntry< unsigned short >( metaDataMap, dictionary, key ) ) { continue; }
+            if ( setMetaDataEntry< short >( metaDataMap, dictionary, key ) ) { continue; }
+            if ( setMetaDataEntry< unsigned int >( metaDataMap, dictionary, key ) ) { continue; }
+            if ( setMetaDataEntry< int >( metaDataMap, dictionary, key ) ) { continue; }
+            if ( setMetaDataEntry< unsigned long >( metaDataMap, dictionary, key ) ) { continue; }
+            if ( setMetaDataEntry< long >( metaDataMap, dictionary, key ) ) { continue; }
+            if ( setMetaDataEntry< unsigned long long >( metaDataMap, dictionary, key ) ) { continue; }
+            if ( setMetaDataEntry< long long >( metaDataMap, dictionary, key ) ) { continue; }
+            if ( setMetaDataEntry< float >( metaDataMap, dictionary, key ) ) { continue; }
+            if ( setMetaDataEntry< double >( metaDataMap, dictionary, key ) ) { continue; }
+            if ( setMetaDataEntry< std::vector<float> >( metaDataMap, dictionary, key ) ) { continue; }
+            if ( setMetaDataEntry< std::vector<double> >( metaDataMap, dictionary, key ) ) { continue; }
+            if ( setMetaDataEntry< std::vector<std::vector<float>> >( metaDataMap, dictionary, key ) ) { continue; }
+            if ( setMetaDataEntry< std::vector<std::vector<double>> >( metaDataMap, dictionary, key ) ) { continue; }
+            if ( setMetaDataEntry< itk::Array<char> >( metaDataMap, dictionary, key ) ) { continue; }
+            if ( setMetaDataEntry< itk::Array<int> >( metaDataMap, dictionary, key ) ) { continue; }
+            if ( setMetaDataEntry< itk::Array<float> >( metaDataMap, dictionary, key ) ) { continue; }
+            if ( setMetaDataEntry< itk::Array<double> >( metaDataMap, dictionary, key ) ) { continue; }
+            if ( setMetaDataEntry< itk::Matrix<float, 4, 4> >( metaDataMap, dictionary, key ) ) { continue; }
+            if ( setMetaDataEntry< itk::Matrix<double> >( metaDataMap, dictionary, key ) ) { continue; }
 
-            spdlog::error( "Key {} is of unsupported type {}", key,
-                           itr->second->GetMetaDataObjectTypeName() );
+            spdlog::info( "Key {} is of unsupported type {}", key, itr->second->GetMetaDataObjectTypeName() );
         }
     }
 

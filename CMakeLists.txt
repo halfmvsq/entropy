@@ -4,7 +4,7 @@ cmake_minimum_required( VERSION 3.10 FATAL_ERROR )
 # Versioning
 #--------------------------------------------------------------------------------
 set( APPNAME_FULL "Entropy" )
-set( ORGNAME_LINE_1 "Penn Image Computing and Science Lab" )
+set( ORGNAME_LINE_1 "Daniel H. Adler and the Penn Image Computing and Science Lab (PICSL)" )
 set( ORGNAME_LINE_2 "Department of Radiology" )
 set( ORGNAME_LINE_3 "University of Pennsylvania" )
 
@@ -53,10 +53,7 @@ endif()
 #--------------------------------------------------------------------------------
 find_package( VTK 9.2.6 REQUIRED )
 
-if( VTK_FOUND )
-    # no longer used after VTK 8.9
-    # include( ${VTK_USE_FILE} )
-else()
+if( NOT VTK_FOUND )
     message( SEND_ERROR "VTK was not found. Please set VTK_DIR." )
 endif()
 
@@ -145,7 +142,7 @@ target_include_directories( imgui PRIVATE ${IMGUI_INCLUDE_DIR} )
 target_compile_options( imgui PRIVATE
      $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>:
           -Werror -Wall -Wextra -Wpointer-arith -Winit-self -Wunreachable-code
-          -Wshadow -pedantic-errors -g -ftrapv -march=native>
+          -Wshadow -pedantic-errors -g -ftrapv>
      $<$<CXX_COMPILER_ID:MSVC>:
           /W4> )
 
@@ -188,7 +185,7 @@ target_include_directories( implot PRIVATE
 target_compile_options( implot PRIVATE
      $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>:
           -Wall -Wextra -Wpointer-arith -Winit-self -Wunreachable-code
-          -Wshadow -g -ftrapv -march=native>
+          -Wshadow -g -ftrapv>
      $<$<CXX_COMPILER_ID:MSVC>:
           /W4> )
 
@@ -334,10 +331,10 @@ execute_process(
     OUTPUT_VARIABLE ENTROPY_GIT_COMMIT_TIMESTAMP
     OUTPUT_STRIP_TRAILING_WHITESPACE )
 
-message( STATUS "Git commit info:")
-message( STATUS " -Hash: ${ENTROPY_GIT_COMMIT_SHA1}" )
-message( STATUS " -Date: ${ENTROPY_GIT_COMMIT_TIMESTAMP}" )
-message( STATUS " -Branch: ${ENTROPY_GIT_BRANCH}" )
+message( STATUS "Git commit information:")
+message( STATUS "   -Hash: ${ENTROPY_GIT_COMMIT_SHA1}" )
+message( STATUS "   -Date: ${ENTROPY_GIT_COMMIT_TIMESTAMP}" )
+message( STATUS "   -Branch: ${ENTROPY_GIT_BRANCH}" )
 
 string( TIMESTAMP BUILD_TIMESTAMP "%Y-%m-%d %H:%M:%S" UTC )
 
@@ -620,8 +617,6 @@ if( NOT CMAKE_BUILD_TYPE )
         STRING "Choose the type of build (Debug or Release)" FORCE )
 
     message( STATUS "Setting build type to '${default_build_type}' as none was specified." )
-
-    # Set the possible values of build type for cmake-gui
     set_property( CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" )
 endif()
 
@@ -630,12 +625,11 @@ if( ${CMAKE_BINARY_DIR} STREQUAL ${PROJECT_SOURCE_DIR} )
     message( FATAL_ERROR "Source and build directories are the same." )
 endif()
 
+set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O3" )
+set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fstack-protector-all -g" )
 
-#set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3" )
-#set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fstack-protector-all" )
-
-#message( "CMAKE_CXX_FLAGS_DEBUG is ${CMAKE_CXX_FLAGS_DEBUG}" )
-#message( "CMAKE_CXX_FLAGS_RELEASE is ${CMAKE_CXX_FLAGS_RELEASE}" )
+message( "CMAKE_CXX_FLAGS_DEBUG is ${CMAKE_CXX_FLAGS_DEBUG}" )
+message( "CMAKE_CXX_FLAGS_RELEASE is ${CMAKE_CXX_FLAGS_RELEASE}" )
 
 
 # if( UNIX AND NOT APPLE )
@@ -730,13 +724,17 @@ target_compile_definitions( ${EXEC_NAME} PRIVATE
     ${VTK_DEFINITIONS} )
 
 target_compile_options( ${EXEC_NAME} PRIVATE
-     $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>:
+     $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>:
           -Werror -Wall -Wextra -Wpointer-arith -Winit-self -Wunreachable-code
           -Wno-error=stringop-overflow
           -Wno-error=maybe-uninitialized
           -Wno-error=array-bounds
-          -Wshadow -g -ftrapv -march=native>
+          -Wshadow -g -ftrapv>
           #-Wconversion -Wsign-conversion
+     $<$<CXX_COMPILER_ID:AppleClang>:
+          -Werror -Wall -Wextra -Wpointer-arith -Winit-self -Wunreachable-code
+          -Wno-error=array-bounds
+          -Wshadow -g -ftrapv>
      $<$<CXX_COMPILER_ID:MSVC>:
           /W4> )
 

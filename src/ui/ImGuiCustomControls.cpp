@@ -1,6 +1,6 @@
 #include "ui/ImGuiCustomControls.h"
 
-#define IMGUI_DEFINE_MATH_OPERATORS
+// #define IMGUI_DEFINE_MATH_OPERATORS
 #include <imgui/imgui_internal.h>
 
 // File browser for ImGui:
@@ -74,8 +74,8 @@ bool paletteButton(
 
     const float borderY = ( lineH < size.y ) ? 0.0f : 0.5f * ( lineH - size.y );
 
-    const ImVec2 posMin = bb.Min + ImVec2( 0, borderY );
-    const ImVec2 posMax = bb.Max - ImVec2( 0, borderY );
+    const ImVec2 posMin = ImVec2( bb.Min.x, bb.Min.y + borderY );
+    const ImVec2 posMax = ImVec2( bb.Max.x, bb.Max.y - borderY );
     const int width = static_cast<int>( posMax.x - posMin.x );
 
     ImDrawList* drawList = ImGui::GetWindowDrawList();

@@ -1087,8 +1087,7 @@ bool EntropyApp::loadSerializedImage(
 
             if ( ! linked )
             {
-                spdlog::error( "Unable to assigned landmark group {} to image {}",
-                               lmGroupUid, *imageUid );
+                spdlog::error( "Unable to assigned landmark group {} to image {}", lmGroupUid, *imageUid );
             }
         }
         else
@@ -1201,7 +1200,7 @@ bool EntropyApp::loadSerializedImage(
         {
             if ( segInfo.isNewSeg )
             {
-                spdlog::info( "Loaded segmentation from \"{}\" for image {} as {}",
+                spdlog::info( "Loaded segmentation from file \"{}\" for image {} as {}",
                               serializedSeg.m_segFileName, *imageUid, *segInfo.uid );
 
                 // New segmentation needs a new table

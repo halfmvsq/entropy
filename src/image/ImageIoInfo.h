@@ -106,8 +106,25 @@ public:
 
 
 using MetaDataMap = std::unordered_map< std::string,
-    std::variant< std::string, int8_t, uint8_t, int16_t, uint16_t,
-                  int32_t, uint32_t, int64_t, uint64_t, float, double > >;
+    std::variant<
+        bool,
+        unsigned char, char, signed char,
+        unsigned short, short,
+        unsigned int, int,
+        unsigned long, long,
+        unsigned long long, long long,
+        float, double,
+        std::string,
+        std::vector<float>,
+        std::vector<double>,
+        std::vector<std::vector<float>>,
+        std::vector<std::vector<double>>,
+        itk::Array<char>,
+        itk::Array<int>,
+        itk::Array<float>,
+        itk::Array<double>,
+        itk::Matrix<float, 4, 4>,
+        itk::Matrix<double> > >;
 
 class ImageIoInfo
 {

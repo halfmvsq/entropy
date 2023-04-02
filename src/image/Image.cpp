@@ -47,13 +47,13 @@ Image::Image(
 
         if ( ! imageIo || imageIo.IsNull() )
         {
-            spdlog::error( "Error creating ImageIOBase for image '{}'", fileName );
+            spdlog::error( "Error creating ImageIOBase for image from file '{}'", fileName );
             throw_debug( "Error creating ImageIOBase" )
         }
 
         if ( ! m_ioInfoOnDisk.set( imageIo ) )
         {
-            spdlog::error( "Error setting image IO information for image '{}'", fileName );
+            spdlog::error( "Error setting image IO information for image from file '{}'", fileName );
             throw_debug( "Error setting image IO information" )
         }
 
@@ -79,7 +79,7 @@ Image::Image(
 
             if ( ! baseImage )
             {
-                spdlog::error( "Unable to read vector image from '{}'", fileName );
+                spdlog::error( "Unable to read vector image from file '{}'", fileName );
                 throw_debug( "Unable to read vector image" )
             }
 
@@ -119,7 +119,7 @@ Image::Image(
 
             if ( 0 == numCompsToLoad )
             {
-                spdlog::error( "No components to load for image '{}'", fileName );
+                spdlog::error( "No components to load for image from file '{}'", fileName );
                 throw_debug( "No components to load for image" )
             }
 
@@ -132,7 +132,7 @@ Image::Image(
 
                 if ( ! allComponentBuffers )
                 {
-                    spdlog::error( "Null buffer holding all components of image '{}'", fileName );
+                    spdlog::error( "Null buffer holding all components of image from file '{}'", fileName );
                     throw_debug( "Null image buffer" )
                 }
             }
@@ -142,7 +142,7 @@ Image::Image(
             {
                 if ( ! componentImages[i] )
                 {
-                    spdlog::error( "Null vector image component {} for image '{}'", i, fileName );
+                    spdlog::error( "Null vector image component {} for image from file '{}'", i, fileName );
                     throw_debug( "Null vector component for image" )
                 }
 
@@ -150,7 +150,7 @@ Image::Image(
 
                 if ( ! buffer )
                 {
-                    spdlog::error( "Null buffer of vector image component {} for image '{}'", i, fileName );
+                    spdlog::error( "Null buffer of vector image component {} for image from file '{}'", i, fileName );
                     throw_debug( "Null buffer of vector image component" )
                 }
 
@@ -206,7 +206,7 @@ Image::Image(
 
             if ( ! baseImage )
             {
-                spdlog::error( "Unable to read image '{}'", fileName );
+                spdlog::error( "Unable to read image from file '{}'", fileName );
                 throw_debug( "Unable to read image" )
             }
 
@@ -215,7 +215,7 @@ Image::Image(
 
             if ( ! image )
             {
-                spdlog::error( "Null image for {}", fileName );
+                spdlog::error( "Null image for file '{}'", fileName );
                 throw_debug( "Null image" )
             }
 
@@ -223,7 +223,7 @@ Image::Image(
 
             if ( ! buffer )
             {
-                spdlog::error( "Null buffer of scalar image '{}'", fileName );
+                spdlog::error( "Null buffer of scalar image from file '{}'", fileName );
                 throw_debug( "Null buffer of scalar image" )
             }
 
@@ -257,12 +257,12 @@ Image::Image(
     }
     catch ( const std::exception& e )
     {
-        spdlog::error( "Exception while constructing image from '{}': {}", fileName, e.what() );
+        spdlog::error( "Exception while constructing image from file '{}': {}", fileName, e.what() );
         throw_debug( "Exception while constructing image" )
     }
     catch ( ... )
     {
-        spdlog::error( "Exception while constructing image from '{}'", fileName );
+        spdlog::error( "Exception while constructing image from file '{}'", fileName );
         throw_debug( "Exception while constructing image" )
     }
 
@@ -346,7 +346,7 @@ Image::Image(
 
         if ( 0 == numCompsToLoad )
         {
-            spdlog::error( "No components to create for image '{}'", m_header.fileName() );
+            spdlog::error( "No components to create for image from file '{}'", m_header.fileName() );
             throw_debug( "No components to create for image" )
         }
 
@@ -489,7 +489,7 @@ void Image::loadImageBuffer( const float* buffer, size_t numElements )
 
     case CType::UNKNOWNCOMPONENTTYPE:
     {
-        spdlog::error( "Unknown component type in image {}", m_ioInfoOnDisk.m_fileInfo.m_fileName );
+        spdlog::error( "Unknown component type in image from file '{}'", m_ioInfoOnDisk.m_fileInfo.m_fileName );
         throw_debug( "Unknown component type in image" )
         }
     }
@@ -621,7 +621,7 @@ void Image::loadSegBuffer( const float* buffer, size_t numElements )
 
     case CType::UNKNOWNCOMPONENTTYPE:
     {
-        spdlog::error( "Unknown component type in image {}", m_ioInfoOnDisk.m_fileInfo.m_fileName );
+        spdlog::error( "Unknown component type in image from file '{}'", m_ioInfoOnDisk.m_fileInfo.m_fileName );
         throw_debug( "Unknown component type in image" )
         }
     }
@@ -1081,7 +1081,7 @@ std::ostream& Image::metaData( std::ostream& os ) const
     for ( const auto& p : m_ioInfoInMemory.m_metaData )
     {
         os << p.first << ": ";
-        std::visit( [&os] ( const auto& e ) { os << e; }, p.second );
+        // std::visit( [&os] ( const auto& e ) { os << e; }, p.second );
         os << std::endl;
     }
     return os;

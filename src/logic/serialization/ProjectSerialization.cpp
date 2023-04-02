@@ -90,6 +90,7 @@ void applyToImagePaths(
 }
 
 
+#if ! HAS_IOS_BASE_FAILURE_DERIVED_FROM_SYSTEM_ERROR
 /**
  * @see Safe C Library: https://github.com/rurban/safeclib
  *
@@ -157,7 +158,6 @@ size_t strerrorlen_s( int errnum )
     }
 }
 
-
 /**
  * @brief Use \c spdlog to log the errno.
  * 
@@ -175,6 +175,7 @@ void logStdErrno()
 
     spdlog::error( "Error #{}: {}", errno, errmsg );
 }
+#endif 
 
 } // anonymous
 
