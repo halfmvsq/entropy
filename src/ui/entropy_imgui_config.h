@@ -1,5 +1,7 @@
+#pragma once
+
 #include <spdlog/spdlog.h>
+#include <spdlog/fmt/ostr.h>
 
-#define MyAssert(_EXPR) do { spdlog::warn( "ImGui assert: {}", _EXPR ) } while(0);
-
-#define IM_ASSERT(_EXPR)  MyAssert(_EXPR)
+// #define IM_ASSERT( EXPR ) spdlog::warn( "ImGui assert: {}", #EXPR )
+#define IM_ASSERT( EXPR ) 1

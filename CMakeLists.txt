@@ -71,6 +71,13 @@ set( Boost_USE_STATIC_LIBS ON )  # only find static libs
 
 
 #--------------------------------------------------------------------------------
+# spdlog (included as Git submodule):
+# Very fast, header-only/compiled, C++ logging library
+#--------------------------------------------------------------------------------
+set( SPDLOG_INCLUDE_DIR ${EXT_DIR}/spdlog/include )
+
+
+#--------------------------------------------------------------------------------
 # GLFW library (included as Git submodule):
 # An Open Source, multi-platform library for OpenGL, OpenGL ES and
 # Vulkan application development. It provides a simple, platform-independent API
@@ -126,6 +133,8 @@ set( IMGUI_SRC_DIR ${EXT_DIR}/imgui )
 set( IMGUI_INCLUDE_DIR ${EXT_DIR}/imgui )
 set( IMGUI_BINDINGS_DIR ${SRC_DIR}/ui/imgui )
 
+add_compile_definitions( IMGUI_USER_CONFIG="ui/entropy_imgui_config.h" )
+
 list( APPEND IMGUI_SOURCES
     ${IMGUI_SRC_DIR}/imgui.cpp
     ${IMGUI_SRC_DIR}/imgui_demo.cpp
@@ -136,12 +145,17 @@ list( APPEND IMGUI_SOURCES
 
 add_library( imgui STATIC ${IMGUI_SOURCES} )
 
-target_include_directories( imgui PRIVATE ${IMGUI_INCLUDE_DIR} )
+target_include_directories( imgui PRIVATE
+    ${IMGUI_INCLUDE_DIR}
+    ${SRC_DIR} # needed for IMGUI_USER_CONFIG file
+    ${SPDLOG_INCLUDE_DIR} # needed for spdlog.h included in IMGUI_USER_CONFIG
+    )
 
 target_compile_options( imgui PRIVATE
      $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>:
           -Werror -Wall -Wextra -Wpointer-arith -Winit-self -Wunreachable-code
           -Wshadow -pedantic-errors -g -ftrapv>
+          -Wno-error=deprecated-copy
      $<$<CXX_COMPILER_ID:MSVC>:
           /W4> )
 
@@ -179,7 +193,10 @@ add_library( implot STATIC ${IMPLOT_SOURCES} )
 
 target_include_directories( implot PRIVATE
     ${IMPLOT_INCLUDE_DIR}
-    ${IMGUI_INCLUDE_DIR} )
+    ${IMGUI_INCLUDE_DIR}
+    ${SRC_DIR} # needed for IMGUI_USER_CONFIG file
+    ${SPDLOG_INCLUDE_DIR} # needed for spdlog.h included in IMGUI_USER_CONFIG
+    )
 
 target_compile_options( implot PRIVATE
      $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>:
@@ -224,13 +241,6 @@ set( JSON_INCLUDE_DIR ${EXT_DIR}/json/include )
 # Shading Language (GLSL) specifications.
 #--------------------------------------------------------------------------------
 set( GLM_INCLUDE_DIR ${EXT_DIR}/glm )
-
-
-#--------------------------------------------------------------------------------
-# spdlog (included as Git submodule):
-# Very fast, header-only/compiled, C++ logging library
-#--------------------------------------------------------------------------------
-set( SPDLOG_INCLUDE_DIR ${EXT_DIR}/spdlog/include )
 
 
 #--------------------------------------------------------------------------------
