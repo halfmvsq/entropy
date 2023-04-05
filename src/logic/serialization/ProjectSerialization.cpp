@@ -34,7 +34,8 @@ namespace fs = ghc::filesystem;
 #endif
 
 
-#if defined(_LIBCPP_VERSION) && (_LIBCPP_VERSION >= 1000)
+//#if defined(_LIBCPP_VERSION) && (_LIBCPP_VERSION >= 1000)
+#if ! defined (_MSC_VER)
 #define HAS_IOS_BASE_FAILURE_DERIVED_FROM_SYSTEM_ERROR 1
 #else
 #define HAS_IOS_BASE_FAILURE_DERIVED_FROM_SYSTEM_ERROR 0
@@ -171,7 +172,7 @@ void logStdErrno()
 {
     const size_t errmsglen = strerrorlen_s( errno ) + 1;
     std::unique_ptr<char[]> errmsg( new char[errmsglen] );
-    strerror_s( errmsg.get(), errmsglen, errno);
+    strerror_s( errmsg.get(), errmsglen, errno );
 
     spdlog::error( "Error #{}: {}", errno, errmsg );
 }

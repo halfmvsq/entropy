@@ -4,4 +4,4 @@
 #include <spdlog/fmt/ostr.h>
 
 // #define IM_ASSERT( EXPR ) spdlog::warn( "ImGui assert: {}", #EXPR )
-#define IM_ASSERT( EXPR ) 1
+#define IM_ASSERT( EXPR )

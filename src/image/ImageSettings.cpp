@@ -556,7 +556,7 @@ float ImageSettings::slope_native_T_texture() const
     }
     default:
     {
-        spdlog::error( "Invalid component type {}", m_componentType );
+        spdlog::error( "Invalid component type {}", componentTypeString( m_componentType ) );
         return 1.0f;
     }
     }
@@ -784,7 +784,7 @@ double ImageSettings::mapNativeIntensityToTexture( double nativeImageValue ) con
     }
     default:
     {
-        spdlog::error( "Invalid component type {}", m_componentType );
+        spdlog::error( "Invalid component type {}", componentTypeString( m_componentType ) );
         return nativeImageValue;
     }
     }

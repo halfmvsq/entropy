@@ -156,6 +156,8 @@ target_compile_options( imgui PRIVATE
           -Werror -Wall -Wextra -Wpointer-arith -Winit-self -Wunreachable-code
           -Wshadow -pedantic-errors -g -ftrapv>
           -Wno-error=deprecated-copy
+          -Wno-error=empty-body
+          -Wno-empty-body # suppressed due to empty IM_ASSERT
      $<$<CXX_COMPILER_ID:MSVC>:
           /W4> )
 
@@ -200,8 +202,7 @@ target_include_directories( implot PRIVATE
 
 target_compile_options( implot PRIVATE
      $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>:
-          -Wall -Wextra -Wpointer-arith -Winit-self -Wunreachable-code
-          -Wshadow -g -ftrapv>
+          -Wall -Wextra -Wpointer-arith -Winit-self -Wunreachable-code -Wshadow -g -ftrapv>
      $<$<CXX_COMPILER_ID:MSVC>:
           /W4> )
 
@@ -735,9 +736,10 @@ target_compile_definitions( ${EXEC_NAME} PRIVATE
 target_compile_options( ${EXEC_NAME} PRIVATE
      $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>:
           -Werror -Wall -Wextra -Wpointer-arith -Winit-self -Wunreachable-code
-          -Wno-error=stringop-overflow
-          -Wno-error=maybe-uninitialized
           -Wno-error=array-bounds
+          -Wno-error=empty-body
+          -Wno-error=maybe-uninitialized
+          -Wno-error=stringop-overflow
           -Wshadow -g -ftrapv>
           #-Wconversion -Wsign-conversion
      $<$<CXX_COMPILER_ID:AppleClang>:
