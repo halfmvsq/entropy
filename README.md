@@ -2,7 +2,10 @@
 
 *A cross-platform tool for interactively visualizing, comparing, segmenting, and annotating 3D medical images.*
 
-Copyright 2022 Penn Image Computing and Science Lab, Department of Radiology, University of Pennsylvania.
+Copyright 2022-2023 Daniel H. Adler
+Copyright 2020-2021 Daniel H. Adler and the Penn Image Computing and Science Lab, Department of Radiology, University of Pennsylvania.
+All rights reserved.
+
 
 ## Building
 
