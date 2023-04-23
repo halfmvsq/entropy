@@ -12,12 +12,12 @@ All rights reserved.
 Entropy requires C++20 and build generation uses CMake 3.24.0+.
 
 ### Operating systems
-Entropy builds on Linux, Windows, and macOS. Specifically, it has been built on the following OS versions:
+Entropy builds on Linux, Windows, and macOS. It is currently tested on the following:
 
 * Ubuntu 22.04 (with gcc 12.2.0)
 * Windows 8.1, 10, and 11 (with MSVC++ 17.3.4)
+* macOS 13.1, Apple Silicon arm64 architecture (with clang 15.0.4)
 * macOS 10.14.6, Intel x86_64 architecture (with clang 11.0.0)
-* macOS 13.0.1, Apple Silicon arm64 architecture (with clang 15.0.4)
 
 ### External libraries
 Please download and install these libraries:

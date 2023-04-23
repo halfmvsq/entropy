@@ -48,7 +48,9 @@ public:
     /// Run the render loop
     void run();
 
-    /// Resize the window
+    /// Resize the window according to the number of pixels in the window framebuffer
+    /// @param[in] width Window framebuffer width
+    /// @param[in] height Window framebuffer height
     void resize( int width, int height );
 
     /// Render one frame

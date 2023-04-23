@@ -117,7 +117,7 @@ void renderAboutDialogModalPopup( bool open )
         ImGui::Text( "%s (version %s)", ENTROPY_APPNAME_FULL, ENTROPY_VERSION_FULL );
 
         ImGui::Spacing();
-        ImGui::Text( "Copyright 2021" );
+        ImGui::Text( "Copyright 2021-2023" );
         ImGui::Text( "%s,", ENTROPY_ORGNAME_LINE1 );
         ImGui::Text( "%s,", ENTROPY_ORGNAME_LINE2 );
         ImGui::Text( "%s", ENTROPY_ORGNAME_LINE3 );
@@ -157,6 +157,7 @@ void renderConfirmCloseAppPopup( AppData& appData )
 
     ImGui::SetNextWindowPos( center, ImGuiCond_Appearing, ImVec2( 0.5f, 0.5f ) );
 
+    ImGui::SetNextItemWidth( -1.0f );
     if ( ImGui::BeginPopupModal( "Quit?", nullptr,
                                  ImGuiWindowFlags_Modal |
                                  ImGuiWindowFlags_NoDecoration ) )
@@ -174,6 +175,9 @@ void renderConfirmCloseAppPopup( AppData& appData )
         ImGui::SetItemDefaultFocus();
 
         ImGui::SameLine();
+
+        ImGui::SetNextItemWidth( -1.0f );
+
         if ( ImGui::Button( "No", ImVec2( 80, 0 ) ) )
         {
             appData.state().setQuitApp( false );

@@ -26,7 +26,7 @@ uniform sampler3D imgTex[4]; // Texture units 0, 5, 6, 7: Red, green, blue, alph
 uniform usampler3D segTex; // Texture unit 1: segmentation
 uniform sampler1D segLabelCmapTex; // Texutre unit 3: label color map (pre-mult RGBA)
 
-uniform bool useTricubicInterpolation; // Whether to use tricubic interpolation
+// uniform bool useTricubicInterpolation; // Whether to use tricubic interpolation
 
 // Slope and intercept for mapping texture intensity to normalized intensity, accounting for window-leveling
 uniform vec2 imgSlopeIntercept[4];
@@ -149,10 +149,8 @@ float interpolateTricubicFast( sampler3D tex, vec3 coord )
 
 float getImageValue( sampler3D tex, vec3 texCoord, vec2 minMax )
 {
-    return clamp( mix(
-        texture( tex, texCoord )[0],
-        interpolateTricubicFast( tex, texCoord ),
-        float(useTricubicInterpolation) ), minMax[0], minMax[1] );
+    return clamp( texture( tex, texCoord )[0], minMax[0], minMax[1] );
+    // interpolateTricubicFast( tex, texCoord )
 }
 
 

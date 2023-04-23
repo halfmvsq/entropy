@@ -217,16 +217,16 @@ float interpolateTricubicFast( sampler3D tex, vec3 coord )
 
 
 /// Look up the image value (after mapping to GL texture units)
-//float getImageValue( sampler3D tex, vec3 texCoords, float minVal, float maxVal )
-//{
-//    return clamp( texture( tex, texCoords )[0], minVal, maxVal );
-//}
+float getImageValue( sampler3D tex, vec3 texCoords, float minVal, float maxVal )
+{
+   return clamp( texture( tex, texCoords )[0], minVal, maxVal );
+}
 
 
- float getImageValue( sampler3D tex, vec3 texCoords, float minVal, float maxVal )
- {
-     return clamp( interpolateTricubicFast(tex, texCoords), minVal, maxVal );
- }
+//  float getImageValue( sampler3D tex, vec3 texCoords, float minVal, float maxVal )
+//  {
+//      return clamp( interpolateTricubicFast(tex, texCoords), minVal, maxVal );
+//  }
 
 // float computeProjection( float img )
 // {

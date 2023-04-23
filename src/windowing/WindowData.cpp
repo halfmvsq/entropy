@@ -435,6 +435,8 @@ WindowData::WindowData()
       m_viewport( 0, 0, 800, 800 ),
       m_windowPos( 0, 0 ),
       m_windowSize( 800, 800 ),
+      m_framebufferSize( 800, 800 ),
+      m_contentScaleRatio( 1.0f, 1.0f ),
 
       m_layouts(),
       m_currentLayout( 0 ),
@@ -798,11 +800,16 @@ void WindowData::setViewport( float left, float bottom, float width, float heigh
     updateAllViews();
 }
 
-void WindowData::setDeviceScaleRatio( const glm::vec2& scale )
+void WindowData::setContentScaleRatio( const glm::vec2& scale )
 {
-    spdlog::trace( "Setting device scale ratio to {}x{}", scale.x, scale.y );
-    m_viewport.setDevicePixelRatio( scale );
+    spdlog::trace( "Setting content scale ratio to {}x{}", scale.x, scale.y );
+    m_contentScaleRatio = scale;
     updateAllViews();
+}
+
+const glm::vec2& WindowData::getContentScaleRatio() const
+{
+    return m_contentScaleRatio;
 }
 
 void WindowData::setWindowPos( int posX, int posY )
@@ -817,12 +824,43 @@ const glm::ivec2& WindowData::getWindowPos() const
 
 void WindowData::setWindowSize( int width, int height )
 {
-    m_windowSize = glm::ivec2{ width, height };
+    static const glm::ivec2 sk_minWindowSize{ 1, 1 };
+    m_windowSize = glm::max( glm::ivec2{ width, height }, sk_minWindowSize );
+
+    const glm::vec2 ratio = framebufferToWindowRatio();
+    spdlog::trace( "Setting device scale ratio to {}x{}", ratio.x, ratio.y );
+    m_viewport.setDevicePixelRatio( ratio );
+
+    updateAllViews();
 }
 
 const glm::ivec2& WindowData::getWindowSize() const
 {
     return m_windowSize;
+}
+
+void WindowData::setFramebufferSize( int width, int height )
+{
+    static const glm::ivec2 sk_minFramebufferSize { 1, 1 };
+    m_framebufferSize = glm::max( glm::ivec2{ width, height }, sk_minFramebufferSize );
+
+    const glm::vec2 ratio = framebufferToWindowRatio();
+    spdlog::trace( "Setting device scale ratio to {}x{}", ratio.x, ratio.y );
+    m_viewport.setDevicePixelRatio( ratio );
+
+    updateAllViews();
+}
+
+const glm::ivec2& WindowData::getFramebufferSize() const
+{
+    return m_framebufferSize;
+}
+
+glm::vec2 WindowData::framebufferToWindowRatio() const
+{
+    return glm::vec2{
+        static_cast<float>( m_framebufferSize.x ) / static_cast<float>( m_windowSize.x ),
+        static_cast<float>( m_framebufferSize.y ) / static_cast<float>( m_windowSize.y ) };
 }
 
 void WindowData::setViewOrientationConvention( const ViewConvention& convention )

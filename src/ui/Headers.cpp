@@ -50,7 +50,9 @@ static const ImVec4 sk_whiteText( 1, 1, 1, 1 );
 static const ImVec4 sk_blackText( 0, 0, 0, 1 );
 
 /// Size of small toolbar buttons (pixels)
-static const ImVec2 sk_smallToolbarButtonSize( 24, 24 );
+////// static const ImVec2 sk_smallToolbarButtonSize( 24, 24 );
+/// @todo FIX PROPERLY
+static const ImVec2 sk_smallToolbarButtonSize( 48, 48 );
 
 static const std::string sk_referenceAndActiveImageMessage( "This is the reference and active image" );
 static const std::string sk_referenceImageMessage( "This is the reference image" );

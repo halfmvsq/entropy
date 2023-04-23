@@ -29,7 +29,9 @@ GlfwWrapper::GlfwWrapper( EntropyApp* app, int glMajorVersion, int glMinorVersio
       m_backupWindowPosX( 0 ),
       m_backupWindowPosY( 0 ),
       m_backupWindowWidth( 1 ),
-      m_backupWindowHeight( 1 )
+      m_backupWindowHeight( 1 ),
+      m_backupFramebufferWidth( 1 ),
+      m_backupFramebufferHeight( 1 )
 {
     if ( ! app )
     {
@@ -114,6 +116,7 @@ GlfwWrapper::GlfwWrapper( EntropyApp* app, int glMajorVersion, int glMinorVersio
     glfwSetWindowCloseCallback( m_window, windowCloseCallback );
     glfwSetWindowPosCallback( m_window, windowPositionCallback );
     glfwSetWindowSizeCallback( m_window, windowSizeCallback );
+    glfwSetFramebufferSizeCallback( m_window, framebufferSizeCallback );
 
     glfwSetCursorPosCallback( m_window, cursorPosCallback );
     glfwSetDropCallback( m_window, dropCallback );
@@ -190,6 +193,9 @@ void GlfwWrapper::init()
 
     glfwGetWindowSize( m_window, &m_backupWindowWidth, &m_backupWindowHeight );
     windowSizeCallback( m_window, m_backupWindowWidth, m_backupWindowHeight );
+
+    glfwGetWindowSize( m_window, &m_backupFramebufferWidth, &m_backupFramebufferHeight );
+    framebufferSizeCallback( m_window, m_backupFramebufferWidth, m_backupFramebufferHeight );
 
     float xscale, yscale;
     glfwGetWindowContentScale( m_window, &xscale, &yscale );

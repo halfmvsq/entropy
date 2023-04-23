@@ -15,7 +15,7 @@ uniform sampler3D imgTex; // Texture unit 0: image
 uniform usampler3D segTex; // Texture unit 1: segmentation
 uniform usampler3D jumpTex; // Texture unit 5: distance texture
 
-uniform bool useTricubicInterpolation; // Whether to use tricubic interpolation
+// uniform bool useTricubicInterpolation; // Whether to use tricubic interpolation
 
 uniform mat4 imgTexture_T_world;
 uniform mat4 world_T_imgTexture;
@@ -122,10 +122,8 @@ float interpolateTricubicFast( sampler3D tex, vec3 coord )
 
 float getImageValue( sampler3D tex, vec3 texCoord )
 {
-    return mix(
-        texture( tex, texCoord )[0],
-        interpolateTricubicFast( tex, texCoord ),
-        float(useTricubicInterpolation) );
+    return texture( tex, texCoord )[0];
+    // interpolateTricubicFast( tex, texCoord )
 }
 
 

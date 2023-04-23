@@ -27,7 +27,7 @@ uniform sampler3D imgTex[2]; // Texture units 0/1: images
 uniform usampler3D segTex[2]; // Texture units 2/3: segmentations
 uniform sampler1D segLabelCmapTex[2]; // Texutre unit 6/7: label color tables (pre-mult RGBA)
 
-uniform bool useTricubicInterpolation; // Whether to use tricubic interpolation
+// uniform bool useTricubicInterpolation; // Whether to use tricubic interpolation
 
 uniform vec2 imgSlopeIntercept[2]; // Slopes and intercepts for image window-leveling
 uniform float segOpacity[2]; // Segmentation opacities
@@ -160,10 +160,8 @@ float getSegInteriorAlpha( int texNum, uint seg )
 
 float getImageValue( sampler3D tex, vec3 texCoord )
 {
-    return mix(
-        texture( tex, texCoord )[0],
-        interpolateTricubicFast( tex, texCoord ),
-        float(useTricubicInterpolation) );
+    return texture( tex, texCoord )[0];
+    // interpolateTricubicFast( tex, texCoord )
 }
 
 

@@ -109,16 +109,37 @@ public:
     /// Set the window viewport (in device-independent pixel units)
     void setViewport( float left, float bottom, float width, float height );
 
-    /// Set ratio of framebuffer to window unit coordinates
-    void setDeviceScaleRatio( const glm::vec2& ratio );
+    /**
+     * @brief Set/get the window content scale ratio
+     * 
+     * @see GLFW
+     * The content scale is the ratio between the current DPI and the platform's default DPI.
+     * This is especially important for text and any UI elements. If the pixel dimensions of your UI
+     * scaled by this look appropriate on your machine then it should appear at a reasonable size on
+     * other machines regardless of their DPI and scaling settings. This relies on the system DPI and
+     * scaling settings being somewhat correct.
+     * 
+     * On systems where each monitors can have its own content scale, the window content scale will depend
+     * on which monitor the system considers the window to be on.
+     */
+    void setContentScaleRatio( const glm::vec2& ratio );
+    const glm::vec2& getContentScaleRatio() const;
 
     /// Set/get the window position in screen space. This does not move the window.
     void setWindowPos( int posX, int posY );
     const glm::ivec2& getWindowPos() const;
 
-    /// Set/get the whole window size
+    /// Set/get the whole window size, which is specified in artificial units that do not
+    /// necessarily correspond to real screen pixels, as is the case when DPI scaling is activated.
     void setWindowSize( int width, int height );
     const glm::ivec2& getWindowSize() const;
+
+    /// Set/get the framebuffer size in pixel units.
+    void setFramebufferSize( int width, int height );
+    const glm::ivec2& getFramebufferSize() const;
+
+    /// Compute the ratio of framebuffer pixels to window size
+    glm::vec2 framebufferToWindowRatio() const;
 
     /// Set/get the view orientation convention
     void setViewOrientationConvention( const ViewConvention& convention );
@@ -165,8 +186,13 @@ private:
     // Window position in screen space with (0, 0) at bottom left corner of the screen
     glm::ivec2 m_windowPos;
 
-    // Whole window size
+    // Window size, measured in "artificial" screen coordinates. This should not be passed to glViewport.
     glm::ivec2 m_windowSize;
+
+    // Window framebuffer size, measured in pixels. This is the size that should be passed to glViewport.
+    glm::ivec2 m_framebufferSize;
+
+    glm::vec2 m_contentScaleRatio;
 
     std::vector<Layout> m_layouts; // All view layouts
     size_t m_currentLayout; // Index of the layout currently on display

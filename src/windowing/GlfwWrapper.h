@@ -146,6 +146,9 @@ private:
 
     int m_backupWindowWidth;
     int m_backupWindowHeight;
+
+    int m_backupFramebufferWidth;
+    int m_backupFramebufferHeight;
 };
 
 #endif // GLFW_WRAPPER_H

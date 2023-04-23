@@ -153,6 +153,22 @@ ImGuiWrapper::ImGuiWrapper(
     // Apply a custom dark style:
     applyCustomDarkStyle();
 
+    /*
+    Q: How should I handle DPI in my application?
+    The short answer is: obtain the desired DPI scale, load your fonts resized with that scale (always round down fonts
+    size to the nearest integer), and scale your Style structure accordingly using style.ScaleAllSizes().
+
+    Your application may want to detect DPI change and reload the fonts and reset style between frames.
+
+    Your ui code should avoid using hardcoded constants for size and positioning. Prefer to express values as multiple of
+    reference values such as ImGui::GetFontSize() or ImGui::GetFrameHeight(). So e.g. instead of seeing a hardcoded height of
+    500 for a given item/window, you may want to use 30*ImGui::GetFontSize() instead.
+    */
+
+    // For correct scaling, prefer to reload font + rebuild ImFontAtlas + call style.ScaleAllSizes().
+    ImGuiStyle& style = ImGui::GetStyle();
+    style.ScaleAllSizes( 2.0f );
+
     // Setup ImGui platform/renderer bindings:
     static const char* glsl_version = "#version 150";
     ImGui_ImplGlfw_InitForOpenGL( window, true );
@@ -292,20 +308,22 @@ void ImGuiWrapper::initializeData()
     // calling ImFontAtlas::Build()/GetTexDataAsXXXX(), which ImGui_ImplXXXX_NewFrame below will call.
 /// @todo use Freetype Rasterizer and Small Font Sizes
 
-    m_appData.guiData().m_fonts[cousineFontPath] = loadFont( cousineFontPath, cousineFontConfig, cousineFontSize, nullptr );
-    m_appData.guiData().m_fonts[cousineFontPath + forkAwesomeFontPath] = loadFont( forkAwesomeFontPath, forkAwesomeFontConfig, forkAwesomeFontSize, forkAwesomeIconGlyphRange );
+    const float contentScaleRatio = 2.0f;
+    
+    m_appData.guiData().m_fonts[cousineFontPath] = loadFont( cousineFontPath, cousineFontConfig, contentScaleRatio * cousineFontSize, nullptr );
+    m_appData.guiData().m_fonts[cousineFontPath + forkAwesomeFontPath] = loadFont( forkAwesomeFontPath, forkAwesomeFontConfig, contentScaleRatio * forkAwesomeFontSize, forkAwesomeIconGlyphRange );
 
-    m_appData.guiData().m_fonts[helveticaFontPath] = loadFont( helveticaFontPath, helveticaFontConfig, helveticaFontSize, nullptr );
-    m_appData.guiData().m_fonts[helveticaFontPath + forkAwesomeFontPath] = loadFont( forkAwesomeFontPath, forkAwesomeFontConfig, forkAwesomeFontSize, forkAwesomeIconGlyphRange );
+    m_appData.guiData().m_fonts[helveticaFontPath] = loadFont( helveticaFontPath, helveticaFontConfig, contentScaleRatio * helveticaFontSize, nullptr );
+    m_appData.guiData().m_fonts[helveticaFontPath + forkAwesomeFontPath] = loadFont( forkAwesomeFontPath, forkAwesomeFontConfig, contentScaleRatio * forkAwesomeFontSize, forkAwesomeIconGlyphRange );
 
-    m_appData.guiData().m_fonts[spaceGroteskFontPath] = loadFont( spaceGroteskFontPath, spaceGroteskFontConfig, spaceGroteskFontSize, nullptr );
-    m_appData.guiData().m_fonts[spaceGroteskFontPath + forkAwesomeFontPath] = loadFont( forkAwesomeFontPath, forkAwesomeFontConfig, forkAwesomeFontSize, forkAwesomeIconGlyphRange );
+    m_appData.guiData().m_fonts[spaceGroteskFontPath] = loadFont( spaceGroteskFontPath, spaceGroteskFontConfig, contentScaleRatio * spaceGroteskFontSize, nullptr );
+    m_appData.guiData().m_fonts[spaceGroteskFontPath + forkAwesomeFontPath] = loadFont( forkAwesomeFontPath, forkAwesomeFontConfig, contentScaleRatio * forkAwesomeFontSize, forkAwesomeIconGlyphRange );
 
-    m_appData.guiData().m_fonts[sfMonoFontPath] = loadFont( sfMonoFontPath, sfMonoFontConfig, sfMonoFontSize, nullptr );
-    m_appData.guiData().m_fonts[sfMonoFontPath + forkAwesomeFontPath] = loadFont( forkAwesomeFontPath, forkAwesomeFontConfig, forkAwesomeFontSize, forkAwesomeIconGlyphRange );
+    m_appData.guiData().m_fonts[sfMonoFontPath] = loadFont( sfMonoFontPath, sfMonoFontConfig, contentScaleRatio * sfMonoFontSize, nullptr );
+    m_appData.guiData().m_fonts[sfMonoFontPath + forkAwesomeFontPath] = loadFont( forkAwesomeFontPath, forkAwesomeFontConfig, contentScaleRatio * forkAwesomeFontSize, forkAwesomeIconGlyphRange );
 
-    m_appData.guiData().m_fonts[sfProFontPath] = loadFont( sfProFontPath, sfProFontConfig, sfProFontSize, nullptr );
-    m_appData.guiData().m_fonts[sfProFontPath + forkAwesomeFontPath] = loadFont( forkAwesomeFontPath, forkAwesomeFontConfig, forkAwesomeFontSize, forkAwesomeIconGlyphRange );
+    m_appData.guiData().m_fonts[sfProFontPath] = loadFont( sfProFontPath, sfProFontConfig, contentScaleRatio * sfProFontSize, nullptr );
+    m_appData.guiData().m_fonts[sfProFontPath + forkAwesomeFontPath] = loadFont( forkAwesomeFontPath, forkAwesomeFontConfig, contentScaleRatio * forkAwesomeFontSize, forkAwesomeIconGlyphRange );
 
     // if ( m_appData.guiData().m_cousineFont )
     // {

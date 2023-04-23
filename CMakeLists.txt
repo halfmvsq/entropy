@@ -24,6 +24,11 @@ set( RES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/resources )
 set( EXT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/externals )
 
 
+# CMake will generate a file compile_commands.json under the build directory.
+# VSCode is able to parse the file and find the include path based on its content.
+add_definitions( -DCMAKE_EXPORT_COMPILE_COMMANDS=ON )
+
+
 #--------------------------------------------------------------------------------
 # OpenGL version
 #--------------------------------------------------------------------------------

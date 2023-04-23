@@ -46,7 +46,7 @@ void errorCallback( int error, const char* description )
 }
 
 
-void windowContentScaleCallback( GLFWwindow* window, float fbToWinScaleX, float fbToWinScaleY )
+void windowContentScaleCallback( GLFWwindow* window, float contentScaleX, float contentScaleY )
 {
     auto app = reinterpret_cast<EntropyApp*>( glfwGetWindowUserPointer( window ) );
     if ( ! app )
@@ -55,7 +55,7 @@ void windowContentScaleCallback( GLFWwindow* window, float fbToWinScaleX, float 
         return;
     }
 
-    app->windowData().setDeviceScaleRatio( glm::vec2{ fbToWinScaleX, fbToWinScaleY } );
+    app->windowData().setContentScaleRatio( glm::vec2{ contentScaleX, contentScaleY } );
 }
 
 
@@ -101,10 +101,27 @@ void windowSizeCallback( GLFWwindow* window, int windowWidth, int windowHeight )
         return;
     }
 
+    // This call sets the window size and viewport
     app->resize( windowWidth, windowHeight );
     app->render();
 
     // The app sometimes crashes on macOS without this call
+    glfwSwapBuffers( window );
+}
+
+
+void framebufferSizeCallback( GLFWwindow* window, int fbWidth, int fbHeight )
+{
+    auto app = reinterpret_cast<EntropyApp*>( glfwGetWindowUserPointer( window ) );
+    if ( ! app )
+    {
+        spdlog::warn( "App is null in framebuffer size callback" );
+        return;
+    }
+
+    app->windowData().setFramebufferSize( fbWidth, fbHeight );
+    app->render();
+
     glfwSwapBuffers( window );
 }
 

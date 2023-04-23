@@ -22,7 +22,7 @@ uniform float segOpacity[N]; // Segmentation opacities
 // Texture sampling directions (horizontal and vertical) for calculating the segmentation outline
 uniform vec3 texSamplingDirsForSegOutline[2];
 
-uniform bool useTricubicInterpolation; // Whether to use tricubic interpolation
+// uniform bool useTricubicInterpolation; // Whether to use tricubic interpolation
 
 // Opacity of the interior of the segmentation
 uniform float segInteriorOpacity;
@@ -131,10 +131,8 @@ float getSegInteriorAlpha( int texNum, uint seg )
 
 float getImageValue( sampler3D tex, vec3 texCoord )
 {
-    return mix(
-        texture( tex, texCoord )[0],
-        interpolateTricubicFast( tex, texCoord ),
-        float(useTricubicInterpolation) );
+    return texture( tex, texCoord )[0];
+    // interpolateTricubicFast( tex, texCoord )
 }
 
 
