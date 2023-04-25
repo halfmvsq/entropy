@@ -492,14 +492,24 @@ createLabelColorTableTextures( const AppData& appData )
         const auto tableUid = appData.labelTableUid( i );
         if ( ! tableUid )
         {
-            spdlog::warn( "Label table index {} is invalid", i );
+            spdlog::error( "Label table index {} is invalid", i );
             continue;
         }
 
         const auto* table = appData.labelTable( *tableUid );
         if ( ! table )
         {
-            spdlog::warn( "Label table {} is invalid", *tableUid );
+            spdlog::error( "Label table {} is invalid", *tableUid );
+            continue;
+        }
+
+        int maxTexSize;
+        glGetIntegerv( GL_MAX_3D_TEXTURE_SIZE, &maxTexSize );
+
+        if ( table->numLabels() > static_cast<size_t>(maxTexSize) )
+        {
+            spdlog::error( "Number of labels ({}) in label color table {} exceeds maximum texture dimension size of {}",
+                           table->numLabels(), *tableUid, maxTexSize );
             continue;
         }
 
@@ -515,6 +525,9 @@ createLabelColorTableTextures( const AppData& appData )
                    tex::BufferPixelFormat::RGBA,
                    tex::BufferPixelDataType::Float32,
                    table->colorData_RGBA_premult_F32() );
+
+        spdlog::debug( "Generated and set data for texture of size {} for label color table {}",
+                       table->numLabels(), *tableUid );
 
         // We should never sample outside the texture coordinate range [0.0, 1.0], anyway
         T.setBorderColor( sk_border );

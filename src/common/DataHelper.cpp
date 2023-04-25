@@ -353,39 +353,41 @@ createLabelColorTableForSegmentation(
     }
 
     // What's the largest label value in this segmentation?
-    const int64_t maxLabel = static_cast<int64_t>( seg->settings().componentStatistics().m_maximum );
-    spdlog::debug( "Maximum label value in segmentation {} is {}", segUid, maxLabel );
+    const int64_t maxLabelInSeg = static_cast<int64_t>( seg->settings().componentStatistics().m_maximum );
+    spdlog::debug( "Maximum label value in segmentation {} is {}", segUid, maxLabelInSeg );
 
     // What's the largest value supported by the segmentation image component type?
     const auto minMaxCompValues = componentRange( seg->header().memoryComponentType() );
-    const int64_t maxNumLabels = static_cast<int64_t>( minMaxCompValues.second - minMaxCompValues.first + 1 );
+    const int64_t maxNumLabelsForComp = static_cast<int64_t>( minMaxCompValues.second - minMaxCompValues.first + 1 );
 
     spdlog::debug( "Maximum label value supported by the component type ({}) of segmentation {} is {}",
                    seg->header().memoryComponentTypeAsString(), segUid, minMaxCompValues.second );
 
     // Allocate color table with 256 labels, so that it fits into a 1 byte segmentation image
     constexpr int64_t k_numLabels = 256;
+    /// @todo The label color table needs to allocate labels as map instead of as vector
+    /// Only allocate labels in table for labels that are used in segmentation.
 
     // cannot allocate more than is allowed by the segmentation type!!!
 //    const int64_t k_numLabels = std::min( static_cast<int64_t>(65536),
 //                                          static_cast<int64_t>(minMaxCompValues.second) + 1 );
 
-    if ( maxLabel > k_numLabels - 1 )
+    if ( maxLabelInSeg > k_numLabels - 1 )
     {
         spdlog::warn( "A color table is being allocated with {} labels, which is fewer than "
                       "the number required to represent the maximum label ({}) in segmentation {}",
-                      k_numLabels, maxLabel, segUid );
+                      k_numLabels, maxLabelInSeg, segUid );
     }
 
-    if ( maxNumLabels > k_numLabels )
+    if ( maxNumLabelsForComp > k_numLabels )
     {
         spdlog::info( "A color table is being allocated with {} labels, which is fewer than "
                       "the number of labels ({}) that can be represented by the pixel component type "
                       "({}) of segmentation {}",
-                      k_numLabels, maxNumLabels, seg->header().memoryComponentTypeAsString(), segUid );
+                      k_numLabels, maxNumLabelsForComp, seg->header().memoryComponentTypeAsString(), segUid );
     }
 
-    const size_t newTableIndex = appData.addLabelColorTable( k_numLabels, maxNumLabels );
+    const size_t newTableIndex = appData.addLabelColorTable( k_numLabels, maxNumLabelsForComp );
     seg->settings().setLabelTableIndex( newTableIndex );
 
     spdlog::info( "Create new label color table (index {}) for segmentation {}", newTableIndex, segUid );

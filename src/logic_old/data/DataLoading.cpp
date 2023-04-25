@@ -219,7 +219,7 @@ std::optional<UID> loadParcellation(
     }
 
     const size_t tableSize = static_cast<size_t>(
-                minMaxLabelValues.second - minMaxLabelValues.first + 1 );
+        minMaxLabelValues.second - minMaxLabelValues.first + 1 );
 
     auto labelTableRecord = details::createLabelTableRecord( tableSize );
     if ( ! labelTableRecord )
