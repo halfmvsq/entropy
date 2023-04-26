@@ -139,7 +139,7 @@ public:
     const glm::ivec2& getFramebufferSize() const;
 
     /// Compute the ratio of framebuffer pixels to window size
-    glm::vec2 framebufferToWindowRatio() const;
+    glm::vec2 computeFramebufferToWindowRatio() const;
 
     /// Set/get the view orientation convention
     void setViewOrientationConvention( const ViewConvention& convention );

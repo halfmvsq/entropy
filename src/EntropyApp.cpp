@@ -257,82 +257,19 @@ void EntropyApp::onImagesReady()
 }
 
 
-void EntropyApp::resize( int width, int height )
+void EntropyApp::resize( int windowWidth, int windowHeight )
 {
-    // Set margins based on visibility of the menu, toolbars, and status bar:
-    float marginLeft = 0.0f;
-    float marginRight = 0.0f;
-    float marginBottom = 0.0f;
-    float marginTop = 0.0f;
+    const auto margins = guiData().computeMargins();
 
-    if ( m_data.guiData().m_showMainMenuBar )
-    {
-        marginTop += m_data.guiData().m_mainMenuBarDims.y;
-    }
-
-    // Corners: -1 custom, 0 top-left, 1 top-right, 2 bottom-left, 3 bottom-right
-
-    if ( m_data.guiData().m_showModeToolbar )
-    {
-        if ( m_data.guiData().m_isModeToolbarHorizontal )
-        {
-            if ( 0 == m_data.guiData().m_modeToolbarCorner || 1 == m_data.guiData().m_modeToolbarCorner )
-            {
-                marginTop = std::max( marginTop, m_data.guiData().m_modeToolbarDockDims.y );
-            }
-            else if ( 2 == m_data.guiData().m_modeToolbarCorner || 3 == m_data.guiData().m_modeToolbarCorner )
-            {
-                marginBottom = std::max( marginBottom, m_data.guiData().m_modeToolbarDockDims.y );
-            }
-        }
-        else
-        {
-            if ( 0 == m_data.guiData().m_modeToolbarCorner || 2 == m_data.guiData().m_modeToolbarCorner )
-            {
-                marginLeft = std::max( marginLeft, m_data.guiData().m_modeToolbarDockDims.x );
-            }
-            else if ( 1 == m_data.guiData().m_modeToolbarCorner || 3 == m_data.guiData().m_modeToolbarCorner )
-            {
-                marginRight = std::max( marginRight, m_data.guiData().m_modeToolbarDockDims.x );
-            }
-        }
-    }
-
-    if ( m_data.guiData().m_showSegToolbar )
-    {
-        if ( m_data.guiData().m_isSegToolbarHorizontal )
-        {
-            if ( 0 == m_data.guiData().m_segToolbarCorner || 1 == m_data.guiData().m_segToolbarCorner )
-            {
-                marginTop = std::max( marginTop, m_data.guiData().m_segToolbarDockDims.y );
-            }
-            else if ( 2 == m_data.guiData().m_segToolbarCorner || 3 == m_data.guiData().m_segToolbarCorner )
-            {
-                marginBottom = std::max( marginBottom, m_data.guiData().m_segToolbarDockDims.y );
-            }
-        }
-        else
-        {
-            if ( 0 == m_data.guiData().m_segToolbarCorner || 2 == m_data.guiData().m_segToolbarCorner )
-            {
-                marginLeft = std::max( marginLeft, m_data.guiData().m_segToolbarDockDims.x );
-            }
-            else if ( 1 == m_data.guiData().m_segToolbarCorner || 3 == m_data.guiData().m_segToolbarCorner )
-            {
-                marginRight = std::max( marginRight, m_data.guiData().m_segToolbarDockDims.x );
-            }
-        }
-    }
-
-
-    m_data.windowData().setWindowSize( width, height );
+    // This call sets the window size and viewport
+    // app->resize( windowWidth, windowHeight );
+    windowData().setWindowSize( windowWidth, windowHeight );
 
     // Set viewport to account for margins
-    m_data.windowData().setViewport(
-                marginLeft,
-                marginBottom,
-                static_cast<float>( width ) - ( marginLeft + marginRight ),
-                static_cast<float>( height ) - ( marginBottom + marginTop ) );
+    windowData().setViewport(
+        margins.left, margins.bottom,
+        static_cast<float>( windowWidth ) - ( margins.left + margins.right ),
+        static_cast<float>( windowHeight ) - ( margins.bottom + margins.top ) );
 }
 
 void EntropyApp::render()

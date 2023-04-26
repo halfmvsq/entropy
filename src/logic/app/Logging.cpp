@@ -1,7 +1,6 @@
 #include "logic/app/Logging.h"
 #include "common/Exception.hpp"
 
-#include <spdlog/sinks/daily_file_sink.h>
 #include <spdlog/fmt/ostr.h>
 
 #include <sstream>
@@ -22,11 +21,11 @@ void Logging::setup()
 
         // The daily file sink uses shows more info: logger name and time zone.
         // Note: debug logging needs SPDLOG_XXX macro
-        auto daily_sink = std::make_shared<spdlog::sinks::daily_file_sink_mt>( sk_logFileName, 23, 59 );
-        daily_sink->set_pattern( "[%Y-%m-%d %H:%M:%S.%e %z] [%n] [tid %t] [%l] [%s:%#] %v" );
-        daily_sink->set_level( spdlog::level::debug ); // default to debug level
+        m_daily_sink = std::make_shared<spdlog::sinks::daily_file_sink_mt>( sk_logFileName, 23, 59 );
+        m_daily_sink->set_pattern( "[%Y-%m-%d %H:%M:%S.%e %z] [%n] [tid %t] [%l] [%s:%#] %v" );
+        m_daily_sink->set_level( spdlog::level::debug ); // default to debug level
 
-        spdlog::sinks_init_list sink_list{ m_console_sink, daily_sink };
+        spdlog::sinks_init_list sink_list{ m_console_sink, m_daily_sink };
 
         // Create synchronous loggers sharing the same sinks
         auto default_logger = std::make_shared<spdlog::logger>(
@@ -66,5 +65,19 @@ void Logging::setConsoleSinkLevel( spdlog::level::level_enum level )
     else
     {
         spdlog::error( "Console logging sink is null" );
+    }
+}
+
+
+void Logging::setDailyFileSinkLevel( spdlog::level::level_enum level )
+{
+    if ( m_daily_sink )
+    {
+        m_daily_sink->set_level( level );
+        spdlog::debug( "Set daily file log level to {}", level );
+    }
+    else
+    {
+        spdlog::error( "Daily file logging sink is null" );
     }
 }

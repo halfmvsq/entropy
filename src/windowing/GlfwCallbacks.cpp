@@ -101,7 +101,6 @@ void windowSizeCallback( GLFWwindow* window, int windowWidth, int windowHeight )
         return;
     }
 
-    // This call sets the window size and viewport
     app->resize( windowWidth, windowHeight );
     app->render();
 

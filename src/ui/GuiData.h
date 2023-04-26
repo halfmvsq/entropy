@@ -84,6 +84,17 @@ struct GuiData
     glm::vec2 m_segToolbarDockDims{ 0.0f, 0.0f };
 
     // Corners: -1 custom, 0 top-left, 1 top-right, 2 bottom-left, 3 bottom-right
+
+    struct Margins
+    {
+        float left = 0.0f;
+        float right = 0.0f;
+        float bottom = 0.0f;
+        float top = 0.0f;
+    };
+
+    /// Compute UI margins based on visibility of the menu, toolbars, and status bar
+    Margins computeMargins() const;
 };
 
 #endif // GUI_DATA_H

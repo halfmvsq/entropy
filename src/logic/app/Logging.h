@@ -2,6 +2,7 @@
 #define LOGGING_H
 
 #include <spdlog/spdlog.h>
+#include <spdlog/sinks/daily_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
 #include <memory>
@@ -29,9 +30,12 @@ public:
      */
     void setConsoleSinkLevel( spdlog::level::level_enum level );
 
+    void setDailyFileSinkLevel( spdlog::level::level_enum level );
+
 private:
 
     std::shared_ptr<spdlog::sinks::stdout_color_sink_mt> m_console_sink;
+    std::shared_ptr<spdlog::sinks::daily_file_sink_mt> m_daily_sink;
 };
 
 #endif // LOGGING_H

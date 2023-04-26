@@ -827,10 +827,7 @@ void WindowData::setWindowSize( int width, int height )
     static const glm::ivec2 sk_minWindowSize{ 1, 1 };
     m_windowSize = glm::max( glm::ivec2{ width, height }, sk_minWindowSize );
 
-    const glm::vec2 ratio = framebufferToWindowRatio();
-    spdlog::trace( "Setting device scale ratio to {}x{}", ratio.x, ratio.y );
-    m_viewport.setDevicePixelRatio( ratio );
-
+    m_viewport.setDevicePixelRatio( computeFramebufferToWindowRatio() );
     updateAllViews();
 }
 
@@ -844,10 +841,7 @@ void WindowData::setFramebufferSize( int width, int height )
     static const glm::ivec2 sk_minFramebufferSize { 1, 1 };
     m_framebufferSize = glm::max( glm::ivec2{ width, height }, sk_minFramebufferSize );
 
-    const glm::vec2 ratio = framebufferToWindowRatio();
-    spdlog::trace( "Setting device scale ratio to {}x{}", ratio.x, ratio.y );
-    m_viewport.setDevicePixelRatio( ratio );
-
+    m_viewport.setDevicePixelRatio( computeFramebufferToWindowRatio() );
     updateAllViews();
 }
 
@@ -856,7 +850,7 @@ const glm::ivec2& WindowData::getFramebufferSize() const
     return m_framebufferSize;
 }
 
-glm::vec2 WindowData::framebufferToWindowRatio() const
+glm::vec2 WindowData::computeFramebufferToWindowRatio() const
 {
     return glm::vec2{
         static_cast<float>( m_framebufferSize.x ) / static_cast<float>( m_windowSize.x ),

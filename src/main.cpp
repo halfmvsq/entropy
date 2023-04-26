@@ -51,6 +51,8 @@ int main( int argc, char* argv[] )
         }
 
         logging.setConsoleSinkLevel( params.consoleLogLevel );
+        logging.setDailyFileSinkLevel( params.consoleLogLevel );
+
         spdlog::debug( "Parsed command line parameters:\n{}", params );
 
         EntropyApp app;
