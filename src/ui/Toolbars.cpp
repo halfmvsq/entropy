@@ -24,9 +24,6 @@
 namespace
 {
 
-/// @todo Scaled this up by factor of 2. Should actually use contentScale!
-static constexpr float sk_pad = 16.0; //8.0f;
-
 static const ImVec4 sk_darkTextColor( 0.0f, 0.0f, 0.0f, 1.0f );
 static const ImVec4 sk_lightTextColor( 1.0f, 1.0f, 1.0f, 1.0f );
 
@@ -73,12 +70,11 @@ ImVec2 scaledToolbarButtonSize( const glm::vec2& contentScale )
     return ImVec2{ contentScale.x * sk_toolbarButtonSize.x, contentScale.y * sk_toolbarButtonSize.y };
 }
 
-// ImVec2 scaledPad( const AppData& appData )
-// {
-//     static constexpr float sk_pad = 8.0f;
-//     const glm::vec2 contentScale = appData.windowData().getContentScaleRatios();
-//     return ImVec2{ contentScale.x * sk_pad, contentScale.y * sk_pad };
-// }
+ImVec2 scaledPad( const glm::vec2& contentScale )
+{
+    static constexpr float sk_pad = 8.0f;
+    return ImVec2{ contentScale.x * sk_pad, contentScale.y * sk_pad };
+}
 
 } // anonymous
 
@@ -106,6 +102,7 @@ void renderModeToolbar(
     GuiData& guiData = appData.guiData();
 
     const auto buttonSize = scaledToolbarButtonSize( appData.windowData().getContentScaleRatios() );
+    const auto padSize = scaledPad( appData.windowData().getContentScaleRatios() );
 
     static bool s_lastShowState = guiData.m_showModeToolbar;
 
@@ -143,8 +140,8 @@ void renderModeToolbar(
     {
 //        windowFlags |= ImGuiWindowFlags_NoMove;
 
-        ImVec2 windowPos( ( corner & 1 ) ? io.DisplaySize.x - sk_pad : sk_pad,
-                          ( corner & 2 ) ? io.DisplaySize.y - sk_pad : sk_pad );
+        ImVec2 windowPos( ( corner & 1 ) ? io.DisplaySize.x - padSize.x : padSize.x,
+                          ( corner & 2 ) ? io.DisplaySize.y - padSize.y : padSize.y );
 
         if ( guiData.m_showMainMenuBar )
         {
@@ -190,7 +187,7 @@ void renderModeToolbar(
 
             guiData.m_modeToolbarDockDims =
                 glm::vec2{winSize.x, winSize.y} +
-                2.0f * glm::vec2{sk_pad, sk_pad};
+                2.0f * glm::vec2{padSize.x, padSize.y};
 
             readjustViewport();
 
@@ -587,9 +584,8 @@ void renderModeToolbar(
         // Save the new toolbar size:
         const ImVec2 winSize = ImGui::GetWindowSize();
 
-        guiData.m_modeToolbarDockDims =
-                glm::vec2{ winSize.x, winSize.y } +
-                2.0f * glm::vec2{ sk_pad, sk_pad };
+        guiData.m_modeToolbarDockDims = glm::vec2{ winSize.x, winSize.y } +
+            2.0f * glm::vec2{padSize.x, padSize.y};
 
         if ( ImGui::BeginPopupContextWindow() )
         {
@@ -655,6 +651,7 @@ void renderSegToolbar(
     GuiData& guiData = appData.guiData();
 
     const auto buttonSize = scaledToolbarButtonSize( appData.windowData().getContentScaleRatios() );
+    const auto padSize = scaledPad( appData.windowData().getContentScaleRatios() );
 
     static bool s_lastShowState = guiData.m_showSegToolbar;
 
@@ -736,8 +733,8 @@ void renderSegToolbar(
 //        windowFlags |= ImGuiWindowFlags_NoMove;
 
         ImVec2 windowPos = ImVec2(
-                    ( corner & 1 ) ? io.DisplaySize.x - sk_pad : sk_pad,
-                    ( corner & 2 ) ? io.DisplaySize.y - sk_pad : sk_pad );
+            ( corner & 1 ) ? io.DisplaySize.x - padSize.x : padSize.x,
+            ( corner & 2 ) ? io.DisplaySize.y - padSize.y : padSize.y );
 
         if ( guiData.m_showMainMenuBar )
         {
@@ -774,7 +771,7 @@ void renderSegToolbar(
 
             guiData.m_segToolbarDockDims =
                 glm::vec2{ winSize.x, winSize.y } +
-                2.0f * glm::vec2{sk_pad, sk_pad};
+                2.0f * glm::vec2{padSize.x, padSize.y};
 
             readjustViewport();
 
@@ -1368,7 +1365,7 @@ void renderSegToolbar(
 
         guiData.m_segToolbarDockDims =
                 glm::vec2{ winSize.x, winSize.y } +
-                2.0f * glm::vec2{ sk_pad, sk_pad };
+                2.0f * glm::vec2{ padSize.x, padSize.y };
 
         if ( ImGui::BeginPopupContextWindow() )
         {
@@ -1395,7 +1392,7 @@ void renderSegToolbar(
 
 
 void renderAnnotationToolbar(
-        AppData& /*appData*/,
+        AppData& appData,
         const FrameBounds& mindowFrameBounds,
         const std::function< void () > paintActiveAnnotation )
 {
@@ -1404,6 +1401,8 @@ void renderAnnotationToolbar(
 
     static int corner = 3;
     static bool isHoriz = true;
+
+    const auto padSize = scaledPad( appData.windowData().getContentScaleRatios() );
 
     const ImVec2 buttonSpace = ( isHoriz ? ImVec2( 2.0f, 0.0f ) : ImVec2( 0.0f, 2.0f ) );
 
@@ -1424,10 +1423,10 @@ void renderAnnotationToolbar(
 //        windowFlags |= ImGuiWindowFlags_NoMove;
 
        const ImVec2 windowPos(
-                ( corner & 1 ) ? mindowFrameBounds.bounds.xoffset + mindowFrameBounds.bounds.width - sk_pad
-                               : mindowFrameBounds.bounds.xoffset + sk_pad,
-                ( corner & 2 ) ? mindowFrameBounds.bounds.yoffset + mindowFrameBounds.bounds.height - sk_pad
-                               : mindowFrameBounds.bounds.yoffset + sk_pad );
+                ( corner & 1 ) ? mindowFrameBounds.bounds.xoffset + mindowFrameBounds.bounds.width - padSize.x
+                               : mindowFrameBounds.bounds.xoffset + padSize.x,
+                ( corner & 2 ) ? mindowFrameBounds.bounds.yoffset + mindowFrameBounds.bounds.height - padSize.y
+                               : mindowFrameBounds.bounds.yoffset + padSize.y );
 
         const ImVec2 windowPosPivot(
                     ( corner & 1 ) ? 1.0f : 0.0f,

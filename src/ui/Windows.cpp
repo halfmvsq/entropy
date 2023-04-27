@@ -109,6 +109,8 @@ void renderViewSettingsComboWindow(
 
     const std::string uidString = std::string( "##" ) + uuids::to_string( viewOrLayoutUid );
 
+    const auto buttonSize = scaledToolbarButtonSize( contentScales );
+
     // This needs to be saved somewhere
     bool windowOpen = false;
 
@@ -303,7 +305,7 @@ void renderViewSettingsComboWindow(
             if ( uiControls.m_hasShaderTypeComboBox )
             {
                 ImGui::SameLine();
-                ImGui::PushItemWidth( scaledToolbarButtonSize( contentScales ).x + 2.0f * ImGui::GetStyle().FramePadding.x );
+                ImGui::PushItemWidth( buttonSize.x + 2.0f * ImGui::GetStyle().FramePadding.x );
 
                 if ( ImGui::BeginCombo( "##shaderTypeCombo", ICON_FK_TELEVISION ) )
                 {
@@ -362,7 +364,7 @@ void renderViewSettingsComboWindow(
                  ( camera::ViewRenderMode::VolumeRender != renderMode ) )
             {
                 ImGui::SameLine();
-                ImGui::PushItemWidth( scaledToolbarButtonSize( contentScales ).x + 2.0f * ImGui::GetStyle().FramePadding.x );
+                ImGui::PushItemWidth( buttonSize.x + 2.0f * ImGui::GetStyle().FramePadding.x );
 
                 if ( ImGui::BeginCombo( "##mipModeCombo", ICON_FK_FILM, ImGuiComboFlags_HeightLargest ) )
                 {
@@ -937,7 +939,6 @@ void renderImagePropertiesWindow(
                             image,
                             isActiveImage,
                             appData.numImages(),
-                            appData.windowData().getContentScaleRatios(),
                             updateAllImageUniforms,
                             [&imageUid, updateImageUniforms] () { updateImageUniforms( imageUid ); },
                             [&imageUid, updateImageInterpolationMode] () { updateImageInterpolationMode( imageUid ); },

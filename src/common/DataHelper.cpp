@@ -364,7 +364,9 @@ createLabelColorTableForSegmentation(
                    seg->header().memoryComponentTypeAsString(), segUid, minMaxCompValues.second );
 
     // Allocate color table with 256 labels, so that it fits into a 1 byte segmentation image
-    constexpr int64_t k_numLabels = 256;
+    /// @note Increased to 2048 so that we can use cortical labels
+    /// @todo FIX THIS!!!
+    constexpr int64_t k_numLabels = 2048;
     /// @todo The label color table needs to allocate labels as map instead of as vector
     /// Only allocate labels in table for labels that are used in segmentation.
 

@@ -351,7 +351,6 @@ void renderImageHeader(
         Image* image,
         bool isActiveImage,
         size_t numImages,
-        const glm::vec2& contentScales,
         const std::function< void(void) >& updateAllImageUniforms,
         const std::function< void(void) >& updateImageUniforms,
         const std::function< void(void) >& updateImageInterpolationMode,
@@ -380,6 +379,8 @@ void renderImageHeader(
             ImGuiColorEditFlags_AlphaPreviewHalf |
             ImGuiColorEditFlags_Uint8 |
             ImGuiColorEditFlags_InputRGB;
+
+    const auto buttonSize = scaledToolbarButtonSize( appData.windowData().getContentScaleRatios() );
 
     const ImVec4* colors = ImGui::GetStyle().Colors;
     const ImVec4 activeColor = colors[ImGuiCol_ButtonActive];
@@ -476,7 +477,7 @@ void renderImageHeader(
     ImGui::SameLine(); helpMarker( "Set the image display name and border color" );
 
 
-    if ( ImGui::Button( ICON_FK_HAND_O_UP, scaledToolbarButtonSize( contentScales ) ) )
+    if ( ImGui::Button( ICON_FK_HAND_O_UP, buttonSize ) )
     {
         glm::vec3 worldPos{ imgTx.worldDef_T_subject() *
                 glm::vec4{ imgHeader.subjectBBoxCenter(), 1.0f } };
@@ -549,7 +550,7 @@ void renderImageHeader(
         const bool isLocked = ( forceLocked || image->transformations().is_worldDef_T_affine_locked() );
 
         ImGui::PushStyleColor( ImGuiCol_Button, ( isLocked ? inactiveColor : activeColor ) );
-        if ( ImGui::Button( ( isLocked ? ICON_FK_LOCK : ICON_FK_UNLOCK ), scaledToolbarButtonSize( contentScales ) ) )
+        if ( ImGui::Button( ( isLocked ? ICON_FK_LOCK : ICON_FK_UNLOCK ), buttonSize ) )
         {
             if ( ! forceLocked )
             {
