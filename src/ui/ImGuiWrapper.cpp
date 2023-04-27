@@ -1,5 +1,7 @@
 ﻿#include "ui/ImGuiWrapper.h"
 
+#include "common/Exception.hpp"
+
 #include "ui/Helpers.h"
 #include "ui/MainMenuBar.h"
 #include "ui/Popups.h"
@@ -59,11 +61,6 @@ ImFont* loadFont(
     {
         fontData[i] = fontFile.cbegin()[i];
     }
-
-// IMGUI_API ImFont* AddFontFromMemoryTTF(
-//     void* font_data, int font_size, float size_pixels,
-//     const ImFontConfig* font_cfg = NULL,
-//     const ImWchar* glyph_ranges = NULL);
 
     // Note: Transfer ownership of 'ttf_data' to ImFontAtlas! Will be deleted after destruction of the atlas.
     // Set font_cfg->FontDataOwnedByAtlas=false to keep ownership of your data and it won't be freed.
@@ -129,7 +126,9 @@ ImGuiWrapper::ImGuiWrapper(
 
       m_executeGridCutsSeg( nullptr ),
       m_setLockManualImageTransformation( nullptr ),
-      m_paintActiveSegmentationWithActivePolygon( nullptr )
+      m_paintActiveSegmentationWithActivePolygon( nullptr ),
+
+      m_contentScale( 1.0f )
 {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -149,34 +148,21 @@ ImGuiWrapper::ImGuiWrapper(
 
     io.ConfigFlags = io.ConfigFlags & ImGuiConfigFlags_NoMouseCursorChange;
 
-
-    // Apply a custom dark style:
-    applyCustomDarkStyle();
-
-    /*
-    Q: How should I handle DPI in my application?
-    The short answer is: obtain the desired DPI scale, load your fonts resized with that scale (always round down fonts
-    size to the nearest integer), and scale your Style structure accordingly using style.ScaleAllSizes().
-
-    Your application may want to detect DPI change and reload the fonts and reset style between frames.
-
-    Your ui code should avoid using hardcoded constants for size and positioning. Prefer to express values as multiple of
-    reference values such as ImGui::GetFontSize() or ImGui::GetFrameHeight(). So e.g. instead of seeing a hardcoded height of
-    500 for a given item/window, you may want to use 30*ImGui::GetFontSize() instead.
-    */
-
-    // For correct scaling, prefer to reload font + rebuild ImFontAtlas + call style.ScaleAllSizes().
-    ImGuiStyle& style = ImGui::GetStyle();
-    style.ScaleAllSizes( 2.0f );
-
     // Setup ImGui platform/renderer bindings:
     static const char* glsl_version = "#version 150";
     ImGui_ImplGlfw_InitForOpenGL( window, true );
     ImGui_ImplOpenGL3_Init( glsl_version );
 
+
+    applyCustomDarkStyle();
+
+    ImGuiStyle& style = ImGui::GetStyle();
+    style.ScaleAllSizes( m_contentScale );
+
     spdlog::debug( "Done setup of ImGui platform and renderer bindings" );
 
-    initializeData();
+    initializeFonts();
+    setContentScale( appData.windowData().getContentScaleRatio() );
 }
 
 
@@ -246,7 +232,37 @@ void ImGuiWrapper::setCallbacks(
 }
 
 
-void ImGuiWrapper::initializeData()
+/*
+Q: How should I handle DPI in my application?
+The short answer is: obtain the desired DPI scale, load your fonts resized with that scale (always round down fonts
+size to the nearest integer), and scale your Style structure accordingly using style.ScaleAllSizes().
+
+Your application may want to detect DPI change and reload the fonts and reset style between frames.
+
+Your ui code should avoid using hardcoded constants for size and positioning. Prefer to express values as multiple of
+reference values such as ImGui::GetFontSize() or ImGui::GetFrameHeight(). So e.g. instead of seeing a hardcoded height of
+500 for a given item/window, you may want to use 30*ImGui::GetFontSize() instead.
+*/
+void ImGuiWrapper::setContentScale( float scale )
+{
+    if ( m_contentScale == scale )
+    {
+        return;
+    }
+
+    spdlog::info( "Setting content scale to {}", scale );
+
+    m_contentScale = scale;
+
+    ImGuiStyle& style = ImGui::GetStyle();
+    style.ScaleAllSizes( m_contentScale );
+
+    // For correct scaling, prefer to reload font + rebuild ImFontAtlas
+    initializeFonts();
+}
+
+
+void ImGuiWrapper::initializeFonts()
 {   
     static const std::string cousineFontPath( "resources/fonts/Cousine/Cousine-Regular.ttf" );
     static const std::string helveticaFontPath( "resources/fonts/HelveticaNeue/HelveticaNeue-Light.ttf" );
@@ -254,6 +270,8 @@ void ImGuiWrapper::initializeData()
     static const std::string sfMonoFontPath( "resources/fonts/SFMono/SFMono-Regular.ttf" );
     static const std::string sfProFontPath( "resources/fonts/SFPro/sf-pro-text-regular.ttf" );
     static const std::string forkAwesomeFontPath = std::string( "resources/fonts/ForkAwesome/" ) + FONT_ICON_FILE_NAME_FK;
+
+    spdlog::debug( "Begin loading fonts" );
 
     ImFontConfig cousineFontConfig;
     const float cousineFontSize = 14.0f;
@@ -299,6 +317,10 @@ void ImGuiWrapper::initializeData()
     static const ImWchar forkAwesomeIconGlyphRange[] = { ICON_MIN_FK, ICON_MAX_FK, 0 };
 
 
+    // Clear all
+    // ImGui::GetIO().Fonts->Clear();
+    // m_appData.guiData().m_fonts.clear();
+
     // Load fonts: If no fonts are loaded, dear imgui will use the default font.
     // You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
     // AddFontFromFileTTF() will return the ImFont* so you can store it if you need to select the
@@ -307,34 +329,79 @@ void ImGuiWrapper::initializeData()
     // The fonts will be rasterized at a given size (w/ oversampling) and stored into a texture when
     // calling ImFontAtlas::Build()/GetTexDataAsXXXX(), which ImGui_ImplXXXX_NewFrame below will call.
 /// @todo use Freetype Rasterizer and Small Font Sizes
+   
+    ImFont* cousineFontPtr = loadFont( cousineFontPath, cousineFontConfig, m_contentScale * cousineFontSize, nullptr );
+    ImFont* fork1Ptr = loadFont( forkAwesomeFontPath, forkAwesomeFontConfig, m_contentScale * forkAwesomeFontSize, forkAwesomeIconGlyphRange );
 
-    const float contentScaleRatio = 2.0f;
-    
-    m_appData.guiData().m_fonts[cousineFontPath] = loadFont( cousineFontPath, cousineFontConfig, contentScaleRatio * cousineFontSize, nullptr );
-    m_appData.guiData().m_fonts[cousineFontPath + forkAwesomeFontPath] = loadFont( forkAwesomeFontPath, forkAwesomeFontConfig, contentScaleRatio * forkAwesomeFontSize, forkAwesomeIconGlyphRange );
+    ImFont* helveticaFontPtr = loadFont( helveticaFontPath, helveticaFontConfig, m_contentScale * helveticaFontSize, nullptr );
+    ImFont* fork2Ptr = loadFont( forkAwesomeFontPath, forkAwesomeFontConfig, m_contentScale * forkAwesomeFontSize, forkAwesomeIconGlyphRange );
 
-    m_appData.guiData().m_fonts[helveticaFontPath] = loadFont( helveticaFontPath, helveticaFontConfig, contentScaleRatio * helveticaFontSize, nullptr );
-    m_appData.guiData().m_fonts[helveticaFontPath + forkAwesomeFontPath] = loadFont( forkAwesomeFontPath, forkAwesomeFontConfig, contentScaleRatio * forkAwesomeFontSize, forkAwesomeIconGlyphRange );
+    ImFont* spaceFontPtr = loadFont( spaceGroteskFontPath, spaceGroteskFontConfig, m_contentScale * spaceGroteskFontSize, nullptr );
+    ImFont* fork3Ptr = loadFont( forkAwesomeFontPath, forkAwesomeFontConfig, m_contentScale * forkAwesomeFontSize, forkAwesomeIconGlyphRange );
 
-    m_appData.guiData().m_fonts[spaceGroteskFontPath] = loadFont( spaceGroteskFontPath, spaceGroteskFontConfig, contentScaleRatio * spaceGroteskFontSize, nullptr );
-    m_appData.guiData().m_fonts[spaceGroteskFontPath + forkAwesomeFontPath] = loadFont( forkAwesomeFontPath, forkAwesomeFontConfig, contentScaleRatio * forkAwesomeFontSize, forkAwesomeIconGlyphRange );
+    ImFont* sfMonoFontPtr = loadFont( sfMonoFontPath, sfMonoFontConfig, m_contentScale * sfMonoFontSize, nullptr );
+    ImFont* fork4Ptr = loadFont( forkAwesomeFontPath, forkAwesomeFontConfig, m_contentScale * forkAwesomeFontSize, forkAwesomeIconGlyphRange );
 
-    m_appData.guiData().m_fonts[sfMonoFontPath] = loadFont( sfMonoFontPath, sfMonoFontConfig, contentScaleRatio * sfMonoFontSize, nullptr );
-    m_appData.guiData().m_fonts[sfMonoFontPath + forkAwesomeFontPath] = loadFont( forkAwesomeFontPath, forkAwesomeFontConfig, contentScaleRatio * forkAwesomeFontSize, forkAwesomeIconGlyphRange );
+    ImFont* sfProFontPtr = loadFont( sfProFontPath, sfProFontConfig, m_contentScale * sfProFontSize, nullptr );
+    ImFont* fork5Ptr = loadFont( forkAwesomeFontPath, forkAwesomeFontConfig, m_contentScale * forkAwesomeFontSize, forkAwesomeIconGlyphRange );
 
-    m_appData.guiData().m_fonts[sfProFontPath] = loadFont( sfProFontPath, sfProFontConfig, contentScaleRatio * sfProFontSize, nullptr );
-    m_appData.guiData().m_fonts[sfProFontPath + forkAwesomeFontPath] = loadFont( forkAwesomeFontPath, forkAwesomeFontConfig, contentScaleRatio * forkAwesomeFontSize, forkAwesomeIconGlyphRange );
 
-    // if ( m_appData.guiData().m_cousineFont )
-    // {
-    //     spdlog::debug( "Loaded font {}", cousineFontPath );
-    // }
-    // else
-    // {
-    //     spdlog::error( "Could not load font {}", cousineFontPath );
-    // }
+    if ( cousineFontPtr && fork1Ptr )
+    {
+        m_appData.guiData().m_fonts[cousineFontPath] = cousineFontPtr;
+        m_appData.guiData().m_fonts[cousineFontPath + forkAwesomeFontPath] = fork1Ptr;
+        spdlog::debug( "Loaded font {}", cousineFontPath );
+    }
+    else
+    {
+        spdlog::error( "Unable to load font {}", forkAwesomeFontPath );
+    }
 
-    spdlog::debug( "Initialized ImGui data" );
+    if ( helveticaFontPtr && fork2Ptr )
+    {
+        m_appData.guiData().m_fonts[helveticaFontPath] = helveticaFontPtr;
+        m_appData.guiData().m_fonts[helveticaFontPath + forkAwesomeFontPath] = fork2Ptr;
+        spdlog::debug( "Loaded font {}", helveticaFontPath );
+    }
+    else
+    {
+        spdlog::error( "Unable to load font {}", forkAwesomeFontPath );
+    }
+       
+    if ( spaceFontPtr && fork3Ptr )
+    {
+        m_appData.guiData().m_fonts[spaceGroteskFontPath] = spaceFontPtr;
+        m_appData.guiData().m_fonts[spaceGroteskFontPath + forkAwesomeFontPath] = fork3Ptr;
+        spdlog::debug( "Loaded font {}", spaceGroteskFontPath );
+    }
+    else
+    {
+        spdlog::error( "Unable to load font {}", forkAwesomeFontPath );
+    }
+       
+    if ( sfMonoFontPtr && fork4Ptr )
+    {
+        m_appData.guiData().m_fonts[sfMonoFontPath] = sfMonoFontPtr;
+        m_appData.guiData().m_fonts[sfMonoFontPath + forkAwesomeFontPath] = fork4Ptr;
+        spdlog::debug( "Loaded font {}", sfMonoFontPath );
+    }
+    else
+    {
+        spdlog::error( "Unable to load font {}", forkAwesomeFontPath );
+    }
+       
+    if ( sfProFontPtr && fork5Ptr )
+    {
+        m_appData.guiData().m_fonts[sfProFontPath] = sfProFontPtr;
+        m_appData.guiData().m_fonts[sfProFontPath + forkAwesomeFontPath] = fork5Ptr;
+        spdlog::debug( "Loaded font {}", sfProFontPath );
+    }
+    else
+    {
+        spdlog::error( "Unable to load font {}", forkAwesomeFontPath );
+    }
+
+    spdlog::debug( "Done loading fonts" );
 }
 
 
@@ -743,6 +810,8 @@ void ImGuiWrapper::render()
                     true,
                     false,
 
+                    m_appData.windowData().getContentScaleRatios(),
+
                     m_appData.numImages(),
                     [this, &currentLayout] ( size_t index ) { return currentLayout.isImageRendered( m_appData, index ); },
                     [this, &currentLayout] ( size_t index, bool visible ) { currentLayout.setImageRendered( m_appData, index, visible ); },
@@ -830,6 +899,8 @@ void ImGuiWrapper::render()
                         view->uiControls(),
                         false,
                         true,
+
+                        m_appData.windowData().getContentScaleRatios(),
 
                         m_appData.numImages(),
                         [this, view] ( size_t index ) { return view->isImageRendered( m_appData, index ); },

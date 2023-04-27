@@ -11,6 +11,7 @@
 #include <glm/glm.hpp>
 
 #define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/component_wise.hpp>
 #include <glm/gtx/string_cast.hpp>
 
 #include <spdlog/spdlog.h>
@@ -446,6 +447,9 @@ WindowData::WindowData()
 {
     setupViews();
     setCurrentLayoutIndex( 0 );
+
+    setWindowSize( m_windowSize.x, m_windowSize.y );
+    setFramebufferSize( m_framebufferSize.x, m_framebufferSize.y );
 }
 
 void WindowData::setupViews()
@@ -800,16 +804,26 @@ void WindowData::setViewport( float left, float bottom, float width, float heigh
     updateAllViews();
 }
 
-void WindowData::setContentScaleRatio( const glm::vec2& scale )
+void WindowData::setContentScaleRatios( const glm::vec2& scale )
 {
+    if ( m_contentScaleRatio == scale )
+    {
+        return;
+    }
+
     spdlog::trace( "Setting content scale ratio to {}x{}", scale.x, scale.y );
     m_contentScaleRatio = scale;
     updateAllViews();
 }
 
-const glm::vec2& WindowData::getContentScaleRatio() const
+const glm::vec2& WindowData::getContentScaleRatios() const
 {
     return m_contentScaleRatio;
+}
+
+float WindowData::getContentScaleRatio() const
+{
+    return glm::compMax( m_contentScaleRatio );
 }
 
 void WindowData::setWindowPos( int posX, int posY )
@@ -825,6 +839,12 @@ const glm::ivec2& WindowData::getWindowPos() const
 void WindowData::setWindowSize( int width, int height )
 {
     static const glm::ivec2 sk_minWindowSize{ 1, 1 };
+ 
+    if ( m_windowSize.x == width && m_windowSize.y == height )
+    {
+        return;
+    }
+
     m_windowSize = glm::max( glm::ivec2{ width, height }, sk_minWindowSize );
 
     m_viewport.setDevicePixelRatio( computeFramebufferToWindowRatio() );
@@ -839,6 +859,12 @@ const glm::ivec2& WindowData::getWindowSize() const
 void WindowData::setFramebufferSize( int width, int height )
 {
     static const glm::ivec2 sk_minFramebufferSize { 1, 1 };
+
+    if ( m_framebufferSize.x == width && m_framebufferSize.y == height )
+    {
+        return;
+    }
+
     m_framebufferSize = glm::max( glm::ivec2{ width, height }, sk_minFramebufferSize );
 
     m_viewport.setDevicePixelRatio( computeFramebufferToWindowRatio() );

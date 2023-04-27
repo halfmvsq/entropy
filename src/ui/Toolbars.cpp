@@ -67,17 +67,16 @@ void renderPlacementContextMenu( int& corner, bool& /*isHoriz*/ )
     ImGui::EndPopup();
 }
 
-ImVec2 scaledToolbarButtonSize( const AppData& appData )
+ImVec2 scaledToolbarButtonSize( const glm::vec2& contentScale )
 {
     static const ImVec2 sk_toolbarButtonSize( 32, 32 );
-    const glm::vec2 contentScale = appData.windowData().getContentScaleRatio();
     return ImVec2{ contentScale.x * sk_toolbarButtonSize.x, contentScale.y * sk_toolbarButtonSize.y };
 }
 
 // ImVec2 scaledPad( const AppData& appData )
 // {
 //     static constexpr float sk_pad = 8.0f;
-//     const glm::vec2 contentScale = appData.windowData().getContentScaleRatio();
+//     const glm::vec2 contentScale = appData.windowData().getContentScaleRatios();
 //     return ImVec2{ contentScale.x * sk_pad, contentScale.y * sk_pad };
 // }
 
@@ -105,6 +104,8 @@ void renderModeToolbar(
     static constexpr bool sk_resetZoom = true;
 
     GuiData& guiData = appData.guiData();
+
+    const auto buttonSize = scaledToolbarButtonSize( appData.windowData().getContentScaleRatios() );
 
     static bool s_lastShowState = guiData.m_showModeToolbar;
 
@@ -209,7 +210,7 @@ void renderModeToolbar(
             if ( isHoriz ) ImGui::SameLine();
             ImGui::PushStyleColor( ImGuiCol_Button, ( isModeActive ? activeColor : inactiveColor ) );
             {
-                if ( ImGui::Button( toolbarButtonIcon( mouseMode ), scaledToolbarButtonSize( appData ) ) )
+                if ( ImGui::Button( toolbarButtonIcon( mouseMode ), buttonSize ) )
                 {
                     isModeActive = ! isModeActive;
                     if ( isModeActive )
@@ -246,7 +247,7 @@ void renderModeToolbar(
             ImGui::Dummy( buttonSpace );
 
             if ( isHoriz ) ImGui::SameLine();
-            if ( ImGui::Button( ICON_FK_PICTURE_O, scaledToolbarButtonSize( appData ) ) )
+            if ( ImGui::Button( ICON_FK_PICTURE_O, buttonSize ) )
             {
                 ImGui::OpenPopup( "imagePopup" );
             }
@@ -293,7 +294,7 @@ void renderModeToolbar(
             {
                 ImGui::PushStyleColor( ImGuiCol_Button, ( guiData.m_showImagePropertiesWindow ? activeColor : inactiveColor ) );
                 {
-                    if ( ImGui::Button( ICON_FK_SLIDERS, scaledToolbarButtonSize( appData )) )
+                    if ( ImGui::Button( ICON_FK_SLIDERS, buttonSize) )
                     {
                         guiData.m_showImagePropertiesWindow = ! guiData.m_showImagePropertiesWindow;
                     }
@@ -314,8 +315,8 @@ void renderModeToolbar(
             {
                 ImGui::PushStyleColor( ImGuiCol_Button, ( guiData.m_showSegmentationsWindow ? activeColor : inactiveColor ) );
                 {
-                    //if ( ImGui::Button( ICON_FK_TH, scaledToolbarButtonSize( appData )) )
-                    if ( ImGui::Button( ICON_FK_LIST_OL, scaledToolbarButtonSize( appData )) )
+                    //if ( ImGui::Button( ICON_FK_TH, buttonSize) )
+                    if ( ImGui::Button( ICON_FK_LIST_OL, buttonSize) )
                     {
                         guiData.m_showSegmentationsWindow = ! guiData.m_showSegmentationsWindow;
                     }
@@ -336,7 +337,7 @@ void renderModeToolbar(
             {
                 ImGui::PushStyleColor( ImGuiCol_Button, ( guiData.m_showLandmarksWindow ? activeColor : inactiveColor ) );
                 {
-                    if ( ImGui::Button( ICON_FK_MAP_MARKER, scaledToolbarButtonSize( appData )) )
+                    if ( ImGui::Button( ICON_FK_MAP_MARKER, buttonSize) )
                     {
                         guiData.m_showLandmarksWindow = ! guiData.m_showLandmarksWindow;
                     }
@@ -357,7 +358,7 @@ void renderModeToolbar(
             {
                 ImGui::PushStyleColor( ImGuiCol_Button, ( guiData.m_showAnnotationsWindow ? activeColor : inactiveColor ) );
                 {
-                    if ( ImGui::Button( ICON_FK_STAR_O, scaledToolbarButtonSize( appData )) )
+                    if ( ImGui::Button( ICON_FK_STAR_O, buttonSize) )
                     {
                         guiData.m_showAnnotationsWindow = ! guiData.m_showAnnotationsWindow;
                     }
@@ -378,7 +379,7 @@ void renderModeToolbar(
             {
                 ImGui::PushStyleColor( ImGuiCol_Button, ( guiData.m_showIsosurfacesWindow ? activeColor : inactiveColor ) );
                 {
-                    if ( ImGui::Button( ICON_FK_SHIP, scaledToolbarButtonSize( appData )) )
+                    if ( ImGui::Button( ICON_FK_SHIP, buttonSize) )
                     {
                         guiData.m_showIsosurfacesWindow = ! guiData.m_showIsosurfacesWindow;
                     }
@@ -399,7 +400,7 @@ void renderModeToolbar(
             {
                 ImGui::PushStyleColor( ImGuiCol_Button, ( guiData.m_showSettingsWindow ? activeColor : inactiveColor ) );
                 {
-                    if ( ImGui::Button( ICON_FK_COGS, scaledToolbarButtonSize( appData )) )
+                    if ( ImGui::Button( ICON_FK_COGS, buttonSize) )
                     {
                         guiData.m_showSettingsWindow = ! guiData.m_showSettingsWindow;
                     }
@@ -420,7 +421,7 @@ void renderModeToolbar(
             {
                 ImGui::PushStyleColor( ImGuiCol_Button, ( guiData.m_showInspectionWindow ? activeColor : inactiveColor ) );
                 {
-                    if ( ImGui::Button( ICON_FK_EYEDROPPER, scaledToolbarButtonSize( appData )) )
+                    if ( ImGui::Button( ICON_FK_EYEDROPPER, buttonSize) )
                     {
                         guiData.m_showInspectionWindow = ! guiData.m_showInspectionWindow;
                     }
@@ -442,7 +443,7 @@ void renderModeToolbar(
             if ( isHoriz ) ImGui::SameLine();
             ImGui::PushID( id );
             {
-                if ( ImGui::Button( ICON_FK_CROSSHAIRS, scaledToolbarButtonSize( appData )) )
+                if ( ImGui::Button( ICON_FK_CROSSHAIRS, buttonSize) )
                 {
                     recenterAllViews( sk_recenterCrosshairs,
                                       sk_doNotRecenterOnCurrentCrosshairsPosition,
@@ -464,7 +465,7 @@ void renderModeToolbar(
 
                 ImGui::PushStyleColor( ImGuiCol_Button, ( isOverlayVisible ? activeColor : inactiveColor ) );
                 {
-                    if ( ImGui::Button( ICON_FK_CLONE, scaledToolbarButtonSize( appData )) )
+                    if ( ImGui::Button( ICON_FK_CLONE, buttonSize) )
                     {
                         isOverlayVisible = ! isOverlayVisible;
                         setOverlayVisibility( isOverlayVisible );
@@ -486,7 +487,7 @@ void renderModeToolbar(
             {
 //                ImGui::PushStyleColor( ImGuiCol_Button, highlightColor );
                 {
-                    if ( ImGui::Button( ICON_FK_CHEVRON_LEFT, scaledToolbarButtonSize( appData )) ) {
+                    if ( ImGui::Button( ICON_FK_CHEVRON_LEFT, buttonSize) ) {
                         cycleViews( -1 );
                     }
                     if ( ImGui::IsItemHovered() ) {
@@ -504,7 +505,7 @@ void renderModeToolbar(
             {
 //                ImGui::PushStyleColor( ImGuiCol_Button, highlightColor );
                 {
-                    if ( ImGui::Button( ICON_FK_CHEVRON_RIGHT, scaledToolbarButtonSize( appData )) ) {
+                    if ( ImGui::Button( ICON_FK_CHEVRON_RIGHT, buttonSize) ) {
                         cycleViews( 1 );
                     }
                     if ( ImGui::IsItemHovered() ) {
@@ -520,7 +521,7 @@ void renderModeToolbar(
             if ( isHoriz ) ImGui::SameLine();
             ImGui::PushID( id );
             {
-                if ( ImGui::Button( ICON_FK_TH, scaledToolbarButtonSize( appData )) )
+                if ( ImGui::Button( ICON_FK_TH, buttonSize) )
                 {
                     openAddLayoutPopup = true;
                 }
@@ -537,7 +538,7 @@ void renderModeToolbar(
             if ( isHoriz ) ImGui::SameLine();
             ImGui::PushID( id );
             {
-                if ( ImGui::Button( ICON_FK_WINDOW_CLOSE_O, scaledToolbarButtonSize( appData )) )
+                if ( ImGui::Button( ICON_FK_WINDOW_CLOSE_O, buttonSize) )
                 {
                     auto& wd = appData.windowData();
                     if ( wd.numLayouts() >= 2 )
@@ -564,7 +565,7 @@ void renderModeToolbar(
             if ( isHoriz ) ImGui::SameLine();
             ImGui::PushID( id );
             {
-                if ( ImGui::Button( ICON_FK_INFO, scaledToolbarButtonSize( appData )) )
+                if ( ImGui::Button( ICON_FK_INFO, buttonSize) )
                 {
                     openAboutDialogPopup = true;
                 }
@@ -652,6 +653,8 @@ void renderSegToolbar(
     const bool inAnnotationMode = ( state::isInStateWhereToolbarVisible() && state::showToolbarFillButton() );
 
     GuiData& guiData = appData.guiData();
+
+    const auto buttonSize = scaledToolbarButtonSize( appData.windowData().getContentScaleRatios() );
 
     static bool s_lastShowState = guiData.m_showSegToolbar;
 
@@ -801,7 +804,7 @@ void renderSegToolbar(
         ImGui::PushStyleColor( ImGuiCol_Button, fgImGuiColor );
         ImGui::PushStyleColor( ImGuiCol_Text, ( useDarkTextForFgColor ? sk_darkTextColor : sk_lightTextColor ) );
         {
-            if ( ImGui::Button( fgButtonLabel.c_str(), scaledToolbarButtonSize( appData )) )
+            if ( ImGui::Button( fgButtonLabel.c_str(), buttonSize ) )
             {
                 ImGui::OpenPopup( "foregroundLabelPopup" );
             }
@@ -816,7 +819,7 @@ void renderSegToolbar(
         ImGui::PushStyleColor( ImGuiCol_Button, bgImGuiColor );
         ImGui::PushStyleColor( ImGuiCol_Text, ( useDarkTextForBgColor ? sk_darkTextColor : sk_lightTextColor ) );
         {
-            if ( ImGui::Button( bgButtonLabel.c_str(), scaledToolbarButtonSize( appData )) )
+            if ( ImGui::Button( bgButtonLabel.c_str(), buttonSize) )
             {
                 ImGui::OpenPopup( "backgroundLabelPopup" );
             }
@@ -891,7 +894,7 @@ void renderSegToolbar(
         if ( isHoriz ) ImGui::SameLine();
         ImGui::PushID( id );
         {
-            if ( ImGui::Button( ICON_FK_RANDOM, scaledToolbarButtonSize( appData ) ) )
+            if ( ImGui::Button( ICON_FK_RANDOM, buttonSize ) )
             {
                 appData.settings().swapForegroundAndBackgroundLabels( *activeLabelTable );
             }
@@ -914,7 +917,7 @@ void renderSegToolbar(
             bool replaceBgWithFg = appData.settings().replaceBackgroundWithForeground();
             ImGui::PushStyleColor( ImGuiCol_Button, ( replaceBgWithFg ? activeColor : inactiveColor ) );
             {
-                if ( ImGui::Button( ICON_FK_PENCIL_SQUARE, scaledToolbarButtonSize( appData ) ) )
+                if ( ImGui::Button( ICON_FK_PENCIL_SQUARE, buttonSize ) )
                 {
                     replaceBgWithFg = ! replaceBgWithFg;
                     appData.settings().setReplaceBackgroundWithForeground( replaceBgWithFg );
@@ -940,7 +943,7 @@ void renderSegToolbar(
                 bool use3d = appData.settings().use3dBrush();
                 ImGui::PushStyleColor( ImGuiCol_Button, ( use3d ? activeColor : inactiveColor ) );
                 {
-                    if ( ImGui::Button( ICON_FK_CUBE, scaledToolbarButtonSize( appData )) )
+                    if ( ImGui::Button( ICON_FK_CUBE, buttonSize ) )
                     {
                         use3d = ! use3d;
                         appData.settings().setUse3dBrush( use3d );
@@ -963,7 +966,7 @@ void renderSegToolbar(
             {
                 bool roundBrush = appData.settings().useRoundBrush();
 
-                if ( ImGui::Button( roundBrush ? ICON_FK_CIRCLE_THIN : ICON_FK_SQUARE_O, scaledToolbarButtonSize( appData ) ) )
+                if ( ImGui::Button( roundBrush ? ICON_FK_CIRCLE_THIN : ICON_FK_SQUARE_O, buttonSize ) )
                 {
                     roundBrush = ! roundBrush;
                     appData.settings().setUseRoundBrush( roundBrush );
@@ -980,7 +983,7 @@ void renderSegToolbar(
 
 
             if ( isHoriz ) ImGui::SameLine();
-            if ( ImGui::Button( ICON_FK_BULLSEYE, scaledToolbarButtonSize( appData )) )
+            if ( ImGui::Button( ICON_FK_BULLSEYE, buttonSize) )
             {
                 ImGui::OpenPopup( "brushSizePopup" );
             }
@@ -996,7 +999,7 @@ void renderSegToolbar(
 
 
             if ( isHoriz ) ImGui::SameLine();
-            if ( ImGui::Button( ICON_FK_PLUS_CIRCLE, scaledToolbarButtonSize( appData )) )
+            if ( ImGui::Button( ICON_FK_PLUS_CIRCLE, buttonSize) )
             {
                 /// @todo replace with EntropyApp::cycleBrushSize
                 uint32_t brushSizeVox = appData.settings().brushSizeInVoxels();
@@ -1013,11 +1016,11 @@ void renderSegToolbar(
             if ( isHoriz ) ImGui::SameLine();
 
             ImGui::PushStyleColor( ImGuiCol_ButtonActive, colors[ImGuiCol_Button] );
-            //        ImGui::PushItemWidth( scaledToolbarButtonSize( appData ).x );
+            //        ImGui::PushItemWidth( buttonSize.x );
             {
                 const uint32_t brushSizeVox = appData.settings().brushSizeInVoxels();
                 const std::string brushSizeString = std::to_string( brushSizeVox );
-                ImGui::Button( brushSizeString.c_str(), scaledToolbarButtonSize( appData ) );
+                ImGui::Button( brushSizeString.c_str(), buttonSize );
 
                 //        static constexpr uint32_t sk_step = 1;
                 //        static constexpr uint32_t sk_stepBig = 2;
@@ -1041,7 +1044,7 @@ void renderSegToolbar(
 
 
             if ( isHoriz ) ImGui::SameLine();
-            if ( ImGui::Button( ICON_FK_MINUS_CIRCLE, scaledToolbarButtonSize( appData )) )
+            if ( ImGui::Button( ICON_FK_MINUS_CIRCLE, buttonSize) )
             {
                 /// @todo replace with EntropyApp::cycleBrushSize
                 uint32_t brushSizeVox = appData.settings().brushSizeInVoxels();
@@ -1192,7 +1195,7 @@ void renderSegToolbar(
 
                 ImGui::PushStyleColor( ImGuiCol_Button, ( xhairsMove ? activeColor : inactiveColor ) );
                 {
-                    if ( ImGui::Button( xhairsMove ? ICON_FK_LINK : ICON_FK_CHAIN_BROKEN, scaledToolbarButtonSize( appData ) ) )
+                    if ( ImGui::Button( xhairsMove ? ICON_FK_LINK : ICON_FK_CHAIN_BROKEN, buttonSize ) )
                     {
                         xhairsMove = ! xhairsMove;
                         appData.settings().setCrosshairsMoveWithBrush( xhairsMove );
@@ -1210,7 +1213,7 @@ void renderSegToolbar(
             ImGui::PopID();
 
             if ( isHoriz ) ImGui::SameLine();
-            if ( ImGui::Button( ICON_FK_RSS, scaledToolbarButtonSize( appData ) ) )
+            if ( ImGui::Button( ICON_FK_RSS, buttonSize ) )
             {
                 ImGui::OpenPopup( "segSyncPopup" );
             }
@@ -1222,7 +1225,7 @@ void renderSegToolbar(
 
 
             if ( isHoriz ) ImGui::SameLine();
-            if ( ImGui::Button( ICON_FK_CUBES, scaledToolbarButtonSize( appData )) )
+            if ( ImGui::Button( ICON_FK_CUBES, buttonSize) )
             {
                 const auto imageUid = appData.activeImageUid();
                 const Image* image = appData.activeImage();

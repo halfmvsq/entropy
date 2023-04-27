@@ -27,6 +27,7 @@ class ParcellationLabelTable;
  * @param uiControls
  * @param hasFrameAndBackground
  * @param showApplyToAllButton
+ * @param contentScaleRatios
  * @param getNumImages
  * @param isImageRendered
  * @param setImageRendered
@@ -48,6 +49,8 @@ void renderViewSettingsComboWindow(
         const UiControls& uiControls,
         bool /*hasFrameAndBackground*/,
         bool showApplyToAllButton,
+
+        const glm::vec2& contentScales,
 
         size_t numImages,
 

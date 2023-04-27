@@ -46,6 +46,7 @@ void renderImageHeaderInformation(
  * @param image
  * @param isActiveImage
  * @param numImages
+ * @param contentScales
  * @param updateAllImageUniforms
  * @param updateImageUniforms
  * @param updateImageInterpolationMode
@@ -65,6 +66,7 @@ void renderImageHeader(
         Image* image,
         bool isActiveImage,
         size_t numImages,
+        const glm::vec2& contentScales,
         const std::function< void ( void ) >& updateAllImageUniforms,
         const std::function< void ( void ) >& updateImageUniforms,
         const std::function< void ( void ) >& updateImageInterpolationMode,

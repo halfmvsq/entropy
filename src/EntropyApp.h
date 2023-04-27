@@ -99,6 +99,9 @@ public:
     const GlfwWrapper& glfw() const;
     GlfwWrapper& glfw();
 
+    const ImGuiWrapper& imgui() const;
+    ImGuiWrapper& imgui();
+
     const RenderData& renderData() const;
     RenderData& renderData();
 

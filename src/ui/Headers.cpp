@@ -50,9 +50,12 @@ static const ImVec4 sk_whiteText( 1, 1, 1, 1 );
 static const ImVec4 sk_blackText( 0, 0, 0, 1 );
 
 /// Size of small toolbar buttons (pixels)
-////// static const ImVec2 sk_smallToolbarButtonSize( 24, 24 );
-/// @todo FIX PROPERLY
-static const ImVec2 sk_smallToolbarButtonSize( 48, 48 );
+ImVec2 scaledToolbarButtonSize( const glm::vec2& contentScale )
+{
+    static const ImVec2 sk_smallToolbarButtonSize( 24, 24 );
+    return ImVec2{ contentScale.x * sk_smallToolbarButtonSize.x, contentScale.y * sk_smallToolbarButtonSize.y };
+}
+
 
 static const std::string sk_referenceAndActiveImageMessage( "This is the reference and active image" );
 static const std::string sk_referenceImageMessage( "This is the reference image" );
@@ -348,6 +351,7 @@ void renderImageHeader(
         Image* image,
         bool isActiveImage,
         size_t numImages,
+        const glm::vec2& contentScales,
         const std::function< void(void) >& updateAllImageUniforms,
         const std::function< void(void) >& updateImageUniforms,
         const std::function< void(void) >& updateImageInterpolationMode,
@@ -472,7 +476,7 @@ void renderImageHeader(
     ImGui::SameLine(); helpMarker( "Set the image display name and border color" );
 
 
-    if ( ImGui::Button( ICON_FK_HAND_O_UP, sk_smallToolbarButtonSize ) )
+    if ( ImGui::Button( ICON_FK_HAND_O_UP, scaledToolbarButtonSize( contentScales ) ) )
     {
         glm::vec3 worldPos{ imgTx.worldDef_T_subject() *
                 glm::vec4{ imgHeader.subjectBBoxCenter(), 1.0f } };
@@ -545,7 +549,7 @@ void renderImageHeader(
         const bool isLocked = ( forceLocked || image->transformations().is_worldDef_T_affine_locked() );
 
         ImGui::PushStyleColor( ImGuiCol_Button, ( isLocked ? inactiveColor : activeColor ) );
-        if ( ImGui::Button( ( isLocked ? ICON_FK_LOCK : ICON_FK_UNLOCK ), sk_smallToolbarButtonSize ) )
+        if ( ImGui::Button( ( isLocked ? ICON_FK_LOCK : ICON_FK_UNLOCK ), scaledToolbarButtonSize( contentScales ) ) )
         {
             if ( ! forceLocked )
             {

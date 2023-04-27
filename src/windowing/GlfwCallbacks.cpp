@@ -55,7 +55,10 @@ void windowContentScaleCallback( GLFWwindow* window, float contentScaleX, float 
         return;
     }
 
-    app->windowData().setContentScaleRatio( glm::vec2{ contentScaleX, contentScaleY } );
+    spdlog::error( "********************************* windowContentScaleCallback {} {} ", contentScaleX, contentScaleY );
+
+    app->windowData().setContentScaleRatios( glm::vec2{ contentScaleX, contentScaleY } );
+    app->imgui().setContentScale( app->windowData().getContentScaleRatio() );
 }
 
 
@@ -101,6 +104,8 @@ void windowSizeCallback( GLFWwindow* window, int windowWidth, int windowHeight )
         return;
     }
 
+    spdlog::error( "********************************* windowSizeCallback {} {} ", windowWidth, windowHeight );
+
     app->resize( windowWidth, windowHeight );
     app->render();
 
@@ -117,6 +122,8 @@ void framebufferSizeCallback( GLFWwindow* window, int fbWidth, int fbHeight )
         spdlog::warn( "App is null in framebuffer size callback" );
         return;
     }
+
+    spdlog::error( "********************************* framebufferSizeCallback {} {} ", fbWidth, fbHeight );
 
     app->windowData().setFramebufferSize( fbWidth, fbHeight );
     app->render();

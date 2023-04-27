@@ -122,8 +122,9 @@ public:
      * On systems where each monitors can have its own content scale, the window content scale will depend
      * on which monitor the system considers the window to be on.
      */
-    void setContentScaleRatio( const glm::vec2& ratio );
-    const glm::vec2& getContentScaleRatio() const;
+    void setContentScaleRatios( const glm::vec2& ratio );
+    const glm::vec2& getContentScaleRatios() const;
+    float getContentScaleRatio() const;
 
     /// Set/get the window position in screen space. This does not move the window.
     void setWindowPos( int posX, int posY );

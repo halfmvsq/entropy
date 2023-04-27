@@ -22,6 +22,8 @@ public:
     ImGuiWrapper( GLFWwindow* window, AppData& appData, CallbackHandler& callbackHandler );
     ~ImGuiWrapper();
 
+    void setContentScale( float scale );
+
     void setCallbacks(
             std::function< void (void) > readjustViewport,
             std::function< void ( const uuids::uuid& viewUid ) > recenterView,
@@ -53,7 +55,7 @@ public:
 
 private:
 
-    void initializeData();
+    void initializeFonts();
 
     void annotationToolbar( const std::function< void () > paintActiveAnnotation );
 
@@ -85,6 +87,8 @@ private:
     std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const uuids::uuid& resultSegUid ) > m_executeGridCutsSeg = nullptr;
     std::function< bool ( const uuids::uuid& imageUid, bool locked ) > m_setLockManualImageTransformation = nullptr;
     std::function< void () > m_paintActiveSegmentationWithActivePolygon = nullptr;
+
+    float m_contentScale;
 };
 
 #endif // IMGUI_WRAPPER_H

@@ -43,19 +43,11 @@ static const ImVec4 sk_blackText( 0, 0, 0, 1 );
 
 static const std::string sk_NA( "<N/A>" );
 
-ImVec2 scaledToolbarButtonSize()
+ImVec2 scaledToolbarButtonSize( const glm::vec2& contentScale )
 {
     static const ImVec2 sk_toolbarButtonSize( 32, 32 );
-    const glm::vec2 contentScale{ 2.0f, 2.0f };
     return ImVec2{ contentScale.x * sk_toolbarButtonSize.x, contentScale.y * sk_toolbarButtonSize.y };
 }
-
-// ImVec2 scaledToolbarButtonSize( const AppData& appData )
-// {
-//     static const ImVec2 sk_toolbarButtonSize( 32, 32 );
-//     const glm::vec2 contentScale = appData.windowData().getContentScaleRatio();
-//     return ImVec2{ contentScale.x * sk_toolbarButtonSize.x, contentScale.y * sk_toolbarButtonSize.y };
-// }
 
 } // anonymous
 
@@ -67,6 +59,8 @@ void renderViewSettingsComboWindow(
         const UiControls& uiControls,
         bool /*hasFrameAndBackground*/,
         bool showApplyToAllButton,
+
+        const glm::vec2& contentScales,
 
         size_t numImages,
 
@@ -309,7 +303,7 @@ void renderViewSettingsComboWindow(
             if ( uiControls.m_hasShaderTypeComboBox )
             {
                 ImGui::SameLine();
-                ImGui::PushItemWidth( scaledToolbarButtonSize().x + 2.0f * ImGui::GetStyle().FramePadding.x );
+                ImGui::PushItemWidth( scaledToolbarButtonSize( contentScales ).x + 2.0f * ImGui::GetStyle().FramePadding.x );
 
                 if ( ImGui::BeginCombo( "##shaderTypeCombo", ICON_FK_TELEVISION ) )
                 {
@@ -368,7 +362,7 @@ void renderViewSettingsComboWindow(
                  ( camera::ViewRenderMode::VolumeRender != renderMode ) )
             {
                 ImGui::SameLine();
-                ImGui::PushItemWidth( scaledToolbarButtonSize().x + 2.0f * ImGui::GetStyle().FramePadding.x );
+                ImGui::PushItemWidth( scaledToolbarButtonSize( contentScales ).x + 2.0f * ImGui::GetStyle().FramePadding.x );
 
                 if ( ImGui::BeginCombo( "##mipModeCombo", ICON_FK_FILM, ImGuiComboFlags_HeightLargest ) )
                 {
@@ -943,6 +937,7 @@ void renderImagePropertiesWindow(
                             image,
                             isActiveImage,
                             appData.numImages(),
+                            appData.windowData().getContentScaleRatios(),
                             updateAllImageUniforms,
                             [&imageUid, updateImageUniforms] () { updateImageUniforms( imageUid ); },
                             [&imageUid, updateImageInterpolationMode] () { updateImageInterpolationMode( imageUid ); },

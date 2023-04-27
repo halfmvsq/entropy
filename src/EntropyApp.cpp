@@ -294,6 +294,9 @@ GuiData& EntropyApp::guiData() { return m_data.guiData(); }
 const GlfwWrapper& EntropyApp::glfw() const { return m_glfw; }
 GlfwWrapper& EntropyApp::glfw() { return m_glfw; }
 
+const ImGuiWrapper& EntropyApp::imgui() const { return m_imgui; }
+ImGuiWrapper& EntropyApp::imgui() { return m_imgui; }
+
 const WindowData& EntropyApp::windowData() const { return m_data.windowData(); }
 WindowData& EntropyApp::windowData() { return m_data.windowData(); }
 
