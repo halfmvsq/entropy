@@ -337,8 +337,9 @@ uint getSegValue( vec3 texCoords, vec3 texOffset, float cutoff, out float opacit
         opacity = 1.0;
         // opacity = cubicPulse( cutoff, segEdgeWidth, interp );
 
-        if ( interp > maxInterp && interp >= cutoff &&
-             ( texelFetch( segLabelCmapTex, int(label), 0 ).a > 0.0 ) )
+        if ( interp > maxInterp &&
+             interp >= cutoff &&
+             texelFetch( segLabelCmapTex, int(label), 0 ).a > 0.0 )
         {
             seg = label;
             maxInterp = interp;
@@ -373,16 +374,16 @@ float getSegInteriorAlpha( uint seg )
         float row = float( mod( i, 3 ) - 1 ); // [-1,0,1]
         float col = float( floor( float(i / 3) ) - 1 ); // [-1,0,1]
 
-        vec3 texPos = row * texSamplingDirsForSegOutline[0] +
-                      col * texSamplingDirsForSegOutline[1];
+        vec3 texPosOffset =
+            row * texSamplingDirsForSegOutline[0] +
+            col * texSamplingDirsForSegOutline[1];
 
         // Segmentation value of neighbor at (row, col) offset:
         float ignore;
-        if ( seg != getSegValue( fs_in.SegTexCoords, texPos, segInterpCutoff, ignore ) )
+        if ( seg != getSegValue( fs_in.SegTexCoords, texPosOffset, segInterpCutoff, ignore ) )
         {
             // Fragment (with segmentation 'seg') is on the segmentation boundary,
-            // since its value is not equal to one of its neighbors. Therefore, it get
-            // full alpha.
+            // since its value is not equal to one of its neighbors. Therefore, it gets full alpha.
             return 1.0;
         }
     }

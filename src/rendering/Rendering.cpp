@@ -333,7 +333,7 @@ bool Rendering::createSegTexture( const uuids::uuid& segUid )
     T.setMagnificationFilter( sk_maxFilter );
     T.setBorderColor( sk_border );
     T.setWrapMode( sk_wrapMode );
-    T.setAutoGenerateMipmaps( true );
+    T.setAutoGenerateMipmaps( false );
     T.setSize( seg->header().pixelDimensions() );
 
     T.setData( sk_mipmapLevel,

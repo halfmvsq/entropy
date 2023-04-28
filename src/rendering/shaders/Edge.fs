@@ -176,32 +176,29 @@ float interpolateTricubicFast( sampler3D tex, vec3 coord )
 // whereas fragments inside are assigned alpha of 'segInteriorOpacity'.
 float getSegInteriorAlpha( uint seg )
 {
-    float segInteriorAlpha = segInteriorOpacity;
-
     // Look up texture values in 8 neighbors surrounding the center fragment.
     // These may be either neighboring image voxels or neighboring view pixels.
     // The center fragment has index i = 4 (row = 0, col = 0).
-    for ( int i = 0; i < 9; ++i )
+    for ( int i = 0; i <= 8; ++i )
     {
         float row = float( mod( i, 3 ) - 1 ); // runs -1 to 1
         float col = float( floor( float(i / 3) ) - 1 ); // runs -1 to 1
 
         vec3 texSamplingPos = row * texSamplingDirsForSegOutline[0] +
-            col * texSamplingDirsForSegOutline[1];
+                              col * texSamplingDirsForSegOutline[1];
 
         // Segmentation value of neighbor at (row, col) offset
         uint nseg = texture( segTex, fs_in.SegTexCoords + texSamplingPos )[0];
 
         // Fragment (with segmentation 'seg') is on the boundary (and hence gets
         // full alpha) if its value is not equal to one of its neighbors.
-        if ( nseg != seg )
+        if ( seg != nseg )
         {
-            segInteriorAlpha = 1.0;
-            break;
+            return 1.0;
         }
     }
 
-    return segInteriorAlpha;
+    return segInteriorOpacity;
 }
 
 float getImageValue( vec3 texCoord )

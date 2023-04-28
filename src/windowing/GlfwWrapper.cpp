@@ -233,8 +233,6 @@ void GlfwWrapper::renderLoop(
 
     spdlog::debug( "Starting GLFW rendering loop" );
 
-    glfwShowWindow( m_window );
-
     while ( ! glfwWindowShouldClose( m_window ) )
     {
         if ( checkAppQuit() )
@@ -247,6 +245,7 @@ void GlfwWrapper::renderLoop(
         {
             imagesReady = false;
             onImagesReady();
+            init(); // Call initial windowing callbacks one more time
         }
 
         if ( imageLoadFailed )
