@@ -66,17 +66,30 @@ GlfwWrapper::GlfwWrapper( EntropyApp* app, int glMajorVersion, int glMinorVersio
     glfwWindowHint( GLFW_DOUBLEBUFFER, GLFW_TRUE );
     glfwWindowHint( GLFW_MAXIMIZED, GLFW_TRUE );
 
+    glfwWindowHint( GLFW_VISIBLE, GLFW_TRUE );
+
+    // Window will be given input focus when glfwShowWindow is called
+    glfwWindowHint( GLFW_FOCUS_ON_SHOW, GLFW_TRUE );
+
+    // Window content area should be resized based on the monitor content scale of any
+    // monitor it is placed on. This includes the initial placement when the window is created
+    glfwWindowHint( GLFW_SCALE_TO_MONITOR, GLFW_TRUE );
+    
+
 #ifdef __APPLE__
     // Window's context is an OpenGL forward-compatible, i.e. one where all functionality deprecated
     // in the requested version of OpenGL is removed (required on macOS)
-    glfwWindowHint( GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE );
+    glfwWindowHint( GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE );
 
     // Use full resolution framebuffers on Retina displays
-    glfwWindowHint( GLFW_COCOA_RETINA_FRAMEBUFFER, GL_TRUE );
+    glfwWindowHint( GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_FALSE );
 
     // Disable Automatic Graphics Switching, i.e. do not allow the system to choose the integrated GPU
     // for the OpenGL context and move it between GPUs if necessary. Forces it to always run on the discrete GPU.
-    glfwWindowHint( GLFW_COCOA_GRAPHICS_SWITCHING, GL_FALSE );
+    glfwWindowHint( GLFW_COCOA_GRAPHICS_SWITCHING, GLFW_FALSE );
+
+    // Encoded name to use for autosaving the window frame
+    glfwWindowHintString( GLFW_COCOA_FRAME_NAME, "EntropyViewer" );
 
     spdlog::debug( "Initialized GLFW window and context for Apple macOS platform" );
 #endif
@@ -201,9 +214,10 @@ void GlfwWrapper::init()
     glfwGetWindowContentScale( m_window, &xscale, &yscale );
     windowContentScaleCallback( m_window, xscale, yscale );
 
+    glfwShowWindow( m_window );
+
     spdlog::debug( "Initialized GLFW wrapper" );
 }
-
 
 void GlfwWrapper::renderLoop(
         std::atomic<bool>& imagesReady,
@@ -218,6 +232,8 @@ void GlfwWrapper::renderLoop(
     }
 
     spdlog::debug( "Starting GLFW rendering loop" );
+
+    glfwShowWindow( m_window );
 
     while ( ! glfwWindowShouldClose( m_window ) )
     {

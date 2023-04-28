@@ -140,7 +140,7 @@ createImageTextures( const AppData& appData )
             T.setMagnificationFilter( maxFilter );
 //            T.setBorderColor( sk_border );
             T.setWrapMode( sk_wrapModeClampToEdge );
-            T.setAutoGenerateMipmaps( true );
+            T.setAutoGenerateMipmaps( false ); // no mipmapping for images
             T.setSize( image->header().pixelDimensions() );
 
             T.setData( sk_mipmapLevel,
@@ -196,7 +196,7 @@ createImageTextures( const AppData& appData )
                 T.setMagnificationFilter( maxFilter );
 //                T.setBorderColor( sk_border );
                 T.setWrapMode( sk_wrapModeClampToEdge );
-                T.setAutoGenerateMipmaps( true );
+                T.setAutoGenerateMipmaps( false ); // no mipmapping for images
                 T.setSize( image->header().pixelDimensions() );
 
                 T.setData( sk_mipmapLevel,
@@ -315,7 +315,7 @@ createDistanceMapTextures( const AppData& appData )
             it.first->second.setMinificationFilter( sk_minFilter );
             it.first->second.setMagnificationFilter( sk_maxFilter );
             it.first->second.setWrapMode( sk_wrapModeClampToEdge );
-            it.first->second.setAutoGenerateMipmaps( true );
+            it.first->second.setAutoGenerateMipmaps( false );
             it.first->second.setSize( glm::uvec3{ mapSize[0], mapSize[1], mapSize[2] } );
 
             it.first->second.setData(
@@ -394,7 +394,7 @@ createSegTextures( const AppData& appData )
         T.setMagnificationFilter( sk_maxFilter );
         T.setBorderColor( sk_border );
         T.setWrapMode( sk_wrapMode );
-        T.setAutoGenerateMipmaps( true );
+        T.setAutoGenerateMipmaps( false ); // no mipmapping for segmentations
         T.setSize( seg->header().pixelDimensions() );
 
         T.setData( k_mipmapLevel,
