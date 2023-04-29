@@ -268,11 +268,11 @@ bool Rendering::createLabelColorTableTexture( const uuids::uuid& labelTableUid )
     int maxBufTexSize;
     glGetIntegerv( GL_MAX_TEXTURE_BUFFER_SIZE, &maxBufTexSize );
 
-    if ( table->numLabels() > static_cast<size_t>(maxBufTexSize) )
+    if ( table->numColorBytes_RGBA_U8() > static_cast<size_t>(maxBufTexSize) )
     {
-        spdlog::error( "Number of labels ({}) of label color table {} exceeds "
-                       "maximum buffer texture size of {}",
-                       table->numLabels(), labelTableUid, maxBufTexSize );
+        spdlog::error( "Number of bytes ({}) in label color table {} exceeds "
+                       "maximum buffer texture size of {} bytes",
+                       table->numColorBytes_RGBA_U8(), labelTableUid, maxBufTexSize );
         return false;
     }
     
@@ -287,8 +287,7 @@ bool Rendering::createLabelColorTableTexture( const uuids::uuid& labelTableUid )
 
     T.generate();
 
-    T.allocate( table->numLabels() * ParcellationLabelTable::numBytesPerLabel_U8(),
-                table->colorData_RGBA_nonpremult_U8() );
+    T.allocate( table->numColorBytes_RGBA_U8(), table->colorData_RGBA_nonpremult_U8() );
 
     spdlog::debug( "Generated buffer texture for label color table {}", labelTableUid );
     return true;
@@ -633,7 +632,7 @@ void Rendering::updateLabelColorTableTexture( size_t tableIndex )
         return;
     }
 
-    it->second.write( 0, table->numLabels(), table->colorData_RGBA_nonpremult_U8() );
+    it->second.write( 0, table->numColorBytes_RGBA_U8(), table->colorData_RGBA_nonpremult_U8() );
 
     spdlog::trace( "Done updating buffer texture for label color table {}", *tableUid );
 }

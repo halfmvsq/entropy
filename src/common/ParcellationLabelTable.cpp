@@ -32,25 +32,26 @@ ParcellationLabelTable::ParcellationLabelTable(
     :
       m_colors_RGBA_U8(),
       m_properties(),
-      m_maxLabelCount( maxLabelCount )
+      m_maxLabelCount( std::min( maxLabelCount, labelCountUpperBound() ) )
 {
     static const std::vector<float> sk_startAngles{
         0.0f, 120.0f, 240.0f, 60.0f, 180.0f, 300.0f };
 
-    if ( labelCount < 7 )
+    std::size_t labelCountAdjusted = labelCount;
+
+    if ( labelCountAdjusted < 7 )
     {
-        throw_debug( "Parcellation must have at least 7 labels" )
+        spdlog::warn( "Parcellation label table must have at least 7 labels" );
+        labelCountAdjusted = 7;
     }
 
-    if ( labelCount > maxLabelCount )
+    if ( labelCountAdjusted > m_maxLabelCount )
     {
-        throw_debug( "Label count exceeds maximum" )
+        spdlog::warn( "Parcellation label count ({}) exceeds maximum ({})",
+                      labelCountAdjusted, m_maxLabelCount );
+        labelCountAdjusted = m_maxLabelCount;
     }
 
-    if ( maxLabelCount > labelCountUpperBound() )
-    {
-        throw_debug( "Maximum label count exceeds upper bound" )
-    }
 
     std::vector< glm::vec3 > rgbValues;
 
@@ -150,7 +151,7 @@ std::size_t ParcellationLabelTable::numBytesPerLabel_U8()
 
 std::size_t ParcellationLabelTable::labelCountUpperBound()
 {
-    return static_cast<std::size_t>( 1U << 24 );
+    return static_cast<std::size_t>( 1U << 16 );
 }
 
 

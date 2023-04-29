@@ -340,11 +340,12 @@ AABB<float> computeWorldAABBoxEnclosingImages(
 }
 
 
-std::optional< uuids::uuid >
-createLabelColorTableForSegmentation(
+std::optional< uuids::uuid > createLabelColorTableForSegmentation(
         AppData& appData,
         const uuids::uuid& segUid )
 {
+    static constexpr int64_t sk_minNumLabels = static_cast<int64_t>(256);
+
     Image* seg = appData.seg( segUid );
 
     if ( ! seg )
@@ -362,19 +363,22 @@ createLabelColorTableForSegmentation(
         componentRange( seg->header().memoryComponentType() ).second );
 
     // Add one to account for label 0:
+    const int64_t maxNumLabelsInSeg = maxLabelInSeg + 1;
     const int64_t maxNumLabelsForComp = maxLabelForComp + 1;
 
     spdlog::debug( "Maximum label value supported by the component type ({}) of segmentation {} is {}",
                    seg->header().memoryComponentTypeAsString(), segUid, maxLabelForComp );
 
-    const int64_t numLabels = std::min( maxNumLabelsForComp,
+    // Allocate a table with at least 256 labels, but no more than the upper bound.
+    const int64_t numLabels = std::min(
+        std::max( maxNumLabelsInSeg, sk_minNumLabels ),
         static_cast<int64_t>( ParcellationLabelTable::labelCountUpperBound() ) );
 
-    if ( maxNumLabelsForComp > numLabels )
+    if ( maxNumLabelsInSeg > numLabels )
     {
         spdlog::warn( "A color table is being allocated with {} labels, which is fewer than "
                       "the number required to represent the maximum label ({}) in segmentation {}",
-                      numLabels, maxNumLabelsForComp, segUid );
+                      numLabels, maxNumLabelsInSeg, segUid );
     }
 
     if ( maxNumLabelsForComp > numLabels )
