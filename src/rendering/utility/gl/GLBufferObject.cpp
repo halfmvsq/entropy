@@ -13,7 +13,7 @@ GLBufferObject::GLBufferObject(
       m_type( type ),
       m_typeEnum( underlyingType( type ) ),
       m_usagePattern( usage ),
-      m_bufferSize( 0 )
+      m_bufferSizeInBytes( 0 )
 {
 }
 
@@ -27,10 +27,10 @@ GLBufferObject::GLBufferObject( GLBufferObject&& other ) noexcept
       m_type( other.m_type ),
       m_typeEnum( underlyingType( other.m_type ) ),
       m_usagePattern( other.m_usagePattern ),
-      m_bufferSize( other.m_bufferSize )
+      m_bufferSizeInBytes( other.m_bufferSizeInBytes )
 {
     other.m_id = 0;
-    other.m_bufferSize = 0;
+    other.m_bufferSizeInBytes = 0;
 }
 
 GLBufferObject& GLBufferObject::operator=( GLBufferObject&& other ) noexcept
@@ -43,7 +43,7 @@ GLBufferObject& GLBufferObject::operator=( GLBufferObject&& other ) noexcept
         std::swap( m_type, other.m_type );
         std::swap( m_typeEnum, other.m_typeEnum );
         std::swap( m_usagePattern, other.m_usagePattern );
-        std::swap( m_bufferSize, other.m_bufferSize );
+        std::swap( m_bufferSizeInBytes, other.m_bufferSizeInBytes );
     }
 
     return *this;
@@ -65,7 +65,7 @@ void GLBufferObject::destroy()
 {
     glDeleteBuffers( 1, &m_id );
     m_id = 0;
-    m_bufferSize = 0;
+    m_bufferSizeInBytes = 0;
 }
 
 void GLBufferObject::bind()
@@ -80,34 +80,38 @@ void GLBufferObject::unbind()
     CHECK_GL_ERROR( m_errorChecker );
 }
 
-void GLBufferObject::allocate( std::size_t size, const GLvoid* data )
+void GLBufferObject::allocate( std::size_t sizeInBytes, const GLvoid* data )
 {
-    if ( size > static_cast<size_t>( std::numeric_limits<GLsizeiptr>::max() ) )
+    if ( sizeInBytes > static_cast<size_t>( std::numeric_limits<GLsizeiptr>::max() ) )
     {
         throw_debug( "Attempting to allocate GLBufferObject larger than maximum size" );
     }
 
     bind();
 
-    glBufferData( m_typeEnum, static_cast<GLsizeiptr>( size ),
+    glBufferData( m_typeEnum, static_cast<GLsizeiptr>( sizeInBytes ),
                   data, underlyingType( m_usagePattern ) );
 
-    m_bufferSize = size;
+    m_bufferSizeInBytes = sizeInBytes;
+
+    unbind();
 
     CHECK_GL_ERROR( m_errorChecker );
 }
 
-void GLBufferObject::write( std::size_t offset, std::size_t size, const GLvoid* data )
+void GLBufferObject::write( std::size_t offset, std::size_t sizeInBytes, const GLvoid* data )
 {
     if ( offset > static_cast<size_t>( std::numeric_limits<GLsizeiptr>::max() ) ||
-         size > static_cast<size_t>( std::numeric_limits<GLsizeiptr>::max() ) )
+         sizeInBytes > static_cast<size_t>( std::numeric_limits<GLsizeiptr>::max() ) )
     {
         throw_debug( "Attempting to wrote GLBufferObject larger than maximum size" );
     }
 
     bind();
     glBufferSubData( m_typeEnum, static_cast<GLsizeiptr>( offset ),
-                     static_cast<GLsizeiptr>( size ), data );
+                     static_cast<GLsizeiptr>( sizeInBytes ), data );
+
+    unbind();
 
     CHECK_GL_ERROR( m_errorChecker );
 }
@@ -180,5 +184,5 @@ BufferUsagePattern GLBufferObject::usagePattern() const
 
 size_t GLBufferObject::size() const
 {
-    return static_cast<size_t>( m_bufferSize );
+    return static_cast<size_t>( m_bufferSizeInBytes );
 }

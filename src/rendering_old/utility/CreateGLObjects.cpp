@@ -941,11 +941,11 @@ std::unique_ptr<GLBufferTexture> createLabelColorTableTextureBuffer(
 
     // Buffer contents will be modified once and used many times
     auto colorMapTexture = std::make_unique<GLBufferTexture>(
-                labels->bufferTextureFormat_RGBA_F32(),
+                labels->bufferTextureFormat_RGBA_U8(),
                 BufferUsagePattern::StaticDraw );
 
     colorMapTexture->generate();
-    colorMapTexture->allocate( labels->numColorBytes_RGBA_F32(), labels->colorData_RGBA_premult_F32() );
+    colorMapTexture->allocate( labels->numColorBytes_RGBA_U8(), labels->colorData_RGBA_nonpremult_U8() );
     colorMapTexture->attachBufferToTexture();
 
     return colorMapTexture;

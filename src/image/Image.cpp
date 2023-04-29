@@ -636,13 +636,14 @@ void Image::loadSegBuffer( const float* buffer, size_t numElements )
         m_ioInfoInMemory.m_sizeInfo.m_imageSizeInBytes =
                 numElements * m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes;
 
-        spdlog::info( "Casted segmentation pixel component from type {} to {}",
+        spdlog::info( "Casted segmentation '{}' pixel component from type {} to {}",
+                      m_ioInfoOnDisk.m_fileInfo.m_fileName,
                       m_ioInfoOnDisk.m_componentInfo.m_componentTypeString, newTypeString );
 
         if ( warnFloatConversion )
         {
             spdlog::warn( "Floating point to integer conversion: "
-                          "Possible loss of precision when casting segmentation pixel component from type {} to {}",
+                          "Possible loss of precision and information when casting segmentation pixel component from type {} to {}",
                           m_ioInfoOnDisk.m_componentInfo.m_componentTypeString, newTypeString );
         }
 

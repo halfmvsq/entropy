@@ -43,12 +43,12 @@ public:
     GLuint id() const;
 
     // Allocate buffer
-    void allocate( std::size_t numTexels, const GLvoid* data );
+    void allocate( std::size_t sizeInBytes, const GLvoid* data );
 
     // Write to buffer
-    void write( GLintptr offset, GLsizeiptr numTexels, const GLvoid* data );
+    void write( GLintptr offset, GLsizeiptr sizeInBytes, const GLvoid* data );
 
-    void read( GLintptr offset, GLsizeiptr numTexels, GLvoid* data );
+    void read( GLintptr offset, GLsizeiptr sizeInBytes, GLvoid* data );
 
     BufferUsagePattern usagePattern() const;
 
@@ -59,7 +59,6 @@ public:
      *
      * @return Number of texels in the buffer texture's texel array
      */
-    std::size_t numTexels() const;
     std::size_t numBytes() const;
 
     /**

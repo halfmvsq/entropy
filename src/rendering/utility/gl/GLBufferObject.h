@@ -60,7 +60,7 @@ public:
      *
      * It is assumed that create() has been called on this buffer and that it has been bound to the current context
      *
-     * @param size Specifies the size in bytes of the buffer object's new data store
+     * @param sizeInBytes Specifies the size in bytes of the buffer object's new data store
      * (how many bytes you want to allocate in this buffer object)
      *
      * @param data Specifies a pointer to data that will be copied into the data store for initialization,
@@ -70,7 +70,7 @@ public:
      *
      * @note This calls bind() to first bind the texture
      */
-    void allocate( std::size_t size, const GLvoid* data );
+    void allocate( std::size_t sizeInBytes, const GLvoid* data );
 
     /**
      * @brief Updates a subset of a buffer object's data store
@@ -79,13 +79,13 @@ public:
      *
      * @param offset Specifies the offset into the buffer object's data store where data replacement will begin, measured in bytes
      *
-     * @param size Specifies the size in bytes of the data store region being replaced
+     * @param sizeInBytes Specifies the size in bytes of the data store region being replaced
      *
      * @param data Specifies a pointer to the new data that will be copied into the data store.
      *
      * @note This calls bind()
      */
-    void write( std::size_t offset, std::size_t size, const GLvoid* data );
+    void write( std::size_t offset, std::size_t sizeInBytes, const GLvoid* data );
 
     /**
      * @brief returns a subset of a buffer object's data store.
@@ -96,12 +96,12 @@ public:
      *
      * @param offset Specifies the offset into the buffer object's data store from which data will be returned, measured in bytes
      *
-     * @param size Specifies the size in bytes of the data store region being returned
+     * @param sizeInBytes Specifies the size in bytes of the data store region being returned
      *
      * @param data Specifies a pointer to the location where buffer object data is returned
      * @return
      */
-    void read( std::size_t offset, std::size_t size, GLvoid* data );
+    void read( std::size_t offset, std::size_t sizeInBytes, GLvoid* data );
 
 
     /**
@@ -159,7 +159,7 @@ private:
     GLenum m_typeEnum;
     BufferUsagePattern m_usagePattern;
 
-    std::size_t m_bufferSize;
+    std::size_t m_bufferSizeInBytes;
 };
 
 #endif // GLBUFFEROBJECT_H

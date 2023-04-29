@@ -15,6 +15,7 @@
 #include <IconFontCppHeaders/IconsForkAwesome.h>
 
 #include <glm/glm.hpp>
+#include <glm/gtc/type_precision.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 #define GLM_ENABLE_EXPERIMENTAL
@@ -155,7 +156,7 @@ void renderSegLabelsChildWindow(
         std::string labelName = labelTable->getName( i );
 
         // ImGui::ColorEdit represents color as non-pre-multiplied colors
-        glm::vec4 labelColor = glm::vec4{ labelTable->getColor( i ), labelTable->getAlpha( i ) };
+        glm::vec4 labelColor = glm::vec4{ labelTable->getColor( i ), labelTable->getAlpha( i ) } / 255.0f;
 
         ImGui::PushID( static_cast<int>( i ) ); /*** PushID i ***/
 
@@ -168,8 +169,8 @@ void renderSegLabelsChildWindow(
         ImGui::SameLine();
         if ( ImGui::ColorEdit4( labelIndexBuffer, glm::value_ptr( labelColor ), sk_colorEditFlags ) )
         {
-            labelTable->setColor( i, glm::vec3{ labelColor } );
-            labelTable->setAlpha( i, labelColor.a );
+            labelTable->setColor( i, glm::u8vec3{ 255.0f * labelColor } );
+            labelTable->setAlpha( i, static_cast<uint8_t>( 255.0f * labelColor.a ) );
             updateLabelColorTableTexture( tableIndex );
         }
 

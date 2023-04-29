@@ -18,7 +18,7 @@
 namespace
 {
 
-static constexpr size_t sk_seed = 1234567890;
+static constexpr std::size_t sk_seed = 1234567890;
 
 static const auto sk_hueMinMax = std::make_pair( 0.0f, 360.0f );
 static const auto sk_satMinMax = std::make_pair( 0.5f, 1.0f );
@@ -27,9 +27,10 @@ static const auto sk_valMinMax = std::make_pair( 0.5f, 1.0f );
 }
 
 
-ParcellationLabelTable::ParcellationLabelTable( size_t labelCount, size_t maxLabelCount )
+ParcellationLabelTable::ParcellationLabelTable(
+    std::size_t labelCount, std::size_t maxLabelCount )
     :
-      m_colors_RGBA_F32(),
+      m_colors_RGBA_U8(),
       m_properties(),
       m_maxLabelCount( maxLabelCount )
 {
@@ -46,6 +47,11 @@ ParcellationLabelTable::ParcellationLabelTable( size_t labelCount, size_t maxLab
         throw_debug( "Label count exceeds maximum" )
     }
 
+    if ( maxLabelCount > labelCountUpperBound() )
+    {
+        throw_debug( "Maximum label count exceeds upper bound" )
+    }
+
     std::vector< glm::vec3 > rgbValues;
 
     // The first label (0) is always black:
@@ -58,16 +64,15 @@ ParcellationLabelTable::ParcellationLabelTable( size_t labelCount, size_t maxLab
     }
 
     const std::vector< glm::vec3 > hsvSamples = math::generateRandomHsvSamples(
-                labelCount - 7, sk_hueMinMax, sk_satMinMax, sk_valMinMax, sk_seed );
+        labelCount - 7, sk_hueMinMax, sk_satMinMax, sk_valMinMax, sk_seed );
 
     std::transform( std::begin( hsvSamples ), std::end( hsvSamples ),
                     std::back_inserter( rgbValues ),
                     glm::rgbColor< float, glm::precision::defaultp > );
 
+    m_colors_RGBA_U8.resize( labelCount );
 
-    m_colors_RGBA_F32.resize( labelCount );
-
-    for ( size_t i = 0; i < labelCount; ++i )
+    for ( std::size_t i = 0; i < labelCount; ++i )
     {
         LabelProperties props;
 
@@ -78,151 +83,148 @@ ParcellationLabelTable::ParcellationLabelTable( size_t labelCount, size_t maxLab
             // Label index 0 is always used as the background label,
             // so it is fully transparent and not visible in 2D/3D views
             ss << "Background";
-            props.m_alpha = 0.0f;
+            props.m_alpha = 0u;
             props.m_visible = false;
             props.m_showMesh = false;
         }
         else
         {
             ss << "Region " << i;
-            props.m_alpha = 1.0f;
+            props.m_alpha = 255u;
             props.m_visible = true;
             props.m_showMesh = false;
         }
 
         props.m_name = ss.str();
-        props.m_color = rgbValues[i];
+        props.m_color = glm::u8vec3{ 255.0f * rgbValues[i] };
 
         m_properties.emplace_back( std::move( props ) );
 
-        // Update the color in m_colors_RGBA_F32
-        updateColorRGBA( i );
+        // Update the color
+        updateVector( i );
     }
 }
 
 
-glm::vec4 ParcellationLabelTable::color_RGBA_premult_F32( size_t index ) const
+glm::u8vec4 ParcellationLabelTable::color_RGBA_nonpremult_U8( std::size_t index ) const
 {
     checkLabelIndex( index );
-    return m_colors_RGBA_F32.at( index );
+    return m_colors_RGBA_U8.at( index );
 }
 
-
-size_t ParcellationLabelTable::numLabels() const
+std::size_t ParcellationLabelTable::numLabels() const
 {
-    return m_colors_RGBA_F32.size();
+    return m_colors_RGBA_U8.size();
 }
 
-size_t ParcellationLabelTable::maxNumLabels() const
+std::size_t ParcellationLabelTable::maxNumLabels() const
 {
     return m_maxLabelCount;
 }
 
 
-size_t ParcellationLabelTable::numColorBytes_RGBA_F32() const
+std::size_t ParcellationLabelTable::numColorBytes_RGBA_U8() const
 {
-    return m_colors_RGBA_F32.size() * sizeof( glm::vec4 );
+    return m_colors_RGBA_U8.size() * sizeof( glm::u8vec4 );
+}
+
+const uint8_t* ParcellationLabelTable::colorData_RGBA_nonpremult_U8() const
+{
+    return glm::value_ptr( m_colors_RGBA_U8[0] );
 }
 
 
-const float* ParcellationLabelTable::colorData_RGBA_premult_F32() const
-{
-    return glm::value_ptr( m_colors_RGBA_F32[0] );
-}
-
-
-tex::SizedInternalBufferTextureFormat ParcellationLabelTable::bufferTextureFormat_RGBA_F32()
+tex::SizedInternalBufferTextureFormat
+ParcellationLabelTable::bufferTextureFormat_RGBA_U8()
 {
     static const tex::SizedInternalBufferTextureFormat sk_format =
-            tex::SizedInternalBufferTextureFormat::RGBA32F;
+        tex::SizedInternalBufferTextureFormat::RGBA8_UNorm;
 
     return sk_format;
 }
 
+std::size_t ParcellationLabelTable::numBytesPerLabel_U8()
+{
+    return 4; // 1 byte per component
+}
 
-const std::string& ParcellationLabelTable::getName( size_t index ) const
+std::size_t ParcellationLabelTable::labelCountUpperBound()
+{
+    return static_cast<std::size_t>( 1U << 24 );
+}
+
+
+const std::string& ParcellationLabelTable::getName( std::size_t index ) const
 {
     checkLabelIndex( index );
     return m_properties.at( index ).m_name;
 }
 
-
-void ParcellationLabelTable::setName( size_t index, std::string name )
+void ParcellationLabelTable::setName( std::size_t index, std::string name )
 {
     checkLabelIndex( index );
     m_properties[index].m_name = std::move( name );
 }
 
 
-bool ParcellationLabelTable::getVisible( size_t index ) const
+bool ParcellationLabelTable::getVisible( std::size_t index ) const
 {
     checkLabelIndex( index );
     return m_properties.at( index ).m_visible;
 }
 
-
-void ParcellationLabelTable::setVisible( size_t index, bool show )
+void ParcellationLabelTable::setVisible( std::size_t index, bool show )
 {
     checkLabelIndex( index );
     m_properties[index].m_visible = show;
-    updateColorRGBA( index );
+    updateVector( index );
 }
 
 
-bool ParcellationLabelTable::getShowMesh( size_t index ) const
+bool ParcellationLabelTable::getShowMesh( std::size_t index ) const
 {
     checkLabelIndex( index );
     return m_properties.at( index ).m_showMesh;
 }
 
-
-void ParcellationLabelTable::setShowMesh( size_t index, bool show )
+void ParcellationLabelTable::setShowMesh( std::size_t index, bool show )
 {
     checkLabelIndex( index );
     m_properties[index].m_showMesh = show;
 }
 
 
-glm::vec3 ParcellationLabelTable::getColor( size_t index ) const
+glm::u8vec3 ParcellationLabelTable::getColor( std::size_t index ) const
 {
     checkLabelIndex( index );
     return m_properties.at( index ).m_color;
 }
 
-
-void ParcellationLabelTable::setColor( size_t index, const glm::vec3& color )
+void ParcellationLabelTable::setColor( std::size_t index, const glm::u8vec3& color )
 {
     checkLabelIndex( index );
-
     m_properties[index].m_color = color;
-    updateColorRGBA( index );
+    updateVector( index );
 }
 
 
-float ParcellationLabelTable::getAlpha( size_t index ) const
+uint8_t ParcellationLabelTable::getAlpha( std::size_t index ) const
 {
     checkLabelIndex( index );
     return m_properties.at( index ).m_alpha;
 }
 
-
-void ParcellationLabelTable::setAlpha( size_t index, float alpha )
+void ParcellationLabelTable::setAlpha( std::size_t index, uint8_t alpha )
 {
     checkLabelIndex( index );
-
-    if ( alpha < 0.0f || 1.0f < alpha )
-    {
-        return;
-    }
-
     m_properties[index].m_alpha = alpha;
-    updateColorRGBA( index );
+    updateVector( index );
 }
 
 
-std::vector<size_t> ParcellationLabelTable::addLabels( size_t count )
+std::vector<std::size_t> ParcellationLabelTable::addLabels( std::size_t count )
 {
-    std::vector<size_t> newIndices;
+    std::vector<std::size_t> newIndices;
 
     if ( 0 == count )
     {
@@ -238,11 +240,11 @@ std::vector<size_t> ParcellationLabelTable::addLabels( size_t count )
     }
 
     // Generate random colors
-    const size_t last = m_colors_RGBA_F32.size();
-    const size_t seed = sk_seed + last;
+    const std::size_t last = m_colors_RGBA_U8.size();
+    const std::size_t seed = sk_seed + last;
 
     const std::vector< glm::vec3 > hsvSamples = math::generateRandomHsvSamples(
-                count, sk_hueMinMax, sk_satMinMax, sk_valMinMax, seed );
+        count, sk_hueMinMax, sk_satMinMax, sk_valMinMax, seed );
 
     std::vector< glm::vec3 > rgbValues;
 
@@ -250,9 +252,9 @@ std::vector<size_t> ParcellationLabelTable::addLabels( size_t count )
                     std::back_inserter( rgbValues ),
                     glm::rgbColor< float, glm::precision::defaultp > );
 
-    m_colors_RGBA_F32.resize( last + count );
+    m_colors_RGBA_U8.resize( last + count );
 
-    for ( size_t i = last; i < last + count; ++i )
+    for ( std::size_t i = last; i < last + count; ++i )
     {
         newIndices.push_back( i );
 
@@ -261,7 +263,7 @@ std::vector<size_t> ParcellationLabelTable::addLabels( size_t count )
         std::ostringstream ss;
         ss << "Region " << i;
 
-        props.m_alpha = 1.0f;
+        props.m_alpha = 255;
         props.m_visible = true;
         props.m_showMesh = false;
         props.m_name = ss.str();
@@ -269,27 +271,23 @@ std::vector<size_t> ParcellationLabelTable::addLabels( size_t count )
 
         m_properties.emplace_back( std::move( props ) );
 
-        // Update the color in m_colors_RGBA_F32
-        updateColorRGBA( i );
+        updateVector( i );
     }
 
     return newIndices;
 }
 
 
-void ParcellationLabelTable::updateColorRGBA( size_t index )
+void ParcellationLabelTable::updateVector( std::size_t index )
 {
     checkLabelIndex( index );
 
     // Modulate opacity by visibility:
-    const float a = getAlpha( index ) * ( getVisible( index ) ? 1.0f : 0.0f );
-
-    // Pre-multiplied RGBA:
-    m_colors_RGBA_F32[index] = a * glm::vec4{ getColor( index ), 1.0f };
+    const uint8_t a = getAlpha( index ) * ( getVisible( index ) ? 1u : 0u );
+    m_colors_RGBA_U8[index] = glm::u8vec4{ getColor( index ), a };
 }
 
-
-void ParcellationLabelTable::checkLabelIndex( size_t index ) const
+void ParcellationLabelTable::checkLabelIndex( std::size_t index ) const
 {
     if ( index >= m_properties.size() )
     {

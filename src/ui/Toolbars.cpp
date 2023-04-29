@@ -783,8 +783,8 @@ void renderSegToolbar(
         const size_t fgLabel = appData.settings().foregroundLabel();
         const size_t bgLabel = appData.settings().backgroundLabel();
 
-        const glm::vec3 fgColor = activeLabelTable->getColor( fgLabel );
-        const glm::vec3 bgColor = activeLabelTable->getColor( bgLabel );
+        const glm::vec3 fgColor = glm::vec3{ activeLabelTable->getColor( fgLabel ) } / 255.0f;
+        const glm::vec3 bgColor = glm::vec3{ activeLabelTable->getColor( bgLabel ) } / 255.0f;
 
         ImVec4 fgImGuiColor( fgColor.r, fgColor.g, fgColor.b, 1.0f );
         ImVec4 bgImGuiColor( bgColor.r, bgColor.g, bgColor.b, 1.0f );
@@ -835,7 +835,7 @@ void renderSegToolbar(
             for ( size_t i = 0; i < activeLabelTable->numLabels(); ++i )
             {
                 const std::string labelName = std::to_string( i ) + ") " + activeLabelTable->getName( i );
-                const glm::vec3 labelColor = activeLabelTable->getColor( i );
+                const glm::vec3 labelColor = glm::vec3{ activeLabelTable->getColor( i ) } / 255.0f;
                 const ImU32 labelColorU32 = ImGui::ColorConvertFloat4ToU32( ImVec4( labelColor.r, labelColor.g, labelColor.b, 1.0f ) );
 
                 const ImVec2 p = ImGui::GetCursorScreenPos();
@@ -865,7 +865,7 @@ void renderSegToolbar(
             for ( size_t i = 0; i < activeLabelTable->numLabels(); ++i )
             {
                 const std::string labelName = std::to_string( i ) + ") " + activeLabelTable->getName( i );
-                const glm::vec3 labelColor = activeLabelTable->getColor( i );
+                const glm::vec3 labelColor = glm::vec3{ activeLabelTable->getColor( i ) } / 255.0f;
                 const ImU32 labelColorU32 = ImGui::ColorConvertFloat4ToU32( ImVec4( labelColor.r, labelColor.g, labelColor.b, 1.0f ) );
 
                 const ImVec2 p = ImGui::GetCursorScreenPos();

@@ -1,6 +1,7 @@
 #ifndef TEXTURE_SETUP_H
 #define TEXTURE_SETUP_H
 
+#include "rendering/utility/gl/GLBufferTexture.h"
 #include "rendering/utility/gl/GLTexture.h"
 
 #include <uuid.h>
@@ -20,7 +21,7 @@ createSegTextures( const AppData& appData );
 std::unordered_map< uuids::uuid, GLTexture >
 createImageColorMapTextures( const AppData& appData );
 
-std::unordered_map< uuids::uuid, GLTexture >
+std::unordered_map< uuids::uuid, GLBufferTexture >
 createLabelColorTableTextures( const AppData& appData );
 
 #endif // TEXTURE_SETUP_H

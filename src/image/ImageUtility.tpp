@@ -607,24 +607,17 @@ bool writeImage(
 template< class ComponentType >
 std::vector<ComponentType> createBuffer( const float* buffer, std::size_t numElements )
 {
+    static constexpr float sk_lowestValue = static_cast<float>( std::numeric_limits<ComponentType>::lowest() );
+    static constexpr float sk_maximumValue = static_cast<float>( std::numeric_limits<ComponentType>::max() );
+
     std::vector<ComponentType> data;
     data.resize( numElements );
 
-    if ( std::is_unsigned<ComponentType>() )
+    // Clamp values to range [lowest, maximum] prior to cast:
+    for ( std::size_t i = 0; i < numElements; ++i )
     {
-        // If casting to an unsigned integer type,
-        // then set all negative values to 0 prior to casting
-        for ( std::size_t i = 0; i < numElements; ++i )
-        {
-            data[i] = static_cast<ComponentType>( std::max( buffer[i], 0.0f ) );
-        }
-    }
-    else
-    {
-        for ( std::size_t i = 0; i < numElements; ++i )
-        {
-            data[i] = static_cast<ComponentType>( buffer[i] );
-        }
+        data[i] = static_cast<ComponentType>(
+            std::min( std::max( buffer[i], sk_lowestValue ), sk_maximumValue ) );
     }
 
     return data;

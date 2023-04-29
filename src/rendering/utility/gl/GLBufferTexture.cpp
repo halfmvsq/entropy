@@ -158,32 +158,32 @@ void GLBufferTexture::unbind()
     m_texture.unbind();
 }
 
-void GLBufferTexture::allocate( std::size_t size, const GLvoid* data )
+void GLBufferTexture::allocate( std::size_t sizeInBytes, const GLvoid* data )
 {
     GLint maxSize;
     glGetIntegerv( GL_MAX_TEXTURE_BUFFER_SIZE, &maxSize );
 
-    if ( size > static_cast<std::size_t>( maxSize ) )
+    if ( sizeInBytes > static_cast<std::size_t>( maxSize ) )
     {
         std::ostringstream ss;
-        ss << "Attempting to allocate " << size
-           << " texels in the texel array of a texture buffer object,"
+        ss << "Attempting to allocate " << sizeInBytes
+           << " bytes in the texel array of a texture buffer object,"
            << " which is greater than the maximum of " << maxSize << std::ends;
 
         throw_debug( ss.str() );
     }
 
-    m_buffer.allocate( size, data );
+    m_buffer.allocate( sizeInBytes, data );
 }
 
-void GLBufferTexture::write( GLintptr offset, GLsizeiptr size, const GLvoid* data )
+void GLBufferTexture::write( GLintptr offset, GLsizeiptr sizeInBytes, const GLvoid* data )
 {
-    m_buffer.write( offset, size, data );
+    m_buffer.write( offset, sizeInBytes, data );
 }
 
-void GLBufferTexture::read( GLintptr offset, GLsizeiptr size, GLvoid* data )
+void GLBufferTexture::read( GLintptr offset, GLsizeiptr sizeInBytes, GLvoid* data )
 {
-    m_buffer.read( offset, size, data );
+    m_buffer.read( offset, sizeInBytes, data );
 }
 
 BufferUsagePattern GLBufferTexture::usagePattern() const
@@ -191,12 +191,12 @@ BufferUsagePattern GLBufferTexture::usagePattern() const
     return m_buffer.usagePattern();
 }
 
-size_t GLBufferTexture::numTexels() const
-{
-    return ( m_buffer.size() *
-             sk_textureFormatToNumComponentsMap.at( m_format ) *
-             sk_textureFormatToNumBytesPerComponentMap.at( m_format ) );
-}
+// size_t GLBufferTexture::numTexels() const
+// {
+//     return ( m_buffer.size() *
+//              sk_textureFormatToNumComponentsMap.at( m_format ) *
+//              sk_textureFormatToNumBytesPerComponentMap.at( m_format ) );
+// }
 
 size_t GLBufferTexture::numBytes() const
 {

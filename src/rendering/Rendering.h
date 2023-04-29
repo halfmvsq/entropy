@@ -20,6 +20,7 @@
 
 
 class AppData;
+class GLBufferTexture;
 class GLTexture;
 class View;
 
@@ -83,7 +84,11 @@ public:
 
     bool createLabelColorTableTexture( const uuids::uuid& labelTableUid );
 
+    /// @brief  A one-off version of createSegTextures (plural)
+    /// @param segUid 
+    /// @return 
     bool createSegTexture( const uuids::uuid& segUid );
+    
     bool removeSegTexture( const uuids::uuid& segUid );
 
     /// Get/set the overlay visibility
@@ -147,14 +152,18 @@ private:
             const FrameBounds& miewportViewBounds,
             const glm::vec3& worldOffsetXhairs );
 
-    // Bind/unbind images, segmentations, color maps, and label tables
+    // Bind/unbind images, segmentations, and color maps
     std::list< std::reference_wrapper<GLTexture> > bindImageTextures( const ImgSegPair& P );
     void unbindTextures( const std::list< std::reference_wrapper<GLTexture> >& textures );
 
-    // Bind/unbind images, segmentations, color maps, and label tables
+    // Bind/unbind images, segmentations, and color maps
     std::list< std::reference_wrapper<GLTexture> >
-    bindMetricImageTextures( const CurrentImages& P, const camera::ViewRenderMode& metricType );
+    bindMetricImageTextures( const CurrentImages& I, const camera::ViewRenderMode& metricType );
 
+    // Bind/unbind label tables
+    std::list< std::reference_wrapper<GLBufferTexture> > bindBufferTextures( const CurrentImages& I );
+    void unbindBufferTextures( const std::list< std::reference_wrapper<GLBufferTexture> >& textures );
+    
     // Get current image and segmentation UIDs to render in the metric shaders
     CurrentImages getImageAndSegUidsForMetricShaders( const std::list<uuids::uuid>& metricImageUids ) const;
 

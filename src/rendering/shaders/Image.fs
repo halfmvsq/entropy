@@ -34,7 +34,7 @@ layout (location = 0) out vec4 Outcolor; // Output RGBA color (pre-multiplied al
 uniform sampler3D imgTex; // Texture unit 0: image
 uniform usampler3D segTex; // Texture unit 1: segmentation
 uniform sampler1D imgCmapTex; // Texture unit 2: image color map (pre-mult RGBA)
-uniform sampler1D segLabelCmapTex; // Texutre unit 3: label color map (pre-mult RGBA)
+uniform samplerBuffer segLabelCmapTex; // Texutre unit 3: label color map (pre-mult RGBA)
 
 // Slope and intercept for mapping texture intensity to normalized intensity, accounting for window-leveling
 uniform vec2 imgSlopeIntercept;
@@ -261,6 +261,22 @@ float computeProjection( float img )
     return img / mix( 1.0, float( numSamples ), float( MEAN_IP_MODE == mipMode ) );
 }
 
+int when_lt( int x, int y )
+{
+    return max( sign(y - x), 0 );
+}
+
+int when_ge( int x, int y )
+{
+    return ( 1 - when_lt(x, y) );
+}
+
+vec4 computeLabelColor( int label )
+{
+    label -= label * when_ge( label, textureSize(segLabelCmapTex) );
+    vec4 color = texelFetch( segLabelCmapTex, label );
+    return color.a * color; // pre-multiply by alpha
+}
 
 /// Look up segmentation texture label value:
 uint getSegValue_N( vec3 texCoords, vec3 texOffset, float cutoff, out float opacity )
@@ -339,7 +355,7 @@ uint getSegValue( vec3 texCoords, vec3 texOffset, float cutoff, out float opacit
 
         if ( interp > maxInterp &&
              interp >= cutoff &&
-             texelFetch( segLabelCmapTex, int(label), 0 ).a > 0.0 )
+             computeLabelColor( int(label) ).a > 0.0 )
         {
             seg = label;
             maxInterp = interp;
@@ -423,7 +439,7 @@ void main()
     vec4 imgLayer = texture( imgCmapTex, imgCmapSlopeIntercept[0] * imgNorm + imgCmapSlopeIntercept[1] ) * imgAlpha;
 
     // Look up segmentation color and apply:
-    vec4 segLayer = texelFetch( segLabelCmapTex, int(seg), 0 ) * segAlpha;
+    vec4 segLayer = computeLabelColor( int(seg) ) * segAlpha;
 
     // Isosurface layer:
     vec4 isoLayer = vec4(0.0, 0.0, 0.0, 0.0);

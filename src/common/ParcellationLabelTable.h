@@ -3,8 +3,7 @@
 
 #include "rendering/utility/gl/GLTextureTypes.h"
 
-#include <glm/vec3.hpp>
-#include <glm/vec4.hpp>
+#include <glm/gtc/type_precision.hpp>
 
 #include <string>
 #include <vector>
@@ -19,6 +18,8 @@
  * - Visibility flag for 2D views
  * - Visibility flag for 3D views
  *
+ * Colors are stored with uchar components
+ * 
  * @note Colors are indexed. These indices are NOT the label values.
  */
 class ParcellationLabelTable
@@ -33,7 +34,7 @@ public:
      * @param labelCount Size of label table to construct. Must be at least 7,
      * in order to represent mandatory labels 0 to 6.
      */
-    explicit ParcellationLabelTable( size_t labelCount, size_t maxLabelCount );
+    explicit ParcellationLabelTable( std::size_t labelCount, std::size_t maxLabelCount );
 
     ParcellationLabelTable( const ParcellationLabelTable& ) = default;
     ParcellationLabelTable& operator=( const ParcellationLabelTable& ) = default;
@@ -45,63 +46,68 @@ public:
 
 
     /// Get number of labels in table
-    size_t numLabels() const;
+    std::size_t numLabels() const;
 
     /// Get the maximum number of labels in table
-    size_t maxNumLabels() const;
+    std::size_t maxNumLabels() const;
 
     /// Get label name
-    const std::string& getName( size_t index ) const;
+    const std::string& getName( std::size_t index ) const;
 
     /// Set label name
-    void setName( size_t index, std::string name );
+    void setName( std::size_t index, std::string name );
 
 
     /// Get global label visibility
-    bool getVisible( size_t index ) const;
+    bool getVisible( std::size_t index ) const;
 
     /// Set global label visibility
-    void setVisible( size_t index, bool show );
+    void setVisible( std::size_t index, bool show );
 
 
     /// Get label mesh visibility (in 3D views)
-    bool getShowMesh( size_t index ) const;
+    bool getShowMesh( std::size_t index ) const;
 
     /// Set label mesh visibility (in 3D views)
-    void setShowMesh( size_t index, bool show );
+    void setShowMesh( std::size_t index, bool show );
 
 
-    /// Get label color (non-premultiplied RGB)
-    glm::vec3 getColor( size_t index ) const;
+    /// Get label color (non-pre-multiplied RGB)
+    glm::u8vec3 getColor( std::size_t index ) const;
 
-    /// Set label color (non-premultiplied RGB)
-    void setColor( size_t index, const glm::vec3& color );
+    /// Set label color (non-pre-multiplied RGB)
+    void setColor( std::size_t index, const glm::u8vec3& color );
 
 
     /// Get label alpha
-    float getAlpha( size_t index ) const;
+    uint8_t getAlpha( std::size_t index ) const;
 
     /// Set label alpha
-    void setAlpha( size_t index, float alpha );
+    void setAlpha( std::size_t index, uint8_t alpha );
 
 
     /// Add new labels to the table, returning the new label indices
-    std::vector<size_t> addLabels( size_t count );
+    std::vector<std::size_t> addLabels( std::size_t count );
 
 
-    /// Get label color as pre-multiplied alpha RGBA with float components in [0.0, 1.0]
-    glm::vec4 color_RGBA_premult_F32( size_t index ) const;
+    /// Get label color as non-premultiplied alpha RGBA with uchar components in [0, 255]
+    glm::u8vec4 color_RGBA_nonpremult_U8( std::size_t index ) const;
 
-    /// Get number of bytes used to represent the color table
-    size_t numColorBytes_RGBA_F32() const;
-
-    /// Get const pointer to raw label color buffer data.
-    /// Colors are RGBA with pre-multiplied alpha.
-    const float* colorData_RGBA_premult_F32() const;
+    /// Get number of bytes used to represent the uchar color table
+    std::size_t numColorBytes_RGBA_U8() const;
 
 
-    /// Get the sized internal texture format for the label RGBA color buffer
-    static tex::SizedInternalBufferTextureFormat bufferTextureFormat_RGBA_F32();
+    /// Get const pointer to raw label color buffer uchar data.
+    /// Colors are RGBA with NON-premultiplied alpha.
+    const uint8_t* colorData_RGBA_nonpremult_U8() const;
+
+
+    /// Get the sized internal texture format for the label RGBA uchar color buffer
+    static tex::SizedInternalBufferTextureFormat bufferTextureFormat_RGBA_U8();
+
+    static std::size_t numBytesPerLabel_U8();
+
+    static std::size_t labelCountUpperBound();
 
 
 private:
@@ -111,39 +117,39 @@ private:
      * @param index Label index
      * @throw Throw exception if label index is not valid.
      */
-    void checkLabelIndex( size_t index ) const;
+    void checkLabelIndex( std::size_t index ) const;
 
 
     /**
-     * @brief Update the pre-multiplied RGBA color at given label index in order to
+     * @brief Update the non-pre-multiplied RGBA color at given label index in order to
      * match it with the label properties
      *
      * @param index Label index
      */
-    void updateColorRGBA( size_t index );
+    void updateVector( std::size_t index );
 
 
-    /// Vector of pre-multiplied alpha colors represented using 32-bit floating point values
-    /// per RGBA component. Components are in range [0.0, 1.0]. RGBA colors in this vector
-    /// account for opacity and 2D visibility. In other words, the RGBA components are
-    /// modulated by label opacity and 2D visibility settings. The size of this vector
+    /// Vector of NON-pre-multiplied alpha colors represented using unsigned char values
+    /// per RGBA component. Components are in range [0, 255]. The size of this vector
     /// matches the size of \c m_properties.
-    std::vector< glm::vec4 > m_colors_RGBA_F32;
+    std::vector< glm::u8vec4 > m_colors_RGBA_U8;
 
     struct LabelProperties
     {
         std::string m_name; //!< Name
-        glm::vec3 m_color; //!< RGB color (non-pre-multiplied) in [0, 1]
-        float m_alpha = 1.0f; //!< Alpha channel opacity in [0, 1]
+
+        glm::u8vec3 m_color; //!< RGB color (NON-premultiplied)
+        uint8_t m_alpha = 255; //!< Alpha channel opacity
+
         bool m_visible = true; //!< Global visibility of label in all view types
         bool m_showMesh = false; //!< Mesh visibility in 3D views
     };
 
-    /// Vector of label properties (size matching \c m_colors_RGBA_F32)
+    /// Vector of label properties (size matching \c m_colors_RGBA_U8 )
     std::vector< LabelProperties > m_properties;
 
     /// Upper bound on the number of labels that this table can hold
-    size_t m_maxLabelCount;
+    std::size_t m_maxLabelCount;
 };
 
 #endif // PARCELLATION_LABEL_TABLE_H

@@ -5,6 +5,7 @@
 
 #include "rendering/utility/containers/VertexAttributeInfo.h"
 #include "rendering/utility/containers/VertexIndicesInfo.h"
+#include "rendering/utility/gl/GLBufferTexture.h"
 #include "rendering/utility/gl/GLTexture.h"
 #include "rendering/utility/gl/GLVertexArrayObject.h"
 #include "rendering/utility/gl/GLBufferObject.h"
@@ -134,7 +135,7 @@ struct RenderData
 
     std::unordered_map< uuids::uuid, GLTexture > m_segTextures;
 
-    std::unordered_map< uuids::uuid, GLTexture > m_labelBufferTextures;
+    std::unordered_map< uuids::uuid, GLBufferTexture > m_labelBufferTextures;
     std::unordered_map< uuids::uuid, GLTexture > m_colormapTextures;
 
     // Blank textures that are bound to image and segmentation units

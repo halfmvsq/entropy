@@ -471,20 +471,20 @@ createImageColorMapTextures( const AppData& appData )
 }
 
 
-std::unordered_map< uuids::uuid, GLTexture >
+std::unordered_map< uuids::uuid, GLBufferTexture >
 createLabelColorTableTextures( const AppData& appData )
 {
-    static const glm::vec4 sk_border{ 0.0f, 0.0f, 0.0f, 0.0f };
+    // static const glm::vec4 sk_border{ 0.0f, 0.0f, 0.0f, 0.0f };
 
-    std::unordered_map< uuids::uuid, GLTexture > textures;
+    std::unordered_map< uuids::uuid, GLBufferTexture > bufTextures;
 
     if ( 0 == appData.numLabelTables() )
     {
-        spdlog::warn( "No parcellation label color tables loaded for which to create textures" );
-        return textures;
+        spdlog::warn( "No parcellation label color tables loaded for which to create buffer textures" );
+        return bufTextures;
     }
 
-    spdlog::debug( "Begin creating 1D label color map textures" );
+    spdlog::debug( "Begin creating label color map buffer textures" );
 
     // Loop through label tables in order of index
     for ( std::size_t i = 0; i < appData.numLabelTables(); ++i )
@@ -503,44 +503,37 @@ createLabelColorTableTextures( const AppData& appData )
             continue;
         }
 
-        int maxTexSize;
-        glGetIntegerv( GL_MAX_3D_TEXTURE_SIZE, &maxTexSize );
+        int maxBufTexSize;
+        glGetIntegerv( GL_MAX_TEXTURE_BUFFER_SIZE, &maxBufTexSize );
 
-        if ( table->numLabels() > static_cast<size_t>(maxTexSize) )
+        if ( table->numLabels() > static_cast<size_t>(maxBufTexSize) )
         {
-            spdlog::error( "Number of labels ({}) in label color table {} exceeds maximum texture dimension size of {}",
-                           table->numLabels(), *tableUid, maxTexSize );
+            spdlog::error( "Number of labels ({}) of label color table {} exceeds "
+                           "maximum buffer texture size of {}",
+                           table->numLabels(), *tableUid, maxBufTexSize );
             continue;
         }
 
-        auto it = textures.emplace( *tableUid, tex::Target::Texture1D );
+        auto it = bufTextures.emplace(
+            std::piecewise_construct,
+            std::forward_as_tuple( *tableUid ),
+            std::forward_as_tuple( table->bufferTextureFormat_RGBA_U8(), BufferUsagePattern::StaticDraw ) );
+
         if ( ! it.second ) continue;
 
-        GLTexture& T = it.first->second;
+        GLBufferTexture& T = it.first->second;
 
         T.generate();
-        T.setSize( glm::uvec3{ table->numLabels(), 1, 1 } );
 
-        T.setData( 0, ImageColorMap::textureFormat_RGBA_F32(),
-                   tex::BufferPixelFormat::RGBA,
-                   tex::BufferPixelDataType::Float32,
-                   table->colorData_RGBA_premult_F32() );
+        T.allocate( table->numLabels() * ParcellationLabelTable::numBytesPerLabel_U8(),
+                    table->colorData_RGBA_nonpremult_U8() );
 
-        spdlog::debug( "Generated and set data for texture of size {} for label color table {}",
+        spdlog::debug( "Generated and set data for buffer texture of size {} for label color table {}",
                        table->numLabels(), *tableUid );
 
-        // We should never sample outside the texture coordinate range [0.0, 1.0], anyway
-        T.setBorderColor( sk_border );
-        T.setWrapMode( tex::WrapMode::ClampToBorder );
-
-        // All sampling of color maps uses linearly interpolation
-        T.setAutoGenerateMipmaps( false );
-        T.setMinificationFilter( tex::MinificationFilter::Nearest );
-        T.setMagnificationFilter( tex::MagnificationFilter::Nearest );
-
-        spdlog::debug( "Generated texture for label color table {}", *tableUid );
+        spdlog::debug( "Generated buffer texture for label color table {}", *tableUid );
     }
 
-    spdlog::debug( "Done creating {} label color map textures", textures.size() );
-    return textures;
+    spdlog::debug( "Done creating {} label color map buffer textures", bufTextures.size() );
+    return bufTextures;
 }

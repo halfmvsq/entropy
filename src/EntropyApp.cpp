@@ -436,7 +436,8 @@ EntropyApp::loadSegmentation(
         const Image* seg = m_data.seg( segUid );
         if ( seg && seg->header().fileName() == fileName )
         {
-            spdlog::info( "Segmentation from file \"{}\" has already been loaded as {}", fileName, segUid );
+            spdlog::info( "Segmentation from file \"{}\" has already been loaded as {}",
+                          fileName, segUid );
 
             if ( ! sk_canLoadSameSegFileTwice )
             {
@@ -674,6 +675,9 @@ std::optional<uuids::uuid> EntropyApp::createBlankSegWithColorTable(
         const uuids::uuid& matchImageUid,
         std::string segDisplayName )
 {
+    spdlog::info( "Creating blank segmentation {} with color table for image {}",
+        segDisplayName, matchImageUid );
+
     const Image* matchImage = m_data.image( matchImageUid );
     if ( ! matchImage )
     {
@@ -704,6 +708,7 @@ std::optional<uuids::uuid> EntropyApp::createBlankSegWithColorTable(
 
     if ( tableUid )
     {
+        spdlog::trace( "Creating texture for label color table {}", *tableUid );
         createdTableTexture = m_rendering.createLabelColorTableTexture( *tableUid );
     }
 
@@ -731,6 +736,7 @@ std::optional<uuids::uuid> EntropyApp::createBlankSegWithColorTable(
     // Make it the active segmentation
     m_data.assignActiveSegUidToImage( matchImageUid, *segUid );
 
+    spdlog::trace( "Creating texture for segmentation {}", *segUid );
     if ( ! m_rendering.createSegTexture( *segUid ) )
     {
         spdlog::error( "Unable to create texture for segmentation {}", *segUid );

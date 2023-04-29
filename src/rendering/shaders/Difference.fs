@@ -25,7 +25,7 @@ layout (location = 0) out vec4 OutColor; // Output RGBA color (pre-multiplied al
 
 uniform sampler3D imgTex[2]; // Texture units 0/1: images
 uniform usampler3D segTex[2]; // Texture units 2/3: segmentations
-uniform sampler1D segLabelCmapTex[2]; // Texutre unit 6/7: label color tables (pre-mult RGBA)
+uniform samplerBuffer segLabelCmapTex[2]; // Texutre unit 6/7: label color tables (pre-mult RGBA)
 
 // uniform bool useTricubicInterpolation; // Whether to use tricubic interpolation
 
@@ -165,12 +165,30 @@ float getImageValue( sampler3D tex, vec3 texCoord )
 }
 
 
+int when_lt( int x, int y )
+{
+    return max( sign(y - x), 0 );
+}
+
+int when_ge( int x, int y )
+{
+    return ( 1 - when_lt(x, y) );
+}
+
+vec4 computeLabelColor( int label, int i )
+{
+    label -= label * when_ge( label, textureSize(segLabelCmapTex[i]) );
+    vec4 color = texelFetch( segLabelCmapTex[i], label );
+    return color.a * color;
+}
+
 // Get the segmentation color for image i
 vec4 getSegColor( int i )
 {
     // Look up label value and color:
     uint label = texture( segTex[i], fs_in.SegTexCoords[i] ).r;
-    vec4 labelColor = texelFetch( segLabelCmapTex[i], int(label), 0 );
+    vec4 labelColor = computeLabelColor( int(label), i );
+    //vec4 labelColor = texelFetch( segLabelCmapTex[i], int(label), 0 );
 
     // Modulate color with the segmentation opacity and mask:
     bool segMask = isInsideTexture( fs_in.SegTexCoords[i] );

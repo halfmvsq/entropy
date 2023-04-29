@@ -15,7 +15,7 @@ layout (location = 0) out vec4 OutColor; // Output RGBA color (pre-multiplied al
 
 uniform sampler3D imgTex[N]; // Texture units 0/1: images
 uniform usampler3D segTex[N]; // Texture units 2/3: segmentations
-uniform sampler1D segLabelCmapTex[N]; // Texutre unit 6/7: label color tables (pre-mult RGBA)
+uniform samplerBuffer segLabelCmapTex[N]; // Texutre unit 6/7: label color tables (pre-mult RGBA)
 
 uniform float segOpacity[N]; // Segmentation opacities
 
@@ -135,6 +135,23 @@ float getImageValue( sampler3D tex, vec3 texCoord )
     // interpolateTricubicFast( tex, texCoord )
 }
 
+int when_lt( int x, int y )
+{
+    return max( sign(y - x), 0 );
+}
+
+int when_ge( int x, int y )
+{
+    return ( 1 - when_lt(x, y) );
+}
+
+vec4 computeLabelColor( int label, int i )
+{
+    label -= label * when_ge( label, textureSize(segLabelCmapTex[i]) );
+    vec4 color = texelFetch( segLabelCmapTex[i], label );
+    return color.a * color;
+}
+
 
 void main()
 {
@@ -157,7 +174,7 @@ void main()
         mask[i] = float( imgMask && ( metricMasking && ( label > 0u ) || ! metricMasking ) );
 
         // Look up label colors:
-        segColor[i] = texelFetch( segLabelCmapTex[i], int(label), 0 ) * getSegInteriorAlpha( i, label ) * segOpacity[i] * float(segMask);
+        segColor[i] = computeLabelColor( int(label), i ) * getSegInteriorAlpha( i, label ) * segOpacity[i] * float(segMask);
     }
 
     float val0[9];

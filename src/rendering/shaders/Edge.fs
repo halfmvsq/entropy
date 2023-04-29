@@ -17,7 +17,7 @@ layout (location = 0) out vec4 OutColor; // Output RGBA color (pre-multiplied al
 uniform sampler3D imgTex; // Texture unit 0: image
 uniform usampler3D segTex; // Texture unit 1: segmentation
 uniform sampler1D imgCmapTex; // Texture unit 2: image color map (pre-mult RGBA)
-uniform sampler1D segLabelCmapTex; // Texutre unit 3: label color map (pre-mult RGBA)
+uniform samplerBuffer segLabelCmapTex; // Texutre unit 3: label color map (pre-mult RGBA)
 
 // uniform bool useTricubicInterpolation; // Whether to use tricubic interpolation
 
@@ -207,6 +207,22 @@ float getImageValue( vec3 texCoord )
     // interpolateTricubicFast( imgTex, texCoord )
 }
 
+int when_lt( int x, int y )
+{
+    return max( sign(y - x), 0 );
+}
+
+int when_ge( int x, int y )
+{
+    return ( 1 - when_lt(x, y) );
+}
+
+vec4 computeLabelColor( int label )
+{
+    label -= label * when_ge( label, textureSize(segLabelCmapTex) );
+    vec4 color = texelFetch( segLabelCmapTex, label );
+    return color.a * color;
+}
 
 void main()
 {
@@ -307,7 +323,7 @@ void main()
     vec4 edgeLayer = alpha * mix( gradMag * edgeColor, gradColormap, float(colormapEdges) );
 
     // Look up label colors:
-    vec4 segColor = texelFetch( segLabelCmapTex, int(seg), 0 ) * getSegInteriorAlpha( seg ) * segOpacity * float(segMask);
+    vec4 segColor = computeLabelColor( int(seg) ) * getSegInteriorAlpha( seg ) * segOpacity * float(segMask);
 
 
     // Blend colors:

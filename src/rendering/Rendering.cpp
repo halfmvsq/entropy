@@ -55,6 +55,7 @@
 #include <memory>
 #include <sstream>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 CMRC_DECLARE(fonts);
@@ -255,7 +256,7 @@ void Rendering::initTextures()
 
 bool Rendering::createLabelColorTableTexture( const uuids::uuid& labelTableUid )
 {
-    static const glm::vec4 sk_border{ 0.0f, 0.0f, 0.0f, 0.0f };
+    // static const glm::vec4 sk_border{ 0.0f, 0.0f, 0.0f, 0.0f };
 
     const auto* table = m_appData.labelTable( labelTableUid );
     if ( ! table )
@@ -264,31 +265,32 @@ bool Rendering::createLabelColorTableTexture( const uuids::uuid& labelTableUid )
         return false;
     }
 
+    int maxBufTexSize;
+    glGetIntegerv( GL_MAX_TEXTURE_BUFFER_SIZE, &maxBufTexSize );
+
+    if ( table->numLabels() > static_cast<size_t>(maxBufTexSize) )
+    {
+        spdlog::error( "Number of labels ({}) of label color table {} exceeds "
+                       "maximum buffer texture size of {}",
+                       table->numLabels(), labelTableUid, maxBufTexSize );
+        return false;
+    }
+    
     auto it = m_appData.renderData().m_labelBufferTextures.emplace(
-                labelTableUid, tex::Target::Texture1D );
+        std::piecewise_construct,
+        std::forward_as_tuple( labelTableUid ),
+        std::forward_as_tuple( table->bufferTextureFormat_RGBA_U8(), BufferUsagePattern::StaticDraw ) );
 
     if ( ! it.second ) return false;
 
-    GLTexture& T = it.first->second;
+    GLBufferTexture& T = it.first->second;
 
     T.generate();
-    T.setSize( glm::uvec3{ table->numLabels(), 1, 1 } );
 
-    T.setData( 0, ImageColorMap::textureFormat_RGBA_F32(),
-               tex::BufferPixelFormat::RGBA,
-               tex::BufferPixelDataType::Float32,
-               table->colorData_RGBA_premult_F32() );
+    T.allocate( table->numLabels() * ParcellationLabelTable::numBytesPerLabel_U8(),
+                table->colorData_RGBA_nonpremult_U8() );
 
-    // We should never sample outside the texture coordinate range [0.0, 1.0], anyway
-    T.setBorderColor( sk_border );
-    T.setWrapMode( tex::WrapMode::ClampToBorder );
-
-    // All sampling of color maps uses linearly interpolation
-    T.setAutoGenerateMipmaps( false );
-    T.setMinificationFilter( tex::MinificationFilter::Nearest );
-    T.setMagnificationFilter( tex::MagnificationFilter::Nearest );
-
-    spdlog::debug( "Generated texture for label color table {}", labelTableUid );
+    spdlog::debug( "Generated buffer texture for label color table {}", labelTableUid );
     return true;
 }
 
@@ -625,19 +627,15 @@ void Rendering::updateLabelColorTableTexture( size_t tableIndex )
     }
 
     auto it = m_appData.renderData().m_labelBufferTextures.find( *tableUid );
-    if ( std::end( m_appData.renderData().m_colormapTextures ) == it )
+    if ( std::end( m_appData.renderData().m_labelBufferTextures ) == it )
     {
-        spdlog::error( "Texture for label color table {} is invalid", *tableUid );
+        spdlog::error( "Buffer texture for label color table {} is invalid", *tableUid );
         return;
     }
 
-    it->second.setData(
-                0, ImageColorMap::textureFormat_RGBA_F32(),
-                tex::BufferPixelFormat::RGBA,
-                tex::BufferPixelDataType::Float32,
-                table->colorData_RGBA_premult_F32() );
+    it->second.write( 0, table->numLabels(), table->colorData_RGBA_nonpremult_U8() );
 
-    spdlog::trace( "Done updating texture for label color table {}", *tableUid );
+    spdlog::trace( "Done updating buffer texture for label color table {}", *tableUid );
 }
 
 void Rendering::render()
@@ -919,10 +917,8 @@ Rendering::bindImageTextures( const ImgSegPair& p )
     const auto& segUid = p.second;
 
     const Image* image = ( imageUid ? m_appData.image( *imageUid ) : nullptr );
-    const Image* seg = ( segUid ? m_appData.seg( *segUid ) : nullptr );
 
     const auto cmapUid = ( image ? m_appData.imageColorMapUid( image->settings().colorMapIndex() ) : std::nullopt );
-    const auto tableUid = ( seg ? m_appData.labelTableUid( seg->settings().labelTableIndex() ) : std::nullopt );
 
     if ( image )
     {
@@ -1062,26 +1058,57 @@ Rendering::bindImageTextures( const ImgSegPair& p )
         textures.push_back( cmapTex );
     }
 
-    if ( tableUid )
-    {
-        GLTexture& tblTex = R.m_labelBufferTextures.at( *tableUid );
-        tblTex.bind( msk_labelTableTexSampler.index );
-        textures.push_back( tblTex );
-    }
-    else
-    {
-        // No label table, so bind the first available one:
-        auto it = std::begin( R.m_labelBufferTextures );
-        GLTexture& tblTex = it->second;
-        tblTex.bind( msk_labelTableTexSampler.index );
-        textures.push_back( tblTex );
-    }
-
     return textures;
 }
 
 
 void Rendering::unbindTextures( const std::list< std::reference_wrapper<GLTexture> >& textures )
+{
+    for ( auto& T : textures )
+    {
+        T.get().unbind();
+    }
+}
+
+
+std::list< std::reference_wrapper<GLBufferTexture> >
+Rendering::bindBufferTextures( const CurrentImages& I )
+{
+    std::list< std::reference_wrapper<GLBufferTexture> > bufferTextures;
+
+    auto& R = m_appData.renderData();
+
+    for ( const auto& imgSegPair : I )
+    {
+        const auto& segUid = imgSegPair.second;
+        if ( ! segUid ) continue;
+
+        const Image* seg = ( segUid ? m_appData.seg( *segUid ) : nullptr );
+        const auto tableUid = ( seg ? m_appData.labelTableUid( seg->settings().labelTableIndex() ) : std::nullopt );
+
+        if ( tableUid )
+        {
+            GLBufferTexture& tblTex = R.m_labelBufferTextures.at( *tableUid );
+            tblTex.bind( msk_labelTableTexSampler.index );
+            tblTex.attachBufferToTexture( msk_labelTableTexSampler.index );
+            bufferTextures.push_back( tblTex );
+        }
+        else
+        {
+            // No label table, so bind the first available one:
+            auto it = std::begin( R.m_labelBufferTextures );
+            GLBufferTexture& tblTex = it->second;
+            tblTex.bind( msk_labelTableTexSampler.index );
+            tblTex.attachBufferToTexture( msk_labelTableTexSampler.index );
+            bufferTextures.push_back( tblTex );
+        }
+    }
+
+    return bufferTextures;
+}
+
+
+void Rendering::unbindBufferTextures( const std::list< std::reference_wrapper<GLBufferTexture> >& textures )
 {
     for ( auto& T : textures )
     {
@@ -1165,8 +1192,6 @@ Rendering::bindMetricImageTextures(
         const auto& segUid = imgSegPair.second;
 
         const Image* image = ( imageUid ? m_appData.image( *imageUid ) : nullptr );
-        const Image* seg = ( segUid ? m_appData.seg( *segUid ) : nullptr );
-        const auto tableUid = ( seg ? m_appData.labelTableUid( seg->settings().labelTableIndex() ) : std::nullopt );
 
         if ( image )
         {
@@ -1193,21 +1218,6 @@ Rendering::bindMetricImageTextures(
         {
             GLTexture& T = R.m_blankSegTexture;
             T.bind( msk_segTexSamplers.indices[i] );
-            textures.push_back( T );
-        }
-
-        if ( tableUid )
-        {
-            GLTexture& T = R.m_labelBufferTextures.at( *tableUid );
-            T.bind( msk_labelTableTexSamplers.indices[i] );
-            textures.push_back( T );
-        }
-        else
-        {
-            // No table specified, so bind the first available one:
-            auto it = std::begin( R.m_labelBufferTextures );
-            GLTexture& T = it->second;
-            T.bind( msk_labelTableTexSamplers.indices[i] );
             textures.push_back( T );
         }
 
@@ -1294,6 +1304,7 @@ void Rendering::renderAllImages(
 {
     static std::list< std::reference_wrapper<GLTexture> > boundImageTextures;
     static std::list< std::reference_wrapper<GLTexture> > boundMetricTextures;
+    static std::list< std::reference_wrapper<GLBufferTexture> > boundBufferTextures;
 
     static const RenderData::ImageUniforms sk_defaultImageUniforms;
 
@@ -1345,6 +1356,7 @@ void Rendering::renderAllImages(
             }
 
             boundImageTextures = bindImageTextures( imgSegPair );
+            boundBufferTextures = bindBufferTextures( std::vector<ImgSegPair>{ imgSegPair } );
 
             const auto& U = renderData.m_uniforms.at( *imgSegPair.first );
 
@@ -1494,6 +1506,7 @@ void Rendering::renderAllImages(
             P->stopUse();
 
             unbindTextures( boundImageTextures );
+            unbindBufferTextures( boundBufferTextures );
 
             isFixedImage = false;
         }
@@ -1510,6 +1523,7 @@ void Rendering::renderAllImages(
         const auto& U1 = ( I.size() >= 2 && I[1].first ) ? renderData.m_uniforms.at( *I[1].first ) : sk_defaultImageUniforms;
 
         boundMetricTextures = bindMetricImageTextures( I, renderMode );
+        boundBufferTextures = bindBufferTextures( I );
 
         if ( camera::ViewRenderMode::Difference == renderMode )
         {
@@ -1595,6 +1609,7 @@ void Rendering::renderAllImages(
         }
 
         unbindTextures( boundMetricTextures );
+        unbindBufferTextures( boundBufferTextures );
 
         break;
     }
@@ -1641,6 +1656,7 @@ void Rendering::renderAllImages(
         updateIsosurfaceDataFor3d( m_appData, *imgSegPair.first );
 
         boundImageTextures = bindImageTextures( imgSegPair );
+        boundBufferTextures = bindBufferTextures( std::vector<ImgSegPair>{ imgSegPair } );
 
         const auto& U = renderData.m_uniforms.at( *imgSegPair.first );
 
@@ -1689,6 +1705,7 @@ void Rendering::renderAllImages(
         P.stopUse();
 
         unbindTextures( boundImageTextures );
+        unbindBufferTextures( boundBufferTextures );
 
         break;
     }
