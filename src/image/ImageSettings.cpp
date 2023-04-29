@@ -101,7 +101,6 @@ const std::string& ImageSettings::displayName() const { return m_displayName; }
 void ImageSettings::setBorderColor( glm::vec3 borderColor ) { m_borderColor = std::move( borderColor ); }
 const glm::vec3& ImageSettings::borderColor() const { return m_borderColor; }
 
-
 void ImageSettings::setLockedToReference( bool locked ) { m_lockedToReference = locked; }
 bool ImageSettings::isLockedToReference() const { return m_lockedToReference; }
 
@@ -132,25 +131,12 @@ double ImageSettings::isosurfaceWidthIn2d() const { return m_isosurfaceWidthIn2d
 void ImageSettings::setIsosurfaceOpacityModulator( float opacityMod ) { m_isosurfaceOpacityModulator = opacityMod; }
 float ImageSettings::isosurfaceOpacityModulator() const { return m_isosurfaceOpacityModulator; }
 
-
-std::pair<double, double> ImageSettings::minMaxImageRange( uint32_t i ) const
-{ return m_componentSettings[i].m_minMaxImageRange; }
-
-std::pair<double, double> ImageSettings::minMaxImageRange() const
-{ return minMaxImageRange( m_activeComponent ); }
-
-std::pair<double, double> ImageSettings::minMaxWindowRange( uint32_t i ) const
-{ return m_componentSettings[i].m_minMaxWindowRange; }
-
-std::pair<double, double> ImageSettings::minMaxWindowRange() const
-{ return minMaxWindowRange( m_activeComponent ); }
-
-std::pair<double, double> ImageSettings::minMaxThresholdRange( uint32_t i ) const
-{ return m_componentSettings[i].m_minMaxThresholdRange; }
-
-std::pair<double, double> ImageSettings::minMaxThresholdRange() const
-{ return minMaxThresholdRange( m_activeComponent ); }
-
+std::pair<double, double> ImageSettings::minMaxImageRange( uint32_t i ) const { return m_componentSettings[i].m_minMaxImageRange; }
+std::pair<double, double> ImageSettings::minMaxImageRange() const { return minMaxImageRange( m_activeComponent ); }
+std::pair<double, double> ImageSettings::minMaxWindowRange( uint32_t i ) const { return m_componentSettings[i].m_minMaxWindowRange; }
+std::pair<double, double> ImageSettings::minMaxWindowRange() const { return minMaxWindowRange( m_activeComponent ); }
+std::pair<double, double> ImageSettings::minMaxThresholdRange( uint32_t i ) const { return m_componentSettings[i].m_minMaxThresholdRange; }
+std::pair<double, double> ImageSettings::minMaxThresholdRange() const { return minMaxThresholdRange( m_activeComponent ); }
 
 void ImageSettings::setWindowLow( uint32_t i, double wLow, bool clampValues )
 {
@@ -185,9 +171,6 @@ void ImageSettings::setWindowLow( uint32_t i, double wLow, bool clampValues )
     updateInternals();
 }
 
-void ImageSettings::setWindowLow( double wLow, bool clampValues )
-{ setWindowLow( m_activeComponent, wLow, clampValues ); }
-
 void ImageSettings::setWindowHigh( uint32_t i, double wHigh, bool clampValues )
 {
     if ( m_componentSettings[i].m_window.first > wHigh )
@@ -220,9 +203,6 @@ void ImageSettings::setWindowHigh( uint32_t i, double wHigh, bool clampValues )
 
     updateInternals();
 }
-
-void ImageSettings::setWindowHigh( double wHigh, bool clampValues )
-{ setWindowHigh( m_activeComponent, wHigh, clampValues ); }
 
 void ImageSettings::setWindowLowHigh( uint32_t i, double wLow, double wHigh, bool clampValues )
 {
@@ -280,37 +260,20 @@ void ImageSettings::setWindowLowHigh( uint32_t i, double wLow, double wHigh, boo
     updateInternals();
 }
 
+void ImageSettings::setWindowLow( double wLow, bool clampValues ) { setWindowLow( m_activeComponent, wLow, clampValues ); }
+void ImageSettings::setWindowHigh( double wHigh, bool clampValues ) { setWindowHigh( m_activeComponent, wHigh, clampValues ); }
+
 void ImageSettings::setWindowLowHigh( double wLow, double wHigh, bool clampValues )
 { setWindowLowHigh( m_activeComponent, wLow, wHigh, clampValues ); }
 
-std::pair<double, double> ImageSettings::windowLowHigh( uint32_t i ) const
-{
-    return m_componentSettings[i].m_window;
-}
-
-std::pair<double, double> ImageSettings::windowLowHigh() const
-{ return windowLowHigh( m_activeComponent ); }
-
+std::pair<double, double> ImageSettings::windowLowHigh( uint32_t i ) const { return m_componentSettings[i].m_window; }
+std::pair<double, double> ImageSettings::windowLowHigh() const { return windowLowHigh( m_activeComponent ); }
 
 double ImageSettings::windowWidth( uint32_t i ) const
-{
-    return ( m_componentSettings[i].m_window.second -
-             m_componentSettings[i].m_window.first );
-}
-
-double ImageSettings::windowWidth() const
-{ return windowWidth( m_activeComponent ); }
+{ return ( m_componentSettings[i].m_window.second - m_componentSettings[i].m_window.first ); }
 
 double ImageSettings::windowCenter( uint32_t i ) const
-{
-    return 0.5 * ( m_componentSettings[i].m_window.first +
-                   m_componentSettings[i].m_window.second );
-}
-
-double ImageSettings::windowCenter() const
-{ return windowCenter( m_activeComponent ); }
-
-
+{ return 0.5 * ( m_componentSettings[i].m_window.first + m_componentSettings[i].m_window.second ); }
 
 void ImageSettings::setThresholdLow( uint32_t i, double tLow )
 {
@@ -321,9 +284,6 @@ void ImageSettings::setThresholdLow( uint32_t i, double tLow )
     }
 }
 
-void ImageSettings::setThresholdLow( double tLow )
-{ setThresholdLow( m_activeComponent, tLow ); }
-
 void ImageSettings::setThresholdHigh( uint32_t i, double tHigh )
 {
     if ( m_componentSettings[i].m_thresholds.first <= tHigh )
@@ -333,16 +293,12 @@ void ImageSettings::setThresholdHigh( uint32_t i, double tHigh )
     }
 }
 
-void ImageSettings::setThresholdHigh( double tHigh )
-{ setThresholdHigh( m_activeComponent, tHigh ); }
-
-std::pair<double, double> ImageSettings::thresholds( uint32_t i ) const
-{
-    return m_componentSettings[i].m_thresholds;
-}
-
-std::pair<double, double> ImageSettings::thresholds() const
-{ return thresholds( m_activeComponent ); }
+double ImageSettings::windowWidth() const { return windowWidth( m_activeComponent ); }
+double ImageSettings::windowCenter() const { return windowCenter( m_activeComponent ); }
+void ImageSettings::setThresholdLow( double tLow ) { setThresholdLow( m_activeComponent, tLow ); }
+void ImageSettings::setThresholdHigh( double tHigh ) { setThresholdHigh( m_activeComponent, tHigh ); }
+std::pair<double, double> ImageSettings::thresholds( uint32_t i ) const { return m_componentSettings[i].m_thresholds; }
+std::pair<double, double> ImageSettings::thresholds() const { return thresholds( m_activeComponent ); }
 
 bool ImageSettings::thresholdsActive( uint32_t i ) const
 {
@@ -352,71 +308,32 @@ bool ImageSettings::thresholdsActive( uint32_t i ) const
              S.m_thresholds.second < S.m_minMaxThresholdRange.second );
 }
 
-bool ImageSettings::thresholdsActive() const
-{ return thresholdsActive( m_activeComponent ); }
+bool ImageSettings::thresholdsActive() const { return thresholdsActive( m_activeComponent ); }
 
+void ImageSettings::setForegroundThresholdLow( uint32_t i, double fgThreshLow ) { m_componentSettings[i].m_foregroundThresholds.first = fgThreshLow; }
+void ImageSettings::setForegroundThresholdLow( double fgThreshLow ) { setForegroundThresholdLow( m_activeComponent, fgThreshLow ); }
+void ImageSettings::setForegroundThresholdHigh( uint32_t i, double fgThreshHigh ) { m_componentSettings[i].m_foregroundThresholds.second = fgThreshHigh; }
+void ImageSettings::setForegroundThresholdHigh( double fgThreshHigh ) { setForegroundThresholdHigh( m_activeComponent, fgThreshHigh ); }
+std::pair<double, double> ImageSettings::foregroundThresholds( uint32_t i ) const { return m_componentSettings[i].m_foregroundThresholds; }
+std::pair<double, double> ImageSettings::foregroundThresholds() const { return foregroundThresholds( m_activeComponent ); }
 
-void ImageSettings::setForegroundThresholdLow( uint32_t i, double fgThreshLow )
-{ m_componentSettings[i].m_foregroundThresholds.first = fgThreshLow; }
+void ImageSettings::setOpacity( uint32_t i, double op ) { m_componentSettings[i].m_opacity = std::max( std::min( op, 1.0 ), 0.0 ); }
+void ImageSettings::setOpacity( double op ) { setOpacity( m_activeComponent, op ); }
+double ImageSettings::opacity( uint32_t i ) const { return m_componentSettings[i].m_opacity; }
+double ImageSettings::opacity() const { return opacity( m_activeComponent ); }
 
-void ImageSettings::setForegroundThresholdLow( double fgThreshLow )
-{ setForegroundThresholdLow( m_activeComponent, fgThreshLow ); }
+void ImageSettings::setVisibility( uint32_t i, bool visible ) { m_componentSettings[i].m_visible = visible; }
+void ImageSettings::setVisibility( bool visible ) { setVisibility( m_activeComponent, visible ); }
+bool ImageSettings::visibility( uint32_t i ) const { return m_componentSettings[i].m_visible; }
+bool ImageSettings::visibility() const { return visibility( m_activeComponent ); }
 
-void ImageSettings::setForegroundThresholdHigh( uint32_t i, double fgThreshHigh )
-{ m_componentSettings[i].m_foregroundThresholds.second = fgThreshHigh; }
-
-void ImageSettings::setForegroundThresholdHigh( double fgThreshHigh )
-{ setForegroundThresholdHigh( m_activeComponent, fgThreshHigh ); }
-
-std::pair<double, double> ImageSettings::foregroundThresholds( uint32_t i ) const
-{ return m_componentSettings[i].m_foregroundThresholds; }
-
-std::pair<double, double> ImageSettings::foregroundThresholds() const
-{ return foregroundThresholds( m_activeComponent ); }
-
-
-
-void ImageSettings::setOpacity( uint32_t i, double op )
-{
-    m_componentSettings[i].m_opacity = std::max( std::min( op, 1.0 ), 0.0 );
-}
-
-void ImageSettings::setOpacity( double op )
-{ setOpacity( m_activeComponent, op ); }
-
-double ImageSettings::opacity( uint32_t i ) const
-{ return m_componentSettings[i].m_opacity; }
-
-double ImageSettings::opacity() const
-{ return opacity( m_activeComponent ); }
-
-void ImageSettings::setVisibility( uint32_t i, bool visible )
-{ m_componentSettings[i].m_visible = visible; }
-
-void ImageSettings::setVisibility( bool visible )
-{ setVisibility( m_activeComponent, visible ); }
-
-bool ImageSettings::visibility( uint32_t i ) const
-{ return m_componentSettings[i].m_visible; }
-
-bool ImageSettings::visibility() const
-{ return visibility( m_activeComponent ); }
-
-
-void ImageSettings::setGlobalVisibility( bool visible )
-{ m_globalVisibility = visible; }
-
-bool ImageSettings::globalVisibility() const
-{ return m_globalVisibility; }
+void ImageSettings::setGlobalVisibility( bool visible ) { m_globalVisibility = visible; }
+bool ImageSettings::globalVisibility() const { return m_globalVisibility; }
 
 void ImageSettings::setGlobalOpacity( double opacity )
-{
-    m_globalOpacity = static_cast<float>( std::max( std::min( opacity, 1.0 ), 0.0 ) );
-}
+{ m_globalOpacity = static_cast<float>( std::max( std::min( opacity, 1.0 ), 0.0 ) ); }
 
-double ImageSettings::globalOpacity() const
-{ return m_globalOpacity; }
-
+double ImageSettings::globalOpacity() const { return m_globalOpacity; }
 
 void ImageSettings::setShowEdges( uint32_t i, bool show ) { m_componentSettings[i].m_showEdges = show; }
 void ImageSettings::setShowEdges( bool show ) { setShowEdges( m_activeComponent, show ); }
@@ -471,8 +388,6 @@ void ImageSettings::setEdgeOpacity( double opacity ) { setEdgeOpacity( m_activeC
 
 double ImageSettings::edgeOpacity( uint32_t i ) const { return m_componentSettings[i].m_edgeOpacity; }
 double ImageSettings::edgeOpacity() const { return edgeOpacity( m_activeComponent ); }
-
-
 
 void ImageSettings::setColorMapIndex( uint32_t i, size_t index ) { m_componentSettings[i].m_colorMapIndex = index; }
 void ImageSettings::setColorMapIndex( size_t index ) { setColorMapIndex( m_activeComponent, index ); }
@@ -562,14 +477,10 @@ float ImageSettings::slope_native_T_texture() const
     }
 }
 
-
 glm::dvec2 ImageSettings::largestSlopeInterceptTextureVec2( uint32_t i ) const
-{ return { m_componentSettings[i].m_largest_slope_texture,
-           m_componentSettings[i].m_largest_intercept_texture }; }
+{ return { m_componentSettings[i].m_largest_slope_texture, m_componentSettings[i].m_largest_intercept_texture }; }
 
-glm::dvec2 ImageSettings::largestSlopeInterceptTextureVec2() const
-{ return largestSlopeInterceptTextureVec2( m_activeComponent ); }
-
+glm::dvec2 ImageSettings::largestSlopeInterceptTextureVec2() const { return largestSlopeInterceptTextureVec2( m_activeComponent ); }
 
 uint32_t ImageSettings::numComponents() const { return m_numComponents; }
 
@@ -583,9 +494,7 @@ const ComponentStats<double>& ImageSettings::componentStatistics( uint32_t i ) c
     return m_componentStats.at( i );
 }
 
-const ComponentStats<double>& ImageSettings::componentStatistics() const
-{ return componentStatistics( m_activeComponent ); }
-
+const ComponentStats<double>& ImageSettings::componentStatistics() const { return componentStatistics( m_activeComponent ); }
 
 void ImageSettings::setActiveComponent( uint32_t component )
 {
@@ -601,10 +510,7 @@ void ImageSettings::setActiveComponent( uint32_t component )
     }
 }
 
-uint32_t ImageSettings::activeComponent() const
-{
-    return m_activeComponent;
-}
+uint32_t ImageSettings::activeComponent() const { return m_activeComponent; }
 
 void ImageSettings::updateInternals()
 {
@@ -726,7 +632,6 @@ void ImageSettings::updateInternals()
     }
 }
 
-
 double ImageSettings::mapNativeIntensityToTexture( double nativeImageValue ) const
 {
     /// @note An alternate mapping for signed integers is sometimes used in OpenGL < 4.2:
@@ -789,7 +694,6 @@ double ImageSettings::mapNativeIntensityToTexture( double nativeImageValue ) con
     }
     }
 }
-
 
 std::ostream& operator<< ( std::ostream& os, const ImageSettings& settings )
 {

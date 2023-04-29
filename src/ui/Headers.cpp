@@ -958,7 +958,6 @@ void renderImageHeader(
             helpMarker( "Lower and upper image thresholds" );
 
 
-
             // Window/level sliders:
             const int32_t windowMin = static_cast<int32_t>( imgSettings.minMaxWindowRange().first );
             const int32_t windowMax = static_cast<int32_t>( imgSettings.minMaxWindowRange().second );
@@ -967,9 +966,9 @@ void renderImageHeader(
             int32_t windowHigh = static_cast<int32_t>( imgSettings.windowLowHigh().second );
 
             if ( ImGui::DragIntRange2( "Window", &windowLow, &windowHigh,
-                                         speed, windowMin, windowMax,
-                                         "Min: %d", "Max: %d",
-                                         ImGuiSliderFlags_AlwaysClamp ) )
+                                       speed, windowMin, windowMax,
+                                       "Min: %d", "Max: %d",
+                                       ImGuiSliderFlags_AlwaysClamp ) )
             {
                 imgSettings.setWindowLowHigh( windowLow, windowHigh );
                 updateImageUniforms();
@@ -978,7 +977,7 @@ void renderImageHeader(
 
 
             const int32_t maxWindowRange = static_cast<int32_t>(
-                        imgSettings.minMaxWindowRange().second - imgSettings.minMaxWindowRange().first );
+                imgSettings.minMaxWindowRange().second - imgSettings.minMaxWindowRange().first );
 
             int32_t windowWidth = static_cast<int32_t>( imgSettings.windowWidth() );
 
@@ -994,11 +993,8 @@ void renderImageHeader(
 //                            std::min( c + 0.5 * static_cast<double>( windowWidth ),
 //                                      imgSettings.minMaxWindowRange().second ) );
 
-                const int32_t w1 = static_cast<int32_t>(
-                            c - 0.5 * static_cast<double>( windowWidth ) );
-
-                const int32_t w2 = static_cast<int32_t>(
-                            c + 0.5 * static_cast<double>( windowWidth ) );
+                const int32_t w1 = static_cast<int32_t>( c - 0.5 * static_cast<double>( windowWidth ) );
+                const int32_t w2 = static_cast<int32_t>( c + 0.5 * static_cast<double>( windowWidth ) );
 
                 imgSettings.setWindowLowHigh( w1, w2 );
                 updateImageUniforms();
