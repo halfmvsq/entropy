@@ -7,12 +7,19 @@
 #include "logic/camera/CameraTypes.h"
 #include "rendering/utility/gl/GLShaderProgram.h"
 
+#include "logic_old/records/MeshRecord.h"
+#include "rendering_old/common/ShaderProviderType.h"
+#include "rendering_old/drawables/BasicMesh.h"
+#include "rendering_old/utility/containers/ShaderProgramContainer.h"
+
 #include <glm/fwd.hpp>
 
 #include <uuid.h>
 
 #include <array>
+#include <functional>
 #include <list>
+#include <memory>
 #include <optional>
 #include <tuple>
 #include <utility>
@@ -22,6 +29,8 @@
 class AppData;
 class GLBufferTexture;
 class GLTexture;
+class IDrawable;
+class IRenderer;
 class View;
 
 struct NVGcontext;
@@ -209,6 +218,19 @@ private:
 
     void updateIsosurfaceDataFor2d( AppData& appData, const uuids::uuid& imageUid );
     void updateIsosurfaceDataFor3d( AppData& appData, const uuids::uuid& imageUid );
+
+
+    using DrawableProviderType = std::function< IDrawable* () >;
+
+    std::unique_ptr<IRenderer> m_renderer;
+    std::unique_ptr<ShaderProgramContainer> m_shaderPrograms;
+    std::unique_ptr<MeshRecord> m_meshRecord;
+    std::unique_ptr<BasicMesh> m_basicMesh;
+
+    ShaderProgramActivatorType m_shaderActivator;
+    UniformsProviderType m_uniformsProvider;
+    DrawableProviderType m_rootDrawableProvider;
+    DrawableProviderType m_overlayDrawableProvider;
 };
 
 #endif // RENDERING_H

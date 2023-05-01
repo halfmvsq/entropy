@@ -126,7 +126,7 @@ void AppData::loadImageColorMaps()
 //    m_imageColorMaps.emplace( defaultGreyMap1Uid, ImageColorMap::createDefaultGreyscaleImageColorMap( 2 ) );
 //    m_imageColorMapUidsOrdered.push_back( defaultGreyMap1Uid );
 
-    static constexpr size_t sk_numSteps = 256;
+    static constexpr std::size_t sk_numSteps = 256;
 
     const glm::vec3 black( 0.0f, 0.0f, 0.0f );
     const glm::vec3 red( 1.0f, 0.0f, 0.0f );
@@ -225,7 +225,7 @@ void AppData::loadImageColorMaps()
 
 uuids::uuid AppData::addImage( Image image )
 {
-    const size_t numComps = image.header().numComponentsPerPixel();
+    const std::size_t numComps = image.header().numComponentsPerPixel();
 
     auto uid = generateRandomUuid();
     m_images.emplace( uid, std::move( image ) );
@@ -346,7 +346,7 @@ bool AppData::addDistanceMap(
     return false;
 }
 
-size_t AppData::addLabelColorTable( size_t numLabels, size_t maxNumLabels )
+std::size_t AppData::addLabelColorTable( std::size_t numLabels, std::size_t maxNumLabels )
 {
     const auto uid = generateRandomUuid();
     m_labelTables.try_emplace( uid, numLabels, maxNumLabels );
@@ -356,9 +356,9 @@ size_t AppData::addLabelColorTable( size_t numLabels, size_t maxNumLabels )
 }
 
 std::optional<uuids::uuid> AppData::addIsosurface(
-        const uuids::uuid& imageUid,
-        ComponentIndexType component,
-        Isosurface isosurface )
+    const uuids::uuid& imageUid,
+    ComponentIndexType component,
+    Isosurface isosurface )
 {
     const Image* img = image( imageUid );
     if ( ! img )
@@ -370,8 +370,7 @@ std::optional<uuids::uuid> AppData::addIsosurface(
     const uint32_t numComps = img->header().numComponentsPerPixel();
     if ( component >= numComps )
     {
-        spdlog::error( "Cannot add isosurface to invalid component {} of image {}.",
-                       component, imageUid );
+        spdlog::error( "Cannot add isosurface to invalid component {} of image {}.", component, imageUid );
         return std::nullopt;
     }
 
@@ -814,7 +813,7 @@ void AppData::setRainbowColorsForAllImages()
     static constexpr float sk_startHue = -1.0f / 48.0f;
 
     const float N = static_cast<float>( m_imageUidsOrdered.size() );
-    size_t i = 0;
+    std::size_t i = 0;
 
     for ( const auto& imageUid : m_imageUidsOrdered )
     {
@@ -1054,13 +1053,13 @@ bool AppData::moveAnnotationToFront( const uuids::uuid imageUid, const uuids::uu
     return true;
 }
 
-size_t AppData::numImages() const { return m_images.size(); }
-size_t AppData::numSegs() const { return m_segs.size(); }
-size_t AppData::numDefs() const { return m_defs.size(); }
-size_t AppData::numImageColorMaps() const { return m_imageColorMaps.size(); }
-size_t AppData::numLabelTables() const { return m_labelTables.size(); }
-size_t AppData::numLandmarkGroups() const { return m_landmarkGroups.size(); }
-size_t AppData::numAnnotations() const { return m_annotations.size(); }
+std::size_t AppData::numImages() const { return m_images.size(); }
+std::size_t AppData::numSegs() const { return m_segs.size(); }
+std::size_t AppData::numDefs() const { return m_defs.size(); }
+std::size_t AppData::numImageColorMaps() const { return m_imageColorMaps.size(); }
+std::size_t AppData::numLabelTables() const { return m_labelTables.size(); }
+std::size_t AppData::numLandmarkGroups() const { return m_landmarkGroups.size(); }
+std::size_t AppData::numAnnotations() const { return m_annotations.size(); }
 
 uuid_range_t AppData::imageUidsOrdered() const
 {
@@ -1354,7 +1353,7 @@ uuid_range_t AppData::imagesBeingSegmented() const
     return m_imagesBeingSegmented;
 }
 
-std::optional<uuids::uuid> AppData::imageUid( size_t index ) const
+std::optional<uuids::uuid> AppData::imageUid( std::size_t index ) const
 {
     if ( index < m_imageUidsOrdered.size() )
     {
@@ -1363,7 +1362,7 @@ std::optional<uuids::uuid> AppData::imageUid( size_t index ) const
     return std::nullopt;
 }
 
-std::optional<uuids::uuid> AppData::segUid( size_t index ) const
+std::optional<uuids::uuid> AppData::segUid( std::size_t index ) const
 {
     if ( index < m_segUidsOrdered.size() )
     {
@@ -1372,7 +1371,7 @@ std::optional<uuids::uuid> AppData::segUid( size_t index ) const
     return std::nullopt;
 }
 
-std::optional<uuids::uuid> AppData::defUid( size_t index ) const
+std::optional<uuids::uuid> AppData::defUid( std::size_t index ) const
 {
     if ( index < m_defUidsOrdered.size() )
     {
@@ -1381,7 +1380,7 @@ std::optional<uuids::uuid> AppData::defUid( size_t index ) const
     return std::nullopt;
 }
 
-std::optional<uuids::uuid> AppData::imageColorMapUid( size_t index ) const
+std::optional<uuids::uuid> AppData::imageColorMapUid( std::size_t index ) const
 {
     if ( index < m_imageColorMapUidsOrdered.size() )
     {
@@ -1390,7 +1389,7 @@ std::optional<uuids::uuid> AppData::imageColorMapUid( size_t index ) const
     return std::nullopt;
 }
 
-std::optional<uuids::uuid> AppData::labelTableUid( size_t index ) const
+std::optional<uuids::uuid> AppData::labelTableUid( std::size_t index ) const
 {
     if ( index < m_labelTablesUidsOrdered.size() )
     {
@@ -1399,7 +1398,7 @@ std::optional<uuids::uuid> AppData::labelTableUid( size_t index ) const
     return std::nullopt;
 }
 
-std::optional<uuids::uuid> AppData::landmarkGroupUid( size_t index ) const
+std::optional<uuids::uuid> AppData::landmarkGroupUid( std::size_t index ) const
 {
     if ( index < m_landmarkGroupUidsOrdered.size() )
     {
@@ -1408,9 +1407,9 @@ std::optional<uuids::uuid> AppData::landmarkGroupUid( size_t index ) const
     return std::nullopt;
 }
 
-std::optional<size_t> AppData::imageIndex( const uuids::uuid& imageUid ) const
+std::optional<std::size_t> AppData::imageIndex( const uuids::uuid& imageUid ) const
 {
-    size_t i = 0;
+    std::size_t i = 0;
     for ( const auto& uid : m_imageUidsOrdered )
     {
         if ( uid == imageUid )
@@ -1422,9 +1421,9 @@ std::optional<size_t> AppData::imageIndex( const uuids::uuid& imageUid ) const
     return std::nullopt;
 }
 
-std::optional<size_t> AppData::segIndex( const uuids::uuid& segUid ) const
+std::optional<std::size_t> AppData::segIndex( const uuids::uuid& segUid ) const
 {
-    for ( size_t i = 0; i < m_segUidsOrdered.size(); ++i )
+    for ( std::size_t i = 0; i < m_segUidsOrdered.size(); ++i )
     {
         if ( m_segUidsOrdered.at(i) == segUid )
         {
@@ -1434,9 +1433,9 @@ std::optional<size_t> AppData::segIndex( const uuids::uuid& segUid ) const
     return std::nullopt;
 }
 
-std::optional<size_t> AppData::defIndex( const uuids::uuid& defUid ) const
+std::optional<std::size_t> AppData::defIndex( const uuids::uuid& defUid ) const
 {
-    for ( size_t i = 0; i < m_defUidsOrdered.size(); ++i )
+    for ( std::size_t i = 0; i < m_defUidsOrdered.size(); ++i )
     {
         if ( m_defUidsOrdered.at(i) == defUid )
         {
@@ -1446,9 +1445,9 @@ std::optional<size_t> AppData::defIndex( const uuids::uuid& defUid ) const
     return std::nullopt;
 }
 
-std::optional<size_t> AppData::imageColorMapIndex( const uuids::uuid& mapUid ) const
+std::optional<std::size_t> AppData::imageColorMapIndex( const uuids::uuid& mapUid ) const
 {
-    for ( size_t i = 0; i < m_imageColorMapUidsOrdered.size(); ++i )
+    for ( std::size_t i = 0; i < m_imageColorMapUidsOrdered.size(); ++i )
     {
         if ( m_imageColorMapUidsOrdered.at(i) == mapUid )
         {
@@ -1458,9 +1457,9 @@ std::optional<size_t> AppData::imageColorMapIndex( const uuids::uuid& mapUid ) c
     return std::nullopt;
 }
 
-std::optional<size_t> AppData::labelTableIndex( const uuids::uuid& tableUid ) const
+std::optional<std::size_t> AppData::labelTableIndex( const uuids::uuid& tableUid ) const
 {
-    for ( size_t i = 0; i < m_labelTablesUidsOrdered.size(); ++i )
+    for ( std::size_t i = 0; i < m_labelTablesUidsOrdered.size(); ++i )
     {
         if ( m_labelTablesUidsOrdered.at(i) == tableUid )
         {
@@ -1470,9 +1469,9 @@ std::optional<size_t> AppData::labelTableIndex( const uuids::uuid& tableUid ) co
     return std::nullopt;
 }
 
-std::optional<size_t> AppData::landmarkGroupIndex( const uuids::uuid& lmGroupUid ) const
+std::optional<std::size_t> AppData::landmarkGroupIndex( const uuids::uuid& lmGroupUid ) const
 {
-    for ( size_t i = 0; i < m_landmarkGroupUidsOrdered.size(); ++i )
+    for ( std::size_t i = 0; i < m_landmarkGroupUidsOrdered.size(); ++i )
     {
         if ( m_landmarkGroupUidsOrdered.at(i) == lmGroupUid )
         {
@@ -1482,10 +1481,10 @@ std::optional<size_t> AppData::landmarkGroupIndex( const uuids::uuid& lmGroupUid
     return std::nullopt;
 }
 
-std::optional<size_t> AppData::annotationIndex(
+std::optional<std::size_t> AppData::annotationIndex(
         const uuids::uuid& imageUid, const uuids::uuid& annotUid ) const
 {
-    size_t i = 0;
+    std::size_t i = 0;
     for ( const auto& uid : annotationsForImage( imageUid ) )
     {
         if ( annotUid == uid )

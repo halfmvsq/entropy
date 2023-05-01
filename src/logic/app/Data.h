@@ -9,11 +9,12 @@
 #include "image/ImageColorMap.h"
 #include "image/Isosurface.h"
 
-#include "logic/app/Settings.h"
-#include "logic/app/State.h"
 #include "logic/annotation/Annotation.h"
 #include "logic/annotation/LandmarkGroup.h"
+#include "logic/app/Settings.h"
+#include "logic/app/State.h"
 #include "logic/serialization/ProjectSerialization.h"
+#include "logic/records/MeshRecord.h"
 
 #include "rendering/RenderData.h"
 #include "windowing/WindowData.h"
@@ -100,7 +101,7 @@ public:
      * @param[in] maxNumLabels Maximum number of labels allowed in the table
      * @return Index of the new table
      */
-    size_t addLabelColorTable( size_t numLabels, size_t maxNumLabels );
+    std::size_t addLabelColorTable( std::size_t numLabels, std::size_t maxNumLabels );
 
     /**
      * @brief Add a landmark group
@@ -130,8 +131,8 @@ public:
      * @return True iff the distance map was successfully added for the image component.
      */
     bool addDistanceMap(
-            const uuids::uuid& imageUid, ComponentIndexType component,
-            DistanceMapType distanceMap, double boundaryIsoValue );
+        const uuids::uuid& imageUid, ComponentIndexType component,
+        DistanceMapType distanceMap, double boundaryIsoValue );
 
     /**
      * @brief Add an isosurface to an image component.
@@ -144,8 +145,8 @@ public:
      * otherwise \c std::nullpt
      */
     std::optional<uuids::uuid> addIsosurface(
-            const uuids::uuid& imageUid, ComponentIndexType component,
-            Isosurface isosurface );
+        const uuids::uuid& imageUid, ComponentIndexType component,
+        Isosurface isosurface );
 
 
 //    bool removeImage( const uuids::uuid& imageUid );
@@ -163,8 +164,8 @@ public:
      * @return True iff the isosurface was successfully removed.
      */
     bool removeIsosurface(
-            const uuids::uuid& imageUid, ComponentIndexType component,
-            const uuids::uuid& isosurfaceUid );
+        const uuids::uuid& imageUid, ComponentIndexType component,
+        const uuids::uuid& isosurfaceUid );
 
 
     const Image* image( const uuids::uuid& imageUid ) const;
@@ -178,7 +179,7 @@ public:
 
     /// Get the distance maps (keyed by isosurface value) associated with an image component
     const std::map< double, DistanceMapType >& distanceMaps(
-            const uuids::uuid& imageUid, ComponentIndexType component ) const;
+        const uuids::uuid& imageUid, ComponentIndexType component ) const;
 
     /**
      * @brief Get an isosurface of an image component.
@@ -190,12 +191,12 @@ public:
      * @return Pointer to the isosurface if it exists; otherwise nullptr
      */
     const Isosurface* isosurface(
-            const uuids::uuid& imageUid, ComponentIndexType component,
-            const uuids::uuid& isosurfaceUid ) const;
+        const uuids::uuid& imageUid, ComponentIndexType component,
+        const uuids::uuid& isosurfaceUid ) const;
 
     Isosurface* isosurface(
-            const uuids::uuid& imageUid, ComponentIndexType component,
-            const uuids::uuid& isosurfaceUid );
+        const uuids::uuid& imageUid, ComponentIndexType component,
+        const uuids::uuid& isosurfaceUid );
 
     const ImageColorMap* imageColorMap( const uuids::uuid& mapUid ) const;
 
@@ -250,13 +251,13 @@ public:
     bool moveAnnotationToFront( const uuids::uuid imageUid, const uuids::uuid annotUid );
 
 
-    size_t numImages() const;
-    size_t numSegs() const;
-    size_t numDefs() const;
-    size_t numImageColorMaps() const;
-    size_t numLabelTables() const;
-    size_t numLandmarkGroups() const;
-    size_t numAnnotations() const;
+    std::size_t numImages() const;
+    std::size_t numSegs() const;
+    std::size_t numDefs() const;
+    std::size_t numImageColorMaps() const;
+    std::size_t numLabelTables() const;
+    std::size_t numLandmarkGroups() const;
+    std::size_t numAnnotations() const;
 
 
     uuid_range_t imageUidsOrdered() const;
@@ -320,20 +321,20 @@ public:
     uuid_range_t imagesBeingSegmented() const;
 
 
-    std::optional<uuids::uuid> imageUid( size_t index ) const;
-    std::optional<uuids::uuid> segUid( size_t index ) const;
-    std::optional<uuids::uuid> defUid( size_t index ) const;
-    std::optional<uuids::uuid> imageColorMapUid( size_t index ) const;
-    std::optional<uuids::uuid> labelTableUid( size_t index ) const;
-    std::optional<uuids::uuid> landmarkGroupUid( size_t index ) const;
+    std::optional<uuids::uuid> imageUid( std::size_t index ) const;
+    std::optional<uuids::uuid> segUid( std::size_t index ) const;
+    std::optional<uuids::uuid> defUid( std::size_t index ) const;
+    std::optional<uuids::uuid> imageColorMapUid( std::size_t index ) const;
+    std::optional<uuids::uuid> labelTableUid( std::size_t index ) const;
+    std::optional<uuids::uuid> landmarkGroupUid( std::size_t index ) const;
 
-    std::optional<size_t> imageIndex( const uuids::uuid& imageUid ) const;
-    std::optional<size_t> segIndex( const uuids::uuid& segUid ) const;
-    std::optional<size_t> defIndex( const uuids::uuid& defUid ) const;
-    std::optional<size_t> imageColorMapIndex( const uuids::uuid& mapUid ) const;
-    std::optional<size_t> labelTableIndex( const uuids::uuid& tableUid ) const;
-    std::optional<size_t> landmarkGroupIndex( const uuids::uuid& lmGroupUid ) const;
-    std::optional<size_t> annotationIndex( const uuids::uuid& imageUid, const uuids::uuid& annotUid ) const;
+    std::optional<std::size_t> imageIndex( const uuids::uuid& imageUid ) const;
+    std::optional<std::size_t> segIndex( const uuids::uuid& segUid ) const;
+    std::optional<std::size_t> defIndex( const uuids::uuid& defUid ) const;
+    std::optional<std::size_t> imageColorMapIndex( const uuids::uuid& mapUid ) const;
+    std::optional<std::size_t> labelTableIndex( const uuids::uuid& tableUid ) const;
+    std::optional<std::size_t> landmarkGroupIndex( const uuids::uuid& lmGroupUid ) const;
+    std::optional<std::size_t> annotationIndex( const uuids::uuid& imageUid, const uuids::uuid& annotUid ) const;
 
     /// @todo Put into DataHelper
     Image* refImage();
@@ -399,6 +400,8 @@ private:
 
     std::unordered_map<uuids::uuid, Annotation> m_annotations; //!< Annotations
 
+    std::unordered_map<uuids::uuid, MeshRecord> m_isosurfaceMeshRecords; //!< Iso-surface mesh records
+
     /// ID of the reference image. This is null iff there are no images.
     std::optional<uuids::uuid> m_refImageUid;
 
@@ -430,6 +433,9 @@ private:
 
     /// Map of image to its active/selected annotation
     std::unordered_map< uuids::uuid, uuids::uuid > m_imageToActiveAnnotation;
+
+    /// Map fo iamge to its iso-surface meshes
+    std::unordered_map< uuids::uuid, std::list<uuids::uuid> > m_imageToIsosurfaceMeshes;
 
     /// Map of image to its per-component data
     std::unordered_map< uuids::uuid, std::vector<ComponentData> > m_imageToComponentData;

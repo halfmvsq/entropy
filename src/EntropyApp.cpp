@@ -19,7 +19,7 @@
 
 
 /************************************************/
-#include "mesh/vtkdetails/MeshGeneration.hpp"
+#include "mesh/MeshLoading.h"
 #include "rendering_old/utility/CreateGLObjects.h"
 /************************************************/
 
@@ -148,10 +148,10 @@ void EntropyApp::run()
     auto checkIfAppShouldQuit = [this]() { return m_data.state().quitApp(); };
 
     m_glfw.renderLoop(
-                m_imagesReady,
-                m_imageLoadFailed,
-                checkIfAppShouldQuit,
-                [this]() { onImagesReady(); } );
+        m_imagesReady,
+        m_imageLoadFailed,
+        checkIfAppShouldQuit,
+        [this]() { onImagesReady(); } );
 
     spdlog::debug( "Done application run loop" );
 }
@@ -204,7 +204,7 @@ void EntropyApp::onImagesReady()
         if ( const auto& refUid = m_data.refImageUid() )
         {
             m_data.windowData().addGridLayout(
-                        m_data.numImages(), 1, sk_offsetViews, sk_isLightbox, 0, *refUid );
+                m_data.numImages(), 1, sk_offsetViews, sk_isLightbox, 0, *refUid );
         }
     }
 
@@ -221,11 +221,12 @@ void EntropyApp::onImagesReady()
         {
             // Compute the number of slices along the World Axial direction:
             const glm::mat3 pixel_T_world = glm::mat3{ image->transformations().pixel_T_worldDef() };
+
             const glm::vec3 pixelDirAxial = glm::abs(
-                        glm::normalize( glm::vec3{ pixel_T_world * Directions::get( Directions::Anatomy::Inferior ) } ) );
+                glm::normalize( glm::vec3{ pixel_T_world * Directions::get( Directions::Anatomy::Inferior ) } ) );
 
             const uint32_t numAxialSlices = static_cast<uint32_t>(
-                        std::abs( glm::dot( glm::vec3{ image->header().pixelDimensions() }, pixelDirAxial ) ) );
+                std::abs( glm::dot( glm::vec3{ image->header().pixelDimensions() }, pixelDirAxial ) ) );
 
             m_data.windowData().addLightboxLayoutForImage( numAxialSlices, imageIndex++, imageUid );
         }
@@ -349,71 +350,60 @@ EntropyApp::loadImage( const std::string& fileName, bool ignoreIfAlreadyLoaded )
 }
 
 
-/****************************************
-std::unique_ptr<MeshCpuRecord> generateIsoSurfaceMeshCpuRecord(
-        const UID& imageUid,
-        const double isoValue )
+
+std::unique_ptr<MeshCpuRecord> EntropyApp::generateIsoSurfaceMeshCpuRecord(
+    const uuids::uuid& imageUid,
+    uint32_t component,
+    const double isoValue )
 {
-    auto imageRecord = dataManager.imageRecord( imageUid ).lock();
+    // Cast image component to float prior to mesh generation
+    using ComponentType = float;
 
-    if ( ! imageRecord || ! imageRecord->cpuData() ||
-         ! imageRecord->cpuData()->imageBaseData() )
+    const Image* image = m_data.image( imageUid );
+
+    if ( ! image )
     {
-        std::ostringstream ss;
-        ss << "Null data in image record " << imageUid << std::ends;
-        std::cerr << ss.str() << std::endl;
+        spdlog::error( "Null image {} when generating iso-surface mesh", imageUid );
         return nullptr;
     }
 
-    const auto imageData = imageRecord->cpuData()->imageBaseData()->asVTKImageData( sk_compIndex );
+    const auto itkImage = createItkImageFromImageComponent<ComponentType>( *image, component );
+    const vtkSmartPointer<vtkImageData> vtkImageData = convertItkImageToVtkImageData<ComponentType>( itkImage );
 
-    if ( ! imageData )
+    if ( ! vtkImageData )
     {
-        std::ostringstream ss;
-        ss << "Image record " << imageUid << " has null vtkImageData" << std::ends;
-        std::cerr << ss.str() << std::endl;
+        spdlog::error( "Image {} has null vtkImageData when generating iso-surface mesh", imageUid );
         return nullptr;
     }
 
-    return meshgen::generateIsoSurface( imageData.Get(), imageRecord->cpuData()->header(), isoValue );
+    return meshgen::generateIsoSurface( vtkImageData.Get(), image->header(), isoValue );
 }
 
 
-std::optional< uuids::uuid > EntropyApp::generateIsoSurfaceMesh(
-        const uuids::uuid& imageUid, double isoValue )
+std::optional<uuids::uuid> EntropyApp::generateIsoSurfaceMesh(
+    const uuids::uuid& imageUid, uint32_t component, double isoValue )
 {
-    auto meshCpuRecord = generateIsoSurfaceMeshCpuRecord( imageUid, isoValue );
+    auto meshCpuRecord = generateIsoSurfaceMeshCpuRecord( imageUid, component, isoValue );
 
     if ( ! meshCpuRecord )
     {
-        std::ostringstream ss;
-        ss << "Error generating iso-surface mesh for image " << imageUid
-           << " at value " << isoValue << std::ends;
-        std::cerr << ss.str() << std::endl;
+        spdlog::error( "Error generating iso-surface mesh for image {} (component {}) at value {}", imageUid, isoValue );
         return std::nullopt;
     }
 
     auto meshGpuRecord = gpuhelper::createMeshGpuRecordFromVtkPolyData(
-                meshCpuRecord->polyData(),
-                meshCpuRecord->meshInfo().primitiveType(),
-                BufferUsagePattern::StreamDraw );
+        meshCpuRecord->polyData(), meshCpuRecord->meshInfo().primitiveType(), BufferUsagePattern::StreamDraw );
 
     if ( ! meshGpuRecord )
     {
-        std::ostringstream ss;
-        ss << "Error converting PolyData to MeshGpuRecord: "
-           << "Could not generate mesh record for image " << imageUid
-           << " at isosurface value " << isoValue << std::ends;
-        std::cerr << ss.str() << std::endl;
+        spdlog::error( "Error converting PolyData to MeshGpuRecord: Could not generate mesh record for image {} "
+                       " at isosurface value ", imageUid, isoValue );
         return std::nullopt;
     }
 
-    return dataManager.insertIsoMeshRecord(
-                imageUid, std::make_shared<MeshRecord>(
-                    std::move( meshCpuRecord ), std::move( meshGpuRecord ) ) );
+    return std::nullopt;
+    // return m_data.insertMeshRecord( imageUid, std::make_shared<MeshRecord>( std::move( meshCpuRecord ), std::move( meshGpuRecord ) ) );
 }
-****************************************/
-
 
 
 std::pair< std::optional<uuids::uuid>, bool >

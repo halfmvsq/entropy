@@ -13,12 +13,15 @@
 #include <itkImageFileReader.h>
 #include <itkImageFileWriter.h>
 #include <itkImageToHistogramFilter.h>
+#include <itkImageToVTKImageFilter.h>
 #include <itkImportImageFilter.h>
 #include <itkLinearInterpolateImageFunction.h>
 #include <itkResampleImageFilter.h>
 #include <itkSignedMaurerDistanceMapImageFilter.h>
 #include <itkStatisticsImageFilter.h>
 #include <itkVectorImage.h>
+
+#include <vtkSmartPointer.h>
 
 #include <spdlog/spdlog.h>
 
@@ -366,7 +369,7 @@ Image createImageFromItkImage(
  */
 template< class T >
 typename itk::Image<T, 3>::Pointer createItkImageFromImageComponent(
-        const Image& image, uint32_t component )
+    const Image& image, uint32_t component )
 {
     using OutputImageType = itk::Image<T, 3>;
 
@@ -817,5 +820,39 @@ typename itk::Image<U, 3>::Pointer computeEuclideanDistanceMap(
 
     return clampFilter->GetOutput();
 }
+
+
+template< class ComponentType >
+vtkSmartPointer< vtkImageData > convertItkImageToVtkImageData(
+        const typename ::itk::Image< ComponentType, 3 >::Pointer image )
+{
+    if ( image.IsNull() )
+    {
+        return nullptr;
+    }
+
+    using ConversionFilterType = ::itk::ImageToVTKImageFilter< ::itk::Image< ComponentType, 3 > >;
+    typename ConversionFilterType::Pointer conversionFilter = ConversionFilterType::New();
+
+    conversionFilter->SetInput( image );
+
+    try
+    {
+        conversionFilter->Update();
+    }
+    catch ( const ::itk::ExceptionObject& e )
+    {
+        spdlog::error( "Exception while converting ITK image to VTK image: {}", e.what() );
+        return nullptr;
+    }
+    catch ( ... )
+    {
+        spdlog::error( "Exception while converting ITK image to VTK image." );
+        return nullptr;
+    }
+
+    return static_cast< vtkImageData* >( conversionFilter->GetOutput() );
+}
+
 
 #endif // IMAGE_UTILITY_TPP

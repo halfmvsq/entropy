@@ -16,8 +16,7 @@ class MeshCpuRecord
 {
 public:
 
-    MeshCpuRecord( vtkSmartPointer<vtkPolyData> polyData,
-                   MeshInfo meshInfo );
+    MeshCpuRecord( vtkSmartPointer<vtkPolyData> polyData, MeshInfo meshInfo );
 
     MeshCpuRecord( const MeshCpuRecord& ) = default;
     MeshCpuRecord& operator=( const MeshCpuRecord& ) = default;
@@ -39,7 +38,7 @@ public:
 
 private:
 
-    vtkSmartPointer< vtkPolyData > m_polyData;
+    vtkSmartPointer<vtkPolyData> m_polyData;
 
     MeshInfo m_meshInfo;
     MeshProperties m_properties;

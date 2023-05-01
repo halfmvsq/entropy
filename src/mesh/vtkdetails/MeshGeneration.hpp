@@ -23,10 +23,10 @@ namespace vtkdetails
 {
 
 void progressFunction(
-        vtkObject* caller,
-        unsigned long /*eventId*/,
-        void* /*clientData*/,
-        void* /*callData*/ );
+    vtkObject* caller,
+    unsigned long /*eventId*/,
+    void* /*clientData*/,
+    void* /*callData*/ );
 
 
 bool writePolyData( vtkPolyData* polyData, const char* fileName );
@@ -41,22 +41,21 @@ bool writePolyData( vtkPolyData* polyData, const char* fileName );
  * @return
  */
 vtkSmartPointer< vtkPolyData > generateIsoSurfaceMesh(
-        vtkImageData* imageData,
-        const vnl_matrix_fixed< double, 3, 3 >& imageDirections,
-        const double isoValue,
-        const MeshPrimitiveType& primitiveType );
+    vtkImageData* imageData,
+    const vnl_matrix_fixed< double, 3, 3 >& imageDirections,
+    const double isoValue,
+    const MeshPrimitiveType& primitiveType );
 
 // Label images are stored as indices
 vtkSmartPointer< vtkPolyData > generateLabelMesh(
-        vtkImageData* imageData,
-        const vnl_matrix_fixed< double, 3, 3 >& imageDirections,
-        const uint32_t labelIndex,
-        const MeshPrimitiveType& primitiveType );
+    vtkImageData* imageData,
+    const vnl_matrix_fixed< double, 3, 3 >& imageDirections,
+    const uint32_t labelIndex,
+    const MeshPrimitiveType& primitiveType );
 
-std::map< int32_t, double >
-generateIntegerImageHistogram(
-        vtkImageData* imageData,
-        const std::set<int32_t>& imageValues );
+std::map< int32_t, double > generateIntegerImageHistogram(
+    vtkImageData* imageData,
+    const std::set<int32_t>& imageValues );
 
 } // namespace vtkdetails
 

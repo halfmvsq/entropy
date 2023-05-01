@@ -126,18 +126,21 @@ private:
     std::pair< std::optional<uuids::uuid>, bool >
     loadImage( const std::string& fileName, bool ignoreIfAlreadyLoaded );
 
+    std::unique_ptr<MeshCpuRecord> generateIsoSurfaceMeshCpuRecord(
+        const uuids::uuid& imageUid, uint32_t component, const double isoValue );
+
     std::optional< uuids::uuid > generateIsoSurfaceMesh(
-            const uuids::uuid& imageUid, double isoValue );
+        const uuids::uuid& imageUid, uint32_t component, double isoValue );
 
     /// Create a blank segmentation with the same header as the given image
     std::optional<uuids::uuid> createBlankSeg(
-            const uuids::uuid& matchImageUid,
-            std::string segDisplayName );
+        const uuids::uuid& matchImageUid,
+        std::string segDisplayName );
 
     /// Create a blank segmentation with the same header as the given image
     std::optional<uuids::uuid> createBlankSegWithColorTable(
-            const uuids::uuid& matchImageUid,
-            std::string segDisplayName );
+        const uuids::uuid& matchImageUid,
+        std::string segDisplayName );
 
     std::future<void> m_futureLoadProject;
 

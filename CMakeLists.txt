@@ -465,6 +465,7 @@ set( ENTROPY_SOURCES
     ${SRC_DIR}/rendering/RenderData.cpp
     ${SRC_DIR}/rendering/TextureSetup.cpp
     ${SRC_DIR}/rendering/VectorDrawing.cpp
+    ${SRC_DIR}/rendering/records/MeshGpuRecord.cpp
     ${SRC_DIR}/rendering/utility/containers/VertexAttributeInfo.cpp
     ${SRC_DIR}/rendering/utility/containers/VertexIndicesInfo.cpp
     ${SRC_DIR}/rendering/utility/containers/Uniforms.cpp
@@ -512,7 +513,7 @@ set( ENTROPY_SOURCES
     ${SRC_DIR}/rendering_old/drawables/slides/SlideStackArrow.cpp
     ${SRC_DIR}/rendering_old/renderers/DepthPeelRenderer.cpp
     ${SRC_DIR}/rendering_old/records/ImageGpuRecord.cpp
-    ${SRC_DIR}/rendering_old/records/MeshGpuRecord.cpp
+    # ${SRC_DIR}/rendering_old/records/MeshGpuRecord.cpp
     ${SRC_DIR}/rendering_old/records/SlideAnnotationGpuRecord.cpp
     ${SRC_DIR}/rendering_old/records/SlideGpuRecord.cpp
     ${SRC_DIR}/rendering_old/utility/CreateGLObjects.cpp

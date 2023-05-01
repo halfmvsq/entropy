@@ -40,7 +40,7 @@ std::unique_ptr<MeshCpuRecord> generateIsoSurface(
     }
 
     const vnl_matrix_fixed< double, 3, 3 > imageDirections =
-            math::convert::toVnlMatrixFixed( glm::dmat3{ imageHeader.directions() } );
+        math::convert::toVnlMatrixFixed( glm::dmat3{ imageHeader.directions() } );
 
     vtkSmartPointer< vtkPolyData > polyData = nullptr;
 
@@ -67,7 +67,7 @@ std::unique_ptr<MeshCpuRecord> generateIsoSurface(
     }
 
     return std::make_unique<MeshCpuRecord>(
-                polyData, MeshInfo( MeshSource::IsoSurface, sk_primitiveType, isoValue ) );
+        polyData, MeshInfo( MeshSource::IsoSurface, sk_primitiveType, isoValue ) );
 }
 
 

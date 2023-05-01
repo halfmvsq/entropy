@@ -23,6 +23,8 @@
 #include "rendering/utility/gl/GLShader.h"
 
 /**************************/
+#include "mesh/MeshLoading.h"
+#include "rendering_old/renderers/DepthPeelRenderer.h"
 #include "rendering_old/utility/containers/BlankTextures.h"
 #include "rendering_old/utility/containers/ShaderProgramContainer.h"
 /**************************/
@@ -84,6 +86,42 @@ static const glm::vec4 sk_zeroVec4{ 0.0f, 0.0f, 0.0f, 0.0f };
 static const glm::ivec2 sk_zeroIVec2{ 0, 0 };
 
 static const std::string ROBOTO_LIGHT( "robotoLight" );
+
+
+
+/**
+ * @brief Create the Dual-Depth Peel renderer for a given view
+ * @param viewUid View UID
+ * @param shaderActivator Function that activates shader programs
+ * @param uniformsProvider Function returning the uniforms
+ * @return Unique pointer to the renderer
+ */
+std::unique_ptr<DepthPeelRenderer> createDdpRenderer(
+        int viewUid,
+        ShaderProgramActivatorType shaderActivator,
+        UniformsProviderType uniformsProvider,
+        GetterType<IDrawable*> rootProvider,
+        GetterType<IDrawable*> overlayProvider )
+{
+    std::ostringstream name;
+    name << "DdpRenderer_" << viewUid << std::ends;
+
+    auto renderer = std::make_unique<DepthPeelRenderer>(
+        name.str(), shaderActivator, uniformsProvider,
+        rootProvider, overlayProvider );
+
+    // Maximum number of dual depth peeling iterations. Three iterations enables
+    // 100% pixel perfect rendering of six transparent layers.
+    static constexpr uint sk_maxPeels = 3;
+    renderer->setMaxNumberOfPeels( sk_maxPeels );
+
+    // Override the maximum depth peel limit by using occlusion queries.
+    // Using an occlusion ratio of 0.0 means that as many peels are
+    // performed as necessary in order to render the scene transparency correctly.
+    renderer->setOcclusionRatio( 0.0f );
+
+    return renderer;
+}
 
 }
 
@@ -155,11 +193,11 @@ Rendering::Rendering( AppData& appData )
 
     /***************************************************/
 
-    auto shaderPrograms = std::make_unique<ShaderProgramContainer>();
+    // auto shaderPrograms = std::make_unique<ShaderProgramContainer>();
 
     // This is a shared pointer, since it gets passed down to rendering
     // objects where it is held as a weak pointer
-    auto blankTextures = std::make_shared<BlankTextures>();
+    // auto blankTextures = std::make_shared<BlankTextures>();
 
     // Constructs, manages, and modifies the assemblies of Drawables that are rendered.
     // It passes the shader programs and blank textures down to the Drawables.
@@ -169,6 +207,37 @@ Rendering::Rendering( AppData& appData )
 //                std::bind( &ShaderProgramContainer::getRegisteredUniforms, shaderPrograms.get(), _1 ),
 //                blankTextures );
     /***************************************************/
+
+    m_shaderPrograms = std::make_unique<ShaderProgramContainer>();
+    m_shaderPrograms->initializeGL();
+
+    m_shaderActivator = std::bind( &ShaderProgramContainer::useProgram, m_shaderPrograms.get(), std::placeholders::_1 );
+    m_uniformsProvider = std::bind( &ShaderProgramContainer::getRegisteredUniforms, m_shaderPrograms.get(), std::placeholders::_1 );
+
+
+    // meshgen::generateIsoSurface();
+    // m_meshRecord = std::make_unique<MeshRecord>();
+
+    // m_basicMesh = std::make_unique<BasicMesh>(
+    //     "basic mesh", m_shaderActivator, m_uniformsProvider );
+
+    m_rootDrawableProvider = [] () -> IDrawable*
+    {
+        return nullptr;
+    };
+
+
+    m_overlayDrawableProvider = [] () -> IDrawable* { return nullptr; };
+
+    int viewUid = 0;
+    
+    m_renderer = createDdpRenderer(
+            viewUid,
+            m_shaderActivator,
+            m_uniformsProvider,
+            m_rootDrawableProvider,
+            m_overlayDrawableProvider );
+
 }
 
 Rendering::~Rendering()

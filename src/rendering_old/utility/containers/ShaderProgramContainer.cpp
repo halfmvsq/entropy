@@ -161,6 +161,8 @@ void ShaderProgramContainer::generateFlatShadingProgram()
         #include "rendering_old/shaders/FlatPeel.frag"
             ;
 
+    std::cout << vsStdSource << std::endl;
+
     Uniforms vsStdUniforms;
     Uniforms fsCommonUniforms;
     {

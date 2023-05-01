@@ -27,11 +27,9 @@ ComponentType fromItkComponentType( const ::itk::IOComponentEnum& componentType 
 
 ::itk::IOComponentEnum toItkComponentType( const ComponentType& componentType );
 
-std::pair< itk::CommonEnums::IOComponent, std::string >
-sniffComponentType( const char* fileName );
+std::pair< itk::CommonEnums::IOComponent, std::string > sniffComponentType( const char* fileName );
 
-typename itk::ImageIOBase::Pointer
-createStandardImageIo( const char* fileName );
+typename itk::ImageIOBase::Pointer createStandardImageIo( const char* fileName );
 
 /**
  * @brief Get the range of values that can be held in components of a given type.
