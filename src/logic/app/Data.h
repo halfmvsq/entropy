@@ -363,9 +363,11 @@ private:
         /// Distance maps for the component, keyed by boundary isosurface value
         std::map< double, DistanceMapType > m_distanceMaps;
 
-        /// Isosurfaces for the component, keyed by UID
+        /// Isosurfaces for the component
         std::unordered_map< uuids::uuid, Isosurface > m_isosurfaces;
 
+        /// Iso-surface meshes
+        std::unordered_map< uuids::uuid, MeshRecord > m_isoMeshes;
     };
 
     void loadImageColorMaps();
@@ -400,8 +402,6 @@ private:
 
     std::unordered_map<uuids::uuid, Annotation> m_annotations; //!< Annotations
 
-    std::unordered_map<uuids::uuid, MeshRecord> m_isosurfaceMeshRecords; //!< Iso-surface mesh records
-
     /// ID of the reference image. This is null iff there are no images.
     std::optional<uuids::uuid> m_refImageUid;
 
@@ -433,9 +433,6 @@ private:
 
     /// Map of image to its active/selected annotation
     std::unordered_map< uuids::uuid, uuids::uuid > m_imageToActiveAnnotation;
-
-    /// Map fo iamge to its iso-surface meshes
-    std::unordered_map< uuids::uuid, std::list<uuids::uuid> > m_imageToIsosurfaceMeshes;
 
     /// Map of image to its per-component data
     std::unordered_map< uuids::uuid, std::vector<ComponentData> > m_imageToComponentData;

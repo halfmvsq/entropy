@@ -77,7 +77,7 @@ AppData::AppData()
       m_imageToActiveLandmarkGroup(),
 
       m_imageToAnnotations(),
-      m_imageToActiveAnnotation(),
+      m_imageToActiveAnnotation(), 
 
       m_imagesBeingSegmented()
 {
