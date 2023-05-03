@@ -1,6 +1,8 @@
 #ifndef ISOSURFACE_H
 #define ISOSURFACE_H
 
+#include "logic/records/MeshRecord.h"
+
 #include <glm/vec3.hpp>
 
 #include <string>
@@ -32,12 +34,14 @@ struct Isosurface
     std::string name; //!< Display name
     double value = 0.0; //!< Isovalue, defined in image intensity units
     glm::vec3 color = glm::vec3{ 0.0f }; //!< RGB color
-    SurfaceMaterial material; /// Material properties
-    float opacity = 1.0f; /// Opacity
+    SurfaceMaterial material; //!< Material properties
+    float opacity = 1.0f; //!< Opacity
     bool visible = true; //!< Visibility
     bool showIn2d = true; //!< Show in 2D slice views
-    float edgeStrength = 0.0f; /// Strength of edge outline, where 0.0f disables edges
+    float edgeStrength = 0.0f; //!< Strength of edge outline, where 0.0f disables edges
 
+    std::unique_ptr<MeshRecord> mesh = nullptr; //!< Mesh of the isosurface
+    bool meshInSync = false; //!< Is the mesh in sync with the isosurface value?
 
     glm::vec3 ambientColor() const
     {

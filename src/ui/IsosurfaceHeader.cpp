@@ -7,6 +7,8 @@
 
 #include "logic/app/Data.h"
 
+#include "mesh/MeshLoading.h"
+
 #include <IconFontCppHeaders/IconsForkAwesome.h>
 
 #include <imgui/imgui.h>
@@ -55,17 +57,17 @@ std::pair< ImVec4, ImVec4 > computeHeaderBgAndTextColors( const glm::vec3& color
 
 
 static const ImGuiTableFlags sk_isosurfaceTableFlags =
-        ImGuiTableFlags_Resizable |
-        ImGuiTableFlags_Reorderable |
-        ImGuiTableFlags_Hideable |
-        ImGuiTableFlags_Sortable |
-        ImGuiTableFlags_SortMulti |
-        ImGuiTableFlags_RowBg |
-        ImGuiTableFlags_Borders |
-        ImGuiTableFlags_NoBordersInBody |
-        ImGuiTableFlags_ScrollX |
-        ImGuiTableFlags_ScrollY |
-        ImGuiTableFlags_SizingFixedFit;
+    ImGuiTableFlags_Resizable |
+    ImGuiTableFlags_Reorderable |
+    ImGuiTableFlags_Hideable |
+    ImGuiTableFlags_Sortable |
+    ImGuiTableFlags_SortMulti |
+    ImGuiTableFlags_RowBg |
+    ImGuiTableFlags_Borders |
+    ImGuiTableFlags_NoBordersInBody |
+    ImGuiTableFlags_ScrollX |
+    ImGuiTableFlags_ScrollY |
+    ImGuiTableFlags_SizingFixedFit;
 
 /// Isosurface table columns
 enum TableColumnId : uint32_t
@@ -79,15 +81,15 @@ enum TableColumnId : uint32_t
 
 
 static const ImGuiTableColumnFlags sk_nameColumnFlags =
-        ImGuiTableColumnFlags_DefaultSort |
-        ImGuiTableColumnFlags_PreferSortDescending |
-        ImGuiTableColumnFlags_WidthFixed |
-        ImGuiTableColumnFlags_NoHide;
+    ImGuiTableColumnFlags_DefaultSort |
+    ImGuiTableColumnFlags_PreferSortDescending |
+    ImGuiTableColumnFlags_WidthFixed |
+    ImGuiTableColumnFlags_NoHide;
 
 static const ImGuiTableColumnFlags sk_isoValueColumnFlags =
-        ImGuiTableColumnFlags_PreferSortDescending |
-        ImGuiTableColumnFlags_WidthFixed |
-        ImGuiTableColumnFlags_NoHide;
+    ImGuiTableColumnFlags_PreferSortDescending |
+    ImGuiTableColumnFlags_WidthFixed |
+    ImGuiTableColumnFlags_NoHide;
 
 //        ( sk_isosurfaceTableFlags & ImGuiTableFlags_NoHostExtendX ) ? 0 : ImGuiTableColumnFlags_WidthStretch;
 
@@ -99,8 +101,8 @@ struct IsosurfaceTableItem
 {
     IsosurfaceTableItem( const uuids::uuid& surfaceUid, Isosurface* surface )
         :
-          m_surfaceUid( surfaceUid ),
-          m_surface( surface )
+        m_surfaceUid( surfaceUid ),
+        m_surface( surface )
     {}
 
     uuids::uuid m_surfaceUid; //!< UID of the surface
@@ -122,9 +124,9 @@ enum class IsosurfaceTableItemContentsType
  * @param[in] sortSpecs
  */
 bool compareWithSortSpecs(
-        const IsosurfaceTableItem& a,
-        const IsosurfaceTableItem& b,
-        const ImGuiTableSortSpecs& sortSpecs )
+    const IsosurfaceTableItem& a,
+    const IsosurfaceTableItem& b,
+    const ImGuiTableSortSpecs& sortSpecs )
 {
     for ( int i = 0; i < sortSpecs.SpecsCount; ++i )
     {
@@ -166,12 +168,15 @@ bool compareWithSortSpecs(
 
 
 std::optional<uuids::uuid> addNewSurface(
-        AppData& appData,
-        const Image* image,
-        const uuids::uuid& imageUid,
-        uint32_t componentToAdjust,
-        size_t index )
+    AppData& appData,
+    const Image* image,
+    const uuids::uuid& imageUid,
+    uint32_t component,
+    size_t index )
+    //std::function< void ( std::future< std::pair<std::string, bool> > ) > saveFuture )
 {
+    static std::future< std::pair<std::string, bool> > future;
+
     static constexpr uint32_t sk_defaultIsovalueQuantile = 750;
 
     if ( ! image )
@@ -179,18 +184,36 @@ std::optional<uuids::uuid> addNewSurface(
         return std::nullopt;
     }
 
-    const auto& stats = image->settings().componentStatistics( componentToAdjust );
+    const auto& stats = image->settings().componentStatistics( component );
 
     Isosurface surface;
     surface.name = "Surface " + std::to_string( index );
     surface.value = stats.m_quantiles[sk_defaultIsovalueQuantile];
     surface.color = glm::vec3{ 0.5f, 0.75f, 1.0f };
     surface.opacity = 1.0f;
+    surface.mesh = nullptr;
+    surface.meshInSync = false;
 
-    if ( const auto uid = appData.addIsosurface( imageUid, componentToAdjust, surface ) )
+    if ( const auto isoUid = appData.addIsosurface( imageUid, component, std::move(surface) ) )
     {
-        spdlog::info( "Added new isosurface {} with value {}", *uid, surface.value );
-        return uid;
+        spdlog::info( "Added new isosurface {} with value {}", *isoUid, surface.value );
+
+        auto meshRecordUpdater = [&appData, &imageUid, component, &isoUid]
+            ( std::unique_ptr<MeshRecord> meshRecord ) -> bool
+        {
+            return appData.updateIsosurfaceMesh( imageUid, component, *isoUid, std::move(meshRecord) );
+        };
+
+        future = meshgen::generateIsosurfaceMeshRecord(
+            *image, component, surface.value, meshRecordUpdater );
+
+        spdlog::debug( "HERE!" );
+        // if ( future.valid() )      
+        // {
+        //     spdlog::info( "SUCCESS: {}", future.get() );
+        // }
+
+        return isoUid;
     }
     else
     {
@@ -204,10 +227,10 @@ std::optional<uuids::uuid> addNewSurface(
 
 
 void renderIsosurfacesHeader(
-        AppData& appData,
-        const uuids::uuid& imageUid,
-        size_t imageIndex,
-        bool isActiveImage )
+    AppData& appData,
+    const uuids::uuid& imageUid,
+    size_t imageIndex,
+    bool isActiveImage )
 {
     static const ImGuiColorEditFlags sk_colorNoAlphaEditFlags =
             ImGuiColorEditFlags_PickerHueBar |

@@ -5,7 +5,11 @@
 #include "common/MathFuncs.h"
 #include "common/Types.h"
 
+#include "image/Image.h"
 #include "image/ImageHeader.h"
+#include "image/ImageUtility.tpp"
+
+#include "rendering_old/utility/CreateGLObjects.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -17,6 +21,7 @@
 #include <vtkSmartPointer.h>
 
 #include <spdlog/spdlog.h>
+#include <spdlog/fmt/ostr.h>
 
 #include <limits>
 #include <utility>
@@ -25,10 +30,10 @@
 namespace meshgen
 {
 
-std::unique_ptr<MeshCpuRecord> generateIsoSurface(
-        vtkImageData* imageData,
-        const ImageHeader& imageHeader,
-        const double isoValue )
+std::unique_ptr<MeshCpuRecord> generateIsosurfaceMeshCpuRecord(
+    vtkImageData* imageData,
+    const ImageHeader& imageHeader,
+    double isoValue )
 {
     // Note: triangle strips offer no speed advantage over indexed triangles on modern hardware
     static const MeshPrimitiveType sk_primitiveType = MeshPrimitiveType::Triangles;
@@ -47,7 +52,7 @@ std::unique_ptr<MeshCpuRecord> generateIsoSurface(
     try
     {
         polyData = ::vtkdetails::generateIsoSurfaceMesh(
-                    imageData, imageDirections, isoValue, sk_primitiveType );
+            imageData, imageDirections, isoValue, sk_primitiveType );
     }
     catch ( const std::exception& e )
     {
@@ -72,9 +77,9 @@ std::unique_ptr<MeshCpuRecord> generateIsoSurface(
 
 
 std::unique_ptr<MeshCpuRecord> generateLabelMesh(
-        vtkImageData* imageData,
-        const ImageHeader& imageHeader,
-        const uint32_t labelIndex )
+    vtkImageData* imageData,
+    const ImageHeader& imageHeader,
+    uint32_t labelIndex )
 {
     // Note: triangle strips offer no speed advantage over indexed triangles on modern hardware
     static const MeshPrimitiveType sk_primitiveType = MeshPrimitiveType::Triangles;
@@ -103,12 +108,12 @@ std::unique_ptr<MeshCpuRecord> generateLabelMesh(
     }
 
     const vnl_matrix_fixed< double, 3, 3 > imageDirections =
-            math::convert::toVnlMatrixFixed( glm::dmat3{ imageHeader.directions() } );
+        math::convert::toVnlMatrixFixed( glm::dmat3{ imageHeader.directions() } );
 
     try
     {
         auto polyData = ::vtkdetails::generateLabelMesh(
-                    imageData, imageDirections, labelIndex, sk_primitiveType );
+            imageData, imageDirections, labelIndex, sk_primitiveType );
 
         if ( ! polyData )
         {
@@ -129,6 +134,100 @@ std::unique_ptr<MeshCpuRecord> generateLabelMesh(
         spdlog::error( "Error generating label mesh at index {}", labelIndex);
         return nullptr;
     }
+}
+
+
+std::future< std::pair<std::string, bool> > generateIsosurfaceMeshRecord(
+    const Image& image,
+    uint32_t component,
+    double isoValue,
+    std::function< bool ( std::unique_ptr<MeshRecord> ) > /*meshRecordUpdater*/ )
+{
+    spdlog::debug( "Start generating isosurface mesh for component {}", component );
+
+    auto generateMesh = [] (
+        const Image& _image,
+        uint32_t _component,
+        double _isoValue,
+        const std::function< void ( bool success ) >& onGenerateDone )
+    {
+
+        std::pair<std::string, bool> ret = std::make_pair( "generate mesh", false );
+
+        // if ( ! _meshRecordUpdater )
+        // {
+        //     spdlog::error( "Null callback meshRecordUpdater" );
+        //     onGenerateDone( false );
+        //     return false;
+        // }
+
+        // Cast image component to float prior to mesh generation
+        const auto itkImage = createItkImageFromImageComponent<float>( _image, _component );
+        const auto vtkImageData = convertItkImageToVtkImageData<float>( itkImage );
+
+        if ( ! vtkImageData )
+        {
+            spdlog::error( "Image has null vtkImageData when generating isosurface" );
+            onGenerateDone( false );
+            return ret;
+        }
+
+        auto cpuRecord = generateIsosurfaceMeshCpuRecord(
+            vtkImageData.Get(), _image.header(), _isoValue );
+
+        if ( ! cpuRecord )
+        {
+            spdlog::error( "Error generating isosurface CPU mesh record" );
+            onGenerateDone( false );
+            return ret;
+        }
+        else
+        {
+            spdlog::debug( "Generated isosurface CPU mesh record" );
+        }
+      
+        onGenerateDone( true );
+        ret.second = true;
+        return ret;
+    };
+
+    auto generateDone = []( bool success )
+    {
+        if ( success )
+        {
+        //     auto gpuRecord = gpuhelper::createMeshGpuRecordFromVtkPolyData(
+        //         cpuRecord->polyData(), cpuRecord->meshInfo().primitiveType(),
+        //         BufferUsagePattern::StreamDraw );
+
+        //     if ( ! gpuRecord )
+        //     {
+        //         spdlog::error( "Error generating isosurface GPU mesh record" );
+        //         onGenerateDone( false );
+        //         return false;
+        //     }
+        //     else
+        //     {
+        //         spdlog::debug( "Generated isosurface GPU mesh record" );
+        //     }
+
+        //     if ( _meshRecordUpdater( std::make_unique<MeshRecord>(
+        //             std::move(cpuRecord), std::move(gpuRecord) ) ) )
+        //     {
+        //         onGenerateDone( true );
+        //         return true;
+        //     }
+
+            // m_glfw.postEmptyEvent(); // Post an empty event to notify render thread
+            spdlog::info( "Done generating isosurface mesh" );
+        }
+        else
+        {
+            spdlog::error( "Failed to generate isosurface mesh" );
+        }
+    };
+
+    return std::async( std::launch::async, generateMesh,
+        image, component, isoValue, generateDone );
 }
 
 

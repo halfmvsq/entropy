@@ -225,6 +225,8 @@ void AppData::loadImageColorMaps()
 
 uuids::uuid AppData::addImage( Image image )
 {
+    std::lock_guard< std::mutex > lock( m_componentDataMutex );
+
     const std::size_t numComps = image.header().numComponentsPerPixel();
 
     auto uid = generateRandomUuid();
@@ -311,6 +313,8 @@ bool AppData::addDistanceMap(
         DistanceMapType distanceMap,
         double boundaryIsoValue )
 {
+    std::lock_guard< std::mutex > lock( m_componentDataMutex );
+
     const Image* img = image( imageUid );
     if ( ! img )
     {
@@ -360,6 +364,8 @@ std::optional<uuids::uuid> AppData::addIsosurface(
     ComponentIndexType component,
     Isosurface isosurface )
 {
+    std::lock_guard< std::mutex > lock( m_componentDataMutex );
+
     const Image* img = image( imageUid );
     if ( ! img )
     {
@@ -395,6 +401,7 @@ std::optional<uuids::uuid> AppData::addIsosurface(
 
     return std::nullopt;
 }
+
 
 //bool AppData::removeImage( const uuids::uuid& /*imageUid*/ )
 //{
@@ -550,6 +557,8 @@ bool AppData::removeIsosurface(
         ComponentIndexType component,
         const uuids::uuid& isosurfaceUid )
 {
+    std::lock_guard< std::mutex > lock( m_componentDataMutex );
+
     const Image* img = image( imageUid );
     if ( ! img )
     {
@@ -586,9 +595,7 @@ const Image* AppData::image( const uuids::uuid& imageUid ) const
 
 Image* AppData::image( const uuids::uuid& imageUid )
 {
-    auto it = m_images.find( imageUid );
-    if ( std::end(m_images) != it ) return &it->second;
-    return nullptr;
+    return const_cast<Image*>( const_cast<const AppData*>(this)->image( imageUid ) );
 }
 
 
@@ -601,9 +608,7 @@ const Image* AppData::seg( const uuids::uuid& segUid ) const
 
 Image* AppData::seg( const uuids::uuid& segUid )
 {
-    auto it = m_segs.find( segUid );
-    if ( std::end(m_segs) != it ) return &it->second;
-    return nullptr;
+    return const_cast<Image*>( const_cast<const AppData*>(this)->seg( segUid ) );
 }
 
 
@@ -616,9 +621,7 @@ const Image* AppData::def( const uuids::uuid& defUid ) const
 
 Image* AppData::def( const uuids::uuid& defUid )
 {
-    auto it = m_defs.find( defUid );
-    if ( std::end(m_defs) != it ) return &it->second;
-    return nullptr;
+    return const_cast<Image*>( const_cast<const AppData*>(this)->def( defUid ) );
 }
 
 const std::map< double, DistanceMapType >& AppData::distanceMaps(
@@ -627,6 +630,8 @@ const std::map< double, DistanceMapType >& AppData::distanceMaps(
 {
     // Map of distance maps (keyed by isosurface value) for the component:
     static const std::map< double, DistanceMapType > EMPTY;
+
+    std::lock_guard< std::mutex > lock( m_componentDataMutex );
 
     auto compDataIt = m_imageToComponentData.find( imageUid );
 
@@ -657,6 +662,8 @@ const Isosurface* AppData::isosurface(
         ComponentIndexType component,
         const uuids::uuid& isosurfaceUid ) const
 {
+    std::lock_guard< std::mutex > lock( m_componentDataMutex );
+
     const Image* img = image( imageUid );
     if ( ! img )
     {
@@ -688,31 +695,38 @@ Isosurface* AppData::isosurface(
         ComponentIndexType component,
         const uuids::uuid& isosurfaceUid )
 {
-    const Image* img = image( imageUid );
-    if ( ! img )
-    {
-        spdlog::error( "Cannot get isosurface from invalid image {}.", imageUid );
-        return nullptr;
-    }
+    return const_cast<Isosurface*>( const_cast<const AppData*>(this)->isosurface(
+        imageUid, component, isosurfaceUid ) );
+}
 
-    const uint32_t numComps = img->header().numComponentsPerPixel();
-    if ( component >= numComps )
-    {
-        spdlog::error( "Cannot get isosurface from invalid component {} of image {}.", component, imageUid );
-        return nullptr;
-    }
+bool AppData::updateIsosurfaceMesh(
+    const uuids::uuid& imageUid,
+    ComponentIndexType component,
+    const uuids::uuid& isosurfaceUid,
+    std::unique_ptr<MeshRecord> mesh )
+{
+    std::lock_guard< std::mutex > lock( m_componentDataMutex );
 
     auto compDataIt = m_imageToComponentData.find( imageUid );
-    if ( std::end( m_imageToComponentData ) != compDataIt )
+
+    if ( std::end(m_imageToComponentData) != compDataIt )
     {
         if ( component < compDataIt->second.size() )
         {
-            return &( compDataIt->second.at( component ).m_isosurfaces.at( isosurfaceUid ) );
+            auto& isosurfaces = compDataIt->second.at( component ).m_isosurfaces;
+            auto surfaceIt = isosurfaces.find( isosurfaceUid );
+
+            if ( std::end(isosurfaces) != surfaceIt )
+            {
+                surfaceIt->second.mesh = std::move(mesh);
+                return true;
+            }
         }
     }
 
-    return nullptr;
+    return false;
 }
+
 
 const ImageColorMap* AppData::imageColorMap( const uuids::uuid& colorMapUid ) const
 {
@@ -730,9 +744,7 @@ const ParcellationLabelTable* AppData::labelTable( const uuids::uuid& labelUid )
 
 ParcellationLabelTable* AppData::labelTable( const uuids::uuid& labelUid )
 {
-    auto it = m_labelTables.find( labelUid );
-    if ( std::end(m_labelTables) != it ) return &it->second;
-    return nullptr;
+    return const_cast<ParcellationLabelTable*>( const_cast<const AppData*>(this)->labelTable( labelUid ) );
 }
 
 const LandmarkGroup* AppData::landmarkGroup( const uuids::uuid& lmGroupUid ) const
@@ -744,9 +756,7 @@ const LandmarkGroup* AppData::landmarkGroup( const uuids::uuid& lmGroupUid ) con
 
 LandmarkGroup* AppData::landmarkGroup( const uuids::uuid& lmGroupUid )
 {
-    auto it = m_landmarkGroups.find( lmGroupUid );
-    if ( std::end(m_landmarkGroups) != it ) return &it->second;
-    return nullptr;
+    return const_cast<LandmarkGroup*>( const_cast<const AppData*>(this)->landmarkGroup( lmGroupUid ) );
 }
 
 const Annotation* AppData::annotation( const uuids::uuid& annotUid ) const
@@ -758,9 +768,7 @@ const Annotation* AppData::annotation( const uuids::uuid& annotUid ) const
 
 Annotation* AppData::annotation( const uuids::uuid& annotUid )
 {
-    auto it = m_annotations.find( annotUid );
-    if ( std::end(m_annotations) != it ) return &it->second;
-    return nullptr;
+    return const_cast<Annotation*>( const_cast<const AppData*>(this)->annotation( annotUid ) );
 }
 
 std::optional<uuids::uuid> AppData::refImageUid() const
@@ -1094,7 +1102,7 @@ uuid_range_t AppData::landmarkGroupUidsOrdered() const
 uuid_range_t AppData::isosurfaceUids(
         const uuids::uuid& imageUid, ComponentIndexType component ) const
 {
-//    static const std::list<uuids::uuid> EMPTY;
+    std::lock_guard< std::mutex > lock( m_componentDataMutex );
 
     const Image* img = image( imageUid );
     if ( ! img )

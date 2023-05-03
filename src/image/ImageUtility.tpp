@@ -261,13 +261,12 @@ splitImageIntoComponents( const typename ::itk::ImageBase<NDim>::Pointer& imageB
 
 
 template< class T >
-typename itk::Image<T, 3>::Pointer
-makeScalarImage(
-        const std::array<uint32_t, 3>& imageDims,
-        const std::array<double, 3>& imageOrigin,
-        const std::array<double, 3>& imageSpacing,
-        const std::array< std::array<double, 3>, 3 >&  imageDirection,
-        const T* imageData )
+typename itk::Image<T, 3>::Pointer makeScalarImage(
+    const std::array<uint32_t, 3>& imageDims,
+    const std::array<double, 3>& imageOrigin,
+    const std::array<double, 3>& imageSpacing,
+    const std::array< std::array<double, 3>, 3 >&  imageDirection,
+    const T* imageData )
 {
     using ImportFilterType = itk::ImportImageFilter<T, 3>;
 
@@ -345,8 +344,8 @@ makeScalarImage(
  */
 template< class T >
 Image createImageFromItkImage(
-        const typename itk::Image<T, 3>::Pointer /*itkImage*/,
-        const std::string& displayName )
+    const typename itk::Image<T, 3>::Pointer /*itkImage*/,
+    const std::string& displayName )
 {
     ImageHeader header;
 
@@ -536,8 +535,7 @@ typename itk::Image<T, 3>::Pointer createItkImageFromImageComponent(
 
 
 template< class ComponentType, uint32_t NDim, bool PixelIsVector >
-typename itk::ImageBase<NDim>::Pointer
-readImage( const std::string& fileName )
+typename itk::ImageBase<NDim>::Pointer readImage( const std::string& fileName )
 {
     using ImageType = typename std::conditional< PixelIsVector,
         itk::VectorImage<ComponentType, NDim>,
@@ -569,8 +567,8 @@ readImage( const std::string& fileName )
 
 template< class T, uint32_t NDim, bool PixelIsVector >
 bool writeImage(
-        typename itk::Image<T, NDim>::Pointer image,
-        const std::string& fileName )
+    typename itk::Image<T, NDim>::Pointer image,
+    const std::string& fileName )
 {
     using ImageType = typename std::conditional< PixelIsVector,
         itk::VectorImage<T, NDim>,
@@ -650,11 +648,11 @@ std::vector<ComponentType> createBuffer( const float* buffer, std::size_t numEle
  */
 template< typename T, typename U >
 typename itk::Image<U, 3>::Pointer computeEuclideanDistanceMap(
-        const typename itk::Image<T, 3>::Pointer image,
-        uint32_t component,
-        const T& lowerBoundaryValue,
-        const T& upperBoundaryValue,
-        float downsampleFactor )
+    const typename itk::Image<T, 3>::Pointer image,
+    uint32_t component,
+    const T& lowerBoundaryValue,
+    const T& upperBoundaryValue,
+    float downsampleFactor )
 {
     using Timer = std::chrono::time_point<std::chrono::system_clock>;
 
@@ -824,7 +822,7 @@ typename itk::Image<U, 3>::Pointer computeEuclideanDistanceMap(
 
 template< class ComponentType >
 vtkSmartPointer< vtkImageData > convertItkImageToVtkImageData(
-        const typename ::itk::Image< ComponentType, 3 >::Pointer image )
+    const typename ::itk::Image< ComponentType, 3 >::Pointer image )
 {
     if ( image.IsNull() )
     {

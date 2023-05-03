@@ -1,27 +1,36 @@
 #ifndef MESH_LOADER_H
 #define MESH_LOADER_H
 
+#include "logic/records/MeshRecord.h"
+
+#include <functional>
+#include <future>
 #include <memory>
 #include <string>
 
-
+class Image;
 class ImageHeader;
-class MeshCpuRecord;
 class vtkImageData;
 
 
 namespace meshgen
 {
 
-std::unique_ptr<MeshCpuRecord> generateIsoSurface(
+std::unique_ptr<MeshCpuRecord> generateIsosurfaceMeshCpuRecord(
         vtkImageData* imageData,
         const ImageHeader& imageHeader,
-        const double isoValue );
+        double isoValue );
 
-std::unique_ptr<MeshCpuRecord> generateLabelMesh(
+std::unique_ptr<MeshCpuRecord> generateLabelMeshCpuRecord(
         vtkImageData* imageData,
         const ImageHeader& imageHeader,
-        const uint32_t labelIndex );
+        uint32_t labelIndex );
+
+std::future< std::pair<std::string, bool> > generateIsosurfaceMeshRecord(
+        const Image& image,
+        uint32_t component,
+        double isoValue,
+        std::function< bool ( std::unique_ptr<MeshRecord> ) > meshRecordUpdater );
 
 /// @todo Put this function here
 //std::map< int64_t, double >

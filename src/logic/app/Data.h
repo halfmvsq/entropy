@@ -14,7 +14,6 @@
 #include "logic/app/Settings.h"
 #include "logic/app/State.h"
 #include "logic/serialization/ProjectSerialization.h"
-#include "logic/records/MeshRecord.h"
 
 #include "rendering/RenderData.h"
 #include "windowing/WindowData.h"
@@ -30,6 +29,8 @@
 
 #include <list>
 #include <map>
+#include <memory>
+#include <mutex>
 #include <optional>
 #include <string>
 #include <unordered_map>
@@ -126,7 +127,7 @@ public:
      * @param[in] imageUid UID of image for which to set the distance map
      * @param[in] component Image component for which to set the distance map
      * @param[in] distanceMap Distance map (in physical units) to a boundary in the image
-     * @param[in] Isosurface value of the distance used for defining the distance map
+     * @param[in] boundaryIsoValue Value of the distance used for defining the distance map
      *
      * @return True iff the distance map was successfully added for the image component.
      */
@@ -191,12 +192,20 @@ public:
      * @return Pointer to the isosurface if it exists; otherwise nullptr
      */
     const Isosurface* isosurface(
-        const uuids::uuid& imageUid, ComponentIndexType component,
+        const uuids::uuid& imageUid,
+        ComponentIndexType component,
         const uuids::uuid& isosurfaceUid ) const;
 
     Isosurface* isosurface(
-        const uuids::uuid& imageUid, ComponentIndexType component,
+        const uuids::uuid& imageUid,
+        ComponentIndexType component,
         const uuids::uuid& isosurfaceUid );
+
+    bool updateIsosurfaceMesh(
+        const uuids::uuid& imageUid,
+        ComponentIndexType component,
+        const uuids::uuid& isosurfaceUid,
+        std::unique_ptr<MeshRecord> mesh );
 
     const ImageColorMap* imageColorMap( const uuids::uuid& mapUid ) const;
 
@@ -365,10 +374,9 @@ private:
 
         /// Isosurfaces for the component
         std::unordered_map< uuids::uuid, Isosurface > m_isosurfaces;
-
-        /// Iso-surface meshes
-        std::unordered_map< uuids::uuid, MeshRecord > m_isoMeshes;
     };
+
+    mutable std::mutex m_componentDataMutex;
 
     void loadImageColorMaps();
 

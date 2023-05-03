@@ -12,6 +12,9 @@
 #include <glm/gtx/component_wise.hpp>
 #include <glm/gtx/string_cast.hpp>
 
+#include <spdlog/spdlog.h>
+#include <spdlog/fmt/ostr.h>
+
 #include <array>
 #include <iostream>
 #include <sstream>
@@ -332,21 +335,21 @@ std::unique_ptr<MeshGpuRecord> createMeshGpuRecord(
 
 
     VertexAttributeInfo positionsInfo(
-                BufferComponentType::Float,
-                BufferNormalizeValues::False,
-                sk_numCoords, sizeof( PositionType ),
-                sk_offset, vertexCount );
+        BufferComponentType::Float,
+        BufferNormalizeValues::False,
+        sk_numCoords, sizeof( PositionType ),
+        sk_offset, vertexCount );
 
     VertexAttributeInfo normalsInfo(
-                BufferComponentType::Int_2_10_10_10,
-                BufferNormalizeValues::True,
-                4, sizeof( NormalType ),
-                sk_offset, vertexCount );
+        BufferComponentType::Int_2_10_10_10,
+        BufferNormalizeValues::True,
+        4, sizeof( NormalType ),
+        sk_offset, vertexCount );
 
     VertexIndicesInfo indexInfo(
-                IndexType::UInt32,
-                primitiveMode,
-                indexCount, 0 );
+        IndexType::UInt32,
+        primitiveMode,
+        indexCount, 0 );
 
     GLBufferObject positionsObject( BufferType::VertexArray, bufferUsagePattern );
     GLBufferObject normalsObject( BufferType::VertexArray, bufferUsagePattern );
@@ -363,13 +366,12 @@ std::unique_ptr<MeshGpuRecord> createMeshGpuRecord(
     indicesObject.allocate( indexCount * sizeof( VertexIndexType ), nullptr );
 
     auto meshGpuRecord = std::make_unique<MeshGpuRecord>(
-                std::move( positionsObject ),
-                std::move( indicesObject ),
-                std::move( positionsInfo ),
-                std::move( indexInfo ) );
+        std::move( positionsObject ),
+        std::move( indicesObject ),
+        std::move( positionsInfo ),
+        std::move( indexInfo ) );
 
-    meshGpuRecord->setNormals( std::move( normalsObject ),
-                               std::move( normalsInfo ) );
+    meshGpuRecord->setNormals( std::move( normalsObject ), std::move( normalsInfo ) );
 
     return meshGpuRecord;
 }
@@ -429,26 +431,26 @@ std::unique_ptr<MeshGpuRecord> createMeshGpuRecordFromVtkPolyData(
         return nullptr;
     }
 
-    std::cout << "Creating GPU record for mesh with "
-              << positionsArrayBuffer->vectorCount() << " vertices and "
-              << indicesArrayBuffer->vectorCount() << " indices" << std::endl;
+    spdlog::info( "Creating GPU record for mesh with {} vertices and {} indices",
+                  positionsArrayBuffer->vectorCount(),
+                  indicesArrayBuffer->vectorCount() );
 
     VertexAttributeInfo positionsInfo(
-                BufferComponentType::Float,
-                BufferNormalizeValues::False,
-                3, 3 * sizeof( float ), 0,
-                positionsArrayBuffer->vectorCount() );
+        BufferComponentType::Float,
+        BufferNormalizeValues::False,
+        3, 3 * sizeof( float ), 0,
+        positionsArrayBuffer->vectorCount() );
 
     VertexAttributeInfo normalsInfo(
-                BufferComponentType::Int_2_10_10_10,
-                BufferNormalizeValues::True,
-                4, sizeof( uint32_t ), 0,
-                normalsArrayBuffer->vectorCount() );
+        BufferComponentType::Int_2_10_10_10,
+        BufferNormalizeValues::True,
+        4, sizeof( uint32_t ), 0,
+        normalsArrayBuffer->vectorCount() );
 
     VertexIndicesInfo indexInfo(
-                IndexType::UInt32,
-                primitiveMode,
-                indicesArrayBuffer->length(), 0 );
+        IndexType::UInt32,
+        primitiveMode,
+        indicesArrayBuffer->length(), 0 );
 
     GLBufferObject positionsObject( BufferType::VertexArray, bufferUsagePattern );
     GLBufferObject normalsObject( BufferType::VertexArray, bufferUsagePattern );
@@ -463,10 +465,10 @@ std::unique_ptr<MeshGpuRecord> createMeshGpuRecordFromVtkPolyData(
     indicesObject.allocate( indicesArrayBuffer->byteCount(), indicesArrayBuffer->buffer() );
 
     auto gpuRecord = std::make_unique<MeshGpuRecord>(
-                std::move( positionsObject ),
-                std::move( indicesObject ),
-                std::move( positionsInfo ),
-                std::move( indexInfo ) );
+        std::move( positionsObject ),
+        std::move( indicesObject ),
+        std::move( positionsInfo ),
+        std::move( indexInfo ) );
 
     gpuRecord->setNormals( std::move( normalsObject ), std::move( normalsInfo ) );
 
@@ -474,16 +476,18 @@ std::unique_ptr<MeshGpuRecord> createMeshGpuRecordFromVtkPolyData(
     {
         if ( positionsArrayBuffer->vectorCount() != texCoordsArrayBuffer->vectorCount() )
         {
-            std::cerr << "Vector array of texture coordinates extracted from "
-                      << "PolyData has incorrect length" << std::endl;
+            spdlog::error( "Vector array of texture coordinates extracted from "
+                           "PolyData has incorrect length {} (vs. {} required)",
+                           positionsArrayBuffer->vectorCount(),
+                           texCoordsArrayBuffer->vectorCount() );
             return nullptr;
         }
 
         VertexAttributeInfo texCoordsInfo(
-                    BufferComponentType::Float,
-                    BufferNormalizeValues::False,
-                    2, sizeof( float ), 0,
-                    texCoordsArrayBuffer->vectorCount() );
+            BufferComponentType::Float,
+            BufferNormalizeValues::False,
+            2, sizeof( float ), 0,
+            texCoordsArrayBuffer->vectorCount() );
 
         GLBufferObject texCoordsObject( BufferType::VertexArray, bufferUsagePattern );
 
@@ -498,7 +502,7 @@ std::unique_ptr<MeshGpuRecord> createMeshGpuRecordFromVtkPolyData(
 
 
 std::unique_ptr<MeshGpuRecord> createBoxMeshGpuRecord(
-        const BufferUsagePattern& bufferUsagePattern )
+    const BufferUsagePattern& bufferUsagePattern )
 {
     using PositionType = glm::vec3;
     using NormalType = uint32_t;
@@ -563,24 +567,24 @@ std::unique_ptr<MeshGpuRecord> createBoxMeshGpuRecord(
 
 
     VertexAttributeInfo positionsInfo(
-                BufferComponentType::Float,
-                BufferNormalizeValues::False,
-                3, sizeof( PositionType ), 0, sk_numPoints );
+        BufferComponentType::Float,
+        BufferNormalizeValues::False,
+        3, sizeof( PositionType ), 0, sk_numPoints );
 
     VertexAttributeInfo normalsInfo(
-                BufferComponentType::Int_2_10_10_10,
-                BufferNormalizeValues::True,
-                4, sizeof( NormalType ), 0, sk_numPoints );
+        BufferComponentType::Int_2_10_10_10,
+        BufferNormalizeValues::True,
+        4, sizeof( NormalType ), 0, sk_numPoints );
 
     VertexAttributeInfo texCoordsInfo(
-                BufferComponentType::Float,
-                BufferNormalizeValues::False,
-                2, sizeof( TexCoordType ), 0, sk_numPoints );
+        BufferComponentType::Float,
+        BufferNormalizeValues::False,
+        2, sizeof( TexCoordType ), 0, sk_numPoints );
 
     VertexIndicesInfo indexInfo(
-                IndexType::UInt8,
-                PrimitiveMode::Triangles,
-                3 * sk_numTriangles, 0 );
+        IndexType::UInt8,
+        PrimitiveMode::Triangles,
+        3 * sk_numTriangles, 0 );
 
     GLBufferObject positionsObject( BufferType::VertexArray, bufferUsagePattern );
     GLBufferObject normalsObject( BufferType::VertexArray, bufferUsagePattern );
@@ -598,14 +602,14 @@ std::unique_ptr<MeshGpuRecord> createBoxMeshGpuRecord(
     indicesObject.allocate( sk_numTriangles * sizeof( IndexedTriangleType ), sk_indexArray.data() );
 
     return std::make_unique<MeshGpuRecord>(
-                std::move( positionsObject ),
-                std::move( normalsObject ),
-                std::move( texCoordsObject ),
-                std::move( indicesObject ),
-                std::move( positionsInfo ),
-                std::move( normalsInfo ),
-                std::move( texCoordsInfo ),
-                std::move( indexInfo ) );
+        std::move( positionsObject ),
+        std::move( normalsObject ),
+        std::move( texCoordsObject ),
+        std::move( indicesObject ),
+        std::move( positionsInfo ),
+        std::move( normalsInfo ),
+        std::move( texCoordsInfo ),
+        std::move( indexInfo ) );
 }
 
 
@@ -636,9 +640,9 @@ void createTestColorBuffer( MeshRecord& meshRecord )
     const auto vertexCount = positionsInfo.vertexCount();
 
     VertexAttributeInfo colorsInfo(
-                BufferComponentType::UByte,
-                BufferNormalizeValues::True,
-                4, 4 * sizeof( uint8_t ), 0, vertexCount );
+        BufferComponentType::UByte,
+        BufferNormalizeValues::True,
+        4, 4 * sizeof( uint8_t ), 0, vertexCount );
 
     GLBufferObject colorsBuffer( BufferType::VertexArray, BufferUsagePattern::StaticDraw );
     colorsBuffer.generate();

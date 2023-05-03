@@ -22,8 +22,8 @@
 #include <future>
 #include <optional>
 #include <string>
-
-struct GLFWcursor;
+#include <unordered_map>
+#include <utility>
 
 
 /**
@@ -126,12 +126,6 @@ private:
     std::pair< std::optional<uuids::uuid>, bool >
     loadImage( const std::string& fileName, bool ignoreIfAlreadyLoaded );
 
-    std::unique_ptr<MeshCpuRecord> generateIsoSurfaceMeshCpuRecord(
-        const uuids::uuid& imageUid, uint32_t component, const double isoValue );
-
-    std::optional< uuids::uuid > generateIsoSurfaceMesh(
-        const uuids::uuid& imageUid, uint32_t component, double isoValue );
-
     /// Create a blank segmentation with the same header as the given image
     std::optional<uuids::uuid> createBlankSeg(
         const uuids::uuid& matchImageUid,
@@ -144,12 +138,18 @@ private:
 
     std::future<void> m_futureLoadProject;
 
-    // Set true when images are loaded from disk and ready to be loaded into textures
+    /// Set to true if the image loading is cancelled
+    std::atomic<bool> m_imageLoadCancelled;
+
+    /// Set true when images are loaded from disk and ready to be loaded into textures
     std::atomic<bool> m_imagesReady;
 
     // Set true when images could not be loaded.
     // If true, this flag will cause the render loop to exit.
     std::atomic<bool> m_imageLoadFailed;
+
+    /// Futures created in the UI during the lifetime of the application
+    std::unordered_map< std::string, std::future< std::pair<std::string, bool> > > m_uiFutures;
 
     GlfwWrapper m_glfw;
     AppData m_data;

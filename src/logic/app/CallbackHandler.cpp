@@ -95,12 +95,12 @@ bool CallbackHandler::executeGridCutSegmentation(
 {
     using namespace std::chrono;
 
-    constexpr short K = 1000;
-    constexpr double SIGMA2 = 100.0;
+    constexpr double K = 100.0;
+    constexpr double SIGMA = 30.0;
 
-    auto weight = [&] ( double A ) -> short
+    auto weight = [K, SIGMA] ( double A ) -> short
     {
-        return static_cast<short>( 1 + static_cast<double>( K ) * std::exp( -A * A / SIGMA2 ) );
+        return static_cast<short>( 1 + K * std::exp( -A * A / ( 2.0 * SIGMA * SIGMA ) ) );
     };
 
     using Grid = GridGraph_3D_6C<short, short, int>;

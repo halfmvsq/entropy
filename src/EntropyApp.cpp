@@ -17,12 +17,6 @@
 #include "logic/states/FsmList.hpp"
 //#include "logic/ipc/IPCMessage.h"
 
-
-/************************************************/
-#include "mesh/MeshLoading.h"
-#include "rendering_old/utility/CreateGLObjects.h"
-/************************************************/
-
 #include <glm/glm.hpp>
 
 #define GLM_ENABLE_EXPERIMENTAL
@@ -78,16 +72,17 @@ bool promptForChar( const char* prompt, char& readch )
 
 EntropyApp::EntropyApp()
     :
-      m_imagesReady( false ),
-      m_imageLoadFailed( false ),
+    m_imageLoadCancelled( false ),
+    m_imagesReady( false ),
+    m_imageLoadFailed( false ),
 
-      // GLFW creates the OpenGL contex
-      m_glfw( this, GL_VERSION_MAJOR, GL_VERSION_MINOR ),
+    // GLFW creates the OpenGL contex
+    m_glfw( this, GL_VERSION_MAJOR, GL_VERSION_MINOR ),
 
-      m_data(), // Requires OpenGL context
-      m_rendering( m_data ), // Requires OpenGL context
-      m_callbackHandler( m_data, m_glfw, m_rendering ),
-      m_imgui( m_glfw.window(), m_data, m_callbackHandler ) // Requires OpenGL context
+    m_data(), // Requires OpenGL context
+    m_rendering( m_data ), // Requires OpenGL context
+    m_callbackHandler( m_data, m_glfw, m_rendering ),
+    m_imgui( m_glfw.window(), m_data, m_callbackHandler ) // Requires OpenGL context
 //      m_IPCHandler()
 {   
     spdlog::debug( "Begin constructing application" );
@@ -152,6 +147,9 @@ void EntropyApp::run()
         m_imageLoadFailed,
         checkIfAppShouldQuit,
         [this]() { onImagesReady(); } );
+
+    // Cancel image loading, in case it's still going on
+    m_imageLoadCancelled = true;
 
     spdlog::debug( "Done application run loop" );
 }
@@ -347,62 +345,6 @@ EntropyApp::loadImage( const std::string& fileName, bool ignoreIfAlreadyLoaded )
     spdlog::info( "Settings:\n{}", image.settings() );
 
     return { m_data.addImage( std::move(image) ), true };
-}
-
-
-
-std::unique_ptr<MeshCpuRecord> EntropyApp::generateIsoSurfaceMeshCpuRecord(
-    const uuids::uuid& imageUid,
-    uint32_t component,
-    const double isoValue )
-{
-    // Cast image component to float prior to mesh generation
-    using ComponentType = float;
-
-    const Image* image = m_data.image( imageUid );
-
-    if ( ! image )
-    {
-        spdlog::error( "Null image {} when generating iso-surface mesh", imageUid );
-        return nullptr;
-    }
-
-    const auto itkImage = createItkImageFromImageComponent<ComponentType>( *image, component );
-    const vtkSmartPointer<vtkImageData> vtkImageData = convertItkImageToVtkImageData<ComponentType>( itkImage );
-
-    if ( ! vtkImageData )
-    {
-        spdlog::error( "Image {} has null vtkImageData when generating iso-surface mesh", imageUid );
-        return nullptr;
-    }
-
-    return meshgen::generateIsoSurface( vtkImageData.Get(), image->header(), isoValue );
-}
-
-
-std::optional<uuids::uuid> EntropyApp::generateIsoSurfaceMesh(
-    const uuids::uuid& imageUid, uint32_t component, double isoValue )
-{
-    auto meshCpuRecord = generateIsoSurfaceMeshCpuRecord( imageUid, component, isoValue );
-
-    if ( ! meshCpuRecord )
-    {
-        spdlog::error( "Error generating iso-surface mesh for image {} (component {}) at value {}", imageUid, isoValue );
-        return std::nullopt;
-    }
-
-    auto meshGpuRecord = gpuhelper::createMeshGpuRecordFromVtkPolyData(
-        meshCpuRecord->polyData(), meshCpuRecord->meshInfo().primitiveType(), BufferUsagePattern::StreamDraw );
-
-    if ( ! meshGpuRecord )
-    {
-        spdlog::error( "Error converting PolyData to MeshGpuRecord: Could not generate mesh record for image {} "
-                       " at isosurface value ", imageUid, isoValue );
-        return std::nullopt;
-    }
-
-    return std::nullopt;
-    // return m_data.insertMeshRecord( imageUid, std::make_shared<MeshRecord>( std::move( meshCpuRecord ), std::move( meshGpuRecord ) ) );
 }
 
 
@@ -1293,7 +1235,9 @@ void EntropyApp::loadImagesFromParams( const InputParams& params )
         m_glfw.setEventProcessingMode( EventProcessingMode::Poll );
         m_data.state().setAnimating( true );
 
-        spdlog::debug( "Begin loading images" );
+        spdlog::debug( "Begin loading images in new thread" );
+
+        if ( m_imageLoadCancelled ) { onProjectLoadingDone( false ); }
 
         if ( ! loadSerializedImage( project.m_referenceImage, true ) )
         {
@@ -1302,6 +1246,8 @@ void EntropyApp::loadImagesFromParams( const InputParams& params )
             onProjectLoadingDone( false );
         }
 
+        if ( m_imageLoadCancelled ) { onProjectLoadingDone( false ); }
+
         for ( const auto& additionalImage : project.m_additionalImages )
         {
             if ( ! loadSerializedImage( additionalImage, false ) )
@@ -1309,9 +1255,12 @@ void EntropyApp::loadImagesFromParams( const InputParams& params )
                 spdlog::error( "Could not load additional image from \"{}\"; skipping it",
                                additionalImage.m_imageFileName );
             }
+
+            if ( m_imageLoadCancelled ) { onProjectLoadingDone( false ); }
         }
 
         const auto refImageUid = m_data.imageUid( sk_defaultReferenceImageIndex );
+
         if ( refImageUid && m_data.setRefImageUid( *refImageUid ) )
         {           
             spdlog::info( "Set {} as the reference image", *refImageUid );
@@ -1369,7 +1318,8 @@ void EntropyApp::loadImagesFromParams( const InputParams& params )
 
     m_futureLoadProject = std::async(
                 std::launch::async, projectLoader,
-                m_data.project(), onProjectLoadingDone );
+                m_data.project(),
+                onProjectLoadingDone );
 
     spdlog::debug( "Done loading images from parameters" );
 }
@@ -1379,7 +1329,7 @@ void EntropyApp::setCallbacks()
 {
     m_glfw.setCallbacks(
                 [this](){ m_rendering.render(); },
-                [this](){ m_imgui.render(); } );
+                [this](){ m_imgui.render(); } ); /// @todo Pass in callback here that stores futures created from UI
 
     m_imgui.setCallbacks(
             [this] ()
