@@ -27,10 +27,10 @@
 #include <utility>
 
 
-namespace meshgen
+namespace
 {
 
-std::unique_ptr<MeshCpuRecord> generateIsosurfaceMeshCpuRecord(
+std::unique_ptr<MeshCpuRecord> _generateIsosurfaceMeshCpuRecord(
     vtkImageData* imageData,
     const ImageHeader& imageHeader,
     double isoValue )
@@ -75,7 +75,7 @@ std::unique_ptr<MeshCpuRecord> generateIsosurfaceMeshCpuRecord(
         polyData, MeshInfo( MeshSource::IsoSurface, sk_primitiveType, isoValue ) );
 }
 
-
+/*
 std::unique_ptr<MeshCpuRecord> generateLabelMesh(
     vtkImageData* imageData,
     const ImageHeader& imageHeader,
@@ -86,10 +86,10 @@ std::unique_ptr<MeshCpuRecord> generateLabelMesh(
 
     // Parcellation image must have exactly one scalar component
     if ( 1 != imageHeader.numComponentsPerPixel() ||
-         PixelType::Scalar != imageHeader.pixelType() )
+        PixelType::Scalar != imageHeader.pixelType() )
     {
         spdlog::error( "Error computing mesh at label index {}: "
-                       "Pixel type must be single-component scalar.", labelIndex );
+                      "Pixel type must be single-component scalar.", labelIndex );
         return nullptr;
     }
 
@@ -97,7 +97,7 @@ std::unique_ptr<MeshCpuRecord> generateLabelMesh(
     if ( ! isUnsignedIntegerType( imageHeader.memoryComponentType() ) )
     {
         spdlog::error( "Error computing mesh at label index {}: "
-                       "Parcellation component type must be unsigned integral.", labelIndex );
+                      "Parcellation component type must be unsigned integral.", labelIndex );
         return nullptr;
     }
 
@@ -122,7 +122,7 @@ std::unique_ptr<MeshCpuRecord> generateLabelMesh(
         }
 
         return std::make_unique<MeshCpuRecord>(
-                    polyData, MeshInfo( MeshSource::Label, sk_primitiveType, labelIndex ) );
+            polyData, MeshInfo( MeshSource::Label, sk_primitiveType, labelIndex ) );
     }
     catch ( const std::exception& e )
     {
@@ -135,109 +135,86 @@ std::unique_ptr<MeshCpuRecord> generateLabelMesh(
         return nullptr;
     }
 }
+*/
+
+} // anonymous
 
 
-std::future< AsyncUiTaskValue > generateIsosurfaceMeshRecord(
+namespace meshgen
+{
+
+std::future< AsyncUiTaskValue > generateIsosurfaceMeshCpuRecord(
     const Image& image,
     uint32_t component,
     double isoValue,
     const uuids::uuid& isosurfaceUid,
-    std::function< bool ( std::unique_ptr<MeshRecord> ) > /*meshRecordUpdater*/ )
+    std::function< bool ( const uuids::uuid& isosurfaceUid, std::unique_ptr<MeshCpuRecord> ) > meshCpuRecordUpdater )
 {
-    auto generateMesh = [] (
-        const Image& _image,
-        uint32_t _component,
-        double _isoValue,
-        const uuids::uuid& _isosurfaceUid,
-        const std::function< void ( bool success ) >& onGenerateDone )
+    // Lambda to generate the CPU mesh record using VTK's marching cubes.
+    // Need to capture by value, since the function is executed asynchronously.
+    auto generateMesh = [=]
+        ( const std::function< void ( bool success, std::unique_ptr<MeshCpuRecord> ) >& onGenerateDone )
     {
-        spdlog::debug( "Start generating mesh for isosurface {} at value {}", _isosurfaceUid, _isoValue );
+        spdlog::info( "Start generating mesh for isosurface {} at value {}", isosurfaceUid, isoValue );
 
         AsyncUiTaskValue retval;
         retval.task = AsyncUiTasks::IsosurfaceMeshGeneration;
-        retval.description = std::string( "Generate mesh at image isovalue " + std::to_string( _isoValue ) );
-        retval.objectUid = _isosurfaceUid;
+        retval.description = std::string( "Generate mesh at image isovalue " + std::to_string( isoValue ) );
+        retval.objectUid = isosurfaceUid;
         retval.success = false;
 
-        // if ( ! _meshRecordUpdater )
-        // {
-        //     spdlog::error( "Null callback meshRecordUpdater" );
-        //     onGenerateDone( false );
-        //     return false;
-        // }
-
         // Cast image component to float prior to mesh generation
-        const auto itkImage = createItkImageFromImageComponent<float>( _image, _component );
-        const auto vtkImageData = convertItkImageToVtkImageData<float>( itkImage );
+        using ImageCompType = float;
+        const auto itkImage = createItkImageFromImageComponent<ImageCompType>( image, component );
+        const auto vtkImageData = convertItkImageToVtkImageData<ImageCompType>( itkImage );
 
         if ( ! vtkImageData )
         {
             spdlog::error( "Image has null vtkImageData when generating isosurface" );
-            onGenerateDone( false );
+            onGenerateDone( false, nullptr );
             return retval;
         }
 
-        auto cpuRecord = generateIsosurfaceMeshCpuRecord(
-            vtkImageData.Get(), _image.header(), _isoValue );
+        auto cpuRecord = _generateIsosurfaceMeshCpuRecord( vtkImageData.Get(), image.header(), isoValue );
 
         if ( ! cpuRecord )
         {
             spdlog::error( "Error generating isosurface CPU mesh record" );
-            onGenerateDone( false );
+            onGenerateDone( false, nullptr );
             return retval;
         }
-        else
-        {
-            spdlog::debug( "Generated isosurface CPU mesh record" );
-        }
 
-        spdlog::debug( "Done generating mesh for isosurface {} at value {}", _isosurfaceUid, _isoValue );
+        spdlog::info( "Done generating mesh for isosurface {} at value {}", isosurfaceUid, isoValue );
 
-        onGenerateDone( true );
+        onGenerateDone( true, std::move(cpuRecord) );
 
         retval.success = true;
         return retval;
     };
 
-    auto generateDone = []( bool success )
+
+    // Called when mesh generation is done
+    auto generateDone = [=] ( bool success, std::unique_ptr<MeshCpuRecord> cpuMeshRecord )
     {
-        if ( success )
+        if ( ! success || ! cpuMeshRecord )
         {
-            spdlog::debug( "Start generating GPU mesh for isosurface" );
+            spdlog::error( "CPU mesh record for isosurface was not generated successfully" );
+            return false;
+        }
 
-        //     auto gpuRecord = gpuhelper::createMeshGpuRecordFromVtkPolyData(
-        //         cpuRecord->polyData(), cpuRecord->meshInfo().primitiveType(),
-        //         BufferUsagePattern::StreamDraw );
-
-        //     if ( ! gpuRecord )
-        //     {
-        //         spdlog::error( "Error generating isosurface GPU mesh record" );
-        //         onGenerateDone( false );
-        //         return false;
-        //     }
-        //     else
-        //     {
-        //         spdlog::debug( "Generated isosurface GPU mesh record" );
-        //     }
-
-        //     if ( _meshRecordUpdater( std::make_unique<MeshRecord>(
-        //             std::move(cpuRecord), std::move(gpuRecord) ) ) )
-        //     {
-        //         onGenerateDone( true );
-        //         return true;
-        //     }
-
-            // m_glfw.postEmptyEvent(); // Post an empty event to notify render thread
-            spdlog::debug( "Done generating GPU mesh for isosurface" );
+        if ( meshCpuRecordUpdater( isosurfaceUid, std::move(cpuMeshRecord) ) )
+        {
+            spdlog::debug( "Updated mesh CPU record for isosurface {}", isosurfaceUid );
+            return true;
         }
         else
         {
-            spdlog::error( "Failed to generate GPU mesh for isosurface" );
+            spdlog::error( "Error updating mesh CPU record for isosurface {}", isosurfaceUid );
+            return false;
         }
     };
 
-    return std::async( std::launch::async, generateMesh,
-        image, component, isoValue, isosurfaceUid, generateDone );
+    return std::async( std::launch::async, generateMesh, generateDone );
 }
 
 

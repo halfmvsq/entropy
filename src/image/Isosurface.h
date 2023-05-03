@@ -40,7 +40,7 @@ struct Isosurface
     bool showIn2d = true; //!< Show in 2D slice views
     float edgeStrength = 0.0f; //!< Strength of edge outline, where 0.0f disables edges
 
-    std::unique_ptr<MeshRecord> mesh = nullptr; //!< Mesh of the isosurface
+    std::unique_ptr<MeshRecord> mesh = nullptr; //!< Mesh record of the isosurface
     bool meshInSync = false; //!< Is the mesh in sync with the isosurface value?
 
     glm::vec3 ambientColor() const

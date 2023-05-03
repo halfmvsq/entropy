@@ -1,7 +1,7 @@
 #ifndef MESH_LOADER_H
 #define MESH_LOADER_H
 
-#include "logic/records/MeshRecord.h"
+#include "mesh/MeshCpuRecord.h"
 #include "ui/AsyncUiTasks.h"
 
 #include <functional>
@@ -10,29 +10,16 @@
 #include <string>
 
 class Image;
-class ImageHeader;
-class vtkImageData;
-
 
 namespace meshgen
 {
 
-std::unique_ptr<MeshCpuRecord> generateIsosurfaceMeshCpuRecord(
-        vtkImageData* imageData,
-        const ImageHeader& imageHeader,
-        double isoValue );
-
-std::unique_ptr<MeshCpuRecord> generateLabelMeshCpuRecord(
-        vtkImageData* imageData,
-        const ImageHeader& imageHeader,
-        uint32_t labelIndex );
-
-std::future< AsyncUiTaskValue > generateIsosurfaceMeshRecord(
+std::future< AsyncUiTaskValue > generateIsosurfaceMeshCpuRecord(
         const Image& image,
         uint32_t component,
         double isoValue,
         const uuids::uuid& isosurfaceUid,
-        std::function< bool ( std::unique_ptr<MeshRecord> ) > meshRecordUpdater );
+        std::function< bool ( const uuids::uuid& isosurfaceUid, std::unique_ptr<MeshCpuRecord> ) > meshCpuRecordUpdater );
 
 /// @todo Put this function here
 //std::map< int64_t, double >

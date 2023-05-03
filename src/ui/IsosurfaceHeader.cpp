@@ -199,38 +199,36 @@ std::optional<uuids::uuid> addNewSurface(
         spdlog::debug( "Added new isosurface {} for image {} (component {}) at isovalue {}",
                        *isosurfaceUid, imageUid, component, surface.value );
 
-        auto meshRecordUpdater = [&appData, &imageUid, component, &isosurfaceUid]
-            ( std::unique_ptr<MeshRecord> meshRecord ) -> bool
+        // Function to update the mesh record in AppData after the mesh is generated
+        auto meshCpuRecordUpdater = [&appData, &imageUid, component]
+            ( const uuids::uuid& _isosurfaceUid,
+              std::unique_ptr<MeshCpuRecord> meshCpuRecord ) -> bool
         {
-            const bool success = appData.updateIsosurfaceMesh(
-                imageUid, component, *isosurfaceUid, std::move(meshRecord) );
-
-            if ( success )
+            if ( appData.updateIsosurfaceMesh( imageUid, component, _isosurfaceUid, std::move(meshCpuRecord) ) )
             {
                 spdlog::debug( "Updated isosurface {} for image {} (component {}) with new mesh record",
-                              *isosurfaceUid, imageUid, component );
-            }
-            else
-            {
-                spdlog::error( "Error updating isosurface {} for image {} (component {}) with new mesh record",
-                               *isosurfaceUid, imageUid, component );
+                               _isosurfaceUid, imageUid, component );
+                return true;
             }
 
-            return success;
+            spdlog::error( "Error updating isosurface {} for image {} (component {}) with new mesh record",
+                           _isosurfaceUid, imageUid, component );
+
+            return false;
         };
 
         uuids::uuid taskUid = generateRandomUuid();
 
         // Need to store the future so that its destructor is not called.
         // Calling the destructor will cause us to wait on the future.
-        storeFuture( taskUid, meshgen::generateIsosurfaceMeshRecord(
-            *image, component, surface.value, *isosurfaceUid, meshRecordUpdater ) );
+        storeFuture( taskUid, meshgen::generateIsosurfaceMeshCpuRecord(
+            *image, component, surface.value, *isosurfaceUid, meshCpuRecordUpdater ) );
 
         return isosurfaceUid;
     }
     else
     {
-        spdlog::error( "Unable to add new isosurface" );
+        spdlog::error( "Unable to add new isosurface for image {}", imageUid );
         return std::nullopt;
     }
 }

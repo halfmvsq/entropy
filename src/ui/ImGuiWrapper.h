@@ -107,6 +107,9 @@ private:
      * @param future The future
      */
     void storeFuture( const uuids::uuid& taskUid, std::future<AsyncUiTaskValue> future );
+
+
+    std::pair<const char*, const char*> getImageDisplayAndFileNames( size_t imageIndex ) const;
 };
 
 #endif // IMGUI_WRAPPER_H

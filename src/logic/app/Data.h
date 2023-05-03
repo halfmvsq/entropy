@@ -205,7 +205,7 @@ public:
         const uuids::uuid& imageUid,
         ComponentIndexType component,
         const uuids::uuid& isosurfaceUid,
-        std::unique_ptr<MeshRecord> mesh );
+        std::unique_ptr<MeshCpuRecord> mesh );
 
     const ImageColorMap* imageColorMap( const uuids::uuid& mapUid ) const;
 

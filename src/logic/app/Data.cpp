@@ -703,7 +703,7 @@ bool AppData::updateIsosurfaceMesh(
     const uuids::uuid& imageUid,
     ComponentIndexType component,
     const uuids::uuid& isosurfaceUid,
-    std::unique_ptr<MeshRecord> mesh )
+    std::unique_ptr<MeshCpuRecord> mesh )
 {
     std::lock_guard< std::mutex > lock( m_componentDataMutex );
 
@@ -718,7 +718,15 @@ bool AppData::updateIsosurfaceMesh(
 
             if ( std::end(isosurfaces) != surfaceIt )
             {
-                surfaceIt->second.mesh = std::move(mesh);
+                if ( surfaceIt->second.mesh )
+                {
+                    surfaceIt->second.mesh->setCpuData( std::move(mesh) );
+                }
+                else
+                {
+                    surfaceIt->second.mesh = std::make_unique<MeshRecord>( std::move(mesh), nullptr );
+                }
+
                 return true;
             }
         }

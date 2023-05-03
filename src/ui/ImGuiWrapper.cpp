@@ -1,13 +1,10 @@
 ﻿#include "ui/ImGuiWrapper.h"
 
-#include "common/Exception.hpp"
-
 #include "ui/Helpers.h"
 #include "ui/MainMenuBar.h"
 #include "ui/Popups.h"
 #include "ui/Style.h"
 #include "ui/Toolbars.h"
-#include "ui/Widgets.h"
 #include "ui/Windows.h"
 
 #include "logic/app/CallbackHandler.h"
@@ -62,32 +59,15 @@ ImFont* loadFont(
         fontData[i] = fontFile.cbegin()[i];
     }
 
-    // Note: Transfer ownership of 'ttf_data' to ImFontAtlas! Will be deleted after destruction of the atlas.
-    // Set font_cfg->FontDataOwnedByAtlas=false to keep ownership of your data and it won't be freed.
+    // Note: Transfer ownership of 'ttf_data' to ImFontAtlas!
+    // Will be deleted after destruction of the atlas.
+    // Set font_cfg->FontDataOwnedByAtlas=false to keep ownership of data and it won't be freed.
 
     return ImGui::GetIO().Fonts->AddFontFromMemoryTTF(
             static_cast<void*>( fontData ),
             static_cast<int32_t>( fontFile.size() ),
             static_cast<float>( fontSize ),
             &fontConfig, glyphRange );
-
-    // if ( m_appData.guiData().m_cousineFont )
-    // {
-    //     spdlog::debug( "Loaded font {}", cousineFontPath );
-    // }
-    // else
-    // {
-    //     spdlog::error( "Could not load font {}", cousineFontPath );
-    // }
-
-    // if ( m_appData.guiData().m_forkAwesomeFont )
-    // {
-    //     spdlog::debug( "Loaded font {}", forkAwesomeFontPath );
-    // }
-    // else
-    // {
-    //     spdlog::error( "Could not load font {}", forkAwesomeFontPath );
-    // }
 }
 
 }
@@ -131,6 +111,7 @@ ImGuiWrapper::ImGuiWrapper(
       m_contentScale( 1.0f )
 {
     IMGUI_CHECKVERSION();
+
     ImGui::CreateContext();
     spdlog::debug( "Created ImGui context" );
 
@@ -234,10 +215,16 @@ void ImGuiWrapper::setCallbacks(
 
 void ImGuiWrapper::storeFuture( const uuids::uuid& taskUid, std::future<AsyncUiTaskValue> future )
 {
+    if ( ! future.valid() )
+    {
+        spdlog::warn( "Future for task {} is not valid", taskUid );
+        return;
+    }
+
     m_futures.emplace( taskUid, std::move(future) );
 
-    spdlog::debug( "Storing future for UI task {}. Total number of futures: {}",
-                   taskUid, m_futures.size() );
+    spdlog::debug( "Storing future for UI task {}. Total number of UI task futures: {}",
+                  taskUid, m_futures.size() );
 }
 
 /*
@@ -413,29 +400,43 @@ void ImGuiWrapper::initializeFonts()
 }
 
 
+std::pair<const char*, const char*> ImGuiWrapper::getImageDisplayAndFileNames( size_t imageIndex ) const
+{
+    static const std::string s_empty( "<unknown>" );
+
+    if ( const auto imageUid = m_appData.imageUid( imageIndex ) )
+    {
+        if ( const Image* image = m_appData.image( *imageUid ) )
+        {
+            return { image->settings().displayName().c_str(), image->header().fileName().c_str() };
+        }
+    }
+
+    return { s_empty.c_str(), s_empty.c_str() };
+}
+
 void ImGuiWrapper::render()
 {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
 
+    //        spdlog::info( "Start generating GPU mesh for isosurface {} at value {}", isosurfaceUid, isoValue );
+
+    //        auto gpuMeshRecord = gpuhelper::createMeshGpuRecordFromVtkPolyData(
+    //            cpuMeshRecord->polyData(), cpuMeshRecord->meshInfo().primitiveType(),
+    //            BufferUsagePattern::StreamDraw );
+
+    //        if ( ! gpuMeshRecord )
+    //        {
+    //            spdlog::error( "Error generating isosurface GPU mesh record" );
+    //            return false;
+    //        }
+
+    //        spdlog::info( "Done generating GPU mesh for isosurface {} at value {}",
+    //                      isosurfaceUid, isoValue );
+
+
     /// @todo Move these functions elsewhere
-
-    auto getImageDisplayAndFileNames = [this] ( size_t imageIndex )
-            -> std::pair<const char*, const char*>
-    {
-        static const std::string s_empty( "<unknown>" );
-
-        if ( const auto imageUid = m_appData.imageUid( imageIndex ) )
-        {
-            if ( const Image* image = m_appData.image( *imageUid ) )
-            {
-                return { image->settings().displayName().c_str(),
-                         image->header().fileName().c_str() };
-            }
-        }
-
-        return { s_empty.c_str(), s_empty.c_str() };
-    };
 
     /// @todo remove this
     auto getActiveImageIndex = [this] () -> size_t
@@ -695,11 +696,13 @@ void ImGuiWrapper::render()
                         m_recenterAllViews );
         }
 
+        using namespace std::placeholders;
+
         if ( m_appData.guiData().m_showInspectionWindow )
         {
             renderInspectionWindowWithTable(
                         m_appData,
-                        getImageDisplayAndFileNames,
+                        std::bind( &ImGuiWrapper::getImageDisplayAndFileNames, this, _1 ),
                         m_getSubjectPos,
                         m_getVoxelPos,
                         m_setSubjectPos,
@@ -714,7 +717,7 @@ void ImGuiWrapper::render()
             renderImagePropertiesWindow(
                         m_appData,
                         m_appData.numImages(),
-                        getImageDisplayAndFileNames,
+                        std::bind( &ImGuiWrapper::getImageDisplayAndFileNames, this, _1 ),
                         getActiveImageIndex,
                         setActiveImageIndex,
                         getNumImageColorMaps,
@@ -774,14 +777,14 @@ void ImGuiWrapper::render()
                     cycleViewLayout,
 
                     m_appData.numImages(),
-                    getImageDisplayAndFileNames,
+                    std::bind( &ImGuiWrapper::getImageDisplayAndFileNames, this, _1 ),
                     getActiveImageIndex,
                     setActiveImageIndex );
 
         renderSegToolbar(
                     m_appData,
                     m_appData.numImages(),
-                    getImageDisplayAndFileNames,
+                    std::bind( &ImGuiWrapper::getImageDisplayAndFileNames, this, _1 ),
                     getActiveImageIndex,
                     setActiveImageIndex,
                     getImageHasActiveSeg,
@@ -828,7 +831,7 @@ void ImGuiWrapper::render()
 
                     [this, &currentLayout] ( size_t index ) { return currentLayout.isImageUsedForMetric( m_appData, index ); },
                     [this, &currentLayout] ( size_t index, bool visible ) { currentLayout.setImageUsedForMetric( m_appData, index, visible ); },
-                    getImageDisplayAndFileNames,
+                    std::bind( &ImGuiWrapper::getImageDisplayAndFileNames, this, _1 ),
 
                     getImageIsVisibleSetting,
                     getImageIsActive,
@@ -919,7 +922,7 @@ void ImGuiWrapper::render()
                         [this, view] ( size_t index ) { return view->isImageUsedForMetric( m_appData, index ); },
                         [this, view] ( size_t index, bool visible ) { view->setImageUsedForMetric( m_appData, index, visible ); },
 
-                        getImageDisplayAndFileNames,
+                        std::bind( &ImGuiWrapper::getImageDisplayAndFileNames, this, _1 ),
                         getImageIsVisibleSetting,
                         getImageIsActive,
 
@@ -965,8 +968,7 @@ void ImGuiWrapper::render()
 }
 
 
-void ImGuiWrapper::annotationToolbar(
-        const std::function< void () > paintActiveAnnotation )
+void ImGuiWrapper::annotationToolbar( const std::function< void () > paintActiveAnnotation )
 {
     if ( ! state::isInStateWhereToolbarVisible() )
     {
@@ -980,17 +982,14 @@ void ImGuiWrapper::annotationToolbar(
 
     // Position the annotation toolbar at the bottom of this view:
     const View* annotationView = m_appData.windowData().getView(
-                *ASM::current_state_ptr->selectedViewUid() );
+        *ASM::current_state_ptr->selectedViewUid() );
 
     const float wholeWindowHeight = static_cast<float>( m_appData.windowData().getWindowSize().y );
 
     const auto mindowAnnotViewFrameBounds = camera::computeMindowFrameBounds(
-                annotationView->windowClipViewport(),
-                m_appData.windowData().viewport().getAsVec4(),
-                wholeWindowHeight );
+        annotationView->windowClipViewport(),
+        m_appData.windowData().viewport().getAsVec4(),
+        wholeWindowHeight );
 
-    renderAnnotationToolbar(
-                m_appData,
-                mindowAnnotViewFrameBounds,
-                paintActiveAnnotation );
+    renderAnnotationToolbar( m_appData, mindowAnnotViewFrameBounds, paintActiveAnnotation );
 }

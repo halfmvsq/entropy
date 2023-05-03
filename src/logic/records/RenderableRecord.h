@@ -3,6 +3,8 @@
 
 #include <uuid.h>
 
+#include <spdlog/spdlog.h>
+
 #include <memory>
 
 
@@ -37,7 +39,9 @@ public:
 
     void setCpuData( std::unique_ptr<CpuData> cpuData )
     {
+        spdlog::debug( "B = {}", __LINE__ );
         m_cpuData = std::move( cpuData );
+        spdlog::debug( "B = {}", __LINE__ );
     }
 
     void setGpuData( std::unique_ptr<GpuData> gpuData )
