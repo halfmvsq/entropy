@@ -16,7 +16,7 @@ void Logging::setup()
         // Assign default sink logging levels.
 
         m_console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-        m_console_sink->set_pattern( "[%Y-%m-%d %H:%M:%S.%e] [%^%l%$] %v" );
+        m_console_sink->set_pattern( "[%Y-%m-%d %H:%M:%S.%e] [tid %t] [%^%l%$] %v" );
         m_console_sink->set_level( spdlog::level::info ); // default to info level
 
         // The daily file sink uses shows more info: logger name and time zone.

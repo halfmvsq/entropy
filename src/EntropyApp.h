@@ -2,7 +2,6 @@
 #define ENTROPY_APP_H
 
 #include "common/InputParams.h"
-#include "common/Types.h"
 
 #include "logic/app/CallbackHandler.h"
 #include "logic/app/Data.h"
