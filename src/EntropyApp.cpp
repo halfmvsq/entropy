@@ -1332,75 +1332,66 @@ void EntropyApp::setCallbacks()
                 [this](){ m_imgui.render(); } );
 
     m_imgui.setCallbacks(
-            [this] ()
-            {
-                resize( m_data.windowData().getWindowSize().x, m_data.windowData().getWindowSize().y );
-            },
+        [this] () { m_glfw.postEmptyEvent(); },
+        [this] () { resize( m_data.windowData().getWindowSize().x, m_data.windowData().getWindowSize().y ); },
 
-            [this] ( const uuids::uuid& viewUid )
-            {
-                m_callbackHandler.recenterView( m_data.state().recenteringMode(), viewUid );
-            },
+        [this] ( const uuids::uuid& viewUid ) { m_callbackHandler.recenterView( m_data.state().recenteringMode(), viewUid ); },
 
-            [this] ( bool recenterCrosshairs,
-                     bool recenterOnCurrentCrosshairsPosition,
-                     bool resetObliqueOrientation,
-                     const std::optional<bool>& resetZoom )
-            {
-                m_callbackHandler.recenterViews(
-                            m_data.state().recenteringMode(),
-                            recenterCrosshairs,
-                            recenterOnCurrentCrosshairsPosition,
-                            resetObliqueOrientation,
-                            resetZoom );
-            },
+        [this] ( bool recenterCrosshairs,
+                 bool recenterOnCurrentCrosshairsPosition,
+                 bool resetObliqueOrientation,
+                 const std::optional<bool>& resetZoom )
+        {
+            m_callbackHandler.recenterViews(
+                m_data.state().recenteringMode(),
+                recenterCrosshairs,
+                recenterOnCurrentCrosshairsPosition,
+                resetObliqueOrientation,
+                resetZoom );
+        },
 
-            [this] () { return m_callbackHandler.showOverlays(); },
-            [this] ( bool show ) { m_callbackHandler.setShowOverlays( show ); },
-            [this] () { m_rendering.updateImageUniforms( m_data.imageUidsOrdered() ); },
-            [this] ( const uuids::uuid& imageUid ) { m_rendering.updateImageUniforms( imageUid ); },
-            [this] ( const uuids::uuid& imageUid ) { m_rendering.updateImageInterpolation( imageUid ); },
-            [this] ( size_t labelColorTableIndex ) { m_rendering.updateLabelColorTableTexture( labelColorTableIndex ); },
+        [this] () { return m_callbackHandler.showOverlays(); },
+        [this] ( bool show ) { m_callbackHandler.setShowOverlays( show ); },
+        [this] () { m_rendering.updateImageUniforms( m_data.imageUidsOrdered() ); },
+        [this] ( const uuids::uuid& imageUid ) { m_rendering.updateImageUniforms( imageUid ); },
+        [this] ( const uuids::uuid& imageUid ) { m_rendering.updateImageInterpolation( imageUid ); },
+        [this] ( size_t labelColorTableIndex ) { m_rendering.updateLabelColorTableTexture( labelColorTableIndex ); },
 
             // moveCrosshairsToSegLabelCentroid
-            [this] ( const uuids::uuid& imageUid, size_t labelIndex )
-            {
-                m_callbackHandler.moveCrosshairsToSegLabelCentroid( imageUid, labelIndex );
-            },
+        [this] ( const uuids::uuid& imageUid, size_t labelIndex ) {
+            m_callbackHandler.moveCrosshairsToSegLabelCentroid( imageUid, labelIndex );
+        },
 
-            [this] () { m_rendering.updateMetricUniforms(); },
-            [this] () { return m_data.state().worldCrosshairs().worldOrigin(); },
+        [this] () { m_rendering.updateMetricUniforms(); },
+        [this] () { return m_data.state().worldCrosshairs().worldOrigin(); },
 
-            // Get subject position:
-            [this] ( size_t imageIndex ) -> std::optional<glm::vec3>
-            {
-                const auto imageUid = m_data.imageUid( imageIndex );
-                const Image* image = imageUid ? m_data.image( *imageUid ) : nullptr;
-                if ( ! image ) return std::nullopt;
+        // Get subject position:
+        [this] ( size_t imageIndex ) -> std::optional<glm::vec3>
+        {
+            const auto imageUid = m_data.imageUid( imageIndex );
+            const Image* image = imageUid ? m_data.image( *imageUid ) : nullptr;
+            if ( ! image ) return std::nullopt;
 
-                const glm::vec4 subjectPos = image->transformations().subject_T_worldDef() *
-                        glm::vec4{ m_data.state().worldCrosshairs().worldOrigin(), 1.0f };
+            const glm::vec4 subjectPos = image->transformations().subject_T_worldDef() *
+                glm::vec4{ m_data.state().worldCrosshairs().worldOrigin(), 1.0f };
 
-                return glm::vec3{ subjectPos / subjectPos.w };
-            },
+            return glm::vec3{ subjectPos / subjectPos.w };
+        },
 
-            [this] ( size_t imageIndex )
-            {
-                return data::getImageVoxelCoordsAtCrosshairs( m_data, imageIndex );
-            },
+        [this] ( size_t imageIndex ) { return data::getImageVoxelCoordsAtCrosshairs( m_data, imageIndex ); },
 
-            // Set subject position for image:
-            [this] ( size_t imageIndex, const glm::vec3& subjectPos )
-            {
-                const auto imageUid = m_data.imageUid( imageIndex );
-                const Image* image = imageUid ? m_data.image( *imageUid ) : nullptr;
-                if ( ! image ) return;
+        // Set subject position for image:
+        [this] ( size_t imageIndex, const glm::vec3& subjectPos )
+        {
+            const auto imageUid = m_data.imageUid( imageIndex );
+            const Image* image = imageUid ? m_data.image( *imageUid ) : nullptr;
+            if ( ! image ) return;
 
-                const glm::vec4 worldPos = image->transformations().worldDef_T_subject() *
-                        glm::vec4{ subjectPos, 1.0f };
+            const glm::vec4 worldPos = image->transformations().worldDef_T_subject() *
+                glm::vec4{ subjectPos, 1.0f };
 
-                m_data.state().setWorldCrosshairsPos( glm::vec3{ worldPos / worldPos.w } );
-            },
+            m_data.state().setWorldCrosshairsPos( glm::vec3{ worldPos / worldPos.w } );
+        },
 
             // Set voxel position for image:
             [this] ( size_t imageIndex, const glm::ivec3& voxelPos )
@@ -1483,13 +1474,11 @@ void EntropyApp::setCallbacks()
                 return std::nullopt;
             },
 
-            [this] ( const uuids::uuid& matchingImageUid, const std::string& segDisplayName )
-            {
+            [this] ( const uuids::uuid& matchingImageUid, const std::string& segDisplayName ) {
                 return createBlankSegWithColorTable( matchingImageUid, segDisplayName );
             },
 
-            [this] ( const uuids::uuid& segUid ) -> bool
-            {
+            [this] ( const uuids::uuid& segUid ) -> bool {
                 return m_callbackHandler.clearSegVoxels( segUid );
             },
 

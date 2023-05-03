@@ -190,7 +190,8 @@ void renderAnnotationWindow(
 
 void renderIsosurfacesWindow(
     AppData& appData,
-    std::function< void ( const uuids::uuid& taskUid, std::future<AsyncUiTaskValue> future ) > storeFuture );
+    std::function< void ( const uuids::uuid& taskUid, std::future<AsyncUiTaskValue> future ) > storeFuture,
+    std::function< void ( const uuids::uuid& taskUid ) > addTaskToIsosurfaceGpuMeshGenerationQueue );
 
 
 /**

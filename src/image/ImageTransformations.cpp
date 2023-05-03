@@ -1,6 +1,5 @@
 #include "image/ImageTransformations.h"
 
-#include "common/Exception.hpp"
 #include "common/MathFuncs.h"
 
 #include <glm/glm.hpp>

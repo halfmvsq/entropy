@@ -699,11 +699,11 @@ Isosurface* AppData::isosurface(
         imageUid, component, isosurfaceUid ) );
 }
 
-bool AppData::updateIsosurfaceMesh(
+bool AppData::updateIsosurfaceMeshCpuRecord(
     const uuids::uuid& imageUid,
     ComponentIndexType component,
     const uuids::uuid& isosurfaceUid,
-    std::unique_ptr<MeshCpuRecord> mesh )
+    std::unique_ptr<MeshCpuRecord> cpuRecord )
 {
     std::lock_guard< std::mutex > lock( m_componentDataMutex );
 
@@ -720,11 +720,49 @@ bool AppData::updateIsosurfaceMesh(
             {
                 if ( surfaceIt->second.mesh )
                 {
-                    surfaceIt->second.mesh->setCpuData( std::move(mesh) );
+                    surfaceIt->second.mesh->setCpuData( std::move(cpuRecord) );
                 }
                 else
                 {
-                    surfaceIt->second.mesh = std::make_unique<MeshRecord>( std::move(mesh), nullptr );
+                    surfaceIt->second.mesh = std::make_unique<MeshRecord>(
+                        std::move(cpuRecord), nullptr );
+                }
+
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+bool AppData::updateIsosurfaceMeshGpuRecord(
+    const uuids::uuid& imageUid,
+    ComponentIndexType component,
+    const uuids::uuid& isosurfaceUid,
+    std::unique_ptr<MeshGpuRecord> gpuRecord )
+{
+    std::lock_guard< std::mutex > lock( m_componentDataMutex );
+
+    auto compDataIt = m_imageToComponentData.find( imageUid );
+
+    if ( std::end(m_imageToComponentData) != compDataIt )
+    {
+        if ( component < compDataIt->second.size() )
+        {
+            auto& isosurfaces = compDataIt->second.at( component ).m_isosurfaces;
+            auto surfaceIt = isosurfaces.find( isosurfaceUid );
+
+            if ( std::end(isosurfaces) != surfaceIt )
+            {
+                if ( surfaceIt->second.mesh )
+                {
+                    surfaceIt->second.mesh->setGpuData( std::move(gpuRecord) );
+                }
+                else
+                {
+                    surfaceIt->second.mesh = std::make_unique<MeshRecord>(
+                        nullptr, std::move(gpuRecord) );
                 }
 
                 return true;

@@ -175,7 +175,8 @@ std::optional<uuids::uuid> addNewSurface(
     const uuids::uuid& imageUid,
     uint32_t component,
     size_t index,
-    std::function< void ( const uuids::uuid& taskUid, std::future<AsyncUiTaskValue> future ) > storeFuture )
+    std::function< void ( const uuids::uuid& taskUid, std::future<AsyncUiTaskValue> future ) > storeFuture,
+    std::function< void ( const uuids::uuid& taskUid ) > addTaskToIsosurfaceGpuMeshGenerationQueue )
 {
     static constexpr uint32_t sk_defaultIsovalueQuantile = 750;
 
@@ -204,7 +205,8 @@ std::optional<uuids::uuid> addNewSurface(
             ( const uuids::uuid& _isosurfaceUid,
               std::unique_ptr<MeshCpuRecord> meshCpuRecord ) -> bool
         {
-            if ( appData.updateIsosurfaceMesh( imageUid, component, _isosurfaceUid, std::move(meshCpuRecord) ) )
+            if ( appData.updateIsosurfaceMeshCpuRecord(
+                    imageUid, component, _isosurfaceUid, std::move(meshCpuRecord) ) )
             {
                 spdlog::debug( "Updated isosurface {} for image {} (component {}) with new mesh record",
                                _isosurfaceUid, imageUid, component );
@@ -217,12 +219,17 @@ std::optional<uuids::uuid> addNewSurface(
             return false;
         };
 
+        // Generate a new UID for the mesh generation task
         uuids::uuid taskUid = generateRandomUuid();
 
         // Need to store the future so that its destructor is not called.
         // Calling the destructor will cause us to wait on the future.
-        storeFuture( taskUid, meshgen::generateIsosurfaceMeshCpuRecord(
-            *image, component, surface.value, *isosurfaceUid, meshCpuRecordUpdater ) );
+        // Note: Bind the task ID to addTaskToIsosurfaceGpuMeshGenerationQueue
+        storeFuture( taskUid,
+            generateIsosurfaceMeshCpuRecord(
+                *image, imageUid, component, surface.value, *isosurfaceUid,
+                meshCpuRecordUpdater,
+                std::bind( addTaskToIsosurfaceGpuMeshGenerationQueue, taskUid ) ) );
 
         return isosurfaceUid;
     }
@@ -242,7 +249,8 @@ void renderIsosurfacesHeader(
     const uuids::uuid& imageUid,
     size_t imageIndex,
     bool isActiveImage,
-    std::function< void ( const uuids::uuid& task, std::future<AsyncUiTaskValue> future ) > storeFuture )
+    std::function< void ( const uuids::uuid& taskUid, std::future<AsyncUiTaskValue> future ) > storeFuture,
+    std::function< void ( const uuids::uuid& taskUid ) > addTaskToIsosurfaceGpuMeshGenerationQueue )
 {
     static const ImGuiColorEditFlags sk_colorNoAlphaEditFlags =
             ImGuiColorEditFlags_PickerHueBar |
@@ -395,7 +403,10 @@ void renderIsosurfacesHeader(
 
         if ( addSurface )
         {
-            if ( const auto uid = addNewSurface( appData, image, imageUid, componentToAdjust, 1, storeFuture ) )
+            if ( const auto uid = addNewSurface(
+                    appData, image, imageUid, componentToAdjust, 1,
+                    storeFuture,
+                    addTaskToIsosurfaceGpuMeshGenerationQueue ) )
             {
                 selectedSurfaceUid = *uid;
                 imageToSelectedSurfaceUid[imageUid] = *uid;
@@ -604,7 +615,10 @@ void renderIsosurfacesHeader(
 
     if ( addSurface )
     {
-        if ( const auto uid = addNewSurface( appData, image, imageUid, componentToAdjust, tableItems.size() + 1, storeFuture ) )
+        if ( const auto uid = addNewSurface(
+                appData, image, imageUid, componentToAdjust, tableItems.size() + 1,
+                storeFuture,
+                addTaskToIsosurfaceGpuMeshGenerationQueue ) )
         {
             selectedSurfaceUid = *uid;
             imageToSelectedSurfaceUid[imageUid] = *uid;

@@ -13,6 +13,8 @@
 #include "logic/states/AnnotationStateHelpers.h"
 #include "logic/states/AnnotationStateMachine.h"
 
+#include "rendering_old/utility/CreateGLObjects.h"
+
 #include <IconFontCppHeaders/IconsForkAwesome.h>
 
 #define IMGUI_DEFINE_MATH_OPERATORS
@@ -80,34 +82,6 @@ ImGuiWrapper::ImGuiWrapper(
     :
       m_appData( appData ),
       m_callbackHandler( callbackHandler ),
-
-      m_recenterView( nullptr ),
-      m_recenterAllViews( nullptr ),
-
-      m_getOverlayVisibility( nullptr ),
-      m_setOverlayVisibility( nullptr ),
-
-      m_updateAllImageUniforms( nullptr ),
-      m_updateImageUniforms( nullptr ),
-      m_updateImageInterpolationMode( nullptr ),
-      m_updateMetricUniforms( nullptr ),
-
-      m_getWorldDeformedPos( nullptr ),
-      m_getSubjectPos( nullptr ),
-      m_getVoxelPos( nullptr ),
-      m_setSubjectPos( nullptr ),
-      m_setVoxelPos( nullptr ),
-      m_getImageValues( nullptr ),
-      m_getSegLabel( nullptr ),
-
-      m_createBlankSeg( nullptr ),
-      m_clearSeg( nullptr ),
-      m_removeSeg( nullptr ),
-
-      m_executeGridCutsSeg( nullptr ),
-      m_setLockManualImageTransformation( nullptr ),
-      m_paintActiveSegmentationWithActivePolygon( nullptr ),
-
       m_contentScale( 1.0f )
 {
     IMGUI_CHECKVERSION();
@@ -161,6 +135,7 @@ ImGuiWrapper::~ImGuiWrapper()
 
 
 void ImGuiWrapper::setCallbacks(
+        std::function< void ( void ) > postEmptyGlfwEvent,
         std::function< void ( void ) > readjustViewport,
         std::function< void ( const uuids::uuid& viewUid ) > recenterView,
         AllViewsRecenterType recenterCurrentViews,
@@ -186,6 +161,7 @@ void ImGuiWrapper::setCallbacks(
         std::function< bool ( const uuids::uuid& imageUid, bool locked ) > setLockManualImageTransformation,
         std::function< void () > paintActiveSegmentationWithActivePolygon )
 {
+    m_postEmptyGlfwEvent = postEmptyGlfwEvent;
     m_readjustViewport = readjustViewport;
     m_recenterView = recenterView;
     m_recenterAllViews = recenterCurrentViews;
@@ -215,6 +191,8 @@ void ImGuiWrapper::setCallbacks(
 
 void ImGuiWrapper::storeFuture( const uuids::uuid& taskUid, std::future<AsyncUiTaskValue> future )
 {
+    std::lock_guard< std::mutex > lock( m_futuresMutex );
+
     if ( ! future.valid() )
     {
         spdlog::warn( "Future for task {} is not valid", taskUid );
@@ -224,8 +202,108 @@ void ImGuiWrapper::storeFuture( const uuids::uuid& taskUid, std::future<AsyncUiT
     m_futures.emplace( taskUid, std::move(future) );
 
     spdlog::debug( "Storing future for UI task {}. Total number of UI task futures: {}",
-                  taskUid, m_futures.size() );
+                   taskUid, m_futures.size() );
 }
+
+void ImGuiWrapper::addTaskToIsosurfaceGpuMeshGenerationQueue( const uuids::uuid& taskUid )
+{
+    std::lock_guard< std::mutex > lock( m_isosurfaceTaskQueueMutex );
+
+    m_isosurfaceTaskQueueForGpuMeshGeneration.push( taskUid );
+
+    // Post an empty event to notify render thread
+    if ( m_postEmptyGlfwEvent ) { m_postEmptyGlfwEvent(); }
+}
+
+void ImGuiWrapper::generateIsosurfaceMeshGpuRecords()
+{
+    std::lock_guard< std::mutex > lock( m_isosurfaceTaskQueueMutex );
+
+    while ( ! m_isosurfaceTaskQueueForGpuMeshGeneration.empty() )
+    {
+        const uuids::uuid taskUid = m_isosurfaceTaskQueueForGpuMeshGeneration.front();
+        m_isosurfaceTaskQueueForGpuMeshGeneration.pop();
+
+        auto it = m_futures.find( taskUid );
+
+        if ( std::end(m_futures) == it )
+        {
+            spdlog::error( "Invalid task {}", taskUid );
+            continue;
+        }
+
+        auto& future = it->second;
+
+        // In case the CPU mesh generation task is not done, then wait for it to finish
+        // and get the result. (Note: it should be done, since tasks only get on this queue when
+        // CPU mesh generation is done.)
+        const AsyncUiTaskValue value = future.get();
+
+        // Remove the future
+        m_futures.erase( it );
+
+        if ( AsyncUiTasks::IsosurfaceMeshGeneration != value.task ||
+             false == value.success ||
+            ! value.imageUid || ! value.imageComponent || ! value.objectUid )
+        {
+            spdlog::error( "Failed task {}", taskUid );
+            continue;
+        }
+
+        spdlog::info( "Task {}: Start generating GPU mesh for isosurface {} ",
+                      taskUid, *value.objectUid );
+
+        // Get the isosurface associated with this task
+        const Isosurface* surface = m_appData.isosurface(
+            *value.imageUid, *value.imageComponent, *value.objectUid );
+
+        if ( ! surface || ! surface->mesh )
+        {
+            spdlog::error( "Null surface mesh for isosurface {} of image {}",
+                          *value.objectUid, *value.imageUid );
+            continue;
+        }
+
+        const MeshCpuRecord* cpuMeshRecord = surface->mesh->cpuData();
+
+        if ( ! cpuMeshRecord )
+        {
+            spdlog::error( "Null CPU mesh record for isosurface {} of image {}",
+                          *value.objectUid, *value.imageUid );
+            continue;
+        }
+
+        std::unique_ptr<MeshGpuRecord> gpuMeshRecord =
+            gpuhelper::createMeshGpuRecordFromVtkPolyData(
+                cpuMeshRecord->polyData(),
+                cpuMeshRecord->meshInfo().primitiveType(),
+                BufferUsagePattern::StreamDraw );
+
+        if ( ! gpuMeshRecord )
+        {
+            spdlog::error( "Error generating GPU mesh record for isosurface {} of image {}",
+                          *value.objectUid, *value.imageUid );
+            continue;
+        }
+
+        spdlog::info( "Task {}: Done generating GPU mesh for isosurface {} ", taskUid, *value.objectUid );
+
+        const bool updated = m_appData.updateIsosurfaceMeshGpuRecord(
+            *value.imageUid, *value.imageComponent, *value.objectUid, std::move(gpuMeshRecord) );
+
+        if ( updated )
+        {
+            spdlog::info( "Updated GPU record for isosurface mesh {} of image {}",
+                         *value.objectUid, *value.imageUid );
+        }
+        else
+        {
+            spdlog::error( "Could not update GPU record for isosurface mesh {} of image {}",
+                          *value.objectUid, *value.imageUid );
+        }
+    }
+}
+
 
 /*
 Q: How should I handle DPI in my application?
@@ -417,24 +495,12 @@ std::pair<const char*, const char*> ImGuiWrapper::getImageDisplayAndFileNames( s
 
 void ImGuiWrapper::render()
 {
+    using namespace std::placeholders;
+
+    generateIsosurfaceMeshGpuRecords();
+
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
-
-    //        spdlog::info( "Start generating GPU mesh for isosurface {} at value {}", isosurfaceUid, isoValue );
-
-    //        auto gpuMeshRecord = gpuhelper::createMeshGpuRecordFromVtkPolyData(
-    //            cpuMeshRecord->polyData(), cpuMeshRecord->meshInfo().primitiveType(),
-    //            BufferUsagePattern::StreamDraw );
-
-    //        if ( ! gpuMeshRecord )
-    //        {
-    //            spdlog::error( "Error generating isosurface GPU mesh record" );
-    //            return false;
-    //        }
-
-    //        spdlog::info( "Done generating GPU mesh for isosurface {} at value {}",
-    //                      isosurfaceUid, isoValue );
-
 
     /// @todo Move these functions elsewhere
 
@@ -662,8 +728,6 @@ void ImGuiWrapper::render()
 
     ImGui::NewFrame();
 
-    using namespace std::placeholders;
-
     if ( m_appData.guiData().m_renderUiWindows )
     {
         renderConfirmCloseAppPopup( m_appData );
@@ -683,7 +747,10 @@ void ImGuiWrapper::render()
 
         if ( m_appData.guiData().m_showIsosurfacesWindow )
         {
-            renderIsosurfacesWindow( m_appData, std::bind( &ImGuiWrapper::storeFuture, this, _1, _2 ) );
+            renderIsosurfacesWindow(
+                m_appData,
+                std::bind( &ImGuiWrapper::storeFuture, this, _1, _2 ),
+                std::bind( &ImGuiWrapper::addTaskToIsosurfaceGpuMeshGenerationQueue, this, _1 ) );
         }
 
         if ( m_appData.guiData().m_showSettingsWindow )

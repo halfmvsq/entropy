@@ -9,6 +9,8 @@
 
 #include <functional>
 #include <future>
+#include <mutex>
+#include <queue>
 #include <unordered_map>
 
 class AppData;
@@ -29,6 +31,7 @@ public:
     void setContentScale( float scale );
 
     void setCallbacks(
+            std::function< void (void) > postEmptyGlfwEvent,
             std::function< void (void) > readjustViewport,
             std::function< void ( const uuids::uuid& viewUid ) > recenterView,
             AllViewsRecenterType recenterCurrentViews,
@@ -67,6 +70,7 @@ private:
     CallbackHandler& m_callbackHandler;
 
     // Callbacks:
+    std::function< void (void) > m_postEmptyGlfwEvent = nullptr;
     std::function< void (void) > m_readjustViewport = nullptr;
     std::function< void ( const uuids::uuid& viewUid ) > m_recenterView = nullptr;
     AllViewsRecenterType m_recenterAllViews = nullptr;
@@ -95,9 +99,28 @@ private:
     /// Scaling for the UI elements and fonts
     float m_contentScale;
 
-    /// Futures created by running tasks asynchronously from the UI during the lifetime of the application
+    /// Futures created by running tasks asynchronously from the UI.
+    /// These are created during the lifetime of the application.
     /// -Key: UID for the task
     std::unordered_map< uuids::uuid, std::future<AsyncUiTaskValue> > m_futures;
+
+    /// Mutex protecting \c m_futures
+    std::mutex m_futuresMutex;
+
+    /// Queue of UIDs referring to task UIDs of futures.
+    /// These are completed isosurface mesh generation tasks that now need
+    /// mesh generation to be run on the GPU.
+    std::queue<uuids::uuid> m_isosurfaceTaskQueueForGpuMeshGeneration;
+
+    /// Mutex protecting \c m_isosurfaceTaskQueueForGpuMeshGeneration
+    std::mutex m_isosurfaceTaskQueueMutex;
+
+    /// Update \c m_isosurfaceTaskQueueForGpuMeshGeneration with a new task UID.
+    /// This is called once CPU mesh generation is complete.
+    void addTaskToIsosurfaceGpuMeshGenerationQueue( const uuids::uuid& taskUid );
+
+    /// Generate GPU mesh records for isosurfaces in \c m_isosurfaceTaskQueueForGpuMeshGeneration
+    void generateIsosurfaceMeshGpuRecords();
 
     /**
      * @brief Store futures from UI tasks in \c m_futures map. Futures need to be stored so that their

@@ -1074,7 +1074,8 @@ void renderAnnotationWindow(
 
 void renderIsosurfacesWindow(
     AppData& appData,
-    std::function< void ( const uuids::uuid& taskUid, std::future<AsyncUiTaskValue> future ) > storeFuture )
+    std::function< void ( const uuids::uuid& taskUid, std::future<AsyncUiTaskValue> future ) > storeFuture,
+    std::function< void ( const uuids::uuid& taskUid ) > addTaskToIsosurfaceGpuMeshGenerationQueue )
 {
     if ( ImGui::Begin( "Isosurfaces",
                        &( appData.guiData().m_showIsosurfacesWindow ),
@@ -1092,7 +1093,8 @@ void renderIsosurfacesWindow(
                         imageUid,
                         imageIndex++,
                         isActiveImage,
-                        storeFuture );
+                        storeFuture,
+                        addTaskToIsosurfaceGpuMeshGenerationQueue );
         }
 
         ImGui::End();
