@@ -98,7 +98,7 @@ bool CallbackHandler::executeGridCutSegmentation(
     constexpr double K = 100.0;
     constexpr double SIGMA = 30.0;
 
-    auto weight = [K, SIGMA] ( double A ) -> short
+    auto weight = [] ( double A ) -> short
     {
         return static_cast<short>( 1 + K * std::exp( -A * A / ( 2.0 * SIGMA * SIGMA ) ) );
     };
