@@ -12,7 +12,7 @@
 #include "logic/annotation/Annotation.h"
 #include "logic/annotation/LandmarkGroup.h"
 #include "logic/camera/MathUtility.h"
-#include "logic/interaction/events/MouseEvent.h"
+//#include "logic/interaction/events/MouseEvent.h"
 #include "logic/serialization/ProjectSerialization.h"
 #include "logic/states/FsmList.hpp"
 //#include "logic/ipc/IPCMessage.h"
@@ -1317,9 +1317,9 @@ void EntropyApp::loadImagesFromParams( const InputParams& params )
     m_data.setProject( serialize::createProjectFromInputParams( params ) );
 
     m_futureLoadProject = std::async(
-                std::launch::async, projectLoader,
-                m_data.project(),
-                onProjectLoadingDone );
+        std::launch::async, projectLoader,
+        m_data.project(),
+        onProjectLoadingDone );
 
     spdlog::debug( "Done loading images from parameters" );
 }
@@ -1329,7 +1329,7 @@ void EntropyApp::setCallbacks()
 {
     m_glfw.setCallbacks(
                 [this](){ m_rendering.render(); },
-                [this](){ m_imgui.render(); } ); /// @todo Pass in callback here that stores futures created from UI
+                [this](){ m_imgui.render(); } );
 
     m_imgui.setCallbacks(
             [this] ()

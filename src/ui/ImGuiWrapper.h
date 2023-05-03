@@ -2,10 +2,14 @@
 #define IMGUI_WRAPPER_H
 
 #include "common/PublicTypes.h"
+#include "ui/AsyncUiTasks.h"
 
 #include <glm/fwd.hpp>
 #include <uuid.h>
+
 #include <functional>
+#include <future>
+#include <unordered_map>
 
 class AppData;
 class CallbackHandler;
@@ -88,7 +92,21 @@ private:
     std::function< bool ( const uuids::uuid& imageUid, bool locked ) > m_setLockManualImageTransformation = nullptr;
     std::function< void () > m_paintActiveSegmentationWithActivePolygon = nullptr;
 
+    /// Scaling for the UI elements and fonts
     float m_contentScale;
+
+    /// Futures created by running tasks asynchronously from the UI during the lifetime of the application
+    /// -Key: UID for the task
+    std::unordered_map< uuids::uuid, std::future<AsyncUiTaskValue> > m_futures;
+
+    /**
+     * @brief Store futures from UI tasks in \c m_futures map. Futures need to be stored so that their
+     * destructors are not called. Calling the destructor of a future causes us to wait on the it.
+     *
+     * @param taskUid UID of the task
+     * @param future The future
+     */
+    void storeFuture( const uuids::uuid& taskUid, std::future<AsyncUiTaskValue> future );
 };
 
 #endif // IMGUI_WRAPPER_H

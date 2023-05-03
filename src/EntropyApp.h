@@ -22,8 +22,6 @@
 #include <future>
 #include <optional>
 #include <string>
-#include <unordered_map>
-#include <utility>
 
 
 /**
@@ -75,10 +73,13 @@ public:
     loadSegmentation( const std::string& fileName,
                       const std::optional<uuids::uuid>& imageUid = std::nullopt );
 
-    /// Load a deformation field from disk.
-    /// @todo If its header does not match the given image, then it is not loaded
-    /// @return Uid and flag if loaded.
-    /// False indcates that it was already loaded and that we are returning an existing image.
+    /**
+     * @brief Load a deformation field from disk.
+     * @return UID and flag if loaded. False indcates that it was already loaded and that we are
+     * returning an existing image.
+     *
+     * @todo If its header does not match the given image, then it is not loaded
+     */
     std::pair< std::optional<uuids::uuid>, bool >
     loadDeformationField( const std::string& fileName );
 
@@ -136,26 +137,26 @@ private:
         const uuids::uuid& matchImageUid,
         std::string segDisplayName );
 
+
     std::future<void> m_futureLoadProject;
 
-    /// Set to true if the image loading is cancelled
+    /// Atomic boolean that is set to true iff image loading is cancelled
     std::atomic<bool> m_imageLoadCancelled;
 
-    /// Set true when images are loaded from disk and ready to be loaded into textures
+    /// Atomic boolean set to true when all project images are loaded from disk and
+    /// ready to be loaded into textures
     std::atomic<bool> m_imagesReady;
 
-    // Set true when images could not be loaded.
-    // If true, this flag will cause the render loop to exit.
+    /// Atomic boolean set to true iff images could not be loaded.
+    /// If true, this flag will cause the render loop to exit.
     std::atomic<bool> m_imageLoadFailed;
 
-    /// Futures created in the UI during the lifetime of the application
-    std::unordered_map< std::string, std::future< std::pair<std::string, bool> > > m_uiFutures;
 
-    GlfwWrapper m_glfw;
-    AppData m_data;
-    Rendering m_rendering;
-    CallbackHandler m_callbackHandler;
-    ImGuiWrapper m_imgui;
+    GlfwWrapper m_glfw; //!< GLFW wrapper
+    AppData m_data; //!< Application data
+    Rendering m_rendering; //!< Render logic
+    CallbackHandler m_callbackHandler; //!< UI callback handlers
+    ImGuiWrapper m_imgui; //!< ImGui wrapper
 };
 
 #endif // ENTROPY_APP_H

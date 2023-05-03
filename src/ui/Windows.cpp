@@ -1072,7 +1072,9 @@ void renderAnnotationWindow(
 }
 
 
-void renderIsosurfacesWindow( AppData& appData )
+void renderIsosurfacesWindow(
+    AppData& appData,
+    std::function< void ( const uuids::uuid& taskUid, std::future<AsyncUiTaskValue> future ) > storeFuture )
 {
     if ( ImGui::Begin( "Isosurfaces",
                        &( appData.guiData().m_showIsosurfacesWindow ),
@@ -1089,7 +1091,8 @@ void renderIsosurfacesWindow( AppData& appData )
                         appData,
                         imageUid,
                         imageIndex++,
-                        isActiveImage );
+                        isActiveImage,
+                        storeFuture );
         }
 
         ImGui::End();

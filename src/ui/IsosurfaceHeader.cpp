@@ -1,6 +1,8 @@
 #include "ui/IsosurfaceHeader.h"
 #include "ui/Helpers.h"
 
+#include "common/UuidUtility.h"
+
 #include "image/Image.h"
 #include "image/ImageColorMap.h"
 #include "image/SurfaceUtility.h"
@@ -172,11 +174,9 @@ std::optional<uuids::uuid> addNewSurface(
     const Image* image,
     const uuids::uuid& imageUid,
     uint32_t component,
-    size_t index )
-    //std::function< void ( std::future< std::pair<std::string, bool> > ) > saveFuture )
+    size_t index,
+    std::function< void ( const uuids::uuid& taskUid, std::future<AsyncUiTaskValue> future ) > storeFuture )
 {
-    static std::future< std::pair<std::string, bool> > future;
-
     static constexpr uint32_t sk_defaultIsovalueQuantile = 750;
 
     if ( ! image )
@@ -194,26 +194,39 @@ std::optional<uuids::uuid> addNewSurface(
     surface.mesh = nullptr;
     surface.meshInSync = false;
 
-    if ( const auto isoUid = appData.addIsosurface( imageUid, component, std::move(surface) ) )
+    if ( const auto isosurfaceUid = appData.addIsosurface( imageUid, component, std::move(surface) ) )
     {
-        spdlog::info( "Added new isosurface {} with value {}", *isoUid, surface.value );
+        spdlog::debug( "Added new isosurface {} for image {} (component {}) at isovalue {}",
+                       *isosurfaceUid, imageUid, component, surface.value );
 
-        auto meshRecordUpdater = [&appData, &imageUid, component, &isoUid]
+        auto meshRecordUpdater = [&appData, &imageUid, component, &isosurfaceUid]
             ( std::unique_ptr<MeshRecord> meshRecord ) -> bool
         {
-            return appData.updateIsosurfaceMesh( imageUid, component, *isoUid, std::move(meshRecord) );
+            const bool success = appData.updateIsosurfaceMesh(
+                imageUid, component, *isosurfaceUid, std::move(meshRecord) );
+
+            if ( success )
+            {
+                spdlog::debug( "Updated isosurface {} for image {} (component {}) with new mesh record",
+                              *isosurfaceUid, imageUid, component );
+            }
+            else
+            {
+                spdlog::error( "Error updating isosurface {} for image {} (component {}) with new mesh record",
+                               *isosurfaceUid, imageUid, component );
+            }
+
+            return success;
         };
 
-        future = meshgen::generateIsosurfaceMeshRecord(
-            *image, component, surface.value, meshRecordUpdater );
+        uuids::uuid taskUid = generateRandomUuid();
 
-        spdlog::debug( "HERE!" );
-        // if ( future.valid() )      
-        // {
-        //     spdlog::info( "SUCCESS: {}", future.get() );
-        // }
+        // Need to store the future so that its destructor is not called.
+        // Calling the destructor will cause us to wait on the future.
+        storeFuture( taskUid, meshgen::generateIsosurfaceMeshRecord(
+            *image, component, surface.value, *isosurfaceUid, meshRecordUpdater ) );
 
-        return isoUid;
+        return isosurfaceUid;
     }
     else
     {
@@ -230,7 +243,8 @@ void renderIsosurfacesHeader(
     AppData& appData,
     const uuids::uuid& imageUid,
     size_t imageIndex,
-    bool isActiveImage )
+    bool isActiveImage,
+    std::function< void ( const uuids::uuid& task, std::future<AsyncUiTaskValue> future ) > storeFuture )
 {
     static const ImGuiColorEditFlags sk_colorNoAlphaEditFlags =
             ImGuiColorEditFlags_PickerHueBar |
@@ -383,7 +397,7 @@ void renderIsosurfacesHeader(
 
         if ( addSurface )
         {
-            if ( const auto uid = addNewSurface( appData, image, imageUid, componentToAdjust, 1 ) )
+            if ( const auto uid = addNewSurface( appData, image, imageUid, componentToAdjust, 1, storeFuture ) )
             {
                 selectedSurfaceUid = *uid;
                 imageToSelectedSurfaceUid[imageUid] = *uid;
@@ -592,7 +606,7 @@ void renderIsosurfacesHeader(
 
     if ( addSurface )
     {
-        if ( const auto uid = addNewSurface( appData, image, imageUid, componentToAdjust, tableItems.size() + 1 ) )
+        if ( const auto uid = addNewSurface( appData, image, imageUid, componentToAdjust, tableItems.size() + 1, storeFuture ) )
         {
             selectedSurfaceUid = *uid;
             imageToSelectedSurfaceUid[imageUid] = *uid;

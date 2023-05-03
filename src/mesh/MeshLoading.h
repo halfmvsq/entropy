@@ -2,6 +2,7 @@
 #define MESH_LOADER_H
 
 #include "logic/records/MeshRecord.h"
+#include "ui/AsyncUiTasks.h"
 
 #include <functional>
 #include <future>
@@ -26,10 +27,11 @@ std::unique_ptr<MeshCpuRecord> generateLabelMeshCpuRecord(
         const ImageHeader& imageHeader,
         uint32_t labelIndex );
 
-std::future< std::pair<std::string, bool> > generateIsosurfaceMeshRecord(
+std::future< AsyncUiTaskValue > generateIsosurfaceMeshRecord(
         const Image& image,
         uint32_t component,
         double isoValue,
+        const uuids::uuid& isosurfaceUid,
         std::function< bool ( std::unique_ptr<MeshRecord> ) > meshRecordUpdater );
 
 /// @todo Put this function here

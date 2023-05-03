@@ -232,6 +232,14 @@ void ImGuiWrapper::setCallbacks(
 }
 
 
+void ImGuiWrapper::storeFuture( const uuids::uuid& taskUid, std::future<AsyncUiTaskValue> future )
+{
+    m_futures.emplace( taskUid, std::move(future) );
+
+    spdlog::debug( "Storing future for UI task {}. Total number of futures: {}",
+                   taskUid, m_futures.size() );
+}
+
 /*
 Q: How should I handle DPI in my application?
 The short answer is: obtain the desired DPI scale, load your fonts resized with that scale (always round down fonts
@@ -653,6 +661,8 @@ void ImGuiWrapper::render()
 
     ImGui::NewFrame();
 
+    using namespace std::placeholders;
+
     if ( m_appData.guiData().m_renderUiWindows )
     {
         renderConfirmCloseAppPopup( m_appData );
@@ -672,7 +682,7 @@ void ImGuiWrapper::render()
 
         if ( m_appData.guiData().m_showIsosurfacesWindow )
         {
-            renderIsosurfacesWindow( m_appData );
+            renderIsosurfacesWindow( m_appData, std::bind( &ImGuiWrapper::storeFuture, this, _1, _2 ) );
         }
 
         if ( m_appData.guiData().m_showSettingsWindow )

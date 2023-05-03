@@ -5,6 +5,8 @@
 #include "logic/camera/CameraHelpers.h" // Framebounds
 #include "logic/camera/CameraTypes.h"
 #include "windowing/ViewTypes.h"
+
+#include "ui/AsyncUiTasks.h"
 #include "ui/UiControls.h"
 
 #include <glm/fwd.hpp>
@@ -12,6 +14,7 @@
 #include <uuid.h>
 
 #include <functional>
+#include <future>
 #include <optional>
 #include <utility>
 
@@ -185,7 +188,9 @@ void renderAnnotationWindow(
         const AllViewsRecenterType& recenterAllViews );
 
 
-void renderIsosurfacesWindow( AppData& appData );
+void renderIsosurfacesWindow(
+    AppData& appData,
+    std::function< void ( const uuids::uuid& taskUid, std::future<AsyncUiTaskValue> future ) > storeFuture );
 
 
 /**

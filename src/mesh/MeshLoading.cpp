@@ -137,22 +137,27 @@ std::unique_ptr<MeshCpuRecord> generateLabelMesh(
 }
 
 
-std::future< std::pair<std::string, bool> > generateIsosurfaceMeshRecord(
+std::future< AsyncUiTaskValue > generateIsosurfaceMeshRecord(
     const Image& image,
     uint32_t component,
     double isoValue,
+    const uuids::uuid& isosurfaceUid,
     std::function< bool ( std::unique_ptr<MeshRecord> ) > /*meshRecordUpdater*/ )
 {
-    spdlog::debug( "Start generating isosurface mesh for component {}", component );
-
     auto generateMesh = [] (
         const Image& _image,
         uint32_t _component,
         double _isoValue,
+        const uuids::uuid& _isosurfaceUid,
         const std::function< void ( bool success ) >& onGenerateDone )
     {
+        spdlog::debug( "Start generating mesh for isosurface {} at value {}", _isosurfaceUid, _isoValue );
 
-        std::pair<std::string, bool> ret = std::make_pair( "generate mesh", false );
+        AsyncUiTaskValue retval;
+        retval.task = AsyncUiTasks::IsosurfaceMeshGeneration;
+        retval.description = std::string( "Generate mesh at image isovalue " + std::to_string( _isoValue ) );
+        retval.objectUid = _isosurfaceUid;
+        retval.success = false;
 
         // if ( ! _meshRecordUpdater )
         // {
@@ -169,7 +174,7 @@ std::future< std::pair<std::string, bool> > generateIsosurfaceMeshRecord(
         {
             spdlog::error( "Image has null vtkImageData when generating isosurface" );
             onGenerateDone( false );
-            return ret;
+            return retval;
         }
 
         auto cpuRecord = generateIsosurfaceMeshCpuRecord(
@@ -179,22 +184,27 @@ std::future< std::pair<std::string, bool> > generateIsosurfaceMeshRecord(
         {
             spdlog::error( "Error generating isosurface CPU mesh record" );
             onGenerateDone( false );
-            return ret;
+            return retval;
         }
         else
         {
             spdlog::debug( "Generated isosurface CPU mesh record" );
         }
-      
+
+        spdlog::debug( "Done generating mesh for isosurface {} at value {}", _isosurfaceUid, _isoValue );
+
         onGenerateDone( true );
-        ret.second = true;
-        return ret;
+
+        retval.success = true;
+        return retval;
     };
 
     auto generateDone = []( bool success )
     {
         if ( success )
         {
+            spdlog::debug( "Start generating GPU mesh for isosurface" );
+
         //     auto gpuRecord = gpuhelper::createMeshGpuRecordFromVtkPolyData(
         //         cpuRecord->polyData(), cpuRecord->meshInfo().primitiveType(),
         //         BufferUsagePattern::StreamDraw );
@@ -218,16 +228,16 @@ std::future< std::pair<std::string, bool> > generateIsosurfaceMeshRecord(
         //     }
 
             // m_glfw.postEmptyEvent(); // Post an empty event to notify render thread
-            spdlog::info( "Done generating isosurface mesh" );
+            spdlog::debug( "Done generating GPU mesh for isosurface" );
         }
         else
         {
-            spdlog::error( "Failed to generate isosurface mesh" );
+            spdlog::error( "Failed to generate GPU mesh for isosurface" );
         }
     };
 
     return std::async( std::launch::async, generateMesh,
-        image, component, isoValue, generateDone );
+        image, component, isoValue, isosurfaceUid, generateDone );
 }
 
 
