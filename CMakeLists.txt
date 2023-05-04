@@ -260,7 +260,10 @@ set( ARGPARSE_INCLUDE_DIR ${EXT_DIR}/argparse/include )
 # GridCut (NOT included as Git submodule):
 # Header-only C++ library of fast max-flow/min-cut solvers optimized for grid graphs
 #--------------------------------------------------------------------------------
-set( GRIDCUT_INCLUDE_DIR ${EXT_DIR}/gridcut/include )
+set( GRIDCUT_INCLUDE_DIRS
+    ${EXT_DIR}/gridcut/include
+    ${EXT_DIR}/gridcut/examples/include )
+#include "../include/AlphaExpansion/AlphaExpansion_2D_4C.h"
 
 
 #--------------------------------------------------------------------------------
@@ -466,6 +469,7 @@ set( ENTROPY_SOURCES
     ${SRC_DIR}/rendering/TextureSetup.cpp
     ${SRC_DIR}/rendering/VectorDrawing.cpp
     ${SRC_DIR}/rendering/records/MeshGpuRecord.cpp
+    ${SRC_DIR}/rendering/utility/CreateGLObjects.cpp
     ${SRC_DIR}/rendering/utility/containers/VertexAttributeInfo.cpp
     ${SRC_DIR}/rendering/utility/containers/VertexIndicesInfo.cpp
     ${SRC_DIR}/rendering/utility/containers/Uniforms.cpp
@@ -479,6 +483,8 @@ set( ENTROPY_SOURCES
     ${SRC_DIR}/rendering/utility/gl/GLVersionChecker.cpp
     ${SRC_DIR}/rendering/utility/gl/GLVertexArrayObject.cpp
     ${SRC_DIR}/rendering/utility/math/SliceIntersector.cpp
+    ${SRC_DIR}/rendering/utility/vtk/PolyDataConversion.cpp
+    ${SRC_DIR}/rendering/utility/vtk/PolyDataGenerator.cpp
 
     ${SRC_DIR}/rendering_old/ShaderNames.cpp
     ${SRC_DIR}/rendering_old/assemblies/AnnotationAssembly.cpp
@@ -516,11 +522,8 @@ set( ENTROPY_SOURCES
     # ${SRC_DIR}/rendering_old/records/MeshGpuRecord.cpp
     ${SRC_DIR}/rendering_old/records/SlideAnnotationGpuRecord.cpp
     ${SRC_DIR}/rendering_old/records/SlideGpuRecord.cpp
-    ${SRC_DIR}/rendering_old/utility/CreateGLObjects.cpp
     ${SRC_DIR}/rendering_old/utility/containers/BlankTextures.cpp
     ${SRC_DIR}/rendering_old/utility/containers/ShaderProgramContainer.cpp
-    ${SRC_DIR}/rendering_old/utility/vtk/PolyDataConversion.cpp
-    ${SRC_DIR}/rendering_old/utility/vtk/PolyDataGenerator.cpp
 
     ${SRC_DIR}/slideio/SlideAssociatedImages.cpp
     ${SRC_DIR}/slideio/SlideCpuRecord.cpp
@@ -732,7 +735,7 @@ target_include_directories( ${EXEC_NAME} SYSTEM PRIVATE
     ${Boost_INCLUDE_DIR}
     ${EARCUT_INCLUDE_DIR}
     ${GLM_INCLUDE_DIR}
-    ${GRIDCUT_INCLUDE_DIR}
+    ${GRIDCUT_INCLUDE_DIRS}
     ${NANOVG_SRC_DIR}
     ${SPDLOG_INCLUDE_DIR} )
 

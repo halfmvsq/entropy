@@ -140,7 +140,7 @@ std::unique_ptr<MeshCpuRecord> generateLabelMesh(
 } // anonymous
 
 
-std::future< AsyncUiTaskValue > generateIsosurfaceMeshCpuRecord(
+std::future<AsyncUiTaskValue> generateIsosurfaceMeshCpuRecord(
     const Image& image,
     const uuids::uuid& imageUid,
     uint32_t component,

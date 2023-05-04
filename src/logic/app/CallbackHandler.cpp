@@ -18,6 +18,7 @@
 
 // #include <GridCut/GridGraph_3D_6C.h>
 #include <GridCut/GridGraph_3D_26C.h>
+#include <AlphaExpansion/AlphaExpansion_3D_26C.h>
 
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/ostr.h>
