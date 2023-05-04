@@ -16,7 +16,8 @@
 
 #include "windowing/GlfwWrapper.h"
 
-#include <GridCut/GridGraph_3D_6C.h>
+// #include <GridCut/GridGraph_3D_6C.h>
+#include <GridCut/GridGraph_3D_26C.h>
 
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/ostr.h>
@@ -95,16 +96,6 @@ bool CallbackHandler::executeGridCutSegmentation(
 {
     using namespace std::chrono;
 
-    constexpr double K = 100.0;
-    constexpr double SIGMA = 30.0;
-
-    auto weight = [] ( double A ) -> short
-    {
-        return static_cast<short>( 1 + K * std::exp( -A * A / ( 2.0 * SIGMA * SIGMA ) ) );
-    };
-
-    using Grid = GridGraph_3D_6C<short, short, int>;
-
     const Image* image = m_appData.image( imageUid );
     const Image* seedSeg = m_appData.seg( seedSegUid );
     Image* resultSeg = m_appData.seg( resultSegUid );
@@ -127,6 +118,20 @@ bool CallbackHandler::executeGridCutSegmentation(
         return false;
     }
 
+
+    using T = float;
+
+    const T amplitude = static_cast<T>( m_appData.settings().graphCutsWeightsAmplitude() );
+    const T sigma = static_cast<T>( m_appData.settings().graphCutsWeightsSigma() );
+
+    auto weight = [&amplitude, &sigma] ( double A ) -> T
+    {
+        return static_cast<T>( amplitude * std::exp( -0.5 * std::pow(A / sigma, 2.0) ) );
+    };
+
+    // using Grid = GridGraph_3D_6C<T, T, T>;
+    using Grid = GridGraph_3D_26C<T, T, T>;
+
     spdlog::debug( "Executing GridCuts on image {} with seeds {}", imageUid, seedSegUid );
 
     const glm::ivec3 pixelDims{ image->header().pixelDimensions() };
@@ -141,60 +146,68 @@ bool CallbackHandler::executeGridCutSegmentation(
         return false;
     }
 
-    /// @todo Speed up filling by accessing raw array
+    const uint32_t C = image->settings().activeComponent();
+
+    auto getWeight = [&weight, &image, &C] ( int x, int y, int z, int dx, int dy, int dz ) -> T
+    {
+        const auto a = image->valueAsDouble( C, x, y, z );
+        const auto b = image->valueAsDouble( C, x + dx, y + dy, z + dz );
+        
+        if ( a && b )
+        {
+            return weight( (*a) - (*b) );
+        }
+        else
+        {
+            return 0.0;
+        }
+    };
+
+    auto setCaps = [&grid, &getWeight] ( int x, int y, int z, int dx, int dy, int dz )
+    {
+        const T cap = getWeight( x, y, z, dx, dy, dz );
+        grid->set_neighbor_cap( grid->node_id( x, y, z ), dx, dy, dz, cap );
+        grid->set_neighbor_cap( grid->node_id( x + dx, y + dy, z + dz ), -dx, -dy, -dz, cap );
+    };
 
     spdlog::debug( "Start filling grid" );
     for ( int z = 0; z < pixelDims.z; ++z )
     {
+        const bool ZL = ( z > 0 );
+        const bool ZH = ( z < ( pixelDims.z - 1 ) );
+
         for ( int y = 0; y < pixelDims.y; ++y )
         {
+            const bool YL = ( y > 0 );
+            const bool YH = ( y < ( pixelDims.y - 1 ) );
+
             for ( int x = 0; x < pixelDims.x; ++x )
             {
+                const bool XL = ( x > 0 );
+                const bool XH = ( x < ( pixelDims.x - 1 ) );
+
                 const std::optional<int64_t> optSeed = seedSeg->valueAsInt64( 0, x, y, z );
-                const int64_t seed = ( optSeed ) ? *optSeed : 0;
+                const int64_t seed = optSeed ? *optSeed : 0;
 
                 grid->set_terminal_cap( grid->node_id( x, y, z ),
-                                        ( seed == 2 ) ? K : 0,
-                                        ( seed == 1 ) ? K : 0 );
+                    ( seed == 2 ) ? amplitude : 0,
+                    ( seed == 1 ) ? amplitude : 0 );
 
-                if ( x < pixelDims.x - 1 )
-                {
-                    const auto optValueX0 = image->valueAsDouble( 0, x, y, z );
-                    const auto optValueX1 = image->valueAsDouble( 0, x + 1, y, z );
+                if ( XH ) { setCaps(x, y, z, 1, 0, 0); }
+                if ( YH ) { setCaps(x, y, z, 0, 1, 0); }
+                if ( ZH ) { setCaps(x, y, z, 0, 0, 1); }
 
-                    const double valueX0 = ( optValueX0 ) ? *optValueX0 : 0.0;
-                    const double valueX1 = ( optValueX1 ) ? *optValueX1 : 0.0;
+                if ( XH && YH ) { setCaps(x, y, z,  1,  1,  0); }
+                if ( XL && YH ) { setCaps(x, y, z, -1,  1,  0); }
+                if ( XH && ZH ) { setCaps(x, y, z,  1,  0,  1); }
+                if ( XL && ZH ) { setCaps(x, y, z, -1,  0,  1); }
+                if ( YH && ZH ) { setCaps(x, y, z,  0,  1,  1); }
+                if ( YL && ZH ) { setCaps(x, y, z,  0, -1,  1); }
 
-                    const short cap = weight( valueX0 - valueX1 );
-                    grid->set_neighbor_cap( grid->node_id( x, y, z ), +1, 0, 0, cap );
-                    grid->set_neighbor_cap( grid->node_id( x + 1, y, z ), -1, 0, 0, cap );
-                }
-
-                if ( y < pixelDims.y - 1 )
-                {
-                    const auto optValueY0 = image->valueAsDouble( 0, x, y, z );
-                    const auto optValueY1 = image->valueAsDouble( 0, x, y + 1, z );
-
-                    const double valueY0 = ( optValueY0 ) ? *optValueY0 : 0.0;
-                    const double valueY1 = ( optValueY1 ) ? *optValueY1 : 0.0;
-
-                    const short cap = weight( valueY0 - valueY1 );
-                    grid->set_neighbor_cap( grid->node_id( x, y, z ), 0, +1, 0, cap );
-                    grid->set_neighbor_cap( grid->node_id( x, y + 1, z ), 0, -1, 0, cap );
-                }
-
-                if ( z < pixelDims.z - 1 )
-                {
-                    const auto optValueZ0 = image->valueAsDouble( 0, x, y, z );
-                    const auto optValueZ1 = image->valueAsDouble( 0, x, y, z + 1 );
-
-                    const double valueZ0 = ( optValueZ0 ) ? *optValueZ0 : 0.0;
-                    const double valueZ1 = ( optValueZ1 ) ? *optValueZ1 : 0.0;
-
-                    const short cap = weight( valueZ0 - valueZ1 );
-                    grid->set_neighbor_cap( grid->node_id( x, y, z ), 0, 0, +1, cap );
-                    grid->set_neighbor_cap( grid->node_id( x, y, z + 1 ), 0, 0, -1, cap );
-                }
+                if ( XH && YH && ZH ) { setCaps(x, y, z,  1,  1,  1); }
+                if ( XL && YH && ZH ) { setCaps(x, y, z, -1,  1,  1); }
+                if ( XH && YL && ZH ) { setCaps(x, y, z,  1, -1,  1); }
+                if ( XH && YH && ZL ) { setCaps(x, y, z,  1,  1, -1); }
             }
         }
     }
@@ -206,10 +219,10 @@ bool CallbackHandler::executeGridCutSegmentation(
         grid->compute_maxflow();
     }
     auto stop = high_resolution_clock::now();
-    auto duration = duration_cast<microseconds>( stop - start );
+    auto duration = duration_cast<milliseconds>( stop - start );
 
     spdlog::debug( "Done computing max flow" );
-    spdlog::debug( "GridCuts execution time: {} us", duration.count() );
+    spdlog::debug( "GridCuts execution time: {} msec", duration.count() );
 
     spdlog::debug( "Start reading back segmentation results" );
     for ( int z = 0; z < pixelDims.z; ++z )
@@ -219,9 +232,18 @@ bool CallbackHandler::executeGridCutSegmentation(
             for ( int x = 0; x < pixelDims.x; ++x )
             {
                 const int64_t seg = static_cast<int64_t>(
-                            grid->get_segment( grid->node_id( x, y, z) ) ? 1 : 0 );
+                    grid->get_segment( grid->node_id( x, y, z) ) ? 1 : 0 );
 
                 resultSeg->setValue( 0, x, y, z, seg );
+
+                // Fill in background seeds again
+                // const std::optional<int64_t> optSeed = seedSeg->valueAsInt64( 0, x, y, z );
+                // const int64_t seed = optSeed ? *optSeed : 0;
+
+                // if ( 2 == seed && 0 == seg )
+                // {
+                //     resultSeg->setValue( 0, x, y, z, seed );
+                // }
             }
         }
     }

@@ -21,6 +21,9 @@ AppSettings::AppSettings()
       m_brushSizeInVoxels( 1 ),
       m_brushSizeInMm( 1.0f ),
 
+      m_graphCutsWeightsAmplitude( 1.0 ),
+      m_graphCutsWeightsSigma( 3.0 ),
+
       m_crosshairsMoveWhileAnnotating( false ),
       m_lockAnatomicalCoordinateAxesWithReferenceImage( false )
 {
@@ -92,6 +95,12 @@ void AppSettings::setBrushSizeInVoxels( uint32_t size )
 
 float AppSettings::brushSizeInMm() const { return m_brushSizeInMm; }
 void AppSettings::setBrushSizeInMm( float size ) { m_brushSizeInMm = size; }
+
+double AppSettings::graphCutsWeightsAmplitude() const { return m_graphCutsWeightsAmplitude; }
+void AppSettings::setGraphCutsWeightsAmplitude( double amplitude ) { m_graphCutsWeightsAmplitude = amplitude; }
+
+double AppSettings::graphCutsWeightsSigma() const { return m_graphCutsWeightsSigma; }
+void AppSettings::setGraphCutsWeightsSigma( double sigma ) { m_graphCutsWeightsSigma = sigma; }
 
 bool AppSettings::crosshairsMoveWhileAnnotating() const { return m_crosshairsMoveWhileAnnotating; }
 void AppSettings::setCrosshairsMoveWhileAnnotating( bool set ) { m_crosshairsMoveWhileAnnotating = set; }

@@ -61,6 +61,12 @@ public:
     float brushSizeInMm() const;
     void setBrushSizeInMm( float size );
 
+    double graphCutsWeightsAmplitude() const;
+    void setGraphCutsWeightsAmplitude( double amplitude );
+
+    double graphCutsWeightsSigma() const;
+    void setGraphCutsWeightsSigma( double sigma );
+
     bool crosshairsMoveWhileAnnotating() const;
     void setCrosshairsMoveWhileAnnotating( bool set );
 
@@ -86,6 +92,11 @@ private:
     uint32_t m_brushSizeInVoxels; //!< Brush size (diameter) in voxels
     float m_brushSizeInMm; //!< Brush size (diameter) in millimeters
     /* End segmentation drawing variables */
+
+    /* Begin Graph Cuts weights variables */
+    double m_graphCutsWeightsAmplitude; //!< Multiplier in front of exponential
+    double m_graphCutsWeightsSigma; //!< Standard deviation in exponential
+    /* End Graph Cuts weights variables */
 
     /// Crosshairs move to the position of every new point added to an annotation
     bool m_crosshairsMoveWhileAnnotating;

@@ -1074,7 +1074,6 @@ void renderSegToolbar(
 
                 ImGui::Text( "Brush options:" );
                 ImGui::Separator();
-
                 ImGui::Spacing();
 
                 if ( useVoxels )
@@ -1171,6 +1170,27 @@ void renderSegToolbar(
                     appData.settings().setCrosshairsMoveWithBrush( xhairsMove );
                 }
                 ImGui::SameLine(); helpMarker( "Crosshairs movement is linked with brush movement" );
+
+
+                ImGui::Spacing();
+                ImGui::Text( "Graph Cuts edge weights:" );
+                ImGui::Separator();
+                ImGui::Spacing();
+
+                double amplitude = appData.settings().graphCutsWeightsAmplitude();
+                double sigma = appData.settings().graphCutsWeightsSigma();
+
+                if ( ImGui::InputScalar( "Amplitude", ImGuiDataType_Double, &amplitude ) )
+                {
+                    appData.settings().setGraphCutsWeightsAmplitude( amplitude );
+                }
+                ImGui::SameLine(); helpMarker( "Amplitude" );
+
+                if ( ImGui::InputScalar( "Sigma", ImGuiDataType_Double, &sigma ) )
+                {
+                    appData.settings().setGraphCutsWeightsSigma( sigma );
+                }
+                ImGui::SameLine(); helpMarker( "Sigma" );
 
                 ImGui::EndPopup();
             }
