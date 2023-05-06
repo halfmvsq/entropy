@@ -200,7 +200,7 @@ bool CallbackHandler::executeGraphCutsSegmentation(
     case GraphCutsSegmentationType::Binary:
     {
         success = graphCutsBinarySegmentation(
-            m_appData.settings().graphCutsNeighboorhood(),
+            m_appData.settings().graphCutsNeighborhood(),
             m_appData.settings().graphCutsWeightsAmplitude(),
             static_cast<LabelType>( m_appData.settings().foregroundLabel() ),
             static_cast<LabelType>( m_appData.settings().backgroundLabel() ),
@@ -212,7 +212,7 @@ bool CallbackHandler::executeGraphCutsSegmentation(
     case GraphCutsSegmentationType::MultiLabel:
     {
         success = graphCutsMultiLabelSegmentation(
-            m_appData.settings().graphCutsNeighboorhood(),
+            m_appData.settings().graphCutsNeighborhood(),
             m_appData.settings().graphCutsWeightsAmplitude(),
             glm::ivec3{ image->header().pixelDimensions() },
             voxelDists,
