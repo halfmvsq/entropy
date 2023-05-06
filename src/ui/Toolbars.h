@@ -1,6 +1,7 @@
 #ifndef UI_TOOLBARS_H
 #define UI_TOOLBARS_H
 
+#include "common/GraphCutsTypes.h"
 #include "common/PublicTypes.h"
 #include "common/Types.h"
 
@@ -39,8 +40,7 @@ void renderSegToolbar(
         const std::function< void (void) >& readjustViewport,
         const std::function< void( const uuids::uuid& imageUid ) >& updateImageUniforms,
         const std::function< std::optional<uuids::uuid>( const uuids::uuid& matchingImageUid, const std::string& segDisplayName ) >& createBlankSeg,
-        const std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const uuids::uuid& resultSegUid ) >& executeGridCutsSeg,
-        const std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const uuids::uuid& resultSegUid ) >& executeMultilabelGraphCutsSeg );
+        const std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const uuids::uuid& resultSegUid, const GraphCutsSegmentationType& segType ) >& executeGraphCutsSeg );
 
 
 void renderAnnotationToolbar(

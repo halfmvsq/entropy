@@ -1,7 +1,9 @@
 #ifndef CALLBACK_HANDLER_H
 #define CALLBACK_HANDLER_H
 
+#include "common/GraphCutsTypes.h"
 #include "common/Types.h"
+
 #include "logic/interaction/ViewHit.h"
 
 #include <uuid.h>
@@ -32,22 +34,11 @@ public:
      */
     bool clearSegVoxels( const uuids::uuid& segUid );
 
-    /**
-     * @brief executeGridCutSegmentation
-     * @param imageUid
-     * @param seedSegUid
-     * @param resultSegUid
-     * @return
-     */
-    bool executeGridCutSegmentation(
-            const uuids::uuid& imageUid,
-            const uuids::uuid& seedSegUid,
-            const uuids::uuid& resultSegUid );
-
-    bool executeMultiLabelGraphCutSegmentation(
-            const uuids::uuid& imageUid,
-            const uuids::uuid& seedSegUid,
-            const uuids::uuid& resultSegUid );
+    bool executeGraphCutsSegmentation(
+        const uuids::uuid& imageUid,
+        const uuids::uuid& seedSegUid,
+        const uuids::uuid& resultSegUid,
+        const GraphCutsSegmentationType& segType );
 
     /**
      * @brief Move the crosshairs

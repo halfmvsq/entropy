@@ -1,7 +1,9 @@
 #ifndef IMGUI_WRAPPER_H
 #define IMGUI_WRAPPER_H
 
+#include "common/GraphCutsTypes.h"
 #include "common/PublicTypes.h"
+
 #include "ui/AsyncUiTasks.h"
 
 #include <glm/fwd.hpp>
@@ -53,8 +55,7 @@ public:
             std::function< std::optional<uuids::uuid>( const uuids::uuid& matchingImageUid, const std::string& segDisplayName ) > createBlankSeg,
             std::function< bool ( const uuids::uuid& segUid ) > clearSeg,
             std::function< bool ( const uuids::uuid& segUid ) > removeSeg,
-            std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const uuids::uuid& resultSegUid ) > executeGridCutsSeg,
-            std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const uuids::uuid& resultSegUid ) > executeMultilabelGraphCutsSeg,
+            std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const uuids::uuid& resultSegUid, const GraphCutsSegmentationType& segType ) > executeGraphCutsSeg,
             std::function< bool ( const uuids::uuid& imageUid, bool locked ) > setLockManualImageTransformation,
             std::function< void () > paintActiveSegmentationWithActivePolygon );
 
@@ -93,8 +94,7 @@ private:
     std::function< std::optional<uuids::uuid>( const uuids::uuid& matchingImageUid, const std::string& segDisplayName ) > m_createBlankSeg = nullptr;
     std::function< bool ( const uuids::uuid& segUid ) > m_clearSeg = nullptr;
     std::function< bool ( const uuids::uuid& segUid ) > m_removeSeg = nullptr;
-    std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const uuids::uuid& resultSegUid ) > m_executeGridCutsSeg = nullptr;
-    std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const uuids::uuid& resultSegUid ) > m_executeMultilabelGraphCutsSeg = nullptr;
+    std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const uuids::uuid& resultSegUid, const GraphCutsSegmentationType& segType ) > m_executeGraphCutsSeg = nullptr;
     std::function< bool ( const uuids::uuid& imageUid, bool locked ) > m_setLockManualImageTransformation = nullptr;
     std::function< void () > m_paintActiveSegmentationWithActivePolygon = nullptr;
 

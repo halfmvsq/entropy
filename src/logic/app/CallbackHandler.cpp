@@ -6,11 +6,9 @@
 
 #include "image/SegUtil.h"
 
-//#include "logic/annotation/AnnotPolygon.tpp"
 #include "logic/app/Data.h"
 #include "logic/camera/CameraHelpers.h"
 #include "logic/camera/MathUtility.h"
-//#include "logic/states/FsmList.hpp"
 
 #include "logic/segmentation/GraphCuts.h"
 
@@ -43,6 +41,25 @@ static constexpr float sk_viewAABBoxScaleFactor = 1.10f;
 static constexpr float sk_parallelThreshold_degrees = 0.1f;
 
 static constexpr float sk_imageFrontBackTranslationScaleFactor = 10.0f;
+
+VoxelDistances computeVoxelDistances( const glm::vec3& spacing, bool normalized )
+{
+    VoxelDistances v;
+
+    const double L = ( normalized ) ? glm::length( spacing ) : 1.0f;
+
+    v.distXYZ = glm::length( spacing ) / L;
+
+    v.distX = glm::length( glm::vec3{spacing.x, 0, 0} ) / L;
+    v.distY = glm::length( glm::vec3{0, spacing.y, 0} ) / L;
+    v.distZ = glm::length( glm::vec3{0, 0, spacing.z} ) / L;
+
+    v.distXY = glm::length( glm::vec3{spacing.x, spacing.y, 0} ) / L;
+    v.distXZ = glm::length( glm::vec3{spacing.x, 0, spacing.z} ) / L;
+    v.distYZ = glm::length( glm::vec3{0, spacing.y, spacing.z} ) / L;
+
+    return v;
+}
 
 } // anonymous
 
@@ -90,22 +107,135 @@ bool CallbackHandler::clearSegVoxels( const uuids::uuid& segUid )
 }
 
 
-bool CallbackHandler::executeGridCutSegmentation(
-        const uuids::uuid& imageUid,
-        const uuids::uuid& seedSegUid,
-        const uuids::uuid& resultSegUid )
+bool CallbackHandler::executeGraphCutsSegmentation(
+    const uuids::uuid& imageUid,
+    const uuids::uuid& seedSegUid,
+    const uuids::uuid& resultSegUid,
+    const GraphCutsSegmentationType& segType )
 {
-    return graphCutsFgBgSegmentation( m_appData, m_rendering, imageUid, seedSegUid, resultSegUid );
-}
+    const Image* image = m_appData.image( imageUid );
+    const Image* seedSeg = m_appData.seg( seedSegUid );
+    Image* resultSeg = m_appData.seg( resultSegUid );
 
-bool CallbackHandler::executeMultiLabelGraphCutSegmentation(
-        const uuids::uuid& imageUid,
-        const uuids::uuid& seedSegUid,
-        const uuids::uuid& resultSegUid )
-{
-    return graphCutsMultiLabelSegmentation( m_appData, m_rendering, imageUid, seedSegUid, resultSegUid );
-}
+    if ( ! image )
+    {
+        spdlog::error( "Null image {} to segment using graph cuts", imageUid );
+        return false;
+    }
 
+    if ( ! seedSeg )
+    {
+        spdlog::error( "Null seed segmentation {} for graph cuts", seedSegUid );
+        return false;
+    }
+
+    if ( ! resultSeg )
+    {
+        spdlog::error( "Null result segmentation {} for graph cuts", resultSegUid );
+        return false;
+    }
+
+    if ( image->header().pixelDimensions() != seedSeg->header().pixelDimensions() )
+    {
+        spdlog::error( "Dimensions of image {} ({}) and seed segmentation {} ({}) do not match",
+                      imageUid, glm::to_string( image->header().pixelDimensions() ),
+                      seedSegUid, glm::to_string( seedSeg->header().pixelDimensions() ) );
+        return false;
+    }
+
+    if ( image->header().pixelDimensions() != resultSeg->header().pixelDimensions() )
+    {
+        spdlog::error( "Dimensions of image {} ({}) and result segmentation {} ({}) do not match",
+                      imageUid, glm::to_string( image->header().pixelDimensions() ),
+                      resultSegUid, glm::to_string( resultSeg->header().pixelDimensions() ) );
+        return false;
+    }
+
+    spdlog::info( "Executing graph cuts segmentation on image {} with seeds {}; "
+                  "resulting segmentation: {}", imageUid, seedSegUid, resultSegUid );
+
+    const uint32_t imComp = image->settings().activeComponent();
+
+    const VoxelDistances voxelDists = computeVoxelDistances(
+        image->header().spacing(), true );
+
+    auto weight = [this] (double diff) -> double
+    {
+        const double amplitude = m_appData.settings().graphCutsWeightsAmplitude();
+        const double sigma = m_appData.settings().graphCutsWeightsSigma();
+
+        return amplitude * std::exp( -0.5 * std::pow(diff / sigma, 2.0) );
+    };
+
+    auto getImageWeight = [&weight, &image, &imComp]
+        (int x, int y, int z, int dx, int dy, int dz) -> double
+    {
+        const auto a = image->valueAsDouble(imComp, x, y, z);
+        const auto b = image->valueAsDouble(imComp, x + dx, y + dy, z + dz);
+
+        if ( a && b )
+        {
+            return weight( (*a) - (*b) );
+        }
+        else
+        {
+            return 0.0; // weight for very different image values
+        }
+    };
+
+    auto getSeedValue = [&seedSeg, &imComp] (int x, int y, int z) -> LabelType
+    {
+        return seedSeg->valueAsInt64(imComp, x, y, z).value_or(0);
+    };
+
+    auto setResultSegValue = [&resultSeg, &imComp] (int x, int y, int z, const LabelType& value)
+    {
+        resultSeg->setValue(imComp, x, y, z, value);
+    };
+
+    bool success = false;
+
+    switch ( segType )
+    {
+    case GraphCutsSegmentationType::Binary:
+    {
+        success = graphCutsBinarySegmentation(
+            m_appData.settings().graphCutsWeightsAmplitude(),
+            glm::ivec3{ image->header().pixelDimensions() },
+            voxelDists,
+            getImageWeight, getSeedValue, setResultSegValue );
+        break;
+    }
+    case GraphCutsSegmentationType::MultiLabel:
+    {
+        success = graphCutsMultiLabelSegmentation(
+            m_appData.settings().graphCutsWeightsAmplitude(),
+            glm::ivec3{ image->header().pixelDimensions() },
+            voxelDists,
+            getImageWeight, getSeedValue, setResultSegValue );
+        break;
+    }
+    }
+
+    if ( ! success )
+    {
+        spdlog::error( "Failure during execution of graph cuts segmentation" );
+        return false;
+    }
+
+    spdlog::debug( "Start updating segmentation texture" );
+    
+    m_rendering.updateSegTexture(
+        resultSegUid,
+        resultSeg->header().memoryComponentType(),
+        glm::uvec3{0},
+        resultSeg->header().pixelDimensions(),
+        resultSeg->bufferAsVoid(imComp) );
+
+    spdlog::debug( "Done updating segmentation texture" );
+
+    return true;
+}
 
 void CallbackHandler::recenterViews(
         const ImageSelection& imageSelection,

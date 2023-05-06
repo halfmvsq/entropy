@@ -2,32 +2,41 @@
 #define GRAPHCUTS_H
 
 #include <uuid.h>
+#include <glm/fwd.hpp>
+#include <functional>
 
-class AppData;
-class Rendering;
+
+using LabelType = int64_t;
+
+// Distances between voxel neighbors
+struct VoxelDistances
+{
+    float distX;
+    float distY;
+    float distZ;
+
+    float distXY;
+    float distXZ;
+    float distYZ;
+
+    float distXYZ;
+};
 
 
-/// @todo Rendering is only used for updateSegTexture
-
-/**
-     * @brief executeGridCutSegmentation
-     * @param imageUid
-     * @param seedSegUid
-     * @param resultSegUid
-     * @return
-     */
-bool graphCutsFgBgSegmentation(
-    AppData& appData,
-    Rendering& rendering,
-    const uuids::uuid& imageUid,
-    const uuids::uuid& seedSegUid,
-    const uuids::uuid& resultSegUid );
+bool graphCutsBinarySegmentation(
+    double terminalCapacity,
+    const glm::ivec3& dims,
+    const VoxelDistances& voxelDistances,
+    std::function< double (int x, int y, int z, int dx, int dy, int dz) > getImageWeight,
+    std::function< LabelType (int x, int y, int z) > getSeedValue,
+    std::function< void (int x, int y, int z, const LabelType& value) > setResultSegValue );
 
 bool graphCutsMultiLabelSegmentation(
-    AppData& appData,
-    Rendering& rendering,
-    const uuids::uuid& imageUid,
-    const uuids::uuid& seedSegUid,
-    const uuids::uuid& resultSegUid );
+    double terminalCapacity,
+    const glm::ivec3& dims,
+    const VoxelDistances& voxelDistances,
+    std::function< double (int x, int y, int z, int dx, int dy, int dz) > getImageWeight,
+    std::function< LabelType (int x, int y, int z) > getSeedValue,
+    std::function< void (int x, int y, int z, const LabelType& value) > setResultSegValue );
 
 #endif // GRAPHCUTS_H
