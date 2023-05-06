@@ -44,6 +44,11 @@ public:
             const uuids::uuid& seedSegUid,
             const uuids::uuid& resultSegUid );
 
+    bool executeMultiLabelGraphCutSegmentation(
+            const uuids::uuid& imageUid,
+            const uuids::uuid& seedSegUid,
+            const uuids::uuid& resultSegUid );
+
     /**
      * @brief Move the crosshairs
      * @param windowLastPos

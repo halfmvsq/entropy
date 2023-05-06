@@ -37,6 +37,8 @@
 namespace
 {
 
+using LabelType = int64_t;
+
 static constexpr float sk_viewAABBoxScaleFactor = 1.10f;
 
 // Angle threshold (in degrees) for checking whether two vectors are parallel
@@ -61,7 +63,7 @@ CallbackHandler::CallbackHandler(
 
 bool CallbackHandler::clearSegVoxels( const uuids::uuid& segUid )
 {
-    static constexpr int64_t ZERO_VAL = 0;
+    static constexpr LabelType ZERO_VAL = 0;
 
     Image* seg = m_appData.seg( segUid );
     if ( ! seg ) return false;
@@ -97,149 +99,198 @@ bool CallbackHandler::executeGridCutSegmentation(
 {
     using namespace std::chrono;
 
+    // Type used for the graph cuts to represent:
+    // -capcities of edges between nodes and terminals
+    // -capacities of edges between nodes and their neighbors
+    // -total flow
+    using T = float;
+
+    using Grid = GridGraph_3D_26C<T, T, T>;
+
+
+    static constexpr LabelType FG_SEED = 1; // Foreground segmentation value
+    static constexpr LabelType BG_SEED = 2; // Background segmentation value
+
     const Image* image = m_appData.image( imageUid );
     const Image* seedSeg = m_appData.seg( seedSegUid );
     Image* resultSeg = m_appData.seg( resultSegUid );
 
     if ( ! image )
     {
-        spdlog::error( "Invalid image {} to segment", imageUid );
+        spdlog::error( "Null image {} to segment using graph cuts", imageUid );
         return false;
     }
 
     if ( ! seedSeg )
     {
-        spdlog::error( "Invalid seed segmentation {} for GridCuts", seedSegUid );
+        spdlog::error( "Null seed segmentation {} for graph cuts", seedSegUid );
         return false;
     }
 
     if ( ! resultSeg )
     {
-        spdlog::error( "Invalid result segmentation {} for GridCuts", resultSegUid );
+        spdlog::error( "Null result segmentation {} for graph cuts", resultSegUid );
         return false;
     }
 
+    const glm::ivec3 dims{ image->header().pixelDimensions() };
+    const glm::vec3 spacing{ image->header().spacing() };
 
-    using T = float;
+    if ( image->header().pixelDimensions() != seedSeg->header().pixelDimensions() )
+    {
+        spdlog::error( "Dimensions of image {} ({}) and seed segmentation {} ({}) do not match",
+                       imageUid, glm::to_string(dims), seedSegUid,
+                       glm::to_string( seedSeg->header().pixelDimensions() ) );
+        return false;
+    }
+
+    if ( image->header().pixelDimensions() != resultSeg->header().pixelDimensions() )
+    {
+        spdlog::error( "Dimensions of image {} ({}) and result segmentation {} ({}) do not match",
+                       imageUid, glm::to_string(dims), resultSegUid,
+                       glm::to_string( resultSeg->header().pixelDimensions() ) );
+        return false;
+    }
 
     const T amplitude = static_cast<T>( m_appData.settings().graphCutsWeightsAmplitude() );
     const T sigma = static_cast<T>( m_appData.settings().graphCutsWeightsSigma() );
 
-    auto weight = [&amplitude, &sigma] ( double A ) -> T
+    auto weight = [&amplitude, &sigma] (double a) -> T
     {
-        return static_cast<T>( amplitude * std::exp( -0.5 * std::pow(A / sigma, 2.0) ) );
+        return static_cast<T>( amplitude * std::exp( -0.5 * std::pow(a / sigma, 2.0) ) );
     };
 
-    // using Grid = GridGraph_3D_6C<T, T, T>;
-    using Grid = GridGraph_3D_26C<T, T, T>;
-
-    spdlog::debug( "Executing GridCuts on image {} with seeds {}", imageUid, seedSegUid );
-
-    const glm::ivec3 pixelDims{ image->header().pixelDimensions() };
+    spdlog::info( "Executing graph cuts on image {} with seeds {}", imageUid, seedSegUid );
+    spdlog::info( "Amplitude = {}, sigma = {}", amplitude, sigma );
 
     spdlog::debug( "Start creating grid" );
-    auto grid = std::make_unique<Grid>( pixelDims.x, pixelDims.y, pixelDims.z );
+    auto start = high_resolution_clock::now();
+
+    auto grid = std::make_unique<Grid>( dims.x, dims.y, dims.z );
+
     spdlog::debug( "Done creating grid" );
+    auto stop = high_resolution_clock::now();
+
+    auto duration = duration_cast<milliseconds>( stop - start );
+    spdlog::debug( "Grid creation time: {} msec", duration.count() );
 
     if ( ! grid )
     {
-        spdlog::error( "Null grid" );
+        spdlog::error( "Null grid for graph cuts segmentation" );
         return false;
     }
 
-    const uint32_t C = image->settings().activeComponent();
+    const uint32_t imComp = image->settings().activeComponent();
 
-    auto getWeight = [&weight, &image, &C] ( int x, int y, int z, int dx, int dy, int dz ) -> T
+    // Distances between voxel neighbors. Normalize them by distXYZ.
+    const double L = glm::length( spacing );
+
+    const double distXYZ = glm::length( spacing ) / L;
+
+    const double distX = glm::length( glm::vec3{spacing.x, 0, 0} ) / L;
+    const double distY = glm::length( glm::vec3{0, spacing.y, 0} ) / L;
+    const double distZ = glm::length( glm::vec3{0, 0, spacing.z} ) / L;
+
+    const double distXY = glm::length( glm::vec3{spacing.x, spacing.y, 0} ) / L;
+    const double distXZ = glm::length( glm::vec3{spacing.x, 0, spacing.z} ) / L;
+    const double distYZ = glm::length( glm::vec3{0, spacing.y, spacing.z} ) / L;
+
+
+    auto getWeight = [&weight, &image, &imComp]
+        (int x, int y, int z, int dx, int dy, int dz, double dist) -> T
     {
-        const auto a = image->valueAsDouble( C, x, y, z );
-        const auto b = image->valueAsDouble( C, x + dx, y + dy, z + dz );
+        const auto a = image->valueAsDouble(imComp, x, y, z);
+        const auto b = image->valueAsDouble(imComp, x + dx, y + dy, z + dz);
         
-        if ( a && b )
-        {
-            return weight( (*a) - (*b) );
-        }
-        else
-        {
-            return 0.0;
-        }
+        if ( a && b ) { return static_cast<T>( weight((*a) - (*b)) / dist ); }
+        else { return static_cast<T>(0); }
     };
 
-    auto setCaps = [&grid, &getWeight] ( int x, int y, int z, int dx, int dy, int dz )
+    // Set symmetric capacities for edges from X to X + dX and from X + dX to X.
+    auto setCaps = [&grid, &getWeight] (int x, int y, int z, int dx, int dy, int dz, double dist)
     {
-        const T cap = getWeight( x, y, z, dx, dy, dz );
-        grid->set_neighbor_cap( grid->node_id( x, y, z ), dx, dy, dz, cap );
-        grid->set_neighbor_cap( grid->node_id( x + dx, y + dy, z + dz ), -dx, -dy, -dz, cap );
+        const T cap = getWeight(x, y, z, dx, dy, dz, dist);
+        grid->set_neighbor_cap( grid->node_id(x, y, z), dx, dy, dz, cap );
+        grid->set_neighbor_cap( grid->node_id(x + dx, y + dy, z + dz), -dx, -dy, -dz, cap );
     };
 
     spdlog::debug( "Start filling grid" );
-    for ( int z = 0; z < pixelDims.z; ++z )
+    start = high_resolution_clock::now();
+
+    for ( int z = 0; z < dims.z; ++z )
     {
         const bool ZL = ( z > 0 );
-        const bool ZH = ( z < ( pixelDims.z - 1 ) );
+        const bool ZH = ( z < ( dims.z - 1 ) );
 
-        for ( int y = 0; y < pixelDims.y; ++y )
+        for ( int y = 0; y < dims.y; ++y )
         {
             const bool YL = ( y > 0 );
-            const bool YH = ( y < ( pixelDims.y - 1 ) );
+            const bool YH = ( y < ( dims.y - 1 ) );
 
-            for ( int x = 0; x < pixelDims.x; ++x )
+            for ( int x = 0; x < dims.x; ++x )
             {
                 const bool XL = ( x > 0 );
-                const bool XH = ( x < ( pixelDims.x - 1 ) );
+                const bool XH = ( x < ( dims.x - 1 ) );
 
-                const std::optional<int64_t> optSeed = seedSeg->valueAsInt64( 0, x, y, z );
-                const int64_t seed = optSeed ? *optSeed : 0;
+                const LabelType seed = seedSeg->valueAsInt64(imComp, x, y, z).value_or(0);
 
-                grid->set_terminal_cap( grid->node_id( x, y, z ),
-                    ( seed == 2 ) ? amplitude : 0,
-                    ( seed == 1 ) ? amplitude : 0 );
+                grid->set_terminal_cap( grid->node_id(x, y, z),
+                    (seed == BG_SEED) ? amplitude : 0,
+                    (seed == FG_SEED) ? amplitude : 0 );
 
-                if ( XH ) { setCaps(x, y, z, 1, 0, 0); }
-                if ( YH ) { setCaps(x, y, z, 0, 1, 0); }
-                if ( ZH ) { setCaps(x, y, z, 0, 0, 1); }
+                // 6 face neighbors:
+                if (XH) { setCaps(x, y, z, 1, 0, 0, distX); }
+                if (YH) { setCaps(x, y, z, 0, 1, 0, distY); }
+                if (ZH) { setCaps(x, y, z, 0, 0, 1, distZ); }
 
-                if ( XH && YH ) { setCaps(x, y, z,  1,  1,  0); }
-                if ( XL && YH ) { setCaps(x, y, z, -1,  1,  0); }
-                if ( XH && ZH ) { setCaps(x, y, z,  1,  0,  1); }
-                if ( XL && ZH ) { setCaps(x, y, z, -1,  0,  1); }
-                if ( YH && ZH ) { setCaps(x, y, z,  0,  1,  1); }
-                if ( YL && ZH ) { setCaps(x, y, z,  0, -1,  1); }
+                // 12 edge neighbors:
+                if (XH && YH) { setCaps(x, y, z,  1,  1,  0, distXY); }
+                if (XL && YH) { setCaps(x, y, z, -1,  1,  0, distXY); }
+                if (XH && ZH) { setCaps(x, y, z,  1,  0,  1, distXZ); }
+                if (XL && ZH) { setCaps(x, y, z, -1,  0,  1, distXZ); }
+                if (YH && ZH) { setCaps(x, y, z,  0,  1,  1, distYZ); }
+                if (YL && ZH) { setCaps(x, y, z,  0, -1,  1, distYZ); }
 
-                if ( XH && YH && ZH ) { setCaps(x, y, z,  1,  1,  1); }
-                if ( XL && YH && ZH ) { setCaps(x, y, z, -1,  1,  1); }
-                if ( XH && YL && ZH ) { setCaps(x, y, z,  1, -1,  1); }
-                if ( XH && YH && ZL ) { setCaps(x, y, z,  1,  1, -1); }
+                // 8 vertex neighbors:
+                if (XH && YH && ZH) { setCaps(x, y, z,  1,  1,  1, distXYZ); }
+                if (XL && YH && ZH) { setCaps(x, y, z, -1,  1,  1, distXYZ); }
+                if (XH && YL && ZH) { setCaps(x, y, z,  1, -1,  1, distXYZ); }
+                if (XH && YH && ZL) { setCaps(x, y, z,  1,  1, -1, distXYZ); }
             }
         }
     }
     spdlog::debug( "Done filling grid" );
+    stop = high_resolution_clock::now();
+
+    duration = duration_cast<milliseconds>( stop - start );
+    spdlog::debug( "Grid fill time: {} msec", duration.count() );
+
 
     spdlog::debug( "Start computing max flow" );
-    auto start = high_resolution_clock::now();
+    start = high_resolution_clock::now();
     {
         grid->compute_maxflow();
     }
-    auto stop = high_resolution_clock::now();
-    auto duration = duration_cast<milliseconds>( stop - start );
+    stop = high_resolution_clock::now();
+    duration = duration_cast<milliseconds>( stop - start );
 
     spdlog::debug( "Done computing max flow" );
-    spdlog::debug( "GridCuts execution time: {} msec", duration.count() );
+    spdlog::debug( "Graph cuts execution time: {} msec", duration.count() );
+
 
     spdlog::debug( "Start reading back segmentation results" );
-    for ( int z = 0; z < pixelDims.z; ++z )
-    {
-        for ( int y = 0; y < pixelDims.y; ++y )
-        {
-            for ( int x = 0; x < pixelDims.x; ++x )
+    for ( int z = 0; z < dims.z; ++z ) {
+        for ( int y = 0; y < dims.y; ++y ) {
+            for ( int x = 0; x < dims.x; ++x )
             {
-                const int64_t seg = static_cast<int64_t>(
-                    grid->get_segment( grid->node_id( x, y, z) ) ? 1 : 0 );
+                const LabelType seg = static_cast<LabelType>(
+                    grid->get_segment( grid->node_id(x, y, z) ) ? 1 : 0 );
 
-                resultSeg->setValue( 0, x, y, z, seg );
+                resultSeg->setValue(imComp, x, y, z, seg);
 
                 // Fill in background seeds again
-                // const std::optional<int64_t> optSeed = seedSeg->valueAsInt64( 0, x, y, z );
-                // const int64_t seed = optSeed ? *optSeed : 0;
+                // const std::optional<LabelType> optSeed = seedSeg->valueAsInt64( 0, x, y, z );
+                // const LabelType seed = optSeed ? *optSeed : 0;
 
                 // if ( 2 == seed && 0 == seg )
                 // {
@@ -249,6 +300,7 @@ bool CallbackHandler::executeGridCutSegmentation(
         }
     }
     spdlog::debug( "Done reading back segmentation results" );
+
 
     const glm::uvec3 dataOffset = glm::uvec3{ 0 };
     const glm::uvec3 dataSize = glm::uvec3{ resultSeg->header().pixelDimensions() };
@@ -261,6 +313,240 @@ bool CallbackHandler::executeGridCutSegmentation(
                 resultSeg->bufferAsVoid( 0 ) );
 
     spdlog::debug( "Done updating segmentation texture" );
+
+    return true;
+}
+
+bool CallbackHandler::executeMultiLabelGraphCutSegmentation(
+        const uuids::uuid& imageUid,
+        const uuids::uuid& seedSegUid,
+        const uuids::uuid& resultSegUid )
+{
+    using namespace std::chrono;
+
+    // Type used for the alpha expansion algorithm to represent:
+    // -data and smoothness costs
+    // -resulting energy
+    using T = float;
+    using Expansion = AlphaExpansion_3D_26C<LabelType, T, T>;
+
+    const Image* image = m_appData.image( imageUid );
+    const Image* seedSeg = m_appData.seg( seedSegUid );
+    Image* resultSeg = m_appData.seg( resultSegUid );
+
+    if ( ! image )
+    {
+        spdlog::error( "Null image {} to segment using graph cuts", imageUid );
+        return false;
+    }
+
+    if ( ! seedSeg )
+    {
+        spdlog::error( "Null seed segmentation {} for graph cuts", seedSegUid );
+        return false;
+    }
+
+    if ( ! resultSeg )
+    {
+        spdlog::error( "Null result segmentation {} for graph cuts", resultSegUid );
+        return false;
+    }
+
+    const uint32_t imComp = image->settings().activeComponent();
+
+    const glm::ivec3 dims{ image->header().pixelDimensions() };
+    const glm::vec3 spacing{ image->header().spacing() };
+
+    if ( image->header().pixelDimensions() != seedSeg->header().pixelDimensions() )
+    {
+        spdlog::error( "Dimensions of image {} ({}) and seed segmentation {} ({}) do not match",
+                       imageUid, glm::to_string(dims), seedSegUid,
+                       glm::to_string( seedSeg->header().pixelDimensions() ) );
+        return false;
+    }
+
+    if ( image->header().pixelDimensions() != resultSeg->header().pixelDimensions() )
+    {
+        spdlog::error( "Dimensions of image {} ({}) and result segmentation {} ({}) do not match",
+                       imageUid, glm::to_string(dims), resultSegUid,
+                       glm::to_string( resultSeg->header().pixelDimensions() ) );
+        return false;
+    }
+
+    const T amplitude = static_cast<T>( m_appData.settings().graphCutsWeightsAmplitude() );
+    const T sigma = static_cast<T>( m_appData.settings().graphCutsWeightsSigma() );
+
+
+    // Distances between voxel neighbors. Normalize them by distXYZ.
+    const double L = glm::length( spacing );
+
+    const double distXYZ = glm::length( spacing ) / L;
+
+    const double distX = glm::length( glm::vec3{spacing.x, 0, 0} ) / L;
+    const double distY = glm::length( glm::vec3{0, spacing.y, 0} ) / L;
+    const double distZ = glm::length( glm::vec3{0, 0, spacing.z} ) / L;
+
+    const double distXY = glm::length( glm::vec3{spacing.x, spacing.y, 0} ) / L;
+    const double distXZ = glm::length( glm::vec3{spacing.x, 0, spacing.z} ) / L;
+    const double distYZ = glm::length( glm::vec3{0, spacing.y, spacing.z} ) / L;
+
+
+    auto weight = [&amplitude, &sigma] (double a) -> T
+    {
+        return static_cast<T>( amplitude * std::exp( -0.5 * std::pow(a / sigma, 2.0) ) );
+    };
+
+    auto getWeight = [&weight, &image, &imComp]
+        (int x, int y, int z, int dx, int dy, int dz, double dist) -> T
+    {
+        const auto a = image->valueAsDouble(imComp, x, y, z);
+        const auto b = image->valueAsDouble(imComp, x + dx, y + dy, z + dz);
+        
+        if ( a && b ) { return static_cast<T>( weight((*a) - (*b)) / dist ); }
+        else { return static_cast<T>(0); }
+    };
+
+    spdlog::debug( "Start creating expansion" );
+
+    const int numLabels = 3;
+
+    std::vector<T> dataCosts( dims.x * dims.y * dims.z * numLabels, 0 );
+
+    auto getIndex = [&dims] (int x, int y, int z) -> std::size_t
+    {
+        return z * (dims.x * dims.y) + y * dims.x + x;
+    };
+
+    for ( int z = 0; z < dims.z; ++z ) {
+        for ( int y = 0; y < dims.y; ++y ) {
+            for ( int x = 0; x < dims.x; ++x )
+            {
+                const LabelType seed = seedSeg->valueAsInt64(imComp, x, y, z).value_or(0);
+                
+                for ( int label = 0; label < numLabels; ++label )
+                {
+                    dataCosts[getIndex(x, y, z) * numLabels + label] =
+                        ( seed == (label + 1) ) ? 0 : amplitude;
+                }
+            }
+        }
+    }
+
+    // For 3D grids with 26 connected neighboring system,
+    // there are thirteen smoothness tables for each pixel.
+    static constexpr std::size_t numSmoothnessTables = 13;
+
+    T** smoothnessCosts = new T*[numSmoothnessTables * dims.x * dims.y * dims.z];
+
+    // Set smoothness constraints for the 6 face-, 12 edge-, and 8 vertex-neighbors.
+    // The order is specified in the AlphaExpansion documentation.
+    
+    for ( int z = 0; z < dims.z; ++z )
+    {
+        const bool ZL = ( z > 0 );
+        const bool ZH = ( z < ( dims.z - 1 ) );
+
+        for ( int y = 0; y < dims.y; ++y )
+        {
+            const bool YL = ( y > 0 );
+            const bool YH = ( y < ( dims.y - 1 ) );
+
+            for ( int x = 0; x < dims.x; ++x )
+            {
+                const bool XL = ( x > 0 );
+                const bool XH = ( x < ( dims.x - 1 ) );
+
+                const std::size_t index = getIndex(x, y, z);
+
+                for ( std::size_t t = 0; t < numSmoothnessTables; ++t )
+                {
+                    smoothnessCosts[numSmoothnessTables * index + t] = new T[numLabels * numLabels];
+                }
+                
+                for ( int label = 0; label < numLabels; ++label )
+                {
+                    for ( int otherLabel = 0; otherLabel < numLabels; ++otherLabel )
+                    {
+                        const size_t l = otherLabel * numLabels + label;
+                        const bool B = ( label != otherLabel );
+
+                        smoothnessCosts[numSmoothnessTables * index +  0][l] = (XH && B)             ? getWeight(x, y, z,  1,  0,  0, distX)   : 0;
+                        smoothnessCosts[numSmoothnessTables * index +  1][l] = (YH && B)             ? getWeight(x, y, z,  0,  1,  0, distY)   : 0;
+                        smoothnessCosts[numSmoothnessTables * index +  2][l] = (XL && YH && B)       ? getWeight(x, y, z, -1,  1,  0, distXY)  : 0;
+                        smoothnessCosts[numSmoothnessTables * index +  3][l] = (XH && YH && B)       ? getWeight(x, y, z,  1,  1,  0, distXY)  : 0;
+                        smoothnessCosts[numSmoothnessTables * index +  4][l] = (ZH && B)             ? getWeight(x, y, z,  0,  0,  1, distZ)   : 0;
+                        smoothnessCosts[numSmoothnessTables * index +  5][l] = (YL && ZH && B)       ? getWeight(x, y, z,  0, -1,  1, distYZ)  : 0;
+                        smoothnessCosts[numSmoothnessTables * index +  6][l] = (YH && ZH && B)       ? getWeight(x, y, z,  0,  1,  1, distYZ)  : 0;
+                        smoothnessCosts[numSmoothnessTables * index +  7][l] = (XL && ZH && B)       ? getWeight(x, y, z, -1,  0,  1, distXZ)  : 0;
+                        smoothnessCosts[numSmoothnessTables * index +  8][l] = (XH && YH && ZL && B) ? getWeight(x, y, z,  1,  1, -1, distXYZ) : 0;
+                        smoothnessCosts[numSmoothnessTables * index +  9][l] = (XL && YH && ZH && B) ? getWeight(x, y, z, -1,  1,  1, distXYZ) : 0;
+                        smoothnessCosts[numSmoothnessTables * index + 10][l] = (XH && ZH && B)       ? getWeight(x, y, z,  1,  0,  1, distXZ)  : 0;
+                        smoothnessCosts[numSmoothnessTables * index + 11][l] = (XH && YL && ZH && B) ? getWeight(x, y, z,  1, -1,  1, distXYZ) : 0;
+                        smoothnessCosts[numSmoothnessTables * index + 12][l] = (XH && YH && ZH && B) ? getWeight(x, y, z,  1,  1,  1, distXYZ) : 0;                                                                      
+                    }
+                }
+            }
+        }
+    }
+
+//    auto smoothnessCostFn = [] ( int X, int Y, int LX, int LY )
+//    {
+
+//    };
+
+    auto expansion = std::make_unique<Expansion>(
+        dims.x, dims.y, dims.z, numLabels,
+        dataCosts.data(), smoothnessCosts );
+
+    spdlog::debug( "Done creating expansion" );
+
+    spdlog::debug( "Start performing expansion" );
+    expansion->perform();
+    spdlog::debug( "Done performing expansion" );
+
+
+    spdlog::debug( "Start reading back segmentation results" );
+    LabelType* labeling = expansion->get_labeling();
+
+    for ( int z = 0; z < dims.z; ++z ) {
+        for ( int y = 0; y < dims.y; ++y ) {
+            for ( int x = 0; x < dims.x; ++x )
+            {
+                resultSeg->setValue( imComp, x, y, z, labeling[getIndex(x, y, z)] + 1 );
+            }
+        }
+    }
+    spdlog::debug( "Done reading back segmentation results" );
+
+
+    const glm::uvec3 dataOffset = glm::uvec3{ 0 };
+    const glm::uvec3 dataSize = glm::uvec3{ resultSeg->header().pixelDimensions() };
+
+    spdlog::debug( "Start updating segmentation texture" );
+    m_rendering.updateSegTexture(
+                resultSegUid, resultSeg->header().memoryComponentType(),
+                dataOffset, dataSize,
+                resultSeg->bufferAsVoid( 0 ) );
+    spdlog::debug( "Done updating segmentation texture" );
+
+
+    for ( int z = 0; z < dims.z; ++z ) {
+        for ( int y = 0; y < dims.y; ++y ) {
+            for ( int x = 0; x < dims.x; ++x )
+            {
+                const std::size_t index = getIndex(x, y, z);
+
+                for ( std::size_t t = 0; t < numSmoothnessTables; ++t )
+                {
+                    delete[] smoothnessCosts[numSmoothnessTables * index + t];
+                    smoothnessCosts[numSmoothnessTables * index + t] = nullptr;
+                }
+            }
+        }
+    }
+
+    delete[] smoothnessCosts;
+    smoothnessCosts = nullptr;
 
     return true;
 }
@@ -410,11 +696,11 @@ void CallbackHandler::doSegment( const ViewHit& hit, bool swapFgAndBg )
     // However, we want to allow the user to segment on any view, regardless of its offset.
     // Therefore, the offset is not applied.
 
-    const int64_t labelToPaint = static_cast<int64_t>(
+    const LabelType labelToPaint = static_cast<LabelType>(
                 ( swapFgAndBg ) ? m_appData.settings().backgroundLabel()
                                 : m_appData.settings().foregroundLabel() );
 
-    const int64_t labelToReplace = static_cast<int64_t>(
+    const LabelType labelToReplace = static_cast<LabelType>(
                 ( swapFgAndBg ) ? m_appData.settings().foregroundLabel()
                                 : m_appData.settings().backgroundLabel() );
 
@@ -452,7 +738,7 @@ void CallbackHandler::doSegment( const ViewHit& hit, bool swapFgAndBg )
 
         auto updateSegTexture = [this, &segUid]
                 ( const ComponentType& memoryComponentType, const glm::uvec3& dataOffset,
-                  const glm::uvec3& dataSize, const int64_t* data )
+                  const glm::uvec3& dataSize, const LabelType* data )
         {
             m_rendering.updateSegTexture( segUid, memoryComponentType, dataOffset, dataSize, data );
         };
@@ -518,7 +804,7 @@ void CallbackHandler::paintActiveSegmentationWithAnnotation()
 
     auto updateSegTexture = [this, &activeSegUid]
             ( const ComponentType& memoryComponentType, const glm::uvec3& dataOffset,
-              const glm::uvec3& dataSize, const int64_t* data )
+              const glm::uvec3& dataSize, const LabelType* data )
     {
         if ( ! activeSegUid ) return;
         m_rendering.updateSegTexture( *activeSegUid, memoryComponentType, dataOffset, dataSize, data );
@@ -526,8 +812,8 @@ void CallbackHandler::paintActiveSegmentationWithAnnotation()
 
     fillSegmentationWithPolygon(
                 seg, annot,
-                static_cast<int64_t>( m_appData.settings().foregroundLabel() ),
-                static_cast<int64_t>( m_appData.settings().backgroundLabel() ),
+                static_cast<LabelType>( m_appData.settings().foregroundLabel() ),
+                static_cast<LabelType>( m_appData.settings().backgroundLabel() ),
                 m_appData.settings().replaceBackgroundWithForeground(),
                 updateSegTexture );
 }
@@ -1541,9 +1827,9 @@ void CallbackHandler::cycleActiveImage( int i )
 /// @todo Put into DataHelper
 void CallbackHandler::cycleForegroundSegLabel( int i )
 {
-    constexpr int64_t k_minLabel = 0;
+    constexpr LabelType k_minLabel = 0;
 
-    int64_t label = static_cast<int64_t>( m_appData.settings().foregroundLabel() );
+    LabelType label = static_cast<LabelType>( m_appData.settings().foregroundLabel() );
     label = std::max( label + i, k_minLabel );
 
     if ( const auto* table = m_appData.activeLabelTable() )
@@ -1556,9 +1842,9 @@ void CallbackHandler::cycleForegroundSegLabel( int i )
 /// @todo Put into DataHelper
 void CallbackHandler::cycleBackgroundSegLabel( int i )
 {
-    constexpr int64_t k_minLabel = 0;
+    constexpr LabelType k_minLabel = 0;
 
-    int64_t label = static_cast<int64_t>( m_appData.settings().backgroundLabel() );
+    LabelType label = static_cast<LabelType>( m_appData.settings().backgroundLabel() );
     label = std::max( label + i, k_minLabel );
 
     if ( const auto* table = m_appData.activeLabelTable() )
@@ -1629,7 +1915,7 @@ void CallbackHandler::moveCrosshairsToSegLabelCentroid(
     if ( ! seg ) return;
 
     const glm::ivec3 dataSizeInt{ seg->header().pixelDimensions() };
-    const int64_t label = static_cast<int64_t>( labelIndex );
+    const LabelType label = static_cast<LabelType>( labelIndex );
 
     glm::vec3 coordSum{ 0.0f, 0.0f, 0.0f };
     size_t count = 0;

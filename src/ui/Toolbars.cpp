@@ -639,7 +639,8 @@ void renderSegToolbar(
         const std::function< void (void) >& readjustViewport,
         const std::function< void( const uuids::uuid& imageUid ) >& updateImageUniforms,
         const std::function< std::optional<uuids::uuid>( const uuids::uuid& matchingImageUid, const std::string& segDisplayName ) >& createBlankSeg,
-        const std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const uuids::uuid& resultSegUid ) >& executeGridCutsSeg )
+        const std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const uuids::uuid& resultSegUid ) >& executeGridCutsSeg,
+        const std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const uuids::uuid& resultSegUid ) >& executeMultilabelGraphCutsSeg )
 {
     // Show the segmentation toolbar in either Segmentation mode,
     // in Annotation mode (when the Fill button is also visible),
@@ -1259,10 +1260,22 @@ void renderSegToolbar(
                                 " for image '" +
                                 image->settings().displayName() + "'";
 
+                        std::string segMultilabelDisplayName =
+                                std::string( "Graph Cuts Multilabel segmentation " ) +
+                                std::to_string( numSegsForImage + 2 ) +
+                                " for image '" +
+                                image->settings().displayName() + "'";
+
                         if ( const auto blankSegUid = createBlankSeg( *imageUid, std::move( segDisplayName ) ) )
                         {
                             updateImageUniforms( *imageUid );
                             executeGridCutsSeg( *imageUid, *seedSegUid, *blankSegUid );
+                        }
+
+                        if ( const auto blankSegUid = createBlankSeg( *imageUid, std::move( segMultilabelDisplayName ) ) )
+                        {
+                            updateImageUniforms( *imageUid );
+                            executeMultilabelGraphCutsSeg( *imageUid, *seedSegUid, *blankSegUid );
                         }
                     }
                 }

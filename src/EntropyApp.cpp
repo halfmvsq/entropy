@@ -1495,6 +1495,11 @@ void EntropyApp::setCallbacks()
                 return m_callbackHandler.executeGridCutSegmentation( imageUid, seedSegUid, resultSegUid );
             },
 
+            [this] ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const uuids::uuid& resultSegUid ) -> bool
+            {
+                return m_callbackHandler.executeMultiLabelGraphCutSegmentation( imageUid, seedSegUid, resultSegUid );
+            },
+
             [this] ( const uuids::uuid& imageUid, bool locked ) -> bool
             {
                 return m_callbackHandler.setLockManualImageTransformation( imageUid, locked );

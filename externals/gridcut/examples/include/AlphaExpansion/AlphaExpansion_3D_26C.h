@@ -1099,9 +1099,11 @@ template<typename type_label, typename type_cost, typename type_energy>
 AlphaExpansion_3D_26C<type_label, type_cost, type_energy>::~AlphaExpansion_3D_26C(void){
 
 	delete [] labeling;
-	delete [] data_cost;
-	if(smooth_array)
-		delete [] smooth_cost;
+
+	// Do not delete arrays passed in by client
+	// delete [] data_cost;
+	// if(smooth_array)
+	// 	delete [] smooth_cost;
 }
 
 #endif
