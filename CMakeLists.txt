@@ -415,7 +415,10 @@ set( ENTROPY_SOURCES
     ${SRC_DIR}/logic/interaction/ViewHit.cpp
     ${SRC_DIR}/logic/interaction/events/ButtonState.cpp
 
+    ${SRC_DIR}/logic/segmentation/GraphCuts.cpp
+
     ${SRC_DIR}/logic/serialization/ProjectSerialization.cpp
+
     ${SRC_DIR}/logic/states/AnnotationStateHelpers.cpp
     ${SRC_DIR}/logic/states/AnnotationStateMachine.cpp
     ${SRC_DIR}/logic/states/AnnotationStates.cpp
