@@ -1,6 +1,7 @@
 #ifndef APP_SETTINGS_H
 #define APP_SETTINGS_H
 
+#include "common/GraphCutsTypes.h"
 #include "common/ParcellationLabelTable.h"
 #include "common/Types.h"
 
@@ -67,6 +68,9 @@ public:
     double graphCutsWeightsSigma() const;
     void setGraphCutsWeightsSigma( double sigma );
 
+    GraphCutsNeighborhoodType graphCutsNeighborhood() const;
+    void setGraphCutsNeighborhood( const GraphCutsNeighborhoodType& );
+
     bool crosshairsMoveWhileAnnotating() const;
     void setCrosshairsMoveWhileAnnotating( bool set );
 
@@ -96,6 +100,7 @@ private:
     /* Begin Graph Cuts weights variables */
     double m_graphCutsWeightsAmplitude; //!< Multiplier in front of exponential
     double m_graphCutsWeightsSigma; //!< Standard deviation in exponential
+    GraphCutsNeighborhoodType m_graphCutsNeighborhood; //!< Neighboorhood used for constructing graph
     /* End Graph Cuts weights variables */
 
     /// Crosshairs move to the position of every new point added to an annotation

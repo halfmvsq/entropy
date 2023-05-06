@@ -1,7 +1,9 @@
 #include "logic/segmentation/GraphCuts.h"
 
-// #include <GridCut/GridGraph_3D_6C.h>
+#include <GridCut/GridGraph_3D_6C.h>
 #include <GridCut/GridGraph_3D_26C.h>
+
+#include <AlphaExpansion/AlphaExpansion_3D_6C.h>
 #include <AlphaExpansion/AlphaExpansion_3D_26C.h>
 
 #include <spdlog/spdlog.h>
@@ -10,7 +12,6 @@
 #include <glm/glm.hpp>
 
 #include <unordered_set>
-
 
 namespace
 {
@@ -47,7 +48,10 @@ std::size_t computeNumLabels(
 
 
 bool graphCutsBinarySegmentation(
+    const GraphCutsNeighborhoodType& hoodType,
     double terminalCapacity,
+    const LabelType& fgSeedValue,
+    const LabelType& bgSeedValue,
     const glm::ivec3& dims,
     const VoxelDistances& voxelDistances,
     std::function< double (int x, int y, int z, int dx, int dy, int dz) > getImageWeight,
@@ -62,15 +66,13 @@ bool graphCutsBinarySegmentation(
     // -total flow
     using T = float;
 
-    using Grid = GridGraph_3D_26C<T, T, T>;
-
-    static constexpr LabelType FG_SEED = 1; // Foreground segmentation value
-    static constexpr LabelType BG_SEED = 2; // Background segmentation value
+    // using Grid_6_Neighbors = GridGraph_3D_6C<T, T, T>;
+    using Grid_26_Neighbors = GridGraph_3D_26C<T, T, T>;
 
     spdlog::debug( "Start creating grid" );
     auto start = high_resolution_clock::now();
 
-    auto grid = std::make_unique<Grid>( dims.x, dims.y, dims.z );
+    auto grid = std::make_unique<Grid_26_Neighbors>( dims.x, dims.y, dims.z );
 
     spdlog::debug( "Done creating grid" );
     auto stop = high_resolution_clock::now();
@@ -115,27 +117,30 @@ bool graphCutsBinarySegmentation(
                 const LabelType seed = getSeedValue(x, y, z);
 
                 grid->set_terminal_cap( grid->node_id(x, y, z),
-                    (seed == BG_SEED) ? terminalCapacity : 0,
-                    (seed == FG_SEED) ? terminalCapacity : 0 );
+                    (seed == bgSeedValue) ? terminalCapacity : 0,
+                    (seed == fgSeedValue) ? terminalCapacity : 0 );
 
                 // 6 face neighbors:
                 if (XH) { setCaps(x, y, z, 1, 0, 0, voxelDistances.distX); }
                 if (YH) { setCaps(x, y, z, 0, 1, 0, voxelDistances.distY); }
                 if (ZH) { setCaps(x, y, z, 0, 0, 1, voxelDistances.distZ); }
 
-                // 12 edge neighbors:
-                if (XH && YH) { setCaps(x, y, z,  1,  1,  0, voxelDistances.distXY); }
-                if (XL && YH) { setCaps(x, y, z, -1,  1,  0, voxelDistances.distXY); }
-                if (XH && ZH) { setCaps(x, y, z,  1,  0,  1, voxelDistances.distXZ); }
-                if (XL && ZH) { setCaps(x, y, z, -1,  0,  1, voxelDistances.distXZ); }
-                if (YH && ZH) { setCaps(x, y, z,  0,  1,  1, voxelDistances.distYZ); }
-                if (YL && ZH) { setCaps(x, y, z,  0, -1,  1, voxelDistances.distYZ); }
+                if ( GraphCutsNeighborhoodType::Neighbors26 == hoodType )
+                {
+                    // 12 edge neighbors:
+                    if (XH && YH) { setCaps(x, y, z,  1,  1,  0, voxelDistances.distXY); }
+                    if (XL && YH) { setCaps(x, y, z, -1,  1,  0, voxelDistances.distXY); }
+                    if (XH && ZH) { setCaps(x, y, z,  1,  0,  1, voxelDistances.distXZ); }
+                    if (XL && ZH) { setCaps(x, y, z, -1,  0,  1, voxelDistances.distXZ); }
+                    if (YH && ZH) { setCaps(x, y, z,  0,  1,  1, voxelDistances.distYZ); }
+                    if (YL && ZH) { setCaps(x, y, z,  0, -1,  1, voxelDistances.distYZ); }
 
-                // 8 vertex neighbors:
-                if (XH && YH && ZH) { setCaps(x, y, z,  1,  1,  1, voxelDistances.distXYZ); }
-                if (XL && YH && ZH) { setCaps(x, y, z, -1,  1,  1, voxelDistances.distXYZ); }
-                if (XH && YL && ZH) { setCaps(x, y, z,  1, -1,  1, voxelDistances.distXYZ); }
-                if (XH && YH && ZL) { setCaps(x, y, z,  1,  1, -1, voxelDistances.distXYZ); }
+                    // 8 vertex neighbors:
+                    if (XH && YH && ZH) { setCaps(x, y, z,  1,  1,  1, voxelDistances.distXYZ); }
+                    if (XL && YH && ZH) { setCaps(x, y, z, -1,  1,  1, voxelDistances.distXYZ); }
+                    if (XH && YL && ZH) { setCaps(x, y, z,  1, -1,  1, voxelDistances.distXYZ); }
+                    if (XH && YH && ZL) { setCaps(x, y, z,  1,  1, -1, voxelDistances.distXYZ); }
+                }
             }
         }
     }
@@ -176,6 +181,7 @@ bool graphCutsBinarySegmentation(
 
 
 bool graphCutsMultiLabelSegmentation(
+    const GraphCutsNeighborhoodType& hoodType,
     double terminalCapacity,
     const glm::ivec3& dims,
     const VoxelDistances& voxelDistances,
@@ -189,7 +195,9 @@ bool graphCutsMultiLabelSegmentation(
     // -data and smoothness costs
     // -resulting energy
     using T = float;
-    using Expansion = AlphaExpansion_3D_26C<LabelType, T, T>;
+
+    // using Expansion_6_Neighbors = AlphaExpansion_3D_6C<LabelType, T, T>;
+    using Expansion_26_Neighbors = AlphaExpansion_3D_26C<LabelType, T, T>;
 
     const std::size_t numLabels = computeNumLabels(dims, getSeedValue);
 
@@ -219,7 +227,8 @@ bool graphCutsMultiLabelSegmentation(
 
     // For 3D grids with 26 connected neighboring system,
     // there are thirteen smoothness tables for each pixel.
-    static constexpr std::size_t numSmoothnessTables = 13;
+    const std::size_t numSmoothnessTables =
+        ( GraphCutsNeighborhoodType::Neighbors6 == hoodType ) ? 3 : 13;
 
     T** smoothnessCosts = new T*[numSmoothnessTables * dims.x * dims.y * dims.z];
 
@@ -255,26 +264,35 @@ bool graphCutsMultiLabelSegmentation(
                         const size_t l = otherLabel * numLabels + label;
                         const bool B = ( label != otherLabel );
 
-                        smoothnessCosts[numSmoothnessTables * index +  0][l] = (XH && B)             ? getImageWeight(x, y, z,  1,  0,  0) / voxelDistances.distX   : 0;
-                        smoothnessCosts[numSmoothnessTables * index +  1][l] = (YH && B)             ? getImageWeight(x, y, z,  0,  1,  0) / voxelDistances.distY   : 0;
-                        smoothnessCosts[numSmoothnessTables * index +  2][l] = (XH && YL && B)       ? getImageWeight(x, y, z,  1, -1,  0) / voxelDistances.distXY  : 0;
-                        smoothnessCosts[numSmoothnessTables * index +  3][l] = (XH && YH && B)       ? getImageWeight(x, y, z,  1,  1,  0) / voxelDistances.distXY  : 0;
-                        smoothnessCosts[numSmoothnessTables * index +  4][l] = (ZH && B)             ? getImageWeight(x, y, z,  0,  0,  1) / voxelDistances.distZ   : 0;
-                        smoothnessCosts[numSmoothnessTables * index +  5][l] = (YL && ZH && B)       ? getImageWeight(x, y, z,  0, -1,  1) / voxelDistances.distYZ  : 0;
-                        smoothnessCosts[numSmoothnessTables * index +  6][l] = (YH && ZH && B)       ? getImageWeight(x, y, z,  0,  1,  1) / voxelDistances.distYZ  : 0;
-                        smoothnessCosts[numSmoothnessTables * index +  7][l] = (XL && ZH && B)       ? getImageWeight(x, y, z, -1,  0,  1) / voxelDistances.distXZ  : 0;
-                        smoothnessCosts[numSmoothnessTables * index +  8][l] = (XL && YL && ZH && B) ? getImageWeight(x, y, z, -1, -1,  1) / voxelDistances.distXYZ : 0;
-                        smoothnessCosts[numSmoothnessTables * index +  9][l] = (XL && YH && ZH && B) ? getImageWeight(x, y, z, -1,  1,  1) / voxelDistances.distXYZ : 0;
-                        smoothnessCosts[numSmoothnessTables * index + 10][l] = (XH && ZH && B)       ? getImageWeight(x, y, z,  1,  0,  1) / voxelDistances.distXZ  : 0;
-                        smoothnessCosts[numSmoothnessTables * index + 11][l] = (XH && YL && ZH && B) ? getImageWeight(x, y, z,  1, -1,  1) / voxelDistances.distXYZ : 0;
-                        smoothnessCosts[numSmoothnessTables * index + 12][l] = (XH && YH && ZH && B) ? getImageWeight(x, y, z,  1,  1,  1) / voxelDistances.distXYZ : 0;
+                        if ( GraphCutsNeighborhoodType::Neighbors6 == hoodType )
+                        {
+                            smoothnessCosts[numSmoothnessTables * index +  0][l] = (XH && B) ? getImageWeight(x, y, z,  1,  0,  0) / voxelDistances.distX : 0;
+                            smoothnessCosts[numSmoothnessTables * index +  1][l] = (YH && B) ? getImageWeight(x, y, z,  0,  1,  0) / voxelDistances.distY : 0;
+                            smoothnessCosts[numSmoothnessTables * index +  2][l] = (ZH && B) ? getImageWeight(x, y, z,  0,  0,  1) / voxelDistances.distZ : 0;
+                        }
+                        else
+                        {
+                            smoothnessCosts[numSmoothnessTables * index +  0][l] = (XH && B)             ? getImageWeight(x, y, z,  1,  0,  0) / voxelDistances.distX   : 0;
+                            smoothnessCosts[numSmoothnessTables * index +  1][l] = (YH && B)             ? getImageWeight(x, y, z,  0,  1,  0) / voxelDistances.distY   : 0;
+                            smoothnessCosts[numSmoothnessTables * index +  2][l] = (XH && YL && B)       ? getImageWeight(x, y, z,  1, -1,  0) / voxelDistances.distXY  : 0;
+                            smoothnessCosts[numSmoothnessTables * index +  3][l] = (XH && YH && B)       ? getImageWeight(x, y, z,  1,  1,  0) / voxelDistances.distXY  : 0;
+                            smoothnessCosts[numSmoothnessTables * index +  4][l] = (ZH && B)             ? getImageWeight(x, y, z,  0,  0,  1) / voxelDistances.distZ   : 0;
+                            smoothnessCosts[numSmoothnessTables * index +  5][l] = (YL && ZH && B)       ? getImageWeight(x, y, z,  0, -1,  1) / voxelDistances.distYZ  : 0;
+                            smoothnessCosts[numSmoothnessTables * index +  6][l] = (YH && ZH && B)       ? getImageWeight(x, y, z,  0,  1,  1) / voxelDistances.distYZ  : 0;
+                            smoothnessCosts[numSmoothnessTables * index +  7][l] = (XL && ZH && B)       ? getImageWeight(x, y, z, -1,  0,  1) / voxelDistances.distXZ  : 0;
+                            smoothnessCosts[numSmoothnessTables * index +  8][l] = (XL && YL && ZH && B) ? getImageWeight(x, y, z, -1, -1,  1) / voxelDistances.distXYZ : 0;
+                            smoothnessCosts[numSmoothnessTables * index +  9][l] = (XL && YH && ZH && B) ? getImageWeight(x, y, z, -1,  1,  1) / voxelDistances.distXYZ : 0;
+                            smoothnessCosts[numSmoothnessTables * index + 10][l] = (XH && ZH && B)       ? getImageWeight(x, y, z,  1,  0,  1) / voxelDistances.distXZ  : 0;
+                            smoothnessCosts[numSmoothnessTables * index + 11][l] = (XH && YL && ZH && B) ? getImageWeight(x, y, z,  1, -1,  1) / voxelDistances.distXYZ : 0;
+                            smoothnessCosts[numSmoothnessTables * index + 12][l] = (XH && YH && ZH && B) ? getImageWeight(x, y, z,  1,  1,  1) / voxelDistances.distXYZ : 0;
+                        }
                     }
                 }
             }
         }
     }
 
-    auto expansion = std::make_unique<Expansion>(
+    auto expansion = std::make_unique<Expansion_26_Neighbors>(
         dims.x, dims.y, dims.z, numLabels,
         dataCosts.data(), smoothnessCosts );
 

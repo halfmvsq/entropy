@@ -22,7 +22,8 @@ AppSettings::AppSettings()
       m_brushSizeInMm( 1.0f ),
 
       m_graphCutsWeightsAmplitude( 1.0 ),
-      m_graphCutsWeightsSigma( 3.0 ),
+      m_graphCutsWeightsSigma( 1.0 ),
+      m_graphCutsNeighborhood( GraphCutsNeighborhoodType::Neighbors26 ),
 
       m_crosshairsMoveWhileAnnotating( false ),
       m_lockAnatomicalCoordinateAxesWithReferenceImage( false )
@@ -101,6 +102,9 @@ void AppSettings::setGraphCutsWeightsAmplitude( double amplitude ) { m_graphCuts
 
 double AppSettings::graphCutsWeightsSigma() const { return m_graphCutsWeightsSigma; }
 void AppSettings::setGraphCutsWeightsSigma( double sigma ) { m_graphCutsWeightsSigma = sigma; }
+
+GraphCutsNeighborhoodType AppSettings::graphCutsNeighborhood() const { return m_graphCutsNeighborhood; }
+void AppSettings::setGraphCutsNeighborhood( const GraphCutsNeighborhoodType& hood ) { m_graphCutsNeighborhood = hood; }
 
 bool AppSettings::crosshairsMoveWhileAnnotating() const { return m_crosshairsMoveWhileAnnotating; }
 void AppSettings::setCrosshairsMoveWhileAnnotating( bool set ) { m_crosshairsMoveWhileAnnotating = set; }

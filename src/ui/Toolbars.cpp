@@ -1192,6 +1192,22 @@ void renderSegToolbar(
                 }
                 ImGui::SameLine(); helpMarker( "Sigma" );
 
+                GraphCutsNeighborhoodType hoodType = appData.settings().graphCutsNeighborhood();
+
+                if ( ImGui::RadioButton( "6", GraphCutsNeighborhoodType::Neighbors6 == hoodType ) )
+                {
+                    hoodType = GraphCutsNeighborhoodType::Neighbors6;
+                    appData.settings().setGraphCutsNeighborhood( hoodType );
+                }
+
+                ImGui::SameLine();
+                if ( ImGui::RadioButton( "26 neighbors", GraphCutsNeighborhoodType::Neighbors26 == hoodType ) )
+                {
+                    hoodType = GraphCutsNeighborhoodType::Neighbors26;
+                    appData.settings().setGraphCutsNeighborhood( hoodType );
+                }
+                ImGui::SameLine(); helpMarker( "Set 3D neighborhood type for graph construction" );
+
                 ImGui::EndPopup();
             }
 

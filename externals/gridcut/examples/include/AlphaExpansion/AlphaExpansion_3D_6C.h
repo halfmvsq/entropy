@@ -8,8 +8,10 @@
 #ifndef AlphaExpansion_3D_6C_H_
 #define AlphaExpansion_3D_6C_H_
 
-#include <algorithm>
 #include <GridCut/GridGraph_3D_6C.h>
+
+#include <algorithm>
+#include <random>
 
 //0:  [ 1, 0, 0]
 //1:  [ 0, 1, 0]
@@ -305,13 +307,17 @@ void AlphaExpansion_3D_6C<type_label, type_cost, type_energy>::perform(int max_c
 template<typename type_label, typename type_cost, typename type_energy>
 type_energy AlphaExpansion_3D_6C<type_label, type_cost, type_energy>::perform_cycle(bool random){
 
+    std::random_device rd;
+    std::mt19937 gen {rd()};
+	
 	int* order = new int[nLabels];
 	for (int i = 0; i < nLabels; i++){ 
 		order[i] = i;
 	}
 	
 	if(random){	
-		std::random_shuffle(order, order + nLabels);	
+		// std::random_shuffle(order, order + nLabels);	
+		std::ranges::shuffle(order, order + nLabels, gen);
 	}
 
 	for (int i = 0;  i < nLabels;  i++ ){

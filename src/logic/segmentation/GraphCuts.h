@@ -1,6 +1,8 @@
 #ifndef GRAPHCUTS_H
 #define GRAPHCUTS_H
 
+#include "common/GraphCutsTypes.h"
+
 #include <uuid.h>
 #include <glm/fwd.hpp>
 #include <functional>
@@ -24,7 +26,10 @@ struct VoxelDistances
 
 
 bool graphCutsBinarySegmentation(
+    const GraphCutsNeighborhoodType& hoodType,
     double terminalCapacity,
+    const LabelType& fgSeedValue,
+    const LabelType& bgSeedValue,
     const glm::ivec3& dims,
     const VoxelDistances& voxelDistances,
     std::function< double (int x, int y, int z, int dx, int dy, int dz) > getImageWeight,
@@ -32,6 +37,7 @@ bool graphCutsBinarySegmentation(
     std::function< void (int x, int y, int z, const LabelType& value) > setResultSegValue );
 
 bool graphCutsMultiLabelSegmentation(
+    const GraphCutsNeighborhoodType& hoodType,
     double terminalCapacity,
     const glm::ivec3& dims,
     const VoxelDistances& voxelDistances,
