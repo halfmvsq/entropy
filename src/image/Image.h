@@ -92,18 +92,95 @@ public:
     /// @brief Get a non-const void pointer to the raw buffer data of an image component.
     void* bufferAsVoid( uint32_t component );
 
-    /// @brief Get the value of the buffer at image index (i, j, k) as a double type
-    std::optional<double> valueAsDouble( uint32_t component, int i, int j, int k ) const;
+    /// @brief Get the value of the buffer at image 3D index (i, j, k)
+    template<typename T>
+    std::optional<T> value( uint32_t component, int i, int j, int k ) const
+    {
+        const auto compAndOffset = getComponentAndOffsetForBuffer( component, i, j, k );
 
-    /// @brief Get the value of the buffer at image index (i, j, k) as a int64_t type
-    std::optional<int64_t> valueAsInt64( uint32_t component, int i, int j, int k ) const;
+        if ( ! compAndOffset )
+        {
+            // Invalid input
+            return std::nullopt;
+        }
 
-    /// @brief Set the value of the buffer at image index (i, j, k) as a int64_t type
-    bool setValue( uint32_t component, int i, int j, int k, int64_t value );
+        const std::size_t c = compAndOffset->first;
+        const std::size_t offset = compAndOffset->second;
 
-    /// @brief Set the value of the buffer at image index (i, j, k) as a double type
-    bool setValue( uint32_t component, int i, int j, int k, double value );
+        switch ( m_header.memoryComponentType() )
+        {
+        case ComponentType::Int8:    return static_cast<T>( m_data_int8.at(c)[offset] );
+        case ComponentType::UInt8:   return static_cast<T>( m_data_uint8.at(c)[offset] );
+        case ComponentType::Int16:   return static_cast<T>( m_data_int16.at(c)[offset] );
+        case ComponentType::UInt16:  return static_cast<T>( m_data_uint16.at(c)[offset] );
+        case ComponentType::Int32:   return static_cast<T>( m_data_int32.at(c)[offset] );
+        case ComponentType::UInt32:  return static_cast<T>( m_data_uint32.at(c)[offset] );
+        case ComponentType::Float32: return static_cast<T>( m_data_float32.at(c)[offset] );
+        default: return std::nullopt;
+        }
 
+        return std::nullopt;
+    }
+
+
+    /// @brief Get the value of the buffer at image 1D index
+    template<typename T>
+    std::optional<T> value( uint32_t component, std::size_t index ) const
+    {
+        const auto compAndOffset = getComponentAndOffsetForBuffer( component, index );
+
+        if ( ! compAndOffset )
+        {
+            // Invalid input
+            return std::nullopt;
+        }
+
+        const std::size_t c = compAndOffset->first;
+        const std::size_t offset = compAndOffset->second;
+
+        switch ( m_header.memoryComponentType() )
+        {
+        case ComponentType::Int8:    return static_cast<T>( m_data_int8.at(c)[offset] );
+        case ComponentType::UInt8:   return static_cast<T>( m_data_uint8.at(c)[offset] );
+        case ComponentType::Int16:   return static_cast<T>( m_data_int16.at(c)[offset] );
+        case ComponentType::UInt16:  return static_cast<T>( m_data_uint16.at(c)[offset] );
+        case ComponentType::Int32:   return static_cast<T>( m_data_int32.at(c)[offset] );
+        case ComponentType::UInt32:  return static_cast<T>( m_data_uint32.at(c)[offset] );
+        case ComponentType::Float32: return static_cast<T>( m_data_float32.at(c)[offset] );
+        default: return std::nullopt;
+        }
+
+        return std::nullopt;
+    }
+
+    /// @brief Set the value of the buffer at image index (i, j, k)
+    template<typename T>
+    bool setValue( uint32_t component, int i, int j, int k, T value )
+    {
+        const auto compAndOffset = getComponentAndOffsetForBuffer( component, i, j, k );
+
+        if ( ! compAndOffset )
+        {
+            return false;
+        }
+
+        const std::size_t c = compAndOffset->first;
+        const std::size_t offset = compAndOffset->second;
+
+        switch ( m_header.memoryComponentType() )
+        {
+        case ComponentType::Int8: m_data_int8.at(c)[offset] = static_cast<int8_t>( value ); return true;
+        case ComponentType::UInt8: m_data_uint8.at(c)[offset] = static_cast<uint8_t>( value ); return true;
+        case ComponentType::Int16: m_data_int16.at(c)[offset] = static_cast<int16_t>( value ); return true;
+        case ComponentType::UInt16: m_data_uint16.at(c)[offset] = static_cast<uint16_t>( value ); return true;
+        case ComponentType::Int32: m_data_int32.at(c)[offset] = static_cast<int32_t>( value ); return true;
+        case ComponentType::UInt32: m_data_uint32.at(c)[offset] = static_cast<uint32_t>( value ); return true;
+        case ComponentType::Float32: m_data_float32.at(c)[offset] = static_cast<float>( value ); return true;
+        default: return false;
+        }
+
+        return false;
+    }
 
     void setUseIdentityPixelSpacings( bool identitySpacings );
     bool getUseIdentityPixelSpacings() const;
@@ -140,16 +217,22 @@ public:
 private:
 
     /// Load a buffer as an image component
-    void loadImageBuffer( const float* buffer, size_t numElements );
+    void loadImageBuffer( const float* buffer, std::size_t numElements );
 
     /// Load a buffer as a segmentation component
-    void loadSegBuffer( const float* buffer, size_t numElements );
+    void loadSegBuffer( const float* buffer, std::size_t numElements );
 
-    /// For a given image component and indices, return a pair consisting of:
+    /// For a given image component and 3D pixel indices, return a pair consisting of:
     /// 1) component buffer to index
     /// 2) offset into that buffer
-    std::optional< std::pair< size_t, size_t > >
+    std::optional< std::pair< std::size_t, std::size_t > >
     getComponentAndOffsetForBuffer( uint32_t comp, int i, int j, int k ) const;
+
+    /// For a given image component and 1D pixel index, return a pair consisting of:
+    /// 1) component buffer to index
+    /// 2) offset into that buffer
+    std::optional< std::pair< std::size_t, std::size_t > >
+    getComponentAndOffsetForBuffer( uint32_t comp, std::size_t index ) const;
 
     /**
      * @remark If the image has a multi-component pixels, then its components are separated and stored

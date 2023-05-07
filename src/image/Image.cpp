@@ -39,7 +39,7 @@ Image::Image(
     using StatsType = double;
 
     // Maximum number of components to load for images with interleaved buffer components
-    static constexpr size_t MAX_COMPS = 4;
+    static constexpr std::size_t MAX_COMPS = 4;
 
     try
     {
@@ -60,8 +60,8 @@ Image::Image(
         // The image information in memory may not match the information on disk
         m_ioInfoInMemory = m_ioInfoOnDisk;
 
-        const size_t numPixels = m_ioInfoOnDisk.m_sizeInfo.m_imageSizeInPixels;
-        const size_t numComps = m_ioInfoOnDisk.m_pixelInfo.m_numComponents;
+        const std::size_t numPixels = m_ioInfoOnDisk.m_sizeInfo.m_imageSizeInPixels;
+        const std::size_t numComps = m_ioInfoOnDisk.m_pixelInfo.m_numComponents;
         const bool isVectorImage = ( numComps > 1 );
 
         spdlog::info( "Attempting to load image from '{}' with {} pixels and {} components per pixel",
@@ -85,7 +85,7 @@ Image::Image(
 
             // Split the base image into component images. Load a maximum of MAX_COMPS components
             // for an image with interleaved component buffers.
-            size_t numCompsToLoad = numComps;
+            std::size_t numCompsToLoad = numComps;
 
             if ( MultiComponentBufferType::InterleavedImage == m_bufferType )
             {
@@ -138,7 +138,7 @@ Image::Image(
             }
 
             // Load the buffers from the component images
-            for ( size_t i = 0; i < numCompsToLoad; ++i )
+            for ( std::size_t i = 0; i < numCompsToLoad; ++i )
             {
                 if ( ! componentImages[i] )
                 {
@@ -171,7 +171,7 @@ Image::Image(
                 case MultiComponentBufferType::InterleavedImage:
                 {
                     // Fill the interleaved buffer
-                    for ( size_t p = 0; p < numPixels; ++p )
+                    for ( std::size_t p = 0; p < numPixels; ++p )
                     {
                         allComponentBuffers[numComps*p + i] = buffer[p];
                     }
@@ -185,7 +185,7 @@ Image::Image(
 
             if ( MultiComponentBufferType::InterleavedImage == m_bufferType )
             {
-                const size_t numElements = numPixels * numComps;
+                const std::size_t numElements = numPixels * numComps;
 
                 if ( ImageRepresentation::Segmentation == m_imageRep )
                 {
@@ -303,7 +303,7 @@ Image::Image(
     using StatsType = double;
 
     // Maximum number of components to create for images with interleaved buffers
-    static constexpr size_t MAX_COMPS = 4;
+    static constexpr std::size_t MAX_COMPS = 4;
 
     // Default buffer value
     static constexpr TempComponentType DEFAULT_VALUE = 0;
@@ -314,8 +314,8 @@ Image::Image(
 
     m_ioInfoInMemory = m_ioInfoOnDisk;
 
-    const size_t numPixels = m_header.numPixels();
-    const size_t numComps = m_header.numComponentsPerPixel();
+    const std::size_t numPixels = m_header.numPixels();
+    const std::size_t numComps = m_header.numComponentsPerPixel();
     const bool isVectorImage = ( numComps > 1 );
 
     std::vector< ComponentStats<StatsType> > componentStats;
@@ -323,7 +323,7 @@ Image::Image(
     if ( isVectorImage )
     {
         // Create multi-component image
-        size_t numCompsToLoad = numComps;
+        std::size_t numCompsToLoad = numComps;
 
         if ( MultiComponentBufferType::InterleavedImage == m_bufferType )
         {
@@ -357,7 +357,7 @@ Image::Image(
             // Create a buffer for each component and load each separately:
             const std::vector<TempComponentType> buffer( numPixels, DEFAULT_VALUE );
 
-            for ( size_t c = 0; c < numCompsToLoad; ++c )
+            for ( std::size_t c = 0; c < numCompsToLoad; ++c )
             {
                 if ( ImageRepresentation::Segmentation == m_imageRep )
                 {
@@ -373,7 +373,7 @@ Image::Image(
         case MultiComponentBufferType::InterleavedImage:
         {
             // Create a single buffer with interleaved components and load it once:
-            const size_t N = numPixels * numComps;
+            const std::size_t N = numPixels * numComps;
             const std::vector<TempComponentType> allComponentBuffers( N, DEFAULT_VALUE );
 
             if ( ImageRepresentation::Segmentation == m_imageRep )
@@ -389,7 +389,7 @@ Image::Image(
         }
 
         // Create default image statistics
-        for ( size_t i = 0; i < numCompsToLoad; ++i )
+        for ( std::size_t i = 0; i < numCompsToLoad; ++i )
         {
             componentStats.emplace_back( createDefaultImageStatistics<TempComponentType, StatsType, 3>(
                                              DEFAULT_VALUE, numPixels ) );
@@ -434,7 +434,7 @@ Image::Image(
 }
 
 
-void Image::loadImageBuffer( const float* buffer, size_t numElements )
+void Image::loadImageBuffer( const float* buffer, std::size_t numElements )
 {
     using CType = ::itk::ImageIOBase::IOComponentType;
 
@@ -517,7 +517,7 @@ void Image::loadImageBuffer( const float* buffer, size_t numElements )
 }
 
 
-void Image::loadSegBuffer( const float* buffer, size_t numElements )
+void Image::loadSegBuffer( const float* buffer, std::size_t numElements )
 {
     using CType = ::itk::ImageIOBase::IOComponentType;
 
@@ -811,51 +811,16 @@ const void* Image::bufferAsVoid( uint32_t comp ) const
 
 void* Image::bufferAsVoid( uint32_t comp )
 {
-    auto F = [this] (uint32_t i) -> void*
-    {
-        switch ( m_header.memoryComponentType() )
-        {
-        case ComponentType::Int8:    return static_cast<void*>( m_data_int8.at(i).data() );
-        case ComponentType::UInt8:   return static_cast<void*>( m_data_uint8.at(i).data() );
-        case ComponentType::Int16:   return static_cast<void*>( m_data_int16.at(i).data() );
-        case ComponentType::UInt16:  return static_cast<void*>( m_data_uint16.at(i).data() );
-        case ComponentType::Int32:   return static_cast<void*>( m_data_int32.at(i).data() );
-        case ComponentType::UInt32:  return static_cast<void*>( m_data_uint32.at(i).data() );
-        case ComponentType::Float32: return static_cast<void*>( m_data_float32.at(i).data() );
-        default: return static_cast<void*>( nullptr );
-        }
-    };
-
-    switch ( m_bufferType )
-    {
-    case MultiComponentBufferType::SeparateImages:
-    {
-        if ( m_header.numComponentsPerPixel() <= comp )
-        {
-            return nullptr;
-        }
-        return F( comp );
-    }
-    case MultiComponentBufferType::InterleavedImage:
-    {
-        if ( 1 <= comp )
-        {
-            return nullptr;
-        }
-        return F( 0 );
-    }
-    }
-
-    return nullptr;
+    return const_cast<void*>( const_cast<const Image*>(this)->bufferAsVoid( comp ) );
 }
 
 
-std::optional< std::pair< size_t, size_t > >
+std::optional< std::pair< std::size_t, std::size_t > >
 Image::getComponentAndOffsetForBuffer( uint32_t comp, int i, int j, int k ) const
 {
     // 1) component buffer to index
     // 2) offset into that buffer
-    std::optional< std::pair< size_t, size_t > > ret;
+    std::optional< std::pair< std::size_t, std::size_t > > ret;
 
     const glm::u64vec3 dims = m_header.pixelDimensions();
     const auto ncomps = m_header.numComponentsPerPixel();
@@ -873,10 +838,10 @@ Image::getComponentAndOffsetForBuffer( uint32_t comp, int i, int j, int k ) cons
     }
 
     // Component to index the image buffer at:
-    size_t c = 0;
+    std::size_t c = 0;
 
     // Offset into the buffer:
-    size_t offset = dims.x * dims.y * static_cast<size_t>(k) +
+    std::size_t offset = dims.x * dims.y * static_cast<size_t>(k) +
             dims.x * static_cast<size_t>(j) +
             static_cast<size_t>(i);
 
@@ -902,115 +867,48 @@ Image::getComponentAndOffsetForBuffer( uint32_t comp, int i, int j, int k ) cons
     return ret;
 }
 
-std::optional<double> Image::valueAsDouble( uint32_t comp, int i, int j, int k ) const
+std::optional< std::pair< std::size_t, std::size_t > >
+Image::getComponentAndOffsetForBuffer( uint32_t comp, std::size_t index ) const
 {
-    const auto compAndOffset = getComponentAndOffsetForBuffer( comp, i, j, k );
-    if ( ! compAndOffset )
+    // 1) component buffer to index
+    // 2) offset into that buffer
+    std::optional< std::pair< std::size_t, std::size_t > > ret;
+
+    const auto ncomps = m_header.numComponentsPerPixel();
+
+    if ( comp > ncomps )
     {
-        // Invalid input
+        // Invalid image component requested
         return std::nullopt;
     }
 
-    const size_t c = compAndOffset->first;
-    const size_t offset = compAndOffset->second;
+    // Component to index the image buffer at:
+    std::size_t c = 0;
 
-    switch ( m_header.memoryComponentType() )
+    // Offset into the buffer:
+    std::size_t offset = index;
+
+    switch ( m_bufferType )
     {
-    case ComponentType::Int8:    return static_cast<double>( m_data_int8.at(c)[offset] );
-    case ComponentType::UInt8:   return static_cast<double>( m_data_uint8.at(c)[offset] );
-    case ComponentType::Int16:   return static_cast<double>( m_data_int16.at(c)[offset] );
-    case ComponentType::UInt16:  return static_cast<double>( m_data_uint16.at(c)[offset] );
-    case ComponentType::Int32:   return static_cast<double>( m_data_int32.at(c)[offset] );
-    case ComponentType::UInt32:  return static_cast<double>( m_data_uint32.at(c)[offset] );
-    case ComponentType::Float32: return static_cast<double>( m_data_float32.at(c)[offset] );
-    default: return std::nullopt;
+    case MultiComponentBufferType::SeparateImages:
+    {
+        c = comp;
+        break;
+    }
+    case MultiComponentBufferType::InterleavedImage:
+    {
+        // There is just one buffer (0) that holds all components:
+        c = 0;
+
+        // Offset into the buffer accounts for the desired component:
+        offset = static_cast<size_t>( comp + 1 ) * offset;
+        break;
+    }
     }
 
-    return std::nullopt;
+    ret = { c, offset };
+    return ret;
 }
-
-std::optional<int64_t> Image::valueAsInt64( uint32_t comp, int i, int j, int k ) const
-{
-    const auto compAndOffset = getComponentAndOffsetForBuffer( comp, i, j, k );
-    if ( ! compAndOffset )
-    {
-        // Invalid input
-        return std::nullopt;
-    }
-
-    const size_t c = compAndOffset->first;
-    const size_t offset = compAndOffset->second;
-
-    switch ( m_header.memoryComponentType() )
-    {
-    case ComponentType::Int8:    return static_cast<int64_t>( m_data_int8.at(c)[offset] );
-    case ComponentType::UInt8:   return static_cast<int64_t>( m_data_uint8.at(c)[offset] );
-    case ComponentType::Int16:   return static_cast<int64_t>( m_data_int16.at(c)[offset] );
-    case ComponentType::UInt16:  return static_cast<int64_t>( m_data_uint16.at(c)[offset] );
-    case ComponentType::Int32:   return static_cast<int64_t>( m_data_int32.at(c)[offset] );
-    case ComponentType::UInt32:  return static_cast<int64_t>( m_data_uint32.at(c)[offset] );
-    case ComponentType::Float32: return static_cast<int64_t>( m_data_float32.at(c)[offset] );
-    default: return std::nullopt;
-    }
-
-    return std::nullopt;
-}
-
-
-bool Image::setValue( uint32_t component, int i, int j, int k, int64_t value )
-{
-    const auto compAndOffset = getComponentAndOffsetForBuffer( component, i, j, k );
-    if ( ! compAndOffset )
-    {
-        // Invalid input
-        return false;
-    }
-
-    const size_t c = compAndOffset->first;
-    const size_t offset = compAndOffset->second;
-
-    switch ( m_header.memoryComponentType() )
-    {
-    case ComponentType::Int8: m_data_int8.at(c)[offset] = static_cast<int8_t>( value ); return true;
-    case ComponentType::UInt8: m_data_uint8.at(c)[offset] = static_cast<uint8_t>( value ); return true;
-    case ComponentType::Int16: m_data_int16.at(c)[offset] = static_cast<int16_t>( value ); return true;
-    case ComponentType::UInt16: m_data_uint16.at(c)[offset] = static_cast<uint16_t>( value ); return true;
-    case ComponentType::Int32: m_data_int32.at(c)[offset] = static_cast<int32_t>( value ); return true;
-    case ComponentType::UInt32: m_data_uint32.at(c)[offset] = static_cast<uint32_t>( value ); return true;
-    case ComponentType::Float32: m_data_float32.at(c)[offset] = static_cast<float>( value ); return true;
-    default: return false;
-    }
-
-    return false;
-}
-
-bool Image::setValue( uint32_t component, int i, int j, int k, double value )
-{
-    const auto compAndOffset = getComponentAndOffsetForBuffer( component, i, j, k );
-    if ( ! compAndOffset )
-    {
-        // Invalid input
-        return false;
-    }
-
-    const size_t c = compAndOffset->first;
-    const size_t offset = compAndOffset->second;
-
-    switch ( m_header.memoryComponentType() )
-    {
-    case ComponentType::Int8: m_data_int8.at(c)[offset] = static_cast<int8_t>( value ); return true;
-    case ComponentType::UInt8: m_data_uint8.at(c)[offset] = static_cast<uint8_t>( value ); return true;
-    case ComponentType::Int16: m_data_int16.at(c)[offset] = static_cast<int16_t>( value ); return true;
-    case ComponentType::UInt16: m_data_uint16.at(c)[offset] = static_cast<uint16_t>( value ); return true;
-    case ComponentType::Int32: m_data_int32.at(c)[offset] = static_cast<int32_t>( value ); return true;
-    case ComponentType::UInt32: m_data_uint32.at(c)[offset] = static_cast<uint32_t>( value ); return true;
-    case ComponentType::Float32: m_data_float32.at(c)[offset] = static_cast<float>( value ); return true;
-    default: return false;
-    }
-
-    return false;
-}
-
 
 void Image::setUseIdentityPixelSpacings( bool identitySpacings )
 {

@@ -39,7 +39,8 @@ class AlphaExpansion_3D_26C
 {
 public:
 	// Function for representing the smoothness term.
-	typedef type_energy (*SmoothCostFn)(int, int, int, int);
+	//typedef type_energy (*SmoothCostFn)(int, int, int, int);
+	using SmoothCostFn = std::function< type_energy (int, int, int, int) >;
 	SmoothCostFn smooth_fn;
 
 	// Constructors of the algorithm.

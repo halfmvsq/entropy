@@ -170,22 +170,25 @@ bool CallbackHandler::executeGraphCutsSegmentation(
     auto getImageWeight = [&weight, &image, &imComp]
         (int x, int y, int z, int dx, int dy, int dz) -> double
     {
-        const auto a = image->valueAsDouble(imComp, x, y, z);
-        const auto b = image->valueAsDouble(imComp, x + dx, y + dy, z + dz);
+        const auto a = image->value<double>( imComp, x, y, z );
+        const auto b = image->value<double>( imComp, x + dx, y + dy, z + dz );
 
-        if ( a && b )
-        {
-            return weight( (*a) - (*b) );
-        }
-        else
-        {
-            return 0.0; // weight for very different image values
-        }
+        if ( a && b ) { return weight( (*a) - (*b) ); }
+        else { return 0.0; } // weight for very different image values
+    };
+
+    auto getImageWeight1D = [&weight, &image, &imComp] (int index1, int index2) -> double
+    {
+        const auto a = image->value<double>( imComp, index1 );
+        const auto b = image->value<double>( imComp, index2 );
+
+        if ( a && b ) { return weight( (*a) - (*b) ); }
+        else { return 0.0; } // weight for very different image values
     };
 
     auto getSeedValue = [&seedSeg, &imComp] (int x, int y, int z) -> LabelType
     {
-        return seedSeg->valueAsInt64(imComp, x, y, z).value_or(0);
+        return seedSeg->value<int64_t>(imComp, x, y, z).value_or(0);
     };
 
     auto setResultSegValue = [&resultSeg, &imComp] (int x, int y, int z, const LabelType& value)
@@ -216,7 +219,8 @@ bool CallbackHandler::executeGraphCutsSegmentation(
             m_appData.settings().graphCutsWeightsAmplitude(),
             glm::ivec3{ image->header().pixelDimensions() },
             voxelDists,
-            getImageWeight, getSeedValue, setResultSegValue );
+            getImageWeight, getImageWeight1D,
+            getSeedValue, setResultSegValue );
         break;
     }
     }
@@ -1609,13 +1613,11 @@ void CallbackHandler::moveCrosshairsToSegLabelCentroid(
     glm::vec3 coordSum{ 0.0f, 0.0f, 0.0f };
     std::size_t count = 0;
 
-    for ( int k = 0; k < dataSizeInt.z; ++k )
-    {
-        for ( int j = 0; j < dataSizeInt.y; ++j )
-        {
+    for ( int k = 0; k < dataSizeInt.z; ++k ) {
+        for ( int j = 0; j < dataSizeInt.y; ++j ) {
             for ( int i = 0; i < dataSizeInt.x; ++i )
             {
-                if ( auto value = seg->valueAsInt64( sk_comp0, i, j, k ) )
+                if ( auto value = seg->value<int64_t>( sk_comp0, i, j, k ) )
                 {
                     if ( label == *value )
                     {

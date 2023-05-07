@@ -8,8 +8,10 @@
 #ifndef AlphaExpansion_3D_6C_MT_H_
 #define AlphaExpansion_3D_6C_MT_H_
 
-#include <algorithm>
 #include <GridCut/GridGraph_3D_6C_MT.h>
+
+#include <algorithm>
+#include <random>
 
 //0:  [ 1, 0, 0]
 //1:  [ 0, 1, 0]
@@ -26,7 +28,8 @@ class AlphaExpansion_3D_6C_MT
 {
 public:
 	// Function for representing the smoothness term.
-	typedef type_energy (*SmoothCostFn)(int, int, int, int);
+	//typedef type_energy (*SmoothCostFn)(int, int, int, int);
+	using SmoothCostFn = std::function< type_energy (int, int, int, int) >;
 	SmoothCostFn smooth_fn;
 
 	// Constructors of the algorithm.
@@ -315,13 +318,17 @@ void AlphaExpansion_3D_6C_MT<type_label, type_cost, type_energy>::perform(int ma
 template<typename type_label, typename type_cost, typename type_energy>
 type_energy AlphaExpansion_3D_6C_MT<type_label, type_cost, type_energy>::perform_cycle(bool random){
 
+    std::random_device rd;
+    std::mt19937 gen {rd()};
+
 	int* order = new int[nLabels];
 	for (int i = 0; i < nLabels; i++){ 
 		order[i] = i;
 	}
 	
 	if(random){	
-		std::random_shuffle(order, order + nLabels);	
+		//std::random_shuffle(order, order + nLabels);	
+		std::ranges::shuffle(order, order + nLabels, gen);
 	}
 
 	for (int i = 0;  i < nLabels;  i++ ){
@@ -709,9 +716,9 @@ template<typename type_label, typename type_cost, typename type_energy>
 AlphaExpansion_3D_6C_MT<type_label, type_cost, type_energy>::~AlphaExpansion_3D_6C_MT(void){
 
 	delete [] labeling;
-	delete [] data_cost;
-	if(smooth_array)
-		delete [] smooth_cost;
+	// delete [] data_cost;
+	// if(smooth_array)
+	// 	delete [] smooth_cost;
 }
 
 #endif

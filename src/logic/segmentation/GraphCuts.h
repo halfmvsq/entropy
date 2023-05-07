@@ -42,6 +42,7 @@ bool graphCutsMultiLabelSegmentation(
     const glm::ivec3& dims,
     const VoxelDistances& voxelDistances,
     std::function< double (int x, int y, int z, int dx, int dy, int dz) > getImageWeight,
+    std::function< double (int index1, int index2) > getImageWeight1D,
     std::function< LabelType (int x, int y, int z) > getSeedValue,
     std::function< void (int x, int y, int z, const LabelType& value) > setResultSegValue );
 

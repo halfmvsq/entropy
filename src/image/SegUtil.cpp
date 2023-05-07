@@ -273,7 +273,7 @@ void updateSeg(
                     // Marked to change, so paint it:
                     if ( brushReplacesBgWithFg )
                     {
-                        const int64_t currentLabel = seg->valueAsInt64( sk_comp, i, j, k ).value_or( 0 );
+                        const int64_t currentLabel = seg->value<int64_t>( sk_comp, i, j, k ).value_or( 0 );
 
                         if ( labelToReplace == currentLabel )
                         {
@@ -292,7 +292,7 @@ void updateSeg(
                 else
                 {
                     // Not marked to change, so replace with the current label:
-                    voxelValues.emplace_back( seg->valueAsInt64( sk_comp, i, j, k ).value_or( 0 ) );
+                    voxelValues.emplace_back( seg->value<int64_t>( sk_comp, i, j, k ).value_or(0) );
                 }
             }
         }

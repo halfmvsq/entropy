@@ -1424,8 +1424,9 @@ void EntropyApp::setCallbacks()
                 {
                     if ( getOnlyActiveComponent )
                     {
-                        if ( const auto a = image->valueAsDouble( image->settings().activeComponent(),
-                                                                  coords->x, coords->y, coords->z ) )
+                        if ( const auto a = image->value<double>(
+                            image->settings().activeComponent(),
+                            coords->x, coords->y, coords->z ) )
                         {
                             // Return empty vector if component has undefined value
                             values.push_back( *a );
@@ -1439,7 +1440,7 @@ void EntropyApp::setCallbacks()
                     {
                         for ( uint32_t i = 0; i < image->header().numComponentsPerPixel(); ++i )
                         {
-                            if ( const auto a = image->valueAsDouble( i, coords->x, coords->y, coords->z ) )
+                            if ( const auto a = image->value<double>( i, coords->x, coords->y, coords->z ) )
                             {
                                 values.push_back( *a );
                             }
@@ -1468,7 +1469,7 @@ void EntropyApp::setCallbacks()
                 if ( const auto coords = data::getSegVoxelCoordsAtCrosshairs( m_data, *segUid, *imageUid ) )
                 {
                     const uint32_t activeComp = seg->settings().activeComponent();
-                    return seg->valueAsInt64( activeComp, coords->x, coords->y, coords->z );
+                    return seg->value<int64_t>( activeComp, coords->x, coords->y, coords->z );
                 }
 
                 return std::nullopt;

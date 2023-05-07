@@ -1,21 +1,20 @@
 #include "logic/segmentation/GraphCuts.h"
-
-#include <GridCut/GridGraph_3D_6C.h>
-#include <GridCut/GridGraph_3D_26C.h>
-
-#include <AlphaExpansion/AlphaExpansion_3D_6C.h>
-#include <AlphaExpansion/AlphaExpansion_3D_26C.h>
+#include "logic/segmentation/GridCutsWrappers.h"
 
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/ostr.h>
 
 #include <glm/glm.hpp>
 
+#include <thread>
 #include <unordered_set>
 
 namespace
 {
-    
+
+static const uint32_t NUM_THREADS = std::thread::hardware_concurrency();
+
+
 /**
  * @brief Compute the number of non-zero labels in a segmentation
  * @param[in] seg Segmentation image
@@ -44,125 +43,6 @@ std::size_t computeNumLabels(
     return labels.size();
 }
 
-
-template<typename type_tcap, typename type_ncap, typename type_flow>
-class GridGraph3D_Base
-{
-public:
-
-    virtual ~GridGraph3D_Base() = default;
-    virtual int node_id( int x, int y, int z ) const = 0;
-    virtual void set_terminal_cap( int node_id, type_tcap cap_source, type_tcap cap_sink ) = 0;
-    virtual void set_neighbor_cap( int node_id, int offset_x, int offset_y, int offset_z, type_ncap cap ) = 0;
-    virtual void compute_maxflow() = 0;
-    virtual int get_segment( int node_id ) const = 0;
-};
-
-template<typename type_tcap, typename type_ncap, typename type_flow>
-class GridGraph3D_6_Neighbors : public GridGraph3D_Base<type_tcap, type_ncap, type_flow>
-{
-public:
-
-    GridGraph3D_6_Neighbors( int width, int height, int depth )
-        : m_grid( std::make_unique< GridGraph_3D_6C<type_tcap, type_ncap, type_flow> >( 
-            width, height, depth) ) {}
-
-    ~GridGraph3D_6_Neighbors() override = default;
-
-    int node_id( int x, int y, int z ) const override { return m_grid->node_id(x, y, z); }
-
-    void set_terminal_cap( int node_id, type_tcap cap_source, type_tcap cap_sink ) override
-    { m_grid->set_terminal_cap(node_id, cap_source, cap_sink); }
-
-    void set_neighbor_cap( int node_id, int offset_x, int offset_y, int offset_z, type_ncap cap ) override
-    { m_grid->set_neighbor_cap(node_id, offset_x, offset_y, offset_z, cap); }
-
-    void compute_maxflow() override { m_grid->compute_maxflow(); }
-    int get_segment( int node_id ) const override { return m_grid->get_segment(node_id); }
-
-private:
-
-    std::unique_ptr< GridGraph_3D_6C<type_tcap, type_ncap, type_flow> > m_grid;
-};
-
-template<typename type_tcap, typename type_ncap, typename type_flow>
-class GridGraph3D_26_Neighbors : public GridGraph3D_Base<type_tcap, type_ncap, type_flow>
-{
-public:
-
-    GridGraph3D_26_Neighbors( int width, int height, int depth )
-        : m_grid( std::make_unique< GridGraph_3D_26C<type_tcap, type_ncap, type_flow> >(
-            width, height, depth) ) {}
-
-    ~GridGraph3D_26_Neighbors() override = default;
-
-    int node_id( int x, int y, int z ) const override { return m_grid->node_id(x, y, z); }
-
-    void set_terminal_cap( int node_id, type_tcap cap_source, type_tcap cap_sink ) override
-    { m_grid->set_terminal_cap(node_id, cap_source, cap_sink); }
-
-    void set_neighbor_cap( int node_id, int offset_x, int offset_y, int offset_z, type_ncap cap ) override
-    { m_grid->set_neighbor_cap(node_id, offset_x, offset_y, offset_z, cap); }
-
-    void compute_maxflow() override { m_grid->compute_maxflow(); }
-    int get_segment( int node_id ) const override { return m_grid->get_segment(node_id); }
-
-private:
-
-    std::unique_ptr< GridGraph_3D_26C<type_tcap, type_ncap, type_flow> > m_grid;
-};
-
-template<typename type_label, typename type_cost, typename type_energy>
-class AlphaExpansion3D_Base
-{
-public:
-
-    virtual ~AlphaExpansion3D_Base() = default;
-    virtual void perform() = 0;
-    virtual void perform_random() = 0;
-    virtual type_label* get_labeling() = 0;
-};
-
-template<typename type_label, typename type_cost, typename type_energy>
-class AlphaExpansion3D_6_Neighbors : public AlphaExpansion3D_Base<type_label, type_cost, type_energy>
-{
-public:
-
-    AlphaExpansion3D_6_Neighbors( int width, int height, int depth, int nLabels, type_cost *data, type_cost **smooth )
-        : m_expansion( std::make_unique< AlphaExpansion_3D_6C<type_label, type_cost, type_energy> >(
-            width, height, depth, nLabels, data, smooth ) ) {}
-
-    ~AlphaExpansion3D_6_Neighbors() override = default;
-
-    void perform() override { m_expansion->perform(); }
-    void perform_random() override { m_expansion->perform_random(); }
-    type_label* get_labeling() override { return m_expansion->get_labeling(); }
-
-private:
-
-    std::unique_ptr< AlphaExpansion_3D_6C<type_label, type_cost, type_energy> > m_expansion;
-};
-
-template<typename type_label, typename type_cost, typename type_energy>
-class AlphaExpansion3D_26_Neighbors : public AlphaExpansion3D_Base<type_label, type_cost, type_energy>
-{
-public:
-
-    AlphaExpansion3D_26_Neighbors( int width, int height, int depth, int nLabels, type_cost *data, type_cost **smooth )
-        : m_expansion( std::make_unique< AlphaExpansion_3D_26C<type_label, type_cost, type_energy> >(
-            width, height, depth, nLabels, data, smooth ) ) {}
-
-    ~AlphaExpansion3D_26_Neighbors() override = default;
-
-    void perform() override { m_expansion->perform(); }
-    void perform_random() override { m_expansion->perform_random(); }
-    type_label* get_labeling() override { return m_expansion->get_labeling(); }
-
-private:
-
-    std::unique_ptr< AlphaExpansion_3D_26C<type_label, type_cost, type_energy> > m_expansion;
-};
-
 } // anonymous
 
 
@@ -188,18 +68,18 @@ bool graphCutsBinarySegmentation(
     spdlog::debug( "Start creating grid" );
     auto start = high_resolution_clock::now();
 
-    std::unique_ptr< GridGraph3D_Base<T, T, T> > grid = nullptr;
+    std::unique_ptr< GridGraph_3D_Base_Wrapper<T, T, T> > grid = nullptr;
 
     switch ( hoodType )
     {
     case GraphCutsNeighborhoodType::Neighbors6:
     {
-        grid = std::make_unique< GridGraph3D_6_Neighbors<T, T, T> >( dims.x, dims.y, dims.z );
+        grid = std::make_unique< GridGraph_3D_6C_Wrapper<T, T, T> >( dims.x, dims.y, dims.z );
         break;
     }
     case GraphCutsNeighborhoodType::Neighbors26:
     {
-        grid = std::make_unique< GridGraph3D_26_Neighbors<T, T, T> >( dims.x, dims.y, dims.z );
+        grid = std::make_unique< GridGraph_3D_26C_Wrapper<T, T, T> >( dims.x, dims.y, dims.z );
         break;
     }
     }
@@ -297,8 +177,7 @@ bool graphCutsBinarySegmentation(
             for ( int x = 0; x < dims.x; ++x )
             {
                 const LabelType seg = static_cast<LabelType>(
-                    grid->get_segment( grid->node_id(x, y, z) )
-                        ? fgSeedValue : bgSeedValue );
+                    grid->get_segment( grid->node_id(x, y, z) ) ? fgSeedValue : 0 );
 
                 setResultSegValue(x, y, z, seg);
             }
@@ -315,7 +194,8 @@ bool graphCutsMultiLabelSegmentation(
     double terminalCapacity,
     const glm::ivec3& dims,
     const VoxelDistances& voxelDistances,
-    std::function< double (int x, int y, int z, int dx, int dy, int dz) > getImageWeight,
+    std::function< double (int x, int y, int z, int dx, int dy, int dz) > /*getImageWeight*/,
+    std::function< double (int index1, int index2) > getImageWeight1D,
     std::function< LabelType (int x, int y, int z) > getSeedValue,
     std::function< void (int x, int y, int z, const LabelType& value) > setResultSegValue )
 {
@@ -352,8 +232,9 @@ bool graphCutsMultiLabelSegmentation(
         }
     }
 
-    // For 3D grids with 26 connected neighboring system,
-    // there are thirteen smoothness tables for each pixel.
+    /*
+    // For 3D grids with 6 and 26 connected neighboring system,
+    // there are 6 an 13 smoothness tables for each pixel, respectively.
     const std::size_t numSmoothnessTables =
         ( GraphCutsNeighborhoodType::Neighbors6 == hoodType ) ? 3 : 13;
 
@@ -417,22 +298,50 @@ bool graphCutsMultiLabelSegmentation(
                 }
             }
         }
-    }
+    }*/
 
-    std::unique_ptr< AlphaExpansion3D_Base<LabelType, T, T> > expansion = nullptr;
+    // Distances between neighbors along x, y, and z directions of the 3D image grid:
+    const int xDiff = 1;
+    const int yDiff = dims.y;
+    const int zDiff = dims.x * dims.y;
+
+    auto smoothFn = [&getImageWeight1D, &voxelDistances, &yDiff, &zDiff]
+        ( int index1, int index2, int label1, int label2 ) -> double
+    {
+        if ( label1 == label2 ) { return 0.0; }
+
+        const int diff = std::abs(index1 - index2);
+        double dist = 1.0;
+
+        if ( xDiff == diff ) { dist = voxelDistances.distX; }
+        else if ( yDiff == diff ) { dist = voxelDistances.distY; }
+        else if ( zDiff == diff ) { dist = voxelDistances.distZ; }
+        else if ( (xDiff + yDiff) == diff ) { dist = voxelDistances.distXY; }
+        else if ( (xDiff + zDiff) == diff ) { dist = voxelDistances.distXZ; }
+        else if ( (yDiff + zDiff) == diff ) { dist = voxelDistances.distYZ; }
+        else if ( (xDiff + yDiff + zDiff) == diff ) { dist = voxelDistances.distXYZ; }
+
+        return getImageWeight1D( index1, index2 ) / dist;
+    };
+
+    std::unique_ptr< AlphaExpansion_3D_Base_Wrapper<LabelType, T, T> > expansion = nullptr;
+
+    const int blockSize = std::min( dims.x, std::min( dims.y, dims.z) ) / NUM_THREADS;
+
+    spdlog::info( "Number of threads: {}; block size: {}", NUM_THREADS, blockSize );
 
     switch ( hoodType )
     {
     case GraphCutsNeighborhoodType::Neighbors6:
     {
-        expansion = std::make_unique< AlphaExpansion3D_6_Neighbors<LabelType, T, T> >(
-            dims.x, dims.y, dims.z, numLabels, dataCosts.data(), smoothnessCosts );
+        expansion = std::make_unique< AlphaExpansion_3D_6C_MT_Wrapper<LabelType, T, T> >(
+            dims.x, dims.y, dims.z, numLabels, dataCosts.data(), smoothFn, NUM_THREADS, blockSize );
         break;
     }
     case GraphCutsNeighborhoodType::Neighbors26:
     {
-        expansion = std::make_unique< AlphaExpansion3D_26_Neighbors<LabelType, T, T> >(
-            dims.x, dims.y, dims.z, numLabels, dataCosts.data(), smoothnessCosts );
+        expansion = std::make_unique< AlphaExpansion_3D_26C_Wrapper<LabelType, T, T> >(
+            dims.x, dims.y, dims.z, numLabels, dataCosts.data(), smoothFn );
         break;
     }
     }
@@ -440,7 +349,7 @@ bool graphCutsMultiLabelSegmentation(
     spdlog::debug( "Done creating expansion" );
 
     spdlog::debug( "Start performing expansion" );
-    expansion->perform_random();
+    expansion->perform();
     spdlog::debug( "Done performing expansion" );
 
     spdlog::debug( "Start reading back segmentation results" );
@@ -456,6 +365,7 @@ bool graphCutsMultiLabelSegmentation(
     }
     spdlog::debug( "Done reading back segmentation results" );
 
+/*
     for ( int z = 0; z < dims.z; ++z ) {
         for ( int y = 0; y < dims.y; ++y ) {
             for ( int x = 0; x < dims.x; ++x )
@@ -473,6 +383,7 @@ bool graphCutsMultiLabelSegmentation(
 
     delete[] smoothnessCosts;
     smoothnessCosts = nullptr;
+*/
 
     return true;
 }
