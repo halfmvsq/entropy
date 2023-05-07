@@ -1173,7 +1173,11 @@ void renderSegToolbar(
 
 
                 ImGui::Spacing();
+                ImGui::Separator();
+                ImGui::Spacing();
+
                 ImGui::Text( "Graph Cuts edge weights:" );
+
                 ImGui::Separator();
                 ImGui::Spacing();
 
@@ -1270,13 +1274,13 @@ void renderSegToolbar(
                         const size_t numSegsForImage = appData.imageToSegUids( *imageUid ).size();
 
                         std::string segDisplayName =
-                                std::string( "Graph Cuts segmentation " ) +
+                                std::string( "Binary Graph Cuts segmentation " ) +
                                 std::to_string( numSegsForImage + 1 ) +
                                 " for image '" +
                                 image->settings().displayName() + "'";
 
                         std::string segMultilabelDisplayName =
-                                std::string( "Graph Cuts Multilabel segmentation " ) +
+                                std::string( "Multi-label Graph Cuts segmentation " ) +
                                 std::to_string( numSegsForImage + 2 ) +
                                 " for image '" +
                                 image->settings().displayName() + "'";

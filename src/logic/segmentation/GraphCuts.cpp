@@ -44,6 +44,105 @@ std::size_t computeNumLabels(
     return labels.size();
 }
 
+
+template<typename type_tcap, typename type_ncap, typename type_flow>
+class GridGraph3D_Base
+{
+public:
+
+    virtual ~GridGraph3D_Base() = default;
+    virtual int node_id( int x, int y, int z ) const = 0;
+    virtual void set_terminal_cap( int node_id, type_tcap cap_source, type_tcap cap_sink ) = 0;
+    virtual void set_neighbor_cap( int node_id, int offset_x, int offset_y, int offset_z, type_ncap cap ) = 0;
+    virtual void compute_maxflow() = 0;
+    virtual int get_segment( int node_id ) const = 0;
+};
+
+template<typename type_tcap, typename type_ncap, typename type_flow>
+class GridGraph3D_6_Neighbors : public GridGraph3D_Base<type_tcap, type_ncap, type_flow>
+{
+public:
+
+    GridGraph3D_6_Neighbors( int width, int height, int depth )
+        : m_grid( std::make_unique< GridGraph_3D_6C<type_tcap, type_ncap, type_flow> >(
+            width, height, depth) ) {}
+
+    ~GridGraph3D_6_Neighbors() override = default;
+
+    int node_id( int x, int y, int z ) const override { return m_grid->node_id(x, y, z); }
+
+    void set_terminal_cap( int node_id, type_tcap cap_source, type_tcap cap_sink ) override
+    { m_grid->set_terminal_cap(node_id, cap_source, cap_sink); }
+
+    void set_neighbor_cap( int node_id, int offset_x, int offset_y, int offset_z, type_ncap cap ) override
+    { m_grid->set_neighbor_cap(node_id, offset_x, offset_y, offset_z, cap); }
+
+    void compute_maxflow() override { m_grid->compute_maxflow(); }
+    int get_segment( int node_id ) const override { return m_grid->get_segment(node_id); }
+
+private:
+
+    std::unique_ptr< GridGraph_3D_6C<type_tcap, type_ncap, type_flow> > m_grid;
+};
+
+template<typename type_tcap, typename type_ncap, typename type_flow>
+class GridGraph3D_26_Neighbors : public GridGraph3D_Base<type_tcap, type_ncap, type_flow>
+{
+public:
+
+    GridGraph3D_26_Neighbors( int width, int height, int depth )
+        : m_grid( std::make_unique< GridGraph_3D_26C<type_tcap, type_ncap, type_flow> >(
+            width, height, depth) ) {}
+
+    ~GridGraph3D_26_Neighbors() override = default;
+
+    int node_id( int x, int y, int z ) const override { return m_grid->node_id(x, y, z); }
+
+    void set_terminal_cap( int node_id, type_tcap cap_source, type_tcap cap_sink ) override
+    { m_grid->set_terminal_cap(node_id, cap_source, cap_sink); }
+
+    void set_neighbor_cap( int node_id, int offset_x, int offset_y, int offset_z, type_ncap cap ) override
+    { m_grid->set_neighbor_cap(node_id, offset_x, offset_y, offset_z, cap); }
+
+    void compute_maxflow() override { m_grid->compute_maxflow(); }
+    int get_segment( int node_id ) const override { return m_grid->get_segment(node_id); }
+
+private:
+
+    std::unique_ptr< GridGraph_3D_26C<type_tcap, type_ncap, type_flow> > m_grid;
+};
+
+template<typename type_label, typename type_cost, typename type_energy>
+class AlphaExpansion_3D_Base
+{
+public:
+
+    virtual ~AlphaExpansion_3D_Base() = default;
+    virtual void perform() = 0;
+    virtual void perform_random() = 0;
+    virtual type_label* get_labeling() = 0;
+};
+
+template<typename type_label, typename type_cost, typename type_energy>
+class AlphaExpansion_3D_6_Neighbors : public AlphaExpansion_3D_Base<type_label, type_cost, type_energy>
+{
+public:
+
+    AlphaExpansion_3D_6_Neighbors( int width, int height, int depth, int nLabels, type_cost *data, type_cost **smooth )
+        : m_expansion( std::make_unique( AlphaExpansion_3D_26C<type_label, type_cost, type_energy>(
+            width, height, depth, nLabels, data, smooth ) ) ) {}
+
+    ~AlphaExpansion_3D_6_Neighbors() override = default;
+
+    void perform() override {}
+    void perform_random() override {}
+    type_label* get_labeling() override {}
+
+private:
+
+    std::unique_ptr< AlphaExpansion_3D_26C<type_label, type_cost, type_energy> > m_expansion;
+};
+
 } // anonymous
 
 
@@ -66,13 +165,24 @@ bool graphCutsBinarySegmentation(
     // -total flow
     using T = float;
 
-    // using Grid_6_Neighbors = GridGraph_3D_6C<T, T, T>;
-    using Grid_26_Neighbors = GridGraph_3D_26C<T, T, T>;
-
     spdlog::debug( "Start creating grid" );
     auto start = high_resolution_clock::now();
 
-    auto grid = std::make_unique<Grid_26_Neighbors>( dims.x, dims.y, dims.z );
+    std::unique_ptr< GridGraph3D_Base<T, T, T> > grid;
+
+    switch ( hoodType )
+    {
+    case GraphCutsNeighborhoodType::Neighbors6:
+    {
+        grid = std::make_unique< GridGraph3D_6_Neighbors<T, T, T> >( dims.x, dims.y, dims.z );
+        break;
+    }
+    case GraphCutsNeighborhoodType::Neighbors26:
+    {
+        grid = std::make_unique< GridGraph3D_26_Neighbors<T, T, T> >( dims.x, dims.y, dims.z );
+        break;
+    }
+    }
 
     spdlog::debug( "Done creating grid" );
     auto stop = high_resolution_clock::now();
@@ -150,7 +260,6 @@ bool graphCutsBinarySegmentation(
     duration = duration_cast<milliseconds>( stop - start );
     spdlog::debug( "Grid fill time: {} msec", duration.count() );
 
-
     spdlog::debug( "Start computing max flow" );
     start = high_resolution_clock::now();
     {
@@ -168,7 +277,8 @@ bool graphCutsBinarySegmentation(
             for ( int x = 0; x < dims.x; ++x )
             {
                 const LabelType seg = static_cast<LabelType>(
-                    grid->get_segment( grid->node_id(x, y, z) ) ? 1 : 0 );
+                    grid->get_segment( grid->node_id(x, y, z) )
+                        ? fgSeedValue : bgSeedValue );
 
                 setResultSegValue(x, y, z, seg);
             }
@@ -197,7 +307,7 @@ bool graphCutsMultiLabelSegmentation(
     using T = float;
 
     // using Expansion_6_Neighbors = AlphaExpansion_3D_6C<LabelType, T, T>;
-    using Expansion_26_Neighbors = AlphaExpansion_3D_26C<LabelType, T, T>;
+    // using Expansion_26_Neighbors = AlphaExpansion_3D_26C<LabelType, T, T>;
 
     const std::size_t numLabels = computeNumLabels(dims, getSeedValue);
 
@@ -299,7 +409,7 @@ bool graphCutsMultiLabelSegmentation(
     spdlog::debug( "Done creating expansion" );
 
     spdlog::debug( "Start performing expansion" );
-    expansion->perform();
+    expansion->perform_random();
     spdlog::debug( "Done performing expansion" );
 
 
