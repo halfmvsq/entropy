@@ -35,22 +35,22 @@ LabelMaps createLabelMaps(
 {
     LabelMaps labelMaps;
 
-    std::size_t index = 0;
+    std::size_t labelIndex = 0;
 
     for ( int z = 0; z < dims.z; ++z ) {
         for ( int y = 0; y < dims.y; ++y ) {
             for ( int x = 0; x < dims.x; ++x )
             {
-                const LabelType label = getSeedValue(x, y, z);
+                const LabelType seedLabel = getSeedValue(x, y, z);
 
                 // Ignore the background (0) label
-                if ( label > 0 )
+                if ( seedLabel > 0 )
                 {
-                    const auto [iter, inserted] = labelMaps.labelToIndex.emplace( label, index );
+                    const auto [iter, inserted] = labelMaps.labelToIndex.emplace( seedLabel, labelIndex );
 
                     if ( inserted )
                     {
-                        labelMaps.indexToLabel.emplace( index++, label );
+                        labelMaps.indexToLabel.emplace( labelIndex++, seedLabel );
                     }
                 }
             }
