@@ -23,7 +23,7 @@ AppSettings::AppSettings()
 
       m_graphCutsWeightsAmplitude( 1.0 ),
       m_graphCutsWeightsSigma( 1.0 ),
-      m_graphCutsNeighborhood( GraphCutsNeighborhoodType::Neighbors26 ),
+      m_graphCutsNeighborhood( GraphCutsNeighborhoodType::Neighbors6 ),
 
       m_crosshairsMoveWhileAnnotating( false ),
       m_lockAnatomicalCoordinateAxesWithReferenceImage( false )

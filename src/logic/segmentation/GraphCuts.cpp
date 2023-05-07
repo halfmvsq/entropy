@@ -64,7 +64,7 @@ class GridGraph3D_6_Neighbors : public GridGraph3D_Base<type_tcap, type_ncap, ty
 public:
 
     GridGraph3D_6_Neighbors( int width, int height, int depth )
-        : m_grid( std::make_unique< GridGraph_3D_6C<type_tcap, type_ncap, type_flow> >(
+        : m_grid( std::make_unique< GridGraph_3D_6C<type_tcap, type_ncap, type_flow> >( 
             width, height, depth) ) {}
 
     ~GridGraph3D_6_Neighbors() override = default;
@@ -113,30 +113,50 @@ private:
 };
 
 template<typename type_label, typename type_cost, typename type_energy>
-class AlphaExpansion_3D_Base
+class AlphaExpansion3D_Base
 {
 public:
 
-    virtual ~AlphaExpansion_3D_Base() = default;
+    virtual ~AlphaExpansion3D_Base() = default;
     virtual void perform() = 0;
     virtual void perform_random() = 0;
     virtual type_label* get_labeling() = 0;
 };
 
 template<typename type_label, typename type_cost, typename type_energy>
-class AlphaExpansion_3D_6_Neighbors : public AlphaExpansion_3D_Base<type_label, type_cost, type_energy>
+class AlphaExpansion3D_6_Neighbors : public AlphaExpansion3D_Base<type_label, type_cost, type_energy>
 {
 public:
 
-    AlphaExpansion_3D_6_Neighbors( int width, int height, int depth, int nLabels, type_cost *data, type_cost **smooth )
-        : m_expansion( std::make_unique( AlphaExpansion_3D_26C<type_label, type_cost, type_energy>(
-            width, height, depth, nLabels, data, smooth ) ) ) {}
+    AlphaExpansion3D_6_Neighbors( int width, int height, int depth, int nLabels, type_cost *data, type_cost **smooth )
+        : m_expansion( std::make_unique< AlphaExpansion_3D_6C<type_label, type_cost, type_energy> >(
+            width, height, depth, nLabels, data, smooth ) ) {}
 
-    ~AlphaExpansion_3D_6_Neighbors() override = default;
+    ~AlphaExpansion3D_6_Neighbors() override = default;
 
-    void perform() override {}
-    void perform_random() override {}
-    type_label* get_labeling() override {}
+    void perform() override { m_expansion->perform(); }
+    void perform_random() override { m_expansion->perform_random(); }
+    type_label* get_labeling() override { return m_expansion->get_labeling(); }
+
+private:
+
+    std::unique_ptr< AlphaExpansion_3D_6C<type_label, type_cost, type_energy> > m_expansion;
+};
+
+template<typename type_label, typename type_cost, typename type_energy>
+class AlphaExpansion3D_26_Neighbors : public AlphaExpansion3D_Base<type_label, type_cost, type_energy>
+{
+public:
+
+    AlphaExpansion3D_26_Neighbors( int width, int height, int depth, int nLabels, type_cost *data, type_cost **smooth )
+        : m_expansion( std::make_unique< AlphaExpansion_3D_26C<type_label, type_cost, type_energy> >(
+            width, height, depth, nLabels, data, smooth ) ) {}
+
+    ~AlphaExpansion3D_26_Neighbors() override = default;
+
+    void perform() override { m_expansion->perform(); }
+    void perform_random() override { m_expansion->perform_random(); }
+    type_label* get_labeling() override { return m_expansion->get_labeling(); }
 
 private:
 
@@ -168,7 +188,7 @@ bool graphCutsBinarySegmentation(
     spdlog::debug( "Start creating grid" );
     auto start = high_resolution_clock::now();
 
-    std::unique_ptr< GridGraph3D_Base<T, T, T> > grid;
+    std::unique_ptr< GridGraph3D_Base<T, T, T> > grid = nullptr;
 
     switch ( hoodType )
     {
@@ -306,9 +326,6 @@ bool graphCutsMultiLabelSegmentation(
     // -resulting energy
     using T = float;
 
-    // using Expansion_6_Neighbors = AlphaExpansion_3D_6C<LabelType, T, T>;
-    // using Expansion_26_Neighbors = AlphaExpansion_3D_26C<LabelType, T, T>;
-
     const std::size_t numLabels = computeNumLabels(dims, getSeedValue);
 
     spdlog::debug( "Start creating expansion" );
@@ -402,16 +419,29 @@ bool graphCutsMultiLabelSegmentation(
         }
     }
 
-    auto expansion = std::make_unique<Expansion_26_Neighbors>(
-        dims.x, dims.y, dims.z, numLabels,
-        dataCosts.data(), smoothnessCosts );
+    std::unique_ptr< AlphaExpansion3D_Base<LabelType, T, T> > expansion = nullptr;
 
+    switch ( hoodType )
+    {
+    case GraphCutsNeighborhoodType::Neighbors6:
+    {
+        expansion = std::make_unique< AlphaExpansion3D_6_Neighbors<LabelType, T, T> >(
+            dims.x, dims.y, dims.z, numLabels, dataCosts.data(), smoothnessCosts );
+        break;
+    }
+    case GraphCutsNeighborhoodType::Neighbors26:
+    {
+        expansion = std::make_unique< AlphaExpansion3D_26_Neighbors<LabelType, T, T> >(
+            dims.x, dims.y, dims.z, numLabels, dataCosts.data(), smoothnessCosts );
+        break;
+    }
+    }
+    
     spdlog::debug( "Done creating expansion" );
 
     spdlog::debug( "Start performing expansion" );
     expansion->perform_random();
     spdlog::debug( "Done performing expansion" );
-
 
     spdlog::debug( "Start reading back segmentation results" );
     LabelType* labeling = expansion->get_labeling();

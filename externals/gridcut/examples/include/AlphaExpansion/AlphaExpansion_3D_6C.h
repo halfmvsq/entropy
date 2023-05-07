@@ -600,9 +600,9 @@ template<typename type_label, typename type_cost, typename type_energy>
 AlphaExpansion_3D_6C<type_label, type_cost, type_energy>::~AlphaExpansion_3D_6C(void){
 
 	delete [] labeling;
-	delete [] data_cost;
-	if(smooth_array)
-		delete [] smooth_cost;
+	// delete [] data_cost;
+	// if(smooth_array)
+	// 	delete [] smooth_cost;
 }
 
 #undef ALPHAEXPANSION_NEIGHBORS
