@@ -92,15 +92,15 @@ public:
     /// @brief Get a non-const void pointer to the raw buffer data of an image component.
     void* bufferAsVoid( uint32_t component );
 
-    /// @brief Get the value of the buffer at image 3D index (i, j, k)
+
+    /// @brief Get the value of the buffer at image 1D index
     template<typename T>
-    std::optional<T> value( uint32_t component, int i, int j, int k ) const
+    std::optional<T> value( uint32_t component, std::size_t index ) const
     {
-        const auto compAndOffset = getComponentAndOffsetForBuffer( component, i, j, k );
+        const auto compAndOffset = getComponentAndOffsetForBuffer( component, index );
 
         if ( ! compAndOffset )
         {
-            // Invalid input
             return std::nullopt;
         }
 
@@ -122,35 +122,18 @@ public:
         return std::nullopt;
     }
 
-
-    /// @brief Get the value of the buffer at image 1D index
+    /// @brief Get the value of the buffer at image 3D index (i, j, k)
     template<typename T>
-    std::optional<T> value( uint32_t component, std::size_t index ) const
+    std::optional<T> value( uint32_t component, int i, int j, int k ) const
     {
-        const auto compAndOffset = getComponentAndOffsetForBuffer( component, index );
+        const glm::u64vec3 dims = m_header.pixelDimensions();
 
-        if ( ! compAndOffset )
-        {
-            // Invalid input
-            return std::nullopt;
-        }
+        const std::size_t index =
+            dims.x * dims.y * static_cast<std::size_t>(k) +
+            dims.x * static_cast<std::size_t>(j) +
+            static_cast<std::size_t>(i);
 
-        const std::size_t c = compAndOffset->first;
-        const std::size_t offset = compAndOffset->second;
-
-        switch ( m_header.memoryComponentType() )
-        {
-        case ComponentType::Int8:    return static_cast<T>( m_data_int8.at(c)[offset] );
-        case ComponentType::UInt8:   return static_cast<T>( m_data_uint8.at(c)[offset] );
-        case ComponentType::Int16:   return static_cast<T>( m_data_int16.at(c)[offset] );
-        case ComponentType::UInt16:  return static_cast<T>( m_data_uint16.at(c)[offset] );
-        case ComponentType::Int32:   return static_cast<T>( m_data_int32.at(c)[offset] );
-        case ComponentType::UInt32:  return static_cast<T>( m_data_uint32.at(c)[offset] );
-        case ComponentType::Float32: return static_cast<T>( m_data_float32.at(c)[offset] );
-        default: return std::nullopt;
-        }
-
-        return std::nullopt;
+        return value<T>( component, index );
     }
 
     /// @brief Set the value of the buffer at image index (i, j, k)

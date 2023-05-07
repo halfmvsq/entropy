@@ -7,40 +7,57 @@
 #include <glm/glm.hpp>
 
 #include <thread>
-#include <unordered_set>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 namespace
 {
 
 static const uint32_t NUM_THREADS = std::thread::hardware_concurrency();
 
+struct LabelMaps
+{
+    /// Map from segmentation label to GridCuts label index
+    std::unordered_map<LabelType, std::size_t> labelToIndex;
+
+    /// Map from GridCuts label index to segmentation label
+    std::unordered_map<std::size_t, LabelType> indexToLabel;
+};
+
 
 /**
  * @brief Compute the number of non-zero labels in a segmentation
- * @param[in] seg Segmentation image
- * @return Number of non-zero voxels/labels
  */
-std::size_t computeNumLabels(
+LabelMaps createLabelMaps(
     const glm::ivec3& dims,
     std::function< LabelType (int x, int y, int z) > getSeedValue )
 {
-    std::unordered_set<LabelType> labels;
+    LabelMaps labelMaps;
+
+    std::size_t index = 0;
 
     for ( int z = 0; z < dims.z; ++z ) {
         for ( int y = 0; y < dims.y; ++y ) {
             for ( int x = 0; x < dims.x; ++x )
             {
-                const LabelType s = getSeedValue(x, y, z);
+                const LabelType label = getSeedValue(x, y, z);
 
-                if ( s > 0 )
+                // Ignore the background (0) label
+                if ( label > 0 )
                 {
-                    labels.insert(s);
+                    const auto [iter, inserted] = labelMaps.labelToIndex.emplace( label, index );
+
+                    if ( inserted )
+                    {
+                        labelMaps.indexToLabel.emplace( index++, label );
+                    }
                 }
             }
         }
     }
 
-    return labels.size();
+    return labelMaps;
 }
 
 } // anonymous
@@ -206,7 +223,8 @@ bool graphCutsMultiLabelSegmentation(
     // -resulting energy
     using T = float;
 
-    const std::size_t numLabels = computeNumLabels(dims, getSeedValue);
+    const LabelMaps labelMaps = createLabelMaps(dims, getSeedValue);
+    const std::size_t numLabels = labelMaps.labelToIndex.size();
 
     spdlog::debug( "Start creating expansion" );
 
@@ -221,12 +239,14 @@ bool graphCutsMultiLabelSegmentation(
         for ( int y = 0; y < dims.y; ++y ) {
             for ( int x = 0; x < dims.x; ++x )
             {
-                const LabelType seed = getSeedValue(x, y, z);
+                const LabelType seedLabel = getSeedValue(x, y, z);
 
-                for ( std::size_t label = 0; label < numLabels; ++label )
+                for ( std::size_t labelIndex = 0; labelIndex < numLabels; ++labelIndex )
                 {
-                    dataCosts[getIndex(x, y, z) * numLabels + label] =
-                        ( seed == static_cast<LabelType>(label + 1) ) ? 0 : terminalCapacity;
+                    const LabelType label = labelMaps.indexToLabel.at( labelIndex );
+
+                    dataCosts[ getIndex(x, y, z) * numLabels + labelIndex ] =
+                        ( seedLabel == label ) ? 0 : terminalCapacity;
                 }
             }
         }
@@ -324,11 +344,11 @@ bool graphCutsMultiLabelSegmentation(
         return getImageWeight1D( index1, index2 ) / dist;
     };
 
-    std::unique_ptr< AlphaExpansion_3D_Base_Wrapper<LabelType, T, T> > expansion = nullptr;
 
     const int blockSize = std::min( dims.x, std::min( dims.y, dims.z) ) / NUM_THREADS;
-
     spdlog::info( "Number of threads: {}; block size: {}", NUM_THREADS, blockSize );
+
+    std::unique_ptr< AlphaExpansion_3D_Base_Wrapper<LabelType, T, T> > expansion = nullptr;
 
     switch ( hoodType )
     {
@@ -359,7 +379,9 @@ bool graphCutsMultiLabelSegmentation(
         for ( int y = 0; y < dims.y; ++y ) {
             for ( int x = 0; x < dims.x; ++x )
             {
-                setResultSegValue(x, y, z, labeling[getIndex(x, y, z)] + 1);
+                const std::size_t labelIndex = labeling[ getIndex(x, y, z) ];
+                const LabelType label = labelMaps.indexToLabel.at( labelIndex );
+                setResultSegValue(x, y, z, label);
             }
         }
     }

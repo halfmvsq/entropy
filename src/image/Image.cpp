@@ -415,16 +415,16 @@ Image::Image(
     }
 
     m_tx = ImageTransformations(
-                m_header.pixelDimensions(),
-                m_header.spacing(),
-                m_header.origin(),
-                m_header.directions() );
+        m_header.pixelDimensions(),
+        m_header.spacing(),
+        m_header.origin(),
+        m_header.directions() );
 
     m_settings = ImageSettings(
-                std::move( displayName ),
-                m_header.numComponentsPerPixel(),
-                m_header.memoryComponentType(),
-                std::move( componentStats ) );
+        std::move( displayName ),
+        m_header.numComponentsPerPixel(),
+        m_header.memoryComponentType(),
+        std::move( componentStats ) );
 
     m_headerOverrides = ImageHeaderOverrides(
         m_header.pixelDimensions(),
@@ -818,53 +818,14 @@ void* Image::bufferAsVoid( uint32_t comp )
 std::optional< std::pair< std::size_t, std::size_t > >
 Image::getComponentAndOffsetForBuffer( uint32_t comp, int i, int j, int k ) const
 {
-    // 1) component buffer to index
-    // 2) offset into that buffer
-    std::optional< std::pair< std::size_t, std::size_t > > ret;
-
     const glm::u64vec3 dims = m_header.pixelDimensions();
-    const auto ncomps = m_header.numComponentsPerPixel();
 
-    if ( comp > ncomps )
-    {
-        // Invalid image component requested
-        return std::nullopt;
-    }
+    const std::size_t index =
+        dims.x * dims.y * static_cast<std::size_t>(k) +
+        dims.x * static_cast<std::size_t>(j) +
+        static_cast<std::size_t>(i);
 
-    if ( i < 0 || j < 0 || k < 0 )
-    {
-        // Invalid index
-        return std::nullopt;
-    }
-
-    // Component to index the image buffer at:
-    std::size_t c = 0;
-
-    // Offset into the buffer:
-    std::size_t offset = dims.x * dims.y * static_cast<size_t>(k) +
-            dims.x * static_cast<size_t>(j) +
-            static_cast<size_t>(i);
-
-    switch ( m_bufferType )
-    {
-    case MultiComponentBufferType::SeparateImages:
-    {
-        c = comp;
-        break;
-    }
-    case MultiComponentBufferType::InterleavedImage:
-    {
-        // There is just one buffer (0) that holds all components:
-        c = 0;
-
-        // Offset into the buffer accounts for the desired component:
-        offset = static_cast<size_t>( comp + 1 ) * offset;
-        break;
-    }
-    }
-
-    ret = { c, offset };
-    return ret;
+    return getComponentAndOffsetForBuffer( comp, index );
 }
 
 std::optional< std::pair< std::size_t, std::size_t > >
@@ -901,7 +862,7 @@ Image::getComponentAndOffsetForBuffer( uint32_t comp, std::size_t index ) const
         c = 0;
 
         // Offset into the buffer accounts for the desired component:
-        offset = static_cast<size_t>( comp + 1 ) * offset;
+        offset = static_cast<std::size_t>( comp + 1 ) * offset;
         break;
     }
     }
