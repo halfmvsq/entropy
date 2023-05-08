@@ -67,7 +67,7 @@ bool graphCutsBinarySegmentation(
     const GraphCutsNeighborhoodType& hoodType,
     double terminalCapacity,
     const LabelType& fgSeedValue,
-    const LabelType& bgSeedValue,
+    const LabelType& /*bgSeedValue*/,
     const glm::ivec3& dims,
     const VoxelDistances& voxelDistances,
     std::function< double (int x, int y, int z, int dx, int dy, int dz) > getImageWeight,
@@ -114,7 +114,7 @@ bool graphCutsBinarySegmentation(
     }
 
     // Set symmetric capacities for edges from X to X + dX and from X + dX to X
-    auto setCaps = [&grid, &getImageWeight]
+    auto setNeighCaps = [&grid, &getImageWeight]
         (int x, int y, int z, int dx, int dy, int dz, double dist)
     {
         const T cap = static_cast<T>( getImageWeight(x, y, z, dx, dy, dz) / dist );
@@ -144,29 +144,29 @@ bool graphCutsBinarySegmentation(
                 const LabelType seed = getSeedValue(x, y, z);
 
                 grid->set_terminal_cap( grid->node_id(x, y, z),
-                    (seed == bgSeedValue) ? terminalCapacity : 0,
-                    (seed == fgSeedValue) ? terminalCapacity : 0 );
+                    (seed > 0 && seed != fgSeedValue) ? terminalCapacity : 0.0,
+                    (seed == fgSeedValue) ? terminalCapacity : 0.0 );
 
                 // 6 face neighbors:
-                if (XH) { setCaps(x, y, z, 1, 0, 0, voxelDistances.distX); }
-                if (YH) { setCaps(x, y, z, 0, 1, 0, voxelDistances.distY); }
-                if (ZH) { setCaps(x, y, z, 0, 0, 1, voxelDistances.distZ); }
+                if (XH) { setNeighCaps(x, y, z, 1, 0, 0, voxelDistances.distX); }
+                if (YH) { setNeighCaps(x, y, z, 0, 1, 0, voxelDistances.distY); }
+                if (ZH) { setNeighCaps(x, y, z, 0, 0, 1, voxelDistances.distZ); }
 
                 if ( GraphCutsNeighborhoodType::Neighbors26 == hoodType )
                 {
                     // 12 edge neighbors:
-                    if (XH && YH) { setCaps(x, y, z,  1,  1,  0, voxelDistances.distXY); }
-                    if (XL && YH) { setCaps(x, y, z, -1,  1,  0, voxelDistances.distXY); }
-                    if (XH && ZH) { setCaps(x, y, z,  1,  0,  1, voxelDistances.distXZ); }
-                    if (XL && ZH) { setCaps(x, y, z, -1,  0,  1, voxelDistances.distXZ); }
-                    if (YH && ZH) { setCaps(x, y, z,  0,  1,  1, voxelDistances.distYZ); }
-                    if (YL && ZH) { setCaps(x, y, z,  0, -1,  1, voxelDistances.distYZ); }
+                    if (XH && YH) { setNeighCaps(x, y, z,  1,  1,  0, voxelDistances.distXY); }
+                    if (XL && YH) { setNeighCaps(x, y, z, -1,  1,  0, voxelDistances.distXY); }
+                    if (XH && ZH) { setNeighCaps(x, y, z,  1,  0,  1, voxelDistances.distXZ); }
+                    if (XL && ZH) { setNeighCaps(x, y, z, -1,  0,  1, voxelDistances.distXZ); }
+                    if (YH && ZH) { setNeighCaps(x, y, z,  0,  1,  1, voxelDistances.distYZ); }
+                    if (YL && ZH) { setNeighCaps(x, y, z,  0, -1,  1, voxelDistances.distYZ); }
 
                     // 8 vertex neighbors:
-                    if (XH && YH && ZH) { setCaps(x, y, z,  1,  1,  1, voxelDistances.distXYZ); }
-                    if (XL && YH && ZH) { setCaps(x, y, z, -1,  1,  1, voxelDistances.distXYZ); }
-                    if (XH && YL && ZH) { setCaps(x, y, z,  1, -1,  1, voxelDistances.distXYZ); }
-                    if (XH && YH && ZL) { setCaps(x, y, z,  1,  1, -1, voxelDistances.distXYZ); }
+                    if (XH && YH && ZH) { setNeighCaps(x, y, z,  1,  1,  1, voxelDistances.distXYZ); }
+                    if (XL && YH && ZH) { setNeighCaps(x, y, z, -1,  1,  1, voxelDistances.distXYZ); }
+                    if (XH && YL && ZH) { setNeighCaps(x, y, z,  1, -1,  1, voxelDistances.distXYZ); }
+                    if (XH && YH && ZL) { setNeighCaps(x, y, z,  1,  1, -1, voxelDistances.distXYZ); }
                 }
             }
         }
@@ -246,7 +246,7 @@ bool graphCutsMultiLabelSegmentation(
                     const LabelType label = labelMaps.indexToLabel.at( labelIndex );
 
                     dataCosts[ getIndex(x, y, z) * numLabels + labelIndex ] =
-                        ( seedLabel == label ) ? 0 : terminalCapacity;
+                        ( seedLabel == label ) ? 0.0f : terminalCapacity;
                 }
             }
         }

@@ -1273,17 +1273,15 @@ void renderSegToolbar(
                     {
                         const size_t numSegsForImage = appData.imageToSegUids( *imageUid ).size();
 
-                        std::string segDisplayName =
+                        const std::string segDisplayName =
                                 std::string( "Binary Graph Cuts segmentation " ) +
                                 std::to_string( numSegsForImage + 1 ) +
-                                " for image '" +
-                                image->settings().displayName() + "'";
+                                " for image '" + image->settings().displayName() + "'";
 
-                        std::string segMultilabelDisplayName =
+                        const std::string segMultilabelDisplayName =
                                 std::string( "Multi-label Graph Cuts segmentation " ) +
                                 std::to_string( numSegsForImage + 2 ) +
-                                " for image '" +
-                                image->settings().displayName() + "'";
+                                " for image '" + image->settings().displayName() + "'";
 
                         if ( const auto blankSegUid = createBlankSeg( *imageUid, std::move( segDisplayName ) ) )
                         {
