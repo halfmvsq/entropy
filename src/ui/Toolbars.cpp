@@ -1173,7 +1173,6 @@ void renderSegToolbar(
 
 
                 ImGui::Spacing();
-                ImGui::Separator();
                 ImGui::Spacing();
 
                 ImGui::Text( "Graph Cuts edge weights:" );
@@ -1190,6 +1189,7 @@ void renderSegToolbar(
                 }
                 ImGui::SameLine(); helpMarker( "Amplitude" );
 
+                /// @todo Sigma should be based on noise in image or intensity of edges...
                 if ( ImGui::InputScalar( "Sigma", ImGuiDataType_Double, &sigma ) )
                 {
                     appData.settings().setGraphCutsWeightsSigma( sigma );
@@ -1198,6 +1198,7 @@ void renderSegToolbar(
 
                 GraphCutsNeighborhoodType hoodType = appData.settings().graphCutsNeighborhood();
 
+                ImGui::Text( "Neighborhood type: " ); ImGui::SameLine();
                 if ( ImGui::RadioButton( "6", GraphCutsNeighborhoodType::Neighbors6 == hoodType ) )
                 {
                     hoodType = GraphCutsNeighborhoodType::Neighbors6;
@@ -1205,7 +1206,7 @@ void renderSegToolbar(
                 }
 
                 ImGui::SameLine();
-                if ( ImGui::RadioButton( "26 neighbors", GraphCutsNeighborhoodType::Neighbors26 == hoodType ) )
+                if ( ImGui::RadioButton( "26", GraphCutsNeighborhoodType::Neighbors26 == hoodType ) )
                 {
                     hoodType = GraphCutsNeighborhoodType::Neighbors26;
                     appData.settings().setGraphCutsNeighborhood( hoodType );
@@ -1262,6 +1263,36 @@ void renderSegToolbar(
 
 
             if ( isHoriz ) ImGui::SameLine();
+            if ( ImGui::Button( ICON_FK_CUBE, buttonSize) )
+            {
+                const auto imageUid = appData.activeImageUid();
+                const Image* image = appData.activeImage();
+
+                if ( imageUid && image )
+                {
+                    if ( const auto seedSegUid = appData.imageToActiveSegUid( *imageUid ) )
+                    {
+                        const size_t numSegsForImage = appData.imageToSegUids( *imageUid ).size();
+
+                        const std::string binarySegDisplayName =
+                                std::string( "Binary graph cuts segmentation " ) +
+                                std::to_string( numSegsForImage + 1 ) +
+                                " for image '" + image->settings().displayName() + "'";
+
+                        if ( const auto blankSegUid = createBlankSeg( *imageUid, std::move( binarySegDisplayName ) ) )
+                        {
+                            updateImageUniforms( *imageUid );
+                            executeGraphCutsSeg( *imageUid, *seedSegUid, *blankSegUid, GraphCutsSegmentationType::Binary );
+                        }
+                    }
+                }
+            }
+            if ( ImGui::IsItemHovered() )
+            {
+                ImGui::SetTooltip( "%s", "Execute binary Graph Cuts segmentation" );
+            }
+
+            if ( isHoriz ) ImGui::SameLine();
             if ( ImGui::Button( ICON_FK_CUBES, buttonSize) )
             {
                 const auto imageUid = appData.activeImageUid();
@@ -1273,23 +1304,12 @@ void renderSegToolbar(
                     {
                         const size_t numSegsForImage = appData.imageToSegUids( *imageUid ).size();
 
-                        const std::string segDisplayName =
-                                std::string( "Binary Graph Cuts segmentation " ) +
-                                std::to_string( numSegsForImage + 1 ) +
-                                " for image '" + image->settings().displayName() + "'";
+                        const std::string multilabelSegDisplayName =
+                            std::string( "Multi-label graph cuts segmentation " ) +
+                            std::to_string( numSegsForImage + 1 ) +
+                            " for image '" + image->settings().displayName() + "'";
 
-                        const std::string segMultilabelDisplayName =
-                                std::string( "Multi-label Graph Cuts segmentation " ) +
-                                std::to_string( numSegsForImage + 2 ) +
-                                " for image '" + image->settings().displayName() + "'";
-
-                        if ( const auto blankSegUid = createBlankSeg( *imageUid, std::move( segDisplayName ) ) )
-                        {
-                            updateImageUniforms( *imageUid );
-                            executeGraphCutsSeg( *imageUid, *seedSegUid, *blankSegUid, GraphCutsSegmentationType::Binary );
-                        }
-
-                        if ( const auto blankSegUid = createBlankSeg( *imageUid, std::move( segMultilabelDisplayName ) ) )
+                        if ( const auto blankSegUid = createBlankSeg( *imageUid, std::move( multilabelSegDisplayName ) ) )
                         {
                             updateImageUniforms( *imageUid );
                             executeGraphCutsSeg( *imageUid, *seedSegUid, *blankSegUid, GraphCutsSegmentationType::MultiLabel );
@@ -1299,9 +1319,8 @@ void renderSegToolbar(
             }
             if ( ImGui::IsItemHovered() )
             {
-                ImGui::SetTooltip( "%s", "Execute Graph Cuts segmentation" );
+                ImGui::SetTooltip( "%s", "Execute multi-label Graph Cuts segmentation" );
             }
-
         }
 
 

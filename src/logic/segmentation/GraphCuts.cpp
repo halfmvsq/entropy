@@ -8,13 +8,13 @@
 
 #include <thread>
 #include <unordered_map>
-#include <utility>
 #include <vector>
+
 
 namespace
 {
 
-static const uint32_t NUM_THREADS = std::thread::hardware_concurrency();
+static const int32_t NUM_THREADS = static_cast<int32_t>( std::thread::hardware_concurrency() );
 
 struct LabelMaps
 {
@@ -82,6 +82,8 @@ bool graphCutsBinarySegmentation(
     // -total flow
     using T = float;
 
+    static constexpr bool multithread = false;
+
     spdlog::debug( "Start creating grid" );
     auto start = high_resolution_clock::now();
 
@@ -91,7 +93,16 @@ bool graphCutsBinarySegmentation(
     {
     case GraphCutsNeighborhoodType::Neighbors6:
     {
-        grid = std::make_unique< GridGraph_3D_6C_Wrapper<T, T, T> >( dims.x, dims.y, dims.z );
+        if ( multithread )
+        {
+            const int blockSize = std::max( 32, std::min( dims.x, std::min( dims.y, dims.z) ) / NUM_THREADS );
+            spdlog::info( "Number of threads: {}; block size: {}", NUM_THREADS, blockSize );
+            grid = std::make_unique< GridGraph_3D_6C_MT_Wrapper<T, T, T> >( dims.x, dims.y, dims.z, NUM_THREADS, blockSize );
+        }
+        else
+        {
+            grid = std::make_unique< GridGraph_3D_6C_Wrapper<T, T, T> >( dims.x, dims.y, dims.z );
+        }
         break;
     }
     case GraphCutsNeighborhoodType::Neighbors26:
@@ -113,64 +124,122 @@ bool graphCutsBinarySegmentation(
         return false;
     }
 
-    // Set symmetric capacities for edges from X to X + dX and from X + dX to X
-    auto setNeighCaps = [&grid, &getImageWeight]
-        (int x, int y, int z, int dx, int dy, int dz, double dist)
-    {
-        const T cap = static_cast<T>( getImageWeight(x, y, z, dx, dy, dz) / dist );
-
-        grid->set_neighbor_cap( grid->node_id(x, y, z), dx, dy, dz, cap );
-        grid->set_neighbor_cap( grid->node_id(x + dx, y + dy, z + dz), -dx, -dy, -dz, cap );
-    };
 
     spdlog::debug( "Start filling grid" );
     start = high_resolution_clock::now();
 
-    for ( int z = 0; z < dims.z; ++z )
+    if ( multithread && GraphCutsNeighborhoodType::Neighbors6 == hoodType )
     {
-        const bool ZL = ( z > 0 );
-        const bool ZH = ( z < ( dims.z - 1 ) );
+        const std::size_t N = dims.x * dims.y * dims.z;
 
-        for ( int y = 0; y < dims.y; ++y )
+        std::unique_ptr<T[]> cap_source = std::make_unique_for_overwrite<float[]>(N);
+        std::unique_ptr<T[]> cap_sink = std::make_unique_for_overwrite<float[]>(N);
+        std::unique_ptr<T[]> cap_lee = std::make_unique_for_overwrite<float[]>(N);
+        std::unique_ptr<T[]> cap_gee = std::make_unique_for_overwrite<float[]>(N);
+        std::unique_ptr<T[]> cap_ele = std::make_unique_for_overwrite<float[]>(N);
+        std::unique_ptr<T[]> cap_ege = std::make_unique_for_overwrite<float[]>(N);
+        std::unique_ptr<T[]> cap_eel = std::make_unique_for_overwrite<float[]>(N);
+        std::unique_ptr<T[]> cap_eeg = std::make_unique_for_overwrite<float[]>(N);
+
+        auto getIndex = [&dims] (int x, int y, int z) -> std::size_t
         {
-            const bool YL = ( y > 0 );
-            const bool YH = ( y < ( dims.y - 1 ) );
+            return z * (dims.x * dims.y) + y * dims.x + x;
+        };
 
-            for ( int x = 0; x < dims.x; ++x )
-            {
-                const bool XL = ( x > 0 );
-                const bool XH = ( x < ( dims.x - 1 ) );
+        // Compute capacity for edge from X to X + dX
+        auto computeNeighCap = [&getImageWeight]
+            (int x, int y, int z, int dx, int dy, int dz, double dist)
+        {
+            return static_cast<T>( getImageWeight(x, y, z, dx, dy, dz) / dist );
+        };
 
-                const LabelType seed = getSeedValue(x, y, z);
-
-                grid->set_terminal_cap( grid->node_id(x, y, z),
-                    (seed > 0 && seed != fgSeedValue) ? terminalCapacity : 0.0,
-                    (seed == fgSeedValue) ? terminalCapacity : 0.0 );
-
-                // 6 face neighbors:
-                if (XH) { setNeighCaps(x, y, z, 1, 0, 0, voxelDistances.distX); }
-                if (YH) { setNeighCaps(x, y, z, 0, 1, 0, voxelDistances.distY); }
-                if (ZH) { setNeighCaps(x, y, z, 0, 0, 1, voxelDistances.distZ); }
-
-                if ( GraphCutsNeighborhoodType::Neighbors26 == hoodType )
+        for ( int z = 0; z < dims.z; ++z ) {
+            for ( int y = 0; y < dims.y; ++y ) {
+                for ( int x = 0; x < dims.x; ++x )
                 {
-                    // 12 edge neighbors:
-                    if (XH && YH) { setNeighCaps(x, y, z,  1,  1,  0, voxelDistances.distXY); }
-                    if (XL && YH) { setNeighCaps(x, y, z, -1,  1,  0, voxelDistances.distXY); }
-                    if (XH && ZH) { setNeighCaps(x, y, z,  1,  0,  1, voxelDistances.distXZ); }
-                    if (XL && ZH) { setNeighCaps(x, y, z, -1,  0,  1, voxelDistances.distXZ); }
-                    if (YH && ZH) { setNeighCaps(x, y, z,  0,  1,  1, voxelDistances.distYZ); }
-                    if (YL && ZH) { setNeighCaps(x, y, z,  0, -1,  1, voxelDistances.distYZ); }
+                    const LabelType seed = getSeedValue(x, y, z);
+                    const std::size_t index = getIndex(x, y, z);
 
-                    // 8 vertex neighbors:
-                    if (XH && YH && ZH) { setNeighCaps(x, y, z,  1,  1,  1, voxelDistances.distXYZ); }
-                    if (XL && YH && ZH) { setNeighCaps(x, y, z, -1,  1,  1, voxelDistances.distXYZ); }
-                    if (XH && YL && ZH) { setNeighCaps(x, y, z,  1, -1,  1, voxelDistances.distXYZ); }
-                    if (XH && YH && ZL) { setNeighCaps(x, y, z,  1,  1, -1, voxelDistances.distXYZ); }
+                    cap_source[index] = (seed > 0 && seed != fgSeedValue) ? terminalCapacity : 0.0;
+                    cap_sink[index] = (seed == fgSeedValue) ? terminalCapacity : 0.0;
+
+                    cap_lee[index] = computeNeighCap(x, y, z, -1, 0, 0, voxelDistances.distX);
+                    cap_gee[index] = computeNeighCap(x, y, z,  1, 0, 0, voxelDistances.distX);
+
+                    cap_ele[index] = computeNeighCap(x, y, z,  0, -1, 0, voxelDistances.distY);
+                    cap_ege[index] = computeNeighCap(x, y, z,  0,  1, 0, voxelDistances.distY);
+
+                    cap_eel[index] = computeNeighCap(x, y, z,  0, 0, -1, voxelDistances.distZ);
+                    cap_eeg[index] = computeNeighCap(x, y, z,  0, 0,  1, voxelDistances.distZ);
+                }
+            }
+        }
+
+        grid->set_caps(
+            cap_source.get(), cap_sink.get(),
+            cap_lee.get(), cap_gee.get(),
+            cap_ele.get(), cap_ege.get(),
+            cap_eel.get(), cap_eeg.get() );
+    }
+    else
+    {
+        // Set symmetric capacities for edges from X to X + dX and from X + dX to X
+        auto setNeighCaps = [&grid, &getImageWeight]
+            (int x, int y, int z, int dx, int dy, int dz, double dist)
+        {
+            const T cap = static_cast<T>( getImageWeight(x, y, z, dx, dy, dz) / dist );
+
+            grid->set_neighbor_cap( grid->node_id(x, y, z), dx, dy, dz, cap );
+            grid->set_neighbor_cap( grid->node_id(x + dx, y + dy, z + dz), -dx, -dy, -dz, cap );
+        };
+
+        for ( int z = 0; z < dims.z; ++z )
+        {
+            const bool ZL = ( z > 0 );
+            const bool ZH = ( z < ( dims.z - 1 ) );
+
+            for ( int y = 0; y < dims.y; ++y )
+            {
+                const bool YL = ( y > 0 );
+                const bool YH = ( y < ( dims.y - 1 ) );
+
+                for ( int x = 0; x < dims.x; ++x )
+                {
+                    const bool XL = ( x > 0 );
+                    const bool XH = ( x < ( dims.x - 1 ) );
+
+                    const LabelType seed = getSeedValue(x, y, z);
+
+                    grid->set_terminal_cap( grid->node_id(x, y, z),
+                        (seed > 0 && seed != fgSeedValue) ? terminalCapacity : 0.0,
+                        (seed == fgSeedValue) ? terminalCapacity : 0.0 );
+
+                    // 6 face neighbors:
+                    if (XH) { setNeighCaps(x, y, z, 1, 0, 0, voxelDistances.distX); }
+                    if (YH) { setNeighCaps(x, y, z, 0, 1, 0, voxelDistances.distY); }
+                    if (ZH) { setNeighCaps(x, y, z, 0, 0, 1, voxelDistances.distZ); }
+
+                    if ( GraphCutsNeighborhoodType::Neighbors26 == hoodType )
+                    {
+                        // 12 edge neighbors:
+                        if (XH && YH) { setNeighCaps(x, y, z,  1,  1,  0, voxelDistances.distXY); }
+                        if (XL && YH) { setNeighCaps(x, y, z, -1,  1,  0, voxelDistances.distXY); }
+                        if (XH && ZH) { setNeighCaps(x, y, z,  1,  0,  1, voxelDistances.distXZ); }
+                        if (XL && ZH) { setNeighCaps(x, y, z, -1,  0,  1, voxelDistances.distXZ); }
+                        if (YH && ZH) { setNeighCaps(x, y, z,  0,  1,  1, voxelDistances.distYZ); }
+                        if (YL && ZH) { setNeighCaps(x, y, z,  0, -1,  1, voxelDistances.distYZ); }
+
+                        // 8 vertex neighbors:
+                        if (XH && YH && ZH) { setNeighCaps(x, y, z,  1,  1,  1, voxelDistances.distXYZ); }
+                        if (XL && YH && ZH) { setNeighCaps(x, y, z, -1,  1,  1, voxelDistances.distXYZ); }
+                        if (XH && YL && ZH) { setNeighCaps(x, y, z,  1, -1,  1, voxelDistances.distXYZ); }
+                        if (XH && YH && ZL) { setNeighCaps(x, y, z,  1,  1, -1, voxelDistances.distXYZ); }
+                    }
                 }
             }
         }
     }
+
     spdlog::debug( "Done filling grid" );
     stop = high_resolution_clock::now();
 
@@ -345,15 +414,15 @@ bool graphCutsMultiLabelSegmentation(
     };
 
 
-    const int blockSize = std::min( dims.x, std::min( dims.y, dims.z) ) / NUM_THREADS;
-    spdlog::info( "Number of threads: {}; block size: {}", NUM_THREADS, blockSize );
-
     std::unique_ptr< AlphaExpansion_3D_Base_Wrapper<LabelType, T, T> > expansion = nullptr;
 
     switch ( hoodType )
     {
     case GraphCutsNeighborhoodType::Neighbors6:
     {
+        const int blockSize = std::max( 32, std::min( dims.x, std::min( dims.y, dims.z) ) / NUM_THREADS );
+        spdlog::info( "Number of threads: {}; block size: {}", NUM_THREADS, blockSize );
+
         expansion = std::make_unique< AlphaExpansion_3D_6C_MT_Wrapper<LabelType, T, T> >(
             dims.x, dims.y, dims.z, numLabels, dataCosts.data(), smoothFn, NUM_THREADS, blockSize );
         break;
@@ -368,9 +437,17 @@ bool graphCutsMultiLabelSegmentation(
     
     spdlog::debug( "Done creating expansion" );
 
-    spdlog::debug( "Start performing expansion" );
-    expansion->perform();
-    spdlog::debug( "Done performing expansion" );
+    spdlog::debug( "Start computing expansion" );
+    auto start = high_resolution_clock::now();
+    {
+        expansion->perform();
+    }
+    auto stop = high_resolution_clock::now();
+    auto duration = duration_cast<milliseconds>( stop - start );
+
+    spdlog::debug( "Done computing expansion" );
+    spdlog::debug( "Graph cuts (with alpha expansion) execution time: {} msec", duration.count() );
+
 
     spdlog::debug( "Start reading back segmentation results" );
     LabelType* labeling = expansion->get_labeling();
