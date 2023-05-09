@@ -11,29 +11,29 @@ namespace
 {
 
 // Normalize image to rage [0.0, 1.0].
-void normalize( std::vector<ImgType>& img )
-{
-    ImgType maxVal = std::numeric_limits<ImgType>::lowest();
-    ImgType minVal = std::numeric_limits<ImgType>::max();
+// void normalize( std::vector<ImgType>& img )
+// {
+//     ImgType maxVal = std::numeric_limits<ImgType>::lowest();
+//     ImgType minVal = std::numeric_limits<ImgType>::max();
 
-    for ( const auto& val : img )
-    {
-        if ( val > maxVal )
-        {
-            maxVal = val;
-        }
+//     for ( const auto& val : img )
+//     {
+//         if ( val > maxVal )
+//         {
+//             maxVal = val;
+//         }
 
-        if ( val < minVal )
-        {
-            minVal = val;
-        }
-    }
+//         if ( val < minVal )
+//         {
+//             minVal = val;
+//         }
+//     }
 
-    for ( size_t i = 0; i < img.size(); ++i )
-    {
-        img[i] = ( img[i] - minVal ) / ( maxVal - minVal );
-    }
-}
+//     for ( size_t i = 0; i < img.size(); ++i )
+//     {
+//         img[i] = ( img[i] - minVal ) / ( maxVal - minVal );
+//     }
+// }
 
 }
 

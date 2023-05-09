@@ -132,14 +132,14 @@ bool graphCutsBinarySegmentation(
     {
         const std::size_t N = dims.x * dims.y * dims.z;
 
-        std::unique_ptr<T[]> cap_source = std::make_unique_for_overwrite<float[]>(N);
-        std::unique_ptr<T[]> cap_sink = std::make_unique_for_overwrite<float[]>(N);
-        std::unique_ptr<T[]> cap_lee = std::make_unique_for_overwrite<float[]>(N);
-        std::unique_ptr<T[]> cap_gee = std::make_unique_for_overwrite<float[]>(N);
-        std::unique_ptr<T[]> cap_ele = std::make_unique_for_overwrite<float[]>(N);
-        std::unique_ptr<T[]> cap_ege = std::make_unique_for_overwrite<float[]>(N);
-        std::unique_ptr<T[]> cap_eel = std::make_unique_for_overwrite<float[]>(N);
-        std::unique_ptr<T[]> cap_eeg = std::make_unique_for_overwrite<float[]>(N);
+        std::unique_ptr<T[]> cap_source = std::make_unique<float[]>(N);
+        std::unique_ptr<T[]> cap_sink = std::make_unique<float[]>(N);
+        std::unique_ptr<T[]> cap_lee = std::make_unique<float[]>(N);
+        std::unique_ptr<T[]> cap_gee = std::make_unique<float[]>(N);
+        std::unique_ptr<T[]> cap_ele = std::make_unique<float[]>(N);
+        std::unique_ptr<T[]> cap_ege = std::make_unique<float[]>(N);
+        std::unique_ptr<T[]> cap_eel = std::make_unique<float[]>(N);
+        std::unique_ptr<T[]> cap_eeg = std::make_unique<float[]>(N);
 
         auto getIndex = [&dims] (int x, int y, int z) -> std::size_t
         {

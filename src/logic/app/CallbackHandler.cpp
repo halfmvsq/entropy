@@ -162,11 +162,13 @@ bool CallbackHandler::executeGraphCutsSegmentation(
     const double imLow = image->settings().componentStatistics(imComp).m_quantiles[10];
     const double imHigh = image->settings().componentStatistics(imComp).m_quantiles[990];
 
+// https://itk.org/Doxygen/html/classitk_1_1NoiseImageFilter.html
+
     auto weight = [this, &imLow, &imHigh] (double diff) -> double
     {
         const double amplitude = m_appData.settings().graphCutsWeightsAmplitude();
         const double sigma = m_appData.settings().graphCutsWeightsSigma();
-        const double diffNorm = ( diff - imLow ) / (imHigh - imLow);
+        const double diffNorm = (diff - imLow) / (imHigh - imLow);
 
         return amplitude * std::exp( -0.5 * std::pow( diffNorm / sigma, 2.0 ) );
     };

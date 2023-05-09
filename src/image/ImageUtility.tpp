@@ -605,19 +605,22 @@ bool writeImage(
 }
 
 
-template< class ComponentType >
-std::vector<ComponentType> createBuffer( const float* buffer, std::size_t numElements )
+template< typename SrcComponentType, typename DestComponentType >
+std::vector<DestComponentType> createBuffer( const SrcComponentType* buffer, std::size_t numElements )
 {
-    static constexpr float sk_lowestValue = static_cast<float>( std::numeric_limits<ComponentType>::lowest() );
-    static constexpr float sk_maximumValue = static_cast<float>( std::numeric_limits<ComponentType>::max() );
+    // Lowest and max values of destination component type, cast to source component type
+    static constexpr SrcComponentType sk_lowestValue = static_cast<SrcComponentType>(
+        std::numeric_limits<DestComponentType>::lowest() );
 
-    std::vector<ComponentType> data;
-    data.resize( numElements );
+    static constexpr SrcComponentType sk_maximumValue = static_cast<SrcComponentType>(
+        std::numeric_limits<DestComponentType>::max() );
 
-    // Clamp values to range [lowest, maximum] prior to cast:
+    std::vector<DestComponentType> data( numElements, 0 );
+
+    // Clamp values to destination range [lowest, maximum] prior to cast:
     for ( std::size_t i = 0; i < numElements; ++i )
     {
-        data[i] = static_cast<ComponentType>(
+        data[i] = static_cast<DestComponentType>(
             std::min( std::max( buffer[i], sk_lowestValue ), sk_maximumValue ) );
     }
 

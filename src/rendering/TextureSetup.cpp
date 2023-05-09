@@ -187,9 +187,9 @@ createImageTextures( const AppData& appData )
                         GLTexture::getBufferPixelNormalizedRedFormat( compType );
 
                 GLTexture& T = componentTextures.emplace_back(
-                            tex::Target::Texture3D,
-                            GLTexture::MultisampleSettings(),
-                            pixelPackSettings, pixelUnpackSettings );
+                    tex::Target::Texture3D,
+                    GLTexture::MultisampleSettings(),
+                    pixelPackSettings, pixelUnpackSettings );
 
                 T.generate();
                 T.setMinificationFilter( minFilter );
@@ -239,13 +239,13 @@ createDistanceMapTextures( const AppData& appData )
 
     // Use Red integer format for each distance map texture:
     const tex::SizedInternalFormat k_sizedInternalNormalizedFormat =
-            GLTexture::getSizedInternalRedFormat( sk_compType );
+        GLTexture::getSizedInternalRedFormat( sk_compType );
 
     // Use this for Red float format:
     // GLTexture::getSizedInternalNormalizedRedFormat( sk_compType );
 
     const tex::BufferPixelFormat k_bufferPixelNormalizedFormat =
-            GLTexture::getBufferPixelRedFormat( sk_compType );
+        GLTexture::getBufferPixelRedFormat( sk_compType );
 
     // Use this for Red float format:
     // GLTexture::getBufferPixelNormalizedRedFormat( sk_compType );
@@ -302,12 +302,12 @@ createDistanceMapTextures( const AppData& appData )
             }
 
             auto it = componentTextures.emplace(
-                        std::piecewise_construct,
-                        std::forward_as_tuple( comp ),
-                        std::forward_as_tuple(
-                            tex::Target::Texture3D,
-                            GLTexture::MultisampleSettings(),
-                            pixelPackSettings, pixelUnpackSettings ) );
+                std::piecewise_construct,
+                std::forward_as_tuple( comp ),
+                std::forward_as_tuple(
+                    tex::Target::Texture3D,
+                    GLTexture::MultisampleSettings(),
+                    pixelPackSettings, pixelUnpackSettings ) );
 
             const auto& mapSize = firstMap->GetLargestPossibleRegion().GetSize();
 
@@ -319,11 +319,11 @@ createDistanceMapTextures( const AppData& appData )
             it.first->second.setSize( glm::uvec3{ mapSize[0], mapSize[1], mapSize[2] } );
 
             it.first->second.setData(
-                        sk_mipmapLevel,
-                        k_sizedInternalNormalizedFormat,
-                        k_bufferPixelNormalizedFormat,
-                        GLTexture::getBufferPixelDataType( sk_compType ),
-                        static_cast<void*>( firstMap->GetBufferPointer() ) );
+                sk_mipmapLevel,
+                k_sizedInternalNormalizedFormat,
+                k_bufferPixelNormalizedFormat,
+                GLTexture::getBufferPixelDataType( sk_compType ),
+                static_cast<void*>( firstMap->GetBufferPointer() ) );
         }
 
         spdlog::debug( "Done creating {} distance map textures for image components",
@@ -381,10 +381,10 @@ createSegTextures( const AppData& appData )
         const ComponentType compType = seg->header().memoryComponentType();
 
         auto it = textures.try_emplace(
-                    segUid,
-                    tex::Target::Texture3D,
-                    GLTexture::MultisampleSettings(),
-                    pixelPackSettings, pixelUnpackSettings );
+            segUid,
+            tex::Target::Texture3D,
+            GLTexture::MultisampleSettings(),
+            pixelPackSettings, pixelUnpackSettings );
 
         if ( ! it.second ) continue;
         GLTexture& T = it.first->second;

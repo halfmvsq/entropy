@@ -40,6 +40,7 @@
 
 using ComponentIndexType = uint32_t;
 using DistanceMapType = typename itk::Image<uint8_t, 3>::Pointer;
+using NoiseEstimateType = typename itk::Image<float, 3>::Pointer;
 
 
 /**
@@ -134,6 +135,10 @@ public:
     bool addDistanceMap(
         const uuids::uuid& imageUid, ComponentIndexType component,
         DistanceMapType distanceMap, double boundaryIsoValue );
+
+    bool addNoiseEstimate(
+        const uuids::uuid& imageUid, ComponentIndexType component,
+        NoiseEstimateType noiseEstimate );
 
     /**
      * @brief Add an isosurface to an image component.
@@ -377,6 +382,9 @@ private:
 
         /// Distance maps for the component, keyed by boundary isosurface value
         std::map< double, DistanceMapType > m_distanceMaps;
+
+        /// Voxel-wise noise estimate of the image
+        NoiseEstimateType m_noiseEstimate;
 
         /// Isosurfaces for the component
         std::unordered_map< uuids::uuid, Isosurface > m_isosurfaces;

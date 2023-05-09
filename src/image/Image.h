@@ -47,10 +47,14 @@ public:
            ImageRepresentation imageRep,
            MultiComponentBufferType bufferType );
 
+    /**
+     * @brief Construct Image from a header and data array
+    */
     Image( const ImageHeader& header,
            std::string displayName,
            ImageRepresentation imageRep,
-           MultiComponentBufferType bufferType );
+           MultiComponentBufferType bufferType,
+           const void* imageData = nullptr );
 
     Image( const Image& ) = default;
     Image& operator=( const Image& ) = default;
@@ -200,10 +204,10 @@ public:
 private:
 
     /// Load a buffer as an image component
-    void loadImageBuffer( const float* buffer, std::size_t numElements );
+    bool loadImageBuffer( const float* buffer, std::size_t numElements );
 
     /// Load a buffer as a segmentation component
-    void loadSegBuffer( const float* buffer, std::size_t numElements );
+    bool loadSegBuffer( const float* buffer, std::size_t numElements );
 
     /// For a given image component and 3D pixel indices, return a pair consisting of:
     /// 1) component buffer to index

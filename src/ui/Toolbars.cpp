@@ -1194,7 +1194,7 @@ void renderSegToolbar(
 //                {
 //                    appData.settings().setGraphCutsWeightsSigma( sigma );
 //                }
-                if ( mySliderF64( "Std. dev.", &sigma, 0.0, 1.0 ) )
+                if ( mySliderF64( "Std. dev.", &sigma, 0.0, 0.05, "%.3f" ) )
                 {
                     appData.settings().setGraphCutsWeightsSigma( sigma );
                 }

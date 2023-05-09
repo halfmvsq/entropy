@@ -13,9 +13,9 @@
 
 
 Image::Image(
-        const std::string& fileName,
-        ImageRepresentation imageRep,
-        MultiComponentBufferType bufferType )
+    const std::string& fileName,
+    ImageRepresentation imageRep,
+    MultiComponentBufferType bufferType )
     :
       m_data_int8(),
       m_data_uint8(),
@@ -31,7 +31,7 @@ Image::Image(
       m_ioInfoOnDisk(),
       m_ioInfoInMemory()
 {
-    // Read all data from disk to an ITK image with float32 pixel components
+    // Read all data from disk to an ITK image with 32-bit floating point pixel components
     using ReadComponentType = float;
     using ComponentImageType = itk::Image<ReadComponentType, 3>;
 
@@ -73,7 +73,6 @@ Image::Image(
         if ( isVectorImage )
         {
             // Load multi-component image
-
             typename itk::ImageBase<3>::Pointer baseImage =
                     readImage<ReadComponentType, 3, true>( fileName );
 
@@ -160,11 +159,17 @@ Image::Image(
                 {
                     if ( ImageRepresentation::Segmentation == m_imageRep )
                     {
-                        loadSegBuffer( buffer, numPixels );
+                        if ( ! loadSegBuffer( buffer, numPixels ) )
+                        {
+                            throw_debug( "Error loading segmentation image buffer" )
+                        }
                     }
                     else
                     {
-                        loadImageBuffer( buffer, numPixels );
+                        if ( ! loadImageBuffer( buffer, numPixels ) )
+                        {
+                            throw_debug( "Error loading image buffer" )
+                        }
                     }
                     break;
                 }
@@ -189,11 +194,17 @@ Image::Image(
 
                 if ( ImageRepresentation::Segmentation == m_imageRep )
                 {
-                    loadSegBuffer( allComponentBuffers.get(), numElements );
+                    if ( ! loadSegBuffer( allComponentBuffers.get(), numElements ) )
+                    {
+                        throw_debug( "Error loading segmentation image buffer" )
+                    }
                 }
                 else
                 {
-                    loadImageBuffer( allComponentBuffers.get(), numElements );
+                    if ( !  loadImageBuffer( allComponentBuffers.get(), numElements ) )
+                    {
+                        throw_debug( "Error loading image buffer" )
+                    }
                 }
             }
         }
@@ -202,7 +213,7 @@ Image::Image(
             // Load scalar, single-component image
 
             typename itk::ImageBase<3>::Pointer baseImage =
-                    readImage<ReadComponentType, 3, false>( fileName );
+                readImage<ReadComponentType, 3, false>( fileName );
 
             if ( ! baseImage )
             {
@@ -211,7 +222,7 @@ Image::Image(
             }
 
             typename ComponentImageType::Pointer image =
-                    downcastImageBaseToImage<ReadComponentType, 3>( baseImage );
+                downcastImageBaseToImage<ReadComponentType, 3>( baseImage );
 
             if ( ! image )
             {
@@ -229,11 +240,17 @@ Image::Image(
 
             if ( ImageRepresentation::Segmentation == m_imageRep )
             {
-                loadSegBuffer( buffer, numPixels );
+                if ( ! loadSegBuffer( buffer, numPixels ) )
+                {
+                    throw_debug( "Error loading segmentation image buffer" )
+                }
             }
             else
             {
-                loadImageBuffer( buffer, numPixels );
+                if ( ! loadImageBuffer( buffer, numPixels ) )
+                {
+                    throw_debug( "Error loading image buffer" )
+                }
             }
 
             componentStats.emplace_back( computeImageStatistics<ReadComponentType, StatsType, 3>( image ) );
@@ -244,16 +261,16 @@ Image::Image(
             ( MultiComponentBufferType::InterleavedImage == m_bufferType ) );
 
         m_tx = ImageTransformations(
-                    m_header.pixelDimensions(),
-                    m_header.spacing(),
-                    m_header.origin(),
-                    m_header.directions() );
+            m_header.pixelDimensions(),
+            m_header.spacing(),
+            m_header.origin(),
+            m_header.directions() );
 
         m_settings = ImageSettings(
-                    getFileName( fileName, false ),
-                    m_header.numComponentsPerPixel(),
-                    m_header.memoryComponentType(),
-                    std::move( componentStats ) );
+            getFileName( fileName, false ),
+            m_header.numComponentsPerPixel(),
+            m_header.memoryComponentType(),
+            std::move( componentStats ) );
     }
     catch ( const std::exception& e )
     {
@@ -275,10 +292,11 @@ Image::Image(
 
 
 Image::Image(
-        const ImageHeader& header,
-        std::string displayName,
-        ImageRepresentation imageRep,
-        MultiComponentBufferType bufferType )
+    const ImageHeader& header,
+    std::string displayName,
+    ImageRepresentation imageRep,
+    MultiComponentBufferType bufferType,
+    const void* /*imageData*/ )
     :
       m_data_int8(),
       m_data_uint8(),
@@ -308,6 +326,7 @@ Image::Image(
     // Default buffer value
     static constexpr TempComponentType DEFAULT_VALUE = 0;
 
+    // The image does not exist on disk, but we need to fill this out anyway:
     m_ioInfoOnDisk.m_fileInfo.m_fileName = m_header.fileName();
     m_ioInfoOnDisk.m_componentInfo.m_componentType = toItkComponentType( m_header.memoryComponentType() );
     m_ioInfoOnDisk.m_componentInfo.m_componentTypeString = m_header.memoryComponentTypeAsString();
@@ -318,6 +337,7 @@ Image::Image(
     const std::size_t numComps = m_header.numComponentsPerPixel();
     const bool isVectorImage = ( numComps > 1 );
 
+    // Extract statistics of each image component into a vector
     std::vector< ComponentStats<StatsType> > componentStats;
 
     if ( isVectorImage )
@@ -361,11 +381,17 @@ Image::Image(
             {
                 if ( ImageRepresentation::Segmentation == m_imageRep )
                 {
-                    loadSegBuffer( buffer.data(), numPixels );
+                    if ( ! loadSegBuffer( buffer.data(), numPixels ) )
+                    {
+                        throw_debug( "Error loading segmentation image buffer" )
+                    }
                 }
                 else
                 {
-                    loadImageBuffer( buffer.data(), numPixels );
+                    if ( ! loadImageBuffer( buffer.data(), numPixels ) )
+                    {
+                        throw_debug( "Error loading image buffer" )
+                    }
                 }
             }
             break;
@@ -378,11 +404,17 @@ Image::Image(
 
             if ( ImageRepresentation::Segmentation == m_imageRep )
             {
-                loadSegBuffer( allComponentBuffers.data(), N );
+                if ( ! loadSegBuffer( allComponentBuffers.data(), N ) )
+                {
+                    throw_debug( "Error loading segmentation image buffer" )
+                }
             }
             else
             {
-                loadImageBuffer( allComponentBuffers.data(), N );
+                if ( ! loadImageBuffer( allComponentBuffers.data(), N ) )
+                {
+                    throw_debug( "Error loading image buffer" )
+                }
             }
             break;
         }
@@ -391,8 +423,8 @@ Image::Image(
         // Create default image statistics
         for ( std::size_t i = 0; i < numCompsToLoad; ++i )
         {
-            componentStats.emplace_back( createDefaultImageStatistics<TempComponentType, StatsType, 3>(
-                                             DEFAULT_VALUE, numPixels ) );
+            componentStats.emplace_back(
+                createDefaultImageStatistics<TempComponentType, StatsType, 3>( DEFAULT_VALUE, numPixels ) );
         }
     }
     else
@@ -402,16 +434,22 @@ Image::Image(
 
         if ( ImageRepresentation::Segmentation == m_imageRep )
         {
-            loadSegBuffer( buffer.data(), numPixels );
+            if ( ! loadSegBuffer( buffer.data(), numPixels ) )
+            {
+                throw_debug( "Error loading segmentation image buffer" )
+            }
         }
         else
         {
-            loadImageBuffer( buffer.data(), numPixels );
+            if ( ! loadImageBuffer( buffer.data(), numPixels ) )
+            {
+                throw_debug( "Error loading image buffer" )
+            }
         }
 
         // Create default image statistics
-        componentStats.emplace_back( createDefaultImageStatistics<TempComponentType, StatsType, 3>(
-                                         DEFAULT_VALUE, numPixels ) );
+        componentStats.emplace_back(
+            createDefaultImageStatistics<TempComponentType, StatsType, 3>( DEFAULT_VALUE, numPixels ) );
     }
 
     m_tx = ImageTransformations(
@@ -434,7 +472,7 @@ Image::Image(
 }
 
 
-void Image::loadImageBuffer( const float* buffer, std::size_t numElements )
+bool Image::loadImageBuffer( const float* buffer, std::size_t numElements )
 {
     using CType = ::itk::ImageIOBase::IOComponentType;
 
@@ -443,18 +481,18 @@ void Image::loadImageBuffer( const float* buffer, std::size_t numElements )
 
     switch ( m_ioInfoOnDisk.m_componentInfo.m_componentType )
     {
-    case CType::UCHAR:  m_data_uint8.emplace_back( createBuffer<uint8_t>( buffer, numElements ) ); break;
-    case CType::CHAR:   m_data_int8.emplace_back( createBuffer<int8_t>( buffer, numElements ) ); break;
-    case CType::USHORT: m_data_uint16.emplace_back( createBuffer<uint16_t>( buffer, numElements ) ); break;
-    case CType::SHORT:  m_data_int16.emplace_back( createBuffer<int16_t>( buffer, numElements ) ); break;
-    case CType::UINT:   m_data_uint32.emplace_back( createBuffer<uint32_t>( buffer, numElements ) ); break;
-    case CType::INT:    m_data_int32.emplace_back( createBuffer<int32_t>( buffer, numElements ) ); break;
-    case CType::FLOAT:  m_data_float32.emplace_back( createBuffer<float>( buffer, numElements ) ); break;
+    case CType::UCHAR:  m_data_uint8.emplace_back( createBuffer<float, uint8_t>( buffer, numElements ) ); break;
+    case CType::CHAR:   m_data_int8.emplace_back( createBuffer<float, int8_t>( buffer, numElements ) ); break;
+    case CType::USHORT: m_data_uint16.emplace_back( createBuffer<float, uint16_t>( buffer, numElements ) ); break;
+    case CType::SHORT:  m_data_int16.emplace_back( createBuffer<float, int16_t>( buffer, numElements ) ); break;
+    case CType::UINT:   m_data_uint32.emplace_back( createBuffer<float, uint32_t>( buffer, numElements ) ); break;
+    case CType::INT:    m_data_int32.emplace_back( createBuffer<float, int32_t>( buffer, numElements ) ); break;
+    case CType::FLOAT:  m_data_float32.emplace_back( createBuffer<float, float>( buffer, numElements ) ); break;
 
     case CType::ULONG:
     case CType::ULONGLONG:
     {
-        m_data_uint32.emplace_back( createBuffer<uint32_t>( buffer, numElements ) );
+        m_data_uint32.emplace_back( createBuffer<float, uint32_t>( buffer, numElements ) );
         m_ioInfoInMemory.m_componentInfo.m_componentType = CType::UINT;
         m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes = 4;
 
@@ -466,7 +504,7 @@ void Image::loadImageBuffer( const float* buffer, std::size_t numElements )
     case CType::LONG:
     case CType::LONGLONG:
     {
-        m_data_int32.emplace_back( createBuffer<int32_t>( buffer, numElements ) );
+        m_data_int32.emplace_back( createBuffer<float, int32_t>( buffer, numElements ) );
         m_ioInfoInMemory.m_componentInfo.m_componentType = CType::INT;
         m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes = 4;
 
@@ -478,7 +516,7 @@ void Image::loadImageBuffer( const float* buffer, std::size_t numElements )
     case CType::DOUBLE:
     case CType::LDOUBLE:
     {
-        m_data_float32.emplace_back( createBuffer<float>( buffer, numElements ) );
+        m_data_float32.emplace_back( createBuffer<float, float>( buffer, numElements ) );
         m_ioInfoInMemory.m_componentInfo.m_componentType = CType::FLOAT;
         m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes = 4;
 
@@ -490,34 +528,37 @@ void Image::loadImageBuffer( const float* buffer, std::size_t numElements )
     case CType::UNKNOWNCOMPONENTTYPE:
     {
         spdlog::error( "Unknown component type in image from file '{}'", m_ioInfoOnDisk.m_fileInfo.m_fileName );
-        throw_debug( "Unknown component type in image" )
-        }
+        return false;
+    }
     }
 
     if ( didCast )
     {
         const std::string newTypeString = itk::ImageIOBase::GetComponentTypeAsString(
-                    m_ioInfoInMemory.m_componentInfo.m_componentType );
+            m_ioInfoInMemory.m_componentInfo.m_componentType );
 
         m_ioInfoInMemory.m_componentInfo.m_componentTypeString = newTypeString;
 
         m_ioInfoInMemory.m_sizeInfo.m_imageSizeInBytes =
-                numElements * m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes;
+            numElements * m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes;
 
         spdlog::info( "Cast image pixel component from type {} to {}",
                       m_ioInfoOnDisk.m_componentInfo.m_componentTypeString, newTypeString );
 
         if ( warnSizeConversion )
         {
-            spdlog::warn( "Size conversion: "
-                          "Possible loss of information when casting image pixel component from type {} to {}",
-                          m_ioInfoOnDisk.m_componentInfo.m_componentTypeString, newTypeString );
+            spdlog::warn(
+                "Size conversion: "
+                "Possible loss of information when casting image pixel component from type {} to {}",
+                m_ioInfoOnDisk.m_componentInfo.m_componentTypeString, newTypeString );
         }
     }
+
+    return true;
 }
 
 
-void Image::loadSegBuffer( const float* buffer, std::size_t numElements )
+bool Image::loadSegBuffer( const float* buffer, std::size_t numElements )
 {
     using CType = ::itk::ImageIOBase::IOComponentType;
 
@@ -531,24 +572,24 @@ void Image::loadSegBuffer( const float* buffer, std::size_t numElements )
     // No casting is needed for the cases of unsigned integers with 8, 16, or 32 bytes:
     case CType::UCHAR:
     {
-        m_data_uint8.emplace_back( createBuffer<uint8_t>( buffer, numElements ) );
+        m_data_uint8.emplace_back( createBuffer<float, uint8_t>( buffer, numElements ) );
         break;
     }
     case CType::USHORT:
     {
-        m_data_uint16.emplace_back( createBuffer<uint16_t>( buffer, numElements ) );
+        m_data_uint16.emplace_back( createBuffer<float, uint16_t>( buffer, numElements ) );
         break;
     }
     case CType::UINT:
     {
-        m_data_uint32.emplace_back( createBuffer<uint32_t>( buffer, numElements ) );
+        m_data_uint32.emplace_back( createBuffer<float, uint32_t>( buffer, numElements ) );
         break;
     }
 
     // Signed 8-, 16-, and 32-bit integers are cast to unsigned 8-, 16-, and 32-bit integers:
     case CType::CHAR:
     {
-        m_data_uint8.emplace_back( createBuffer<uint8_t>( buffer, numElements ) );
+        m_data_uint8.emplace_back( createBuffer<float, uint8_t>( buffer, numElements ) );
         m_ioInfoInMemory.m_componentInfo.m_componentType = CType::UCHAR;
         m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes = 1;
 
@@ -558,7 +599,7 @@ void Image::loadSegBuffer( const float* buffer, std::size_t numElements )
     }
     case CType::SHORT:
     {
-        m_data_uint16.emplace_back( createBuffer<uint16_t>( buffer, numElements ) );
+        m_data_uint16.emplace_back( createBuffer<float, uint16_t>( buffer, numElements ) );
         m_ioInfoInMemory.m_componentInfo.m_componentType = CType::USHORT;
         m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes = 2;
 
@@ -568,7 +609,7 @@ void Image::loadSegBuffer( const float* buffer, std::size_t numElements )
     }
     case CType::INT:
     {
-        m_data_uint32.emplace_back( createBuffer<uint32_t>( buffer, numElements ) );
+        m_data_uint32.emplace_back( createBuffer<float, uint32_t>( buffer, numElements ) );
         m_ioInfoInMemory.m_componentInfo.m_componentType = CType::UINT;
         m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes = 4;
 
@@ -581,7 +622,7 @@ void Image::loadSegBuffer( const float* buffer, std::size_t numElements )
     case CType::ULONG:
     case CType::ULONGLONG:
     {
-        m_data_uint32.emplace_back( createBuffer<uint32_t>( buffer, numElements ) );
+        m_data_uint32.emplace_back( createBuffer<float, uint32_t>( buffer, numElements ) );
         m_ioInfoInMemory.m_componentInfo.m_componentType = CType::UINT;
         m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes = 4;
 
@@ -594,7 +635,7 @@ void Image::loadSegBuffer( const float* buffer, std::size_t numElements )
     case CType::LONG:
     case CType::LONGLONG:
     {
-        m_data_uint32.emplace_back( createBuffer<uint32_t>( buffer, numElements ) );
+        m_data_uint32.emplace_back( createBuffer<float, uint32_t>( buffer, numElements ) );
         m_ioInfoInMemory.m_componentInfo.m_componentType = CType::UINT;
         m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes = 4;
 
@@ -609,7 +650,7 @@ void Image::loadSegBuffer( const float* buffer, std::size_t numElements )
     case CType::DOUBLE:
     case CType::LDOUBLE:
     {
-        m_data_uint32.emplace_back( createBuffer<uint32_t>( buffer, numElements ) );
+        m_data_uint32.emplace_back( createBuffer<float, uint32_t>( buffer, numElements ) );
         m_ioInfoInMemory.m_componentInfo.m_componentType = CType::UINT;
         m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes = 4;
 
@@ -622,45 +663,51 @@ void Image::loadSegBuffer( const float* buffer, std::size_t numElements )
     case CType::UNKNOWNCOMPONENTTYPE:
     {
         spdlog::error( "Unknown component type in image from file '{}'", m_ioInfoOnDisk.m_fileInfo.m_fileName );
-        throw_debug( "Unknown component type in image" )
-        }
+        return false;
+    }
     }
 
     if ( didCast )
     {
         const std::string newTypeString = itk::ImageIOBase::GetComponentTypeAsString(
-                    m_ioInfoInMemory.m_componentInfo.m_componentType );
+            m_ioInfoInMemory.m_componentInfo.m_componentType );
 
         m_ioInfoInMemory.m_componentInfo.m_componentTypeString = newTypeString;
 
         m_ioInfoInMemory.m_sizeInfo.m_imageSizeInBytes =
-                numElements * m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes;
+            numElements * m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes;
 
-        spdlog::info( "Casted segmentation '{}' pixel component from type {} to {}",
-                      m_ioInfoOnDisk.m_fileInfo.m_fileName,
-                      m_ioInfoOnDisk.m_componentInfo.m_componentTypeString, newTypeString );
+        spdlog::info(
+            "Casted segmentation '{}' pixel component from type {} to {}",
+            m_ioInfoOnDisk.m_fileInfo.m_fileName,
+            m_ioInfoOnDisk.m_componentInfo.m_componentTypeString, newTypeString );
 
         if ( warnFloatConversion )
         {
-            spdlog::warn( "Floating point to integer conversion: "
-                          "Possible loss of precision and information when casting segmentation pixel component from type {} to {}",
-                          m_ioInfoOnDisk.m_componentInfo.m_componentTypeString, newTypeString );
+            spdlog::warn(
+                "Floating point to integer conversion: "
+                "Possible loss of precision and information when casting segmentation pixel component from type {} to {}",
+                m_ioInfoOnDisk.m_componentInfo.m_componentTypeString, newTypeString );
         }
 
         if ( warnSizeConversion )
         {
-            spdlog::warn( "Size conversion: "
-                          "Possible loss of information when casting segmentation pixel component from type {} to {}",
-                          m_ioInfoOnDisk.m_componentInfo.m_componentTypeString, newTypeString );
+            spdlog::warn(
+                "Size conversion: "
+                "Possible loss of information when casting segmentation pixel component from type {} to {}",
+                m_ioInfoOnDisk.m_componentInfo.m_componentTypeString, newTypeString );
         }
 
         if ( warnSignConversion )
         {
-            spdlog::warn( "Signed to unsigned integer conversion: "
-                          "Possible loss of information when casting segmentation pixel component from type {} to {}",
-                          m_ioInfoOnDisk.m_componentInfo.m_componentTypeString, newTypeString );
+            spdlog::warn(
+                "Signed to unsigned integer conversion: "
+                "Possible loss of information when casting segmentation pixel component from type {} to {}",
+                m_ioInfoOnDisk.m_componentInfo.m_componentTypeString, newTypeString );
         }
     }
+
+    return true;
 }
 
 
