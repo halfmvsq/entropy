@@ -577,10 +577,17 @@ std::optional<uuids::uuid> EntropyApp::createBlankSeg(
     segHeader.setFileName( "<unsaved>" );
     segHeader.adjustToScalarUCharFormat();
 
+    // Data buffer for component 0 of segmentation
+    const std::vector<float> buffer( segHeader.numPixels(), 0.0f );
+
+    // Vector holding the buffer
+    const std::vector<const float*> imageData{ buffer.data() };
+
     Image seg( segHeader,
                segDisplayName,
                Image::ImageRepresentation::Segmentation,
-               Image::MultiComponentBufferType::SeparateImages );
+               Image::MultiComponentBufferType::SeparateImages,
+               imageData );
 
     seg.setHeaderOverrides( matchImg->getHeaderOverrides() );
 

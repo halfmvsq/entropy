@@ -51,6 +51,8 @@ public:
     uint32_t numComponentsPerPixel() const; //!< Number of components per pixel
     uint64_t numPixels() const; //!< Number of pixels in the image
 
+    void setNumComponentsPerPixel( uint32_t numComponents );
+
     uint64_t fileImageSizeInBytes() const; //!< Image size in bytes (in file)
     uint64_t memoryImageSizeInBytes() const; //!< Image size in bytes (in memory)
 
@@ -104,7 +106,7 @@ private:
     void setSpace( const ImageIoInfo& ioInfo );
     void setBoundingBox();
 
-    /// Hold onto the original image information
+    /// Hold onto the original image information, even though these get never be retrieved by the client
     ImageIoInfo m_ioInfoOnDisk;
     ImageIoInfo m_ioInfoInMemory;
 

@@ -39,6 +39,255 @@
 #define DEBUG_IMAGE_OUTPUT 0
 
 
+
+
+template< class T >
+typename itk::Image<T, 3>::Pointer makeScalarImage(
+    const std::array<uint32_t, 3>& imageDims,
+    const std::array<double, 3>& imageOrigin,
+    const std::array<double, 3>& imageSpacing,
+    const std::array< std::array<double, 3>, 3 >&  imageDirection,
+    const T* imageData )
+{
+    using ImportFilterType = itk::ImportImageFilter<T, 3>;
+
+    if ( ! imageData )
+    {
+        spdlog::error( "Null data array provided when creating new scalar image" );
+        return nullptr;
+    }
+
+    constexpr bool filterOwnsBuffer = false;
+
+    typename ImportFilterType::IndexType start;
+    typename ImportFilterType::SizeType size;
+    typename ImportFilterType::DirectionType direction;
+
+    itk::SpacePrecisionType origin[3];
+    itk::SpacePrecisionType spacing[3];
+
+    for ( uint32_t i = 0; i < 3; ++i )
+    {
+        start[i] = 0.0;
+        size[i] = imageDims[i];
+        origin[i] = imageOrigin[i];
+        spacing[i] = imageSpacing[i];
+
+        for ( uint32_t j = 0; j < 3; ++j )
+        {
+            direction[i][j] = imageDirection[i][j];
+        }
+    }
+
+    const std::size_t numPixels = size[0] * size[1] * size[2];
+
+    if ( 0 == numPixels )
+    {
+        spdlog::error( "Cannot create new scalar image with size zero" );
+        return nullptr;
+    }
+
+    typename  ImportFilterType::RegionType region;
+    region.SetIndex( start );
+    region.SetSize( size );
+
+    try
+    {
+        typename ImportFilterType::Pointer importer = ImportFilterType::New();
+        importer->SetRegion( region );
+        importer->SetOrigin( origin );
+        importer->SetSpacing( spacing );
+        importer->SetDirection( direction );
+        importer->SetImportPointer( const_cast<T*>( imageData ), numPixels, filterOwnsBuffer );
+        importer->Update();
+
+        return importer->GetOutput();
+    }
+    catch ( const std::exception& e )
+    {
+        spdlog::error( "Exception creating new ITK scalar image from data array: {}", e.what() );
+        return nullptr;
+    }
+}
+
+
+/**
+ * @brief Create a scalar ITK image from an image component
+ *
+ * @tparam T Component type of output image
+ * @param[in] image Image
+ * @param[in] component Image component
+ *
+ * @return Scalar ITK image of the component
+ */
+template< class T >
+typename itk::Image<T, 3>::Pointer createItkImageFromImageComponent(
+    const Image& image, uint32_t component )
+{
+    using OutputImageType = itk::Image<T, 3>;
+
+    const ImageHeader& header = image.header();
+
+    if ( component >= header.numComponentsPerPixel() )
+    {
+        spdlog::error( "Invalid image component {} to convert to ITK image; image has only {} components",
+                      component, header.numComponentsPerPixel() );
+        return nullptr;
+    }
+
+    std::array< uint32_t, 3 > dims;
+    std::array< double, 3 > origin;
+    std::array< double, 3 > spacing;
+    std::array< std::array<double, 3>, 3 > directions;
+
+    for ( uint32_t i = 0; i < 3; ++i )
+    {
+        const int ii = static_cast<int>(i);
+
+        dims[i] = header.pixelDimensions()[ii];
+        origin[i] = static_cast<double>( header.origin()[ii] );
+        spacing[i] = static_cast<double>( header.spacing()[ii] );
+
+        directions[i] = {
+            static_cast<double>( header.directions()[ii].x ),
+            static_cast<double>( header.directions()[ii].y ),
+            static_cast<double>( header.directions()[ii].z )
+        };
+    }
+
+    switch ( header.memoryComponentType() )
+    {
+    case ComponentType::Int8:
+    {
+        using S = int8_t;
+        using InputImageType = itk::Image<S, 3>;
+        using FilterType = itk::CastImageFilter< InputImageType, OutputImageType >;
+        typename FilterType::Pointer caster = FilterType::New();
+
+        InputImageType::Pointer compImage = makeScalarImage(
+            dims, origin, spacing, directions,
+            reinterpret_cast<const S*>( image.bufferAsVoid( component ) ) );
+
+        if ( ! compImage ) return nullptr;
+
+        caster->SetInput( compImage );
+        caster->Update();
+        return caster->GetOutput();
+    }
+    case ComponentType::UInt8:
+    {
+        using S = uint8_t;
+        using InputImageType = itk::Image<S, 3>;
+        using FilterType = itk::CastImageFilter< InputImageType, OutputImageType >;
+        typename FilterType::Pointer caster = FilterType::New();
+
+        InputImageType::Pointer compImage = makeScalarImage(
+            dims, origin, spacing, directions,
+            reinterpret_cast<const S*>( image.bufferAsVoid( component ) ) );
+
+        if ( ! compImage ) return nullptr;
+
+        caster->SetInput( compImage );
+        caster->Update();
+        return caster->GetOutput();
+    }
+    case ComponentType::Int16:
+    {
+        using S = int16_t;
+        using InputImageType = itk::Image<S, 3>;
+        using FilterType = itk::CastImageFilter< InputImageType, OutputImageType >;
+        typename FilterType::Pointer caster = FilterType::New();
+
+        InputImageType::Pointer compImage = makeScalarImage(
+            dims, origin, spacing, directions,
+            reinterpret_cast<const S*>( image.bufferAsVoid( component ) ) );
+
+        if ( ! compImage ) return nullptr;
+
+        caster->SetInput( compImage );
+        caster->Update();
+        return caster->GetOutput();
+    }
+    case ComponentType::UInt16:
+    {
+        using S = uint16_t;
+        using InputImageType = itk::Image<S, 3>;
+        using FilterType = itk::CastImageFilter< InputImageType, OutputImageType >;
+        typename FilterType::Pointer caster = FilterType::New();
+
+        InputImageType::Pointer compImage = makeScalarImage(
+            dims, origin, spacing, directions,
+            reinterpret_cast<const S*>( image.bufferAsVoid( component ) ) );
+
+        if ( ! compImage ) return nullptr;
+
+        caster->SetInput( compImage );
+        caster->Update();
+        return caster->GetOutput();
+    }
+    case ComponentType::Int32:
+    {
+        using S = int32_t;
+        using InputImageType = itk::Image<S, 3>;
+        using FilterType = itk::CastImageFilter< InputImageType, OutputImageType >;
+        typename FilterType::Pointer caster = FilterType::New();
+
+        InputImageType::Pointer compImage = makeScalarImage(
+            dims, origin, spacing, directions,
+            reinterpret_cast<const S*>( image.bufferAsVoid( component ) ) );
+
+        if ( ! compImage ) return nullptr;
+
+        caster->SetInput( compImage );
+        caster->Update();
+        return caster->GetOutput();
+    }
+    case ComponentType::UInt32:
+    {
+        using S = uint32_t;
+        using InputImageType = itk::Image<S, 3>;
+        using FilterType = itk::CastImageFilter< InputImageType, OutputImageType >;
+        typename FilterType::Pointer caster = FilterType::New();
+
+        InputImageType::Pointer compImage = makeScalarImage(
+            dims, origin, spacing, directions,
+            reinterpret_cast<const S*>( image.bufferAsVoid( component ) ) );
+
+        if ( ! compImage ) return nullptr;
+
+        caster->SetInput( compImage );
+        caster->Update();
+        return caster->GetOutput();
+    }
+    case ComponentType::Float32:
+    {
+        using S = float;
+        using InputImageType = itk::Image<S, 3>;
+        using FilterType = itk::CastImageFilter< InputImageType, OutputImageType >;
+        typename FilterType::Pointer caster = FilterType::New();
+
+        InputImageType::Pointer compImage = makeScalarImage(
+            dims, origin, spacing, directions,
+            reinterpret_cast<const S*>( image.bufferAsVoid( component ) ) );
+
+        if ( ! compImage ) return nullptr;
+
+        caster->SetInput( compImage );
+        caster->Update();
+        return caster->GetOutput();
+    }
+    default:
+    {
+        spdlog::error( "Invalid image component type '{}' upon conversion of component to ITK image",
+                      header.memoryComponentTypeAsString() );
+        return nullptr;
+    }
+    }
+
+    return nullptr;
+}
+
+
 /**
  * @brief Compute statistics on one component of an image
  * @tparam T Image component type
@@ -119,7 +368,72 @@ ComponentStats<U> computeImageStatistics( const typename itk::Image<T, NDim>::Po
 }
 
 
-template< typename T, typename U, uint32_t NDim >
+template< typename T >
+std::vector< ComponentStats<T> > computeImageStatistics( const Image& image )
+{
+    std::vector< ComponentStats<T> > componentStats;
+
+    for ( uint32_t i = 0; i < image.header().numComponentsPerPixel(); ++i )
+    {
+        switch ( image.header().memoryComponentType() )
+        {
+        case ComponentType::Int8:
+        {
+            componentStats.emplace_back( computeImageStatistics<int8_t, T, 3>(
+                createItkImageFromImageComponent<int8_t>( image, i ) ) );
+            break;
+        }
+        case ComponentType::UInt8:
+        {
+            componentStats.emplace_back( computeImageStatistics<uint8_t, T, 3>(
+                createItkImageFromImageComponent<uint8_t>( image, i ) ) );
+            break;
+        }
+        case ComponentType::Int16:
+        {
+            componentStats.emplace_back( computeImageStatistics<int16_t, T, 3>(
+                createItkImageFromImageComponent<int16_t>( image, i ) ) );
+            break;
+        }
+        case ComponentType::UInt16:
+        {
+            componentStats.emplace_back( computeImageStatistics<uint16_t, T, 3>(
+                createItkImageFromImageComponent<uint16_t>( image, i ) ) );
+            break;
+        }
+        case ComponentType::Int32:
+        {
+            componentStats.emplace_back( computeImageStatistics<int32_t, T, 3>(
+                createItkImageFromImageComponent<int32_t>( image, i ) ) );
+            break;
+        }
+        case ComponentType::UInt32:
+        {
+            componentStats.emplace_back( computeImageStatistics<uint32_t, T, 3>(
+                createItkImageFromImageComponent<uint32_t>( image, i ) ) );
+            break;
+        }
+        case ComponentType::Float32:
+        {
+            componentStats.emplace_back( computeImageStatistics<float, T, 3>(
+                createItkImageFromImageComponent<float>( image, i ) ) );
+            break;
+        }
+        default:
+        {
+            spdlog::error( "Invalid component type '{}'",
+                componentTypeString( image.header().memoryComponentType() ) );
+
+            throw_debug( "Invalid component type" );
+        }
+        }
+    }
+
+    return componentStats;
+}
+
+
+template< typename T, typename U >
 ComponentStats<U> createDefaultImageStatistics( T defaultValue, std::size_t numPixels )
 {
     static constexpr std::size_t sk_numBins = 101;
@@ -260,76 +574,6 @@ splitImageIntoComponents( const typename ::itk::ImageBase<NDim>::Pointer& imageB
 }
 
 
-template< class T >
-typename itk::Image<T, 3>::Pointer makeScalarImage(
-    const std::array<uint32_t, 3>& imageDims,
-    const std::array<double, 3>& imageOrigin,
-    const std::array<double, 3>& imageSpacing,
-    const std::array< std::array<double, 3>, 3 >&  imageDirection,
-    const T* imageData )
-{
-    using ImportFilterType = itk::ImportImageFilter<T, 3>;
-
-    if ( ! imageData )
-    {
-        spdlog::error( "Null data array provided when creating new scalar image" );
-        return nullptr;
-    }
-
-    constexpr bool filterOwnsBuffer = false;
-
-    typename ImportFilterType::IndexType start;
-    typename ImportFilterType::SizeType size;
-    typename ImportFilterType::DirectionType direction;
-
-    itk::SpacePrecisionType origin[3];
-    itk::SpacePrecisionType spacing[3];
-
-    for ( uint32_t i = 0; i < 3; ++i )
-    {
-        start[i] = 0.0;
-        size[i] = imageDims[i];
-        origin[i] = imageOrigin[i];
-        spacing[i] = imageSpacing[i];
-
-        for ( uint32_t j = 0; j < 3; ++j )
-        {
-            direction[i][j] = imageDirection[i][j];
-        }
-    }
-
-    const std::size_t numPixels = size[0] * size[1] * size[2];
-
-    if ( 0 == numPixels )
-    {
-        spdlog::error( "Cannot create new scalar image with size zero" );
-        return nullptr;
-    }
-
-    typename  ImportFilterType::RegionType region;
-    region.SetIndex( start );
-    region.SetSize( size );
-
-    try
-    {
-        typename ImportFilterType::Pointer importer = ImportFilterType::New();
-        importer->SetRegion( region );
-        importer->SetOrigin( origin );
-        importer->SetSpacing( spacing );
-        importer->SetDirection( direction );
-        importer->SetImportPointer( const_cast<T*>( imageData ), numPixels, filterOwnsBuffer );
-        importer->Update();
-
-        return importer->GetOutput();
-    }
-    catch ( const std::exception& e )
-    {
-        spdlog::error( "Exception creating new ITK scalar image from data array: {}", e.what() );
-        return nullptr;
-    }
-}
-
-
 /**
  * @brief Create an Entropy image from an ITK image
  *
@@ -344,193 +588,17 @@ typename itk::Image<T, 3>::Pointer makeScalarImage(
  */
 template< class T >
 Image createImageFromItkImage(
-    const typename itk::Image<T, 3>::Pointer /*itkImage*/,
+    const typename itk::Image<T, 3>::Pointer itkImage,
     const std::string& displayName )
 {
     ImageHeader header;
 
     Image image( header, displayName,
                  Image::ImageRepresentation::Image,
-                 Image::MultiComponentBufferType::SeparateImages );
+                 Image::MultiComponentBufferType::SeparateImages,
+                 static_cast<void*>( itkImage->GetBufferPointer() ) );
 
     return image;
-}
-
-
-/**
- * @brief Create a scalar ITK image from an image component
- *
- * @tparam T Component type of output image
- * @param[in] image Image
- * @param[in] component Image component
- *
- * @return Scalar ITK image of the component
- */
-template< class T >
-typename itk::Image<T, 3>::Pointer createItkImageFromImageComponent(
-    const Image& image, uint32_t component )
-{
-    using OutputImageType = itk::Image<T, 3>;
-
-    const ImageHeader& header = image.header();
-
-    if ( component >= header.numComponentsPerPixel() )
-    {
-        spdlog::error( "Invalid image component {} to convert to ITK image; image has only {} components",
-                       component, header.numComponentsPerPixel() );
-        return nullptr;
-    }
-
-    std::array< uint32_t, 3 > dims;
-    std::array< double, 3 > origin;
-    std::array< double, 3 > spacing;
-    std::array< std::array<double, 3>, 3 > directions;
-
-    for ( uint32_t i = 0; i < 3; ++i )
-    {
-        const int ii = static_cast<int>(i);
-
-        dims[i] = header.pixelDimensions()[ii];
-        origin[i] = static_cast<double>( header.origin()[ii] );
-        spacing[i] = static_cast<double>( header.spacing()[ii] );
-
-        directions[i] = {
-            static_cast<double>( header.directions()[ii].x ),
-            static_cast<double>( header.directions()[ii].y ),
-            static_cast<double>( header.directions()[ii].z )
-        };
-    }
-
-    switch ( header.memoryComponentType() )
-    {
-    case ComponentType::Int8:
-    {
-        using S = int8_t;
-        using InputImageType = itk::Image<S, 3>;
-        using FilterType = itk::CastImageFilter< InputImageType, OutputImageType >;
-        typename FilterType::Pointer caster = FilterType::New();
-
-        InputImageType::Pointer compImage = makeScalarImage(
-                    dims, origin, spacing, directions,
-                    reinterpret_cast<const S*>( image.bufferAsVoid( component ) ) );
-
-        if ( ! compImage ) return nullptr;
-
-        caster->SetInput( compImage );
-        caster->Update();
-        return caster->GetOutput();
-    }
-    case ComponentType::UInt8:
-    {
-        using S = uint8_t;
-        using InputImageType = itk::Image<S, 3>;
-        using FilterType = itk::CastImageFilter< InputImageType, OutputImageType >;
-        typename FilterType::Pointer caster = FilterType::New();
-
-        InputImageType::Pointer compImage = makeScalarImage(
-                    dims, origin, spacing, directions,
-                    reinterpret_cast<const S*>( image.bufferAsVoid( component ) ) );
-
-        if ( ! compImage ) return nullptr;
-
-        caster->SetInput( compImage );
-        caster->Update();
-        return caster->GetOutput();
-    }
-    case ComponentType::Int16:
-    {
-        using S = int16_t;
-        using InputImageType = itk::Image<S, 3>;
-        using FilterType = itk::CastImageFilter< InputImageType, OutputImageType >;
-        typename FilterType::Pointer caster = FilterType::New();
-
-        InputImageType::Pointer compImage = makeScalarImage(
-                    dims, origin, spacing, directions,
-                    reinterpret_cast<const S*>( image.bufferAsVoid( component ) ) );
-
-        if ( ! compImage ) return nullptr;
-
-        caster->SetInput( compImage );
-        caster->Update();
-        return caster->GetOutput();
-    }
-    case ComponentType::UInt16:
-    {
-        using S = uint16_t;
-        using InputImageType = itk::Image<S, 3>;
-        using FilterType = itk::CastImageFilter< InputImageType, OutputImageType >;
-        typename FilterType::Pointer caster = FilterType::New();
-
-        InputImageType::Pointer compImage = makeScalarImage(
-                    dims, origin, spacing, directions,
-                    reinterpret_cast<const S*>( image.bufferAsVoid( component ) ) );
-
-        if ( ! compImage ) return nullptr;
-
-        caster->SetInput( compImage );
-        caster->Update();
-        return caster->GetOutput();
-    }
-    case ComponentType::Int32:
-    {
-        using S = int32_t;
-        using InputImageType = itk::Image<S, 3>;
-        using FilterType = itk::CastImageFilter< InputImageType, OutputImageType >;
-        typename FilterType::Pointer caster = FilterType::New();
-
-        InputImageType::Pointer compImage = makeScalarImage(
-                    dims, origin, spacing, directions,
-                    reinterpret_cast<const S*>( image.bufferAsVoid( component ) ) );
-
-        if ( ! compImage ) return nullptr;
-
-        caster->SetInput( compImage );
-        caster->Update();
-        return caster->GetOutput();
-    }
-    case ComponentType::UInt32:
-    {
-        using S = uint32_t;
-        using InputImageType = itk::Image<S, 3>;
-        using FilterType = itk::CastImageFilter< InputImageType, OutputImageType >;
-        typename FilterType::Pointer caster = FilterType::New();
-
-        InputImageType::Pointer compImage = makeScalarImage(
-                    dims, origin, spacing, directions,
-                    reinterpret_cast<const S*>( image.bufferAsVoid( component ) ) );
-
-        if ( ! compImage ) return nullptr;
-
-        caster->SetInput( compImage );
-        caster->Update();
-        return caster->GetOutput();
-    }
-    case ComponentType::Float32:
-    {
-        using S = float;
-        using InputImageType = itk::Image<S, 3>;
-        using FilterType = itk::CastImageFilter< InputImageType, OutputImageType >;
-        typename FilterType::Pointer caster = FilterType::New();
-
-        InputImageType::Pointer compImage = makeScalarImage(
-                    dims, origin, spacing, directions,
-                    reinterpret_cast<const S*>( image.bufferAsVoid( component ) ) );
-
-        if ( ! compImage ) return nullptr;
-
-        caster->SetInput( compImage );
-        caster->Update();
-        return caster->GetOutput();
-    }
-    default:
-    {
-        spdlog::error( "Invalid image component type '{}' upon conversion of component to ITK image",
-                       header.memoryComponentTypeAsString() );
-        return nullptr;
-    }
-    }
-
-    return nullptr;
 }
 
 

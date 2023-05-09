@@ -50,13 +50,23 @@ public:
            MultiComponentBufferType bufferType );
 
     /**
-     * @brief Construct Image from a header and data array
+     * @brief
     */
-    Image( const ImageHeader& header,
-           std::string displayName,
-           ImageRepresentation imageRep,
-           MultiComponentBufferType bufferType,
-           const void* imageData = nullptr );
+    /**
+     * @brief Construct Image from a header and data array
+     * @param header
+     * @param displayName
+     * @param imageRep
+     * @param bufferType
+     * @param imageDataComponents Must match the format specified in \c bufferType
+     * If the components are interleaved, then component 0 holds all buffers
+     */
+    Image(
+        const ImageHeader& header,
+        std::string displayName,
+        ImageRepresentation imageRep,
+        MultiComponentBufferType bufferType,
+        const std::vector<const float*> imageDataComponents );
 
     Image( const Image& ) = default;
     Image& operator=( const Image& ) = default;
@@ -234,13 +244,13 @@ private:
 
         switch ( m_ioInfoOnDisk.m_componentInfo.m_componentType )
         {
-        case CType::UCHAR:  m_data_uint8.emplace_back( createBuffer<SrcBufferCompType, uint8_t>( buffer, numElements ) ); break;
-        case CType::CHAR:   m_data_int8.emplace_back( createBuffer<SrcBufferCompType, int8_t>( buffer, numElements ) ); break;
+        case CType::UCHAR: m_data_uint8.emplace_back( createBuffer<SrcBufferCompType, uint8_t>( buffer, numElements ) ); break;
+        case CType::CHAR: m_data_int8.emplace_back( createBuffer<SrcBufferCompType, int8_t>( buffer, numElements ) ); break;
         case CType::USHORT: m_data_uint16.emplace_back( createBuffer<SrcBufferCompType, uint16_t>( buffer, numElements ) ); break;
-        case CType::SHORT:  m_data_int16.emplace_back( createBuffer<SrcBufferCompType, int16_t>( buffer, numElements ) ); break;
-        case CType::UINT:   m_data_uint32.emplace_back( createBuffer<SrcBufferCompType, uint32_t>( buffer, numElements ) ); break;
-        case CType::INT:    m_data_int32.emplace_back( createBuffer<SrcBufferCompType, int32_t>( buffer, numElements ) ); break;
-        case CType::FLOAT:  m_data_float32.emplace_back( createBuffer<SrcBufferCompType, float>( buffer, numElements ) ); break;
+        case CType::SHORT: m_data_int16.emplace_back( createBuffer<SrcBufferCompType, int16_t>( buffer, numElements ) ); break;
+        case CType::UINT: m_data_uint32.emplace_back( createBuffer<SrcBufferCompType, uint32_t>( buffer, numElements ) ); break;
+        case CType::INT: m_data_int32.emplace_back( createBuffer<SrcBufferCompType, int32_t>( buffer, numElements ) ); break;
+        case CType::FLOAT: m_data_float32.emplace_back( createBuffer<SrcBufferCompType, float>( buffer, numElements ) ); break;
 
         case CType::ULONG:
         case CType::ULONGLONG:

@@ -10,6 +10,15 @@
 #include <sstream>
 
 
+namespace
+{
+
+// Default source component type and value
+using DefaultSrcComponentType = float;
+
+}
+
+
 Image::Image(
     const std::string& fileName,
     ImageRepresentation imageRep,
@@ -58,14 +67,10 @@ Image::Image(
 
     const std::size_t numPixels = m_ioInfoOnDisk.m_sizeInfo.m_imageSizeInPixels;
     const std::size_t numComps = m_ioInfoOnDisk.m_pixelInfo.m_numComponents;
-
     const bool isVectorImage = ( numComps > 1 );
 
     spdlog::info( "Attempting to load image from '{}' with {} pixels and {} components per pixel",
                   fileName, numPixels, numComps );
-
-    // Extract statistics of each image component into a vector
-    std::vector< ComponentStats<StatsType> > componentStats;
 
     if ( isVectorImage )
     {
@@ -110,6 +115,9 @@ Image::Image(
                           fileName, numComps );
             numCompsToLoad = 1;
         }
+
+        // Adjust the number of components in the image header
+        m_header.setNumComponentsPerPixel( numCompsToLoad );
 
         if ( 0 == numCompsToLoad )
         {
@@ -180,9 +188,6 @@ Image::Image(
                 break;
             }
             }
-
-            componentStats.emplace_back(
-                computeImageStatistics<ReadComponentType, StatsType, 3>( componentImages[i] ) );
         }
 
         if ( MultiComponentBufferType::InterleavedImage == m_bufferType )
@@ -250,8 +255,6 @@ Image::Image(
                 throw_debug( "Error loading image buffer" )
             }
         }
-
-        componentStats.emplace_back( computeImageStatistics<ReadComponentType, StatsType, 3>( image ) );
     }
 
     m_header = ImageHeader(
@@ -260,12 +263,12 @@ Image::Image(
     m_tx = ImageTransformations(
         m_header.pixelDimensions(), m_header.spacing(), m_header.origin(), m_header.directions() );
 
-    m_settings = ImageSettings(
-        getFileName( fileName, false ), m_header.numComponentsPerPixel(),
-        m_header.memoryComponentType(), std::move( componentStats ) );
-
     m_headerOverrides = ImageHeaderOverrides(
         m_header.pixelDimensions(), m_header.spacing(), m_header.origin(), m_header.directions() );
+
+    m_settings = ImageSettings(
+        getFileName( fileName, false ), m_header.numComponentsPerPixel(),
+        m_header.memoryComponentType(), computeImageStatistics<StatsType>( *this ) );
 }
 
 
@@ -274,35 +277,35 @@ Image::Image(
     std::string displayName,
     ImageRepresentation imageRep,
     MultiComponentBufferType bufferType,
-    const void* /*imageData*/ )
+    const std::vector<const float*> imageDataComponents )
     :
-      m_data_int8(),
-      m_data_uint8(),
-      m_data_int16(),
-      m_data_uint16(),
-      m_data_int32(),
-      m_data_uint32(),
-      m_data_float32(),
+    m_data_int8(),
+    m_data_uint8(),
+    m_data_int16(),
+    m_data_uint16(),
+    m_data_int32(),
+    m_data_uint32(),
+    m_data_float32(),
 
-      m_imageRep( std::move(imageRep) ),
-      m_bufferType( std::move(bufferType) ),
+    m_imageRep( std::move(imageRep) ),
+    m_bufferType( std::move(bufferType) ),
 
-      m_ioInfoOnDisk(),
-      m_ioInfoInMemory(),
+    m_ioInfoOnDisk(),
+    m_ioInfoInMemory(),
 
-      m_header( header )
+    m_header( header )
 {
-    // Temporary buffer component type
-    using TempComponentType = float;
-
     // Statistics per component are stored as double
     using StatsType = double;
 
     // Maximum number of components to create for images with interleaved buffers
     static constexpr std::size_t MAX_COMPS = 4;
 
-    // Default buffer value
-    static constexpr TempComponentType DEFAULT_VALUE = 0;
+    if ( imageDataComponents.empty() )
+    {
+        spdlog::error( "No image data buffers provided for constructing Image" );
+        throw_debug( "No image data buffers provided for constructing Image" );
+    }
 
     // The image does not exist on disk, but we need to fill this out anyway:
     m_ioInfoOnDisk.m_fileInfo.m_fileName = m_header.fileName();
@@ -314,9 +317,6 @@ Image::Image(
     const std::size_t numPixels = m_header.numPixels();
     const std::size_t numComps = m_header.numComponentsPerPixel();
     const bool isVectorImage = ( numComps > 1 );
-
-    // Extract statistics of each image component into a vector
-    std::vector< ComponentStats<StatsType> > componentStats;
 
     if ( isVectorImage )
     {
@@ -348,25 +348,33 @@ Image::Image(
             throw_debug( "No components to create for image" )
         }
 
+        // Adjust the number of components in the image header
+        m_header.setNumComponentsPerPixel( numCompsToLoad );
+
+
         switch ( m_bufferType )
         {
         case MultiComponentBufferType::SeparateImages:
         {
-            // Create a buffer for each component and load each separately:
-            const std::vector<TempComponentType> buffer( numPixels, DEFAULT_VALUE );
+            // Load each component separately:
+            if ( imageDataComponents.size() < m_header.numComponentsPerPixel() )
+            {
+                spdlog::error( "Insufficient number of image data buffers provided: {}", imageDataComponents.size() );
+                throw_debug( "Insufficient number of image data buffers were provided" );
+            }
 
-            for ( std::size_t c = 0; c < numCompsToLoad; ++c )
+            for ( std::size_t c = 0; c < m_header.numComponentsPerPixel(); ++c )
             {
                 if ( ImageRepresentation::Segmentation == m_imageRep )
                 {
-                    if ( ! loadSegBuffer<TempComponentType>( buffer.data(), numPixels ) )
+                    if ( ! loadSegBuffer<DefaultSrcComponentType>( imageDataComponents[c], numPixels ) )
                     {
                         throw_debug( "Error loading segmentation image buffer" )
                     }
                 }
                 else
                 {
-                    if ( ! loadImageBuffer<TempComponentType>( buffer.data(), numPixels ) )
+                    if ( ! loadImageBuffer<DefaultSrcComponentType>( imageDataComponents[c], numPixels ) )
                     {
                         throw_debug( "Error loading image buffer" )
                     }
@@ -376,20 +384,19 @@ Image::Image(
         }
         case MultiComponentBufferType::InterleavedImage:
         {
-            // Create a single buffer with interleaved components and load it once:
+            // Load a single buffer with interleaved components:
             const std::size_t N = numPixels * numComps;
-            const std::vector<TempComponentType> allComponentBuffers( N, DEFAULT_VALUE );
 
             if ( ImageRepresentation::Segmentation == m_imageRep )
             {
-                if ( ! loadSegBuffer<TempComponentType>( allComponentBuffers.data(), N ) )
+                if ( ! loadSegBuffer<DefaultSrcComponentType>( imageDataComponents[0], N ) )
                 {
                     throw_debug( "Error loading segmentation image buffer" )
                 }
             }
             else
             {
-                if ( ! loadImageBuffer<TempComponentType>( allComponentBuffers.data(), N ) )
+                if ( ! loadImageBuffer<DefaultSrcComponentType>( imageDataComponents[0], N ) )
                 {
                     throw_debug( "Error loading image buffer" )
                 }
@@ -397,48 +404,34 @@ Image::Image(
             break;
         }
         }
-
-        // Create default image statistics
-        for ( std::size_t i = 0; i < numCompsToLoad; ++i )
-        {
-            componentStats.emplace_back(
-                createDefaultImageStatistics<TempComponentType, StatsType, 3>( DEFAULT_VALUE, numPixels ) );
-        }
     }
     else
     {
-        // Create a scalar, single-component image
-        const std::vector<TempComponentType> buffer( numPixels, DEFAULT_VALUE );
-
         if ( ImageRepresentation::Segmentation == m_imageRep )
         {
-            if ( ! loadSegBuffer<TempComponentType>( buffer.data(), numPixels ) )
+            if ( ! loadSegBuffer<DefaultSrcComponentType>( imageDataComponents[0], numPixels ) )
             {
                 throw_debug( "Error loading segmentation image buffer" )
             }
         }
         else
         {
-            if ( ! loadImageBuffer<TempComponentType>( buffer.data(), numPixels ) )
+            if ( ! loadImageBuffer<DefaultSrcComponentType>( imageDataComponents[0], numPixels ) )
             {
                 throw_debug( "Error loading image buffer" )
             }
         }
-
-        // Create default image statistics
-        componentStats.emplace_back(
-            createDefaultImageStatistics<TempComponentType, StatsType, 3>( DEFAULT_VALUE, numPixels ) );
     }
 
     m_tx = ImageTransformations(
         m_header.pixelDimensions(), m_header.spacing(), m_header.origin(), m_header.directions() );
 
-    m_settings = ImageSettings(
-        std::move( displayName ), m_header.numComponentsPerPixel(),
-        m_header.memoryComponentType(), std::move( componentStats ) );
-
     m_headerOverrides = ImageHeaderOverrides(
         m_header.pixelDimensions(), m_header.spacing(), m_header.origin(), m_header.directions() );
+
+    m_settings = ImageSettings(
+        std::move( displayName ), m_header.numComponentsPerPixel(),
+        m_header.memoryComponentType(), computeImageStatistics<StatsType>( *this ) );
 }
 
 

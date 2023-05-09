@@ -194,6 +194,23 @@ void ImageHeader::setFileName( std::string fileName ) { m_fileName = std::move( 
 uint32_t ImageHeader::numComponentsPerPixel() const { return m_numComponentsPerPixel; }
 uint64_t ImageHeader::numPixels() const { return m_numPixels; }
 
+void ImageHeader::setNumComponentsPerPixel( uint32_t numComponents )
+{
+    if ( 0 == numComponents )
+    {
+        spdlog::error( "Unable to set number of image components to {}", numComponents );
+        return;
+    }
+
+    m_numComponentsPerPixel = numComponents;
+
+    m_fileImageSizeInBytes = m_fileComponentSizeInBytes * m_numComponentsPerPixel * m_numPixels;
+    m_memoryImageSizeInBytes = m_memoryComponentSizeInBytes * m_numComponentsPerPixel * m_numPixels;
+
+    /// @note \c m_ioInfoInMemoryhas not been updated. It is never retrieved by the client or used later.
+    /// m_ioInfoInMemory.m_pixelInfo.m_numComponents = m_numComponentsPerPixel;
+}
+
 uint64_t ImageHeader::fileImageSizeInBytes() const { return m_fileImageSizeInBytes; }
 uint64_t ImageHeader::memoryImageSizeInBytes() const { return m_memoryImageSizeInBytes; }
 
