@@ -1183,14 +1183,18 @@ void renderSegToolbar(
                 double amplitude = appData.settings().graphCutsWeightsAmplitude();
                 double sigma = appData.settings().graphCutsWeightsSigma();
 
-                if ( ImGui::InputScalar( "Amplitude", ImGuiDataType_Double, &amplitude ) )
+                if ( ImGui::InputScalar( "Amplitude", ImGuiDataType_Double, &amplitude, nullptr, nullptr, "%.3f" ) )
                 {
                     appData.settings().setGraphCutsWeightsAmplitude( amplitude );
                 }
                 ImGui::SameLine(); helpMarker( "Amplitude" );
 
                 /// @todo Sigma should be based on noise in image or intensity of edges...
-                if ( ImGui::InputScalar( "Sigma", ImGuiDataType_Double, &sigma ) )
+//                if ( ImGui::InputScalar( "Sigma", ImGuiDataType_Double, &sigma ) )
+//                {
+//                    appData.settings().setGraphCutsWeightsSigma( sigma );
+//                }
+                if ( mySliderF64( "Std. dev.", &sigma, 0.0, 1.0 ) )
                 {
                     appData.settings().setGraphCutsWeightsSigma( sigma );
                 }

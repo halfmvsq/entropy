@@ -22,7 +22,7 @@ AppSettings::AppSettings()
       m_brushSizeInMm( 1.0f ),
 
       m_graphCutsWeightsAmplitude( 1.0 ),
-      m_graphCutsWeightsSigma( 1.0 ),
+      m_graphCutsWeightsSigma( 0.1 ),
       m_graphCutsNeighborhood( GraphCutsNeighborhoodType::Neighbors6 ),
 
       m_crosshairsMoveWhileAnnotating( false ),

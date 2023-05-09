@@ -159,12 +159,16 @@ bool CallbackHandler::executeGraphCutsSegmentation(
     const VoxelDistances voxelDists = computeVoxelDistances(
         image->header().spacing(), true );
 
-    auto weight = [this] (double diff) -> double
+    const double imLow = image->settings().componentStatistics(imComp).m_quantiles[10];
+    const double imHigh = image->settings().componentStatistics(imComp).m_quantiles[990];
+
+    auto weight = [this, &imLow, &imHigh] (double diff) -> double
     {
         const double amplitude = m_appData.settings().graphCutsWeightsAmplitude();
         const double sigma = m_appData.settings().graphCutsWeightsSigma();
+        const double diffNorm = ( diff - imLow ) / (imHigh - imLow);
 
-        return amplitude * std::exp( -0.5 * std::pow(diff / sigma, 2.0) );
+        return amplitude * std::exp( -0.5 * std::pow( diffNorm / sigma, 2.0 ) );
     };
 
     auto getImageWeight = [&weight, &image, &imComp]

@@ -416,6 +416,7 @@ set( ENTROPY_SOURCES
     ${SRC_DIR}/logic/interaction/events/ButtonState.cpp
 
     ${SRC_DIR}/logic/segmentation/GraphCuts.cpp
+    ${SRC_DIR}/logic/segmentation/Poisson.cpp
 
     ${SRC_DIR}/logic/serialization/ProjectSerialization.cpp
 

@@ -99,7 +99,7 @@ private:
 
     /* Begin Graph Cuts weights variables */
     double m_graphCutsWeightsAmplitude; //!< Multiplier in front of exponential
-    double m_graphCutsWeightsSigma; //!< Standard deviation in exponential
+    double m_graphCutsWeightsSigma; //!< Standard deviation in exponential, assuming image normalized as [1%, 99%] -> [0, 1]
     GraphCutsNeighborhoodType m_graphCutsNeighborhood; //!< Neighboorhood used for constructing graph
     /* End Graph Cuts weights variables */
 
