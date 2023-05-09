@@ -605,29 +605,6 @@ bool writeImage(
 }
 
 
-template< typename SrcComponentType, typename DestComponentType >
-std::vector<DestComponentType> createBuffer( const SrcComponentType* buffer, std::size_t numElements )
-{
-    // Lowest and max values of destination component type, cast to source component type
-    static constexpr SrcComponentType sk_lowestValue = static_cast<SrcComponentType>(
-        std::numeric_limits<DestComponentType>::lowest() );
-
-    static constexpr SrcComponentType sk_maximumValue = static_cast<SrcComponentType>(
-        std::numeric_limits<DestComponentType>::max() );
-
-    std::vector<DestComponentType> data( numElements, 0 );
-
-    // Clamp values to destination range [lowest, maximum] prior to cast:
-    for ( std::size_t i = 0; i < numElements; ++i )
-    {
-        data[i] = static_cast<DestComponentType>(
-            std::min( std::max( buffer[i], sk_lowestValue ), sk_maximumValue ) );
-    }
-
-    return data;
-}
-
-
 /**
  * @brief Compute the signed distance transformation to the boundary of an image.
  * -Voxels inside of the boundary are defined to have negative distance,

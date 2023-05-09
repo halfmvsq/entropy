@@ -4,8 +4,6 @@
 
 #include "common/Exception.hpp"
 
-#include <spdlog/spdlog.h>
-
 #include <algorithm>
 #include <array>
 #include <memory>
@@ -41,253 +39,233 @@ Image::Image(
     // Maximum number of components to load for images with interleaved buffer components
     static constexpr std::size_t MAX_COMPS = 4;
 
-    try
+    const itk::ImageIOBase::Pointer imageIo = createStandardImageIo( fileName.c_str() );
+
+    if ( ! imageIo || imageIo.IsNull() )
     {
-        const itk::ImageIOBase::Pointer imageIo = createStandardImageIo( fileName.c_str() );
+        spdlog::error( "Error creating ImageIOBase for image from file '{}'", fileName );
+        throw_debug( "Error creating ImageIOBase" )
+    }
 
-        if ( ! imageIo || imageIo.IsNull() )
+    if ( ! m_ioInfoOnDisk.set( imageIo ) )
+    {
+        spdlog::error( "Error setting image IO information for image from file '{}'", fileName );
+        throw_debug( "Error setting image IO information" )
+    }
+
+    // The image information in memory may not match the information on disk
+    m_ioInfoInMemory = m_ioInfoOnDisk;
+
+    const std::size_t numPixels = m_ioInfoOnDisk.m_sizeInfo.m_imageSizeInPixels;
+    const std::size_t numComps = m_ioInfoOnDisk.m_pixelInfo.m_numComponents;
+
+    const bool isVectorImage = ( numComps > 1 );
+
+    spdlog::info( "Attempting to load image from '{}' with {} pixels and {} components per pixel",
+                  fileName, numPixels, numComps );
+
+    // Extract statistics of each image component into a vector
+    std::vector< ComponentStats<StatsType> > componentStats;
+
+    if ( isVectorImage )
+    {
+        // Load multi-component image
+        typename itk::ImageBase<3>::Pointer baseImage = readImage<ReadComponentType, 3, true>( fileName );
+
+        if ( ! baseImage )
         {
-            spdlog::error( "Error creating ImageIOBase for image from file '{}'", fileName );
-            throw_debug( "Error creating ImageIOBase" )
+            spdlog::error( "Unable to read vector ImageBase from file '{}'", fileName );
+            throw_debug( "Unable to read vector image" )
         }
 
-        if ( ! m_ioInfoOnDisk.set( imageIo ) )
+        // Split the base image into component images. Load a maximum of MAX_COMPS components
+        // for an image with interleaved component buffers.
+        std::size_t numCompsToLoad = numComps;
+
+        if ( MultiComponentBufferType::InterleavedImage == m_bufferType )
         {
-            spdlog::error( "Error setting image IO information for image from file '{}'", fileName );
-            throw_debug( "Error setting image IO information" )
+            numCompsToLoad = std::min( numCompsToLoad, MAX_COMPS );
+
+            if ( numComps > MAX_COMPS )
+            {
+                spdlog::warn( "The number of image components ({}) exceeds that maximum that will be loaded ({}) "
+                              "because this image uses interleaved buffer format", numComps, MAX_COMPS );
+            }
         }
 
-        // The image information in memory may not match the information on disk
-        m_ioInfoInMemory = m_ioInfoOnDisk;
+        std::vector< typename ComponentImageType::Pointer > componentImages =
+            splitImageIntoComponents<ReadComponentType, 3>( baseImage );
 
-        const std::size_t numPixels = m_ioInfoOnDisk.m_sizeInfo.m_imageSizeInPixels;
-        const std::size_t numComps = m_ioInfoOnDisk.m_pixelInfo.m_numComponents;
-        const bool isVectorImage = ( numComps > 1 );
-
-        spdlog::info( "Attempting to load image from '{}' with {} pixels and {} components per pixel",
-                      fileName, numPixels, numComps );
-
-        // Extract statistics of each image component into a vector
-        std::vector< ComponentStats<StatsType> > componentStats;
-
-        if ( isVectorImage )
+        if ( componentImages.size() < numCompsToLoad )
         {
-            // Load multi-component image
-            typename itk::ImageBase<3>::Pointer baseImage =
-                    readImage<ReadComponentType, 3, true>( fileName );
+            spdlog::error( "Only {} component images were loaded, but {} components were expected",
+                           componentImages.size(), numCompsToLoad );
+            numCompsToLoad = componentImages.size();
+        }
 
-            if ( ! baseImage )
+        if ( ImageRepresentation::Segmentation == m_imageRep )
+        {
+            spdlog::warn( "Loading a segmentation image from '{}' with {} components. "
+                          "Only the first component of the segmentation will be used",
+                          fileName, numComps );
+            numCompsToLoad = 1;
+        }
+
+        if ( 0 == numCompsToLoad )
+        {
+            spdlog::error( "No components to load for image from file '{}'", fileName );
+            throw_debug( "No components to load for image" )
+        }
+
+        // If interleaving vector components, then create a single buffer
+        std::unique_ptr<ReadComponentType[]> allComponentBuffers = nullptr;
+
+        if ( MultiComponentBufferType::InterleavedImage == m_bufferType )
+        {
+            allComponentBuffers = std::make_unique<ReadComponentType[]>( numPixels * numCompsToLoad );
+
+            if ( ! allComponentBuffers )
             {
-                spdlog::error( "Unable to read vector image from file '{}'", fileName );
-                throw_debug( "Unable to read vector image" )
+                spdlog::error( "Null buffer holding all components of image from file '{}'", fileName );
+                throw_debug( "Null image buffer" )
+            }
+        }
+
+        // Load the buffers from the component images
+        for ( std::size_t i = 0; i < numCompsToLoad; ++i )
+        {
+            if ( ! componentImages[i] )
+            {
+                spdlog::error( "Null vector image component {} for image from file '{}'", i, fileName );
+                throw_debug( "Null vector component for image" )
             }
 
-            // Split the base image into component images. Load a maximum of MAX_COMPS components
-            // for an image with interleaved component buffers.
-            std::size_t numCompsToLoad = numComps;
+            const ReadComponentType* buffer = componentImages[i]->GetBufferPointer();
 
-            if ( MultiComponentBufferType::InterleavedImage == m_bufferType )
+            if ( ! buffer )
             {
-                numCompsToLoad = std::min( numCompsToLoad, MAX_COMPS );
-
-                if ( numComps > MAX_COMPS )
-                {
-                    spdlog::warn( "The number of image components ({}) exceeds that maximum that will be loaded ({}) "
-                                  "because this image uses interleaved buffer format", numComps, MAX_COMPS );
-                }
+                spdlog::error( "Null buffer of vector image component {} for image from file '{}'", i, fileName );
+                throw_debug( "Null buffer of vector image component" )
             }
 
-            std::vector< typename ComponentImageType::Pointer > componentImages =
-                splitImageIntoComponents<ReadComponentType, 3>( baseImage );
-
-            if ( componentImages.size() < numCompsToLoad )
+            switch ( m_bufferType )
             {
-                spdlog::error( "Only {} component images were loaded, but {} components were expected",
-                               componentImages.size(), numCompsToLoad );
-
-                numCompsToLoad = componentImages.size();
-            }
-
-            if ( ImageRepresentation::Segmentation == m_imageRep )
+            case MultiComponentBufferType::SeparateImages:
             {
-                spdlog::warn( "Loading a segmentation image from '{}' with {} components. "
-                              "Only the first component of the segmentation will be used",
-                              fileName, numComps );
-                numCompsToLoad = 1;
-            }
-
-            if ( 0 == numCompsToLoad )
-            {
-                spdlog::error( "No components to load for image from file '{}'", fileName );
-                throw_debug( "No components to load for image" )
-            }
-
-            // If interleaving vector components, then create a single buffer
-            std::unique_ptr<ReadComponentType[]> allComponentBuffers = nullptr;
-
-            if ( MultiComponentBufferType::InterleavedImage == m_bufferType )
-            {
-                allComponentBuffers = std::make_unique<ReadComponentType[]>( numPixels * numCompsToLoad );
-
-                if ( ! allComponentBuffers )
-                {
-                    spdlog::error( "Null buffer holding all components of image from file '{}'", fileName );
-                    throw_debug( "Null image buffer" )
-                }
-            }
-
-            // Load the buffers from the component images
-            for ( std::size_t i = 0; i < numCompsToLoad; ++i )
-            {
-                if ( ! componentImages[i] )
-                {
-                    spdlog::error( "Null vector image component {} for image from file '{}'", i, fileName );
-                    throw_debug( "Null vector component for image" )
-                }
-
-                const ReadComponentType* buffer = componentImages[i]->GetBufferPointer();
-
-                if ( ! buffer )
-                {
-                    spdlog::error( "Null buffer of vector image component {} for image from file '{}'", i, fileName );
-                    throw_debug( "Null buffer of vector image component" )
-                }
-
-                switch ( m_bufferType )
-                {
-                case MultiComponentBufferType::SeparateImages:
-                {
-                    if ( ImageRepresentation::Segmentation == m_imageRep )
-                    {
-                        if ( ! loadSegBuffer( buffer, numPixels ) )
-                        {
-                            throw_debug( "Error loading segmentation image buffer" )
-                        }
-                    }
-                    else
-                    {
-                        if ( ! loadImageBuffer( buffer, numPixels ) )
-                        {
-                            throw_debug( "Error loading image buffer" )
-                        }
-                    }
-                    break;
-                }
-                case MultiComponentBufferType::InterleavedImage:
-                {
-                    // Fill the interleaved buffer
-                    for ( std::size_t p = 0; p < numPixels; ++p )
-                    {
-                        allComponentBuffers[numComps*p + i] = buffer[p];
-                    }
-                    break;
-                }
-                }
-
-                componentStats.emplace_back(
-                            computeImageStatistics<ReadComponentType, StatsType, 3>( componentImages[i] ) );
-            }
-
-            if ( MultiComponentBufferType::InterleavedImage == m_bufferType )
-            {
-                const std::size_t numElements = numPixels * numComps;
-
                 if ( ImageRepresentation::Segmentation == m_imageRep )
                 {
-                    if ( ! loadSegBuffer( allComponentBuffers.get(), numElements ) )
+                    if ( ! loadSegBuffer<ReadComponentType>( buffer, numPixels ) )
                     {
+                        spdlog::error( "Error loading segmentation image buffer for file '{}'", fileName );
                         throw_debug( "Error loading segmentation image buffer" )
                     }
                 }
                 else
                 {
-                    if ( !  loadImageBuffer( allComponentBuffers.get(), numElements ) )
+                    if ( ! loadImageBuffer<ReadComponentType>( buffer, numPixels ) )
                     {
+                        spdlog::error( "Error loading image buffer for file '{}'", fileName );
                         throw_debug( "Error loading image buffer" )
                     }
                 }
+                break;
             }
+            case MultiComponentBufferType::InterleavedImage:
+            {
+                // Fill the interleaved buffer
+                for ( std::size_t p = 0; p < numPixels; ++p )
+                {
+                    allComponentBuffers[numComps*p + i] = buffer[p];
+                }
+                break;
+            }
+            }
+
+            componentStats.emplace_back(
+                computeImageStatistics<ReadComponentType, StatsType, 3>( componentImages[i] ) );
         }
-        else
+
+        if ( MultiComponentBufferType::InterleavedImage == m_bufferType )
         {
-            // Load scalar, single-component image
-
-            typename itk::ImageBase<3>::Pointer baseImage =
-                readImage<ReadComponentType, 3, false>( fileName );
-
-            if ( ! baseImage )
-            {
-                spdlog::error( "Unable to read image from file '{}'", fileName );
-                throw_debug( "Unable to read image" )
-            }
-
-            typename ComponentImageType::Pointer image =
-                downcastImageBaseToImage<ReadComponentType, 3>( baseImage );
-
-            if ( ! image )
-            {
-                spdlog::error( "Null image for file '{}'", fileName );
-                throw_debug( "Null image" )
-            }
-
-            const ReadComponentType* buffer = image->GetBufferPointer();
-
-            if ( ! buffer )
-            {
-                spdlog::error( "Null buffer of scalar image from file '{}'", fileName );
-                throw_debug( "Null buffer of scalar image" )
-            }
+            const std::size_t numElements = numPixels * numComps;
 
             if ( ImageRepresentation::Segmentation == m_imageRep )
             {
-                if ( ! loadSegBuffer( buffer, numPixels ) )
+                if ( ! loadSegBuffer<ReadComponentType>( allComponentBuffers.get(), numElements ) )
                 {
+                    spdlog::error( "Error loading segmentation image buffer for file '{}'", fileName );
                     throw_debug( "Error loading segmentation image buffer" )
                 }
             }
             else
             {
-                if ( ! loadImageBuffer( buffer, numPixels ) )
+                if ( ! loadImageBuffer<ReadComponentType>( allComponentBuffers.get(), numElements ) )
                 {
+                    spdlog::error( "Error loading image buffer for file '{}'", fileName );
                     throw_debug( "Error loading image buffer" )
                 }
             }
+        }
+    }
+    else
+    {
+        // Load scalar, single-component image
+        typename itk::ImageBase<3>::Pointer baseImage = readImage<ReadComponentType, 3, false>( fileName );
 
-            componentStats.emplace_back( computeImageStatistics<ReadComponentType, StatsType, 3>( image ) );
+        if ( ! baseImage )
+        {
+            spdlog::error( "Unable to read ImageBase from file '{}'", fileName );
+            throw_debug( "Unable to read image" )
         }
 
-        m_header = ImageHeader(
-            m_ioInfoOnDisk, m_ioInfoInMemory,
-            ( MultiComponentBufferType::InterleavedImage == m_bufferType ) );
+        typename ComponentImageType::Pointer image = downcastImageBaseToImage<ReadComponentType, 3>( baseImage );
 
-        m_tx = ImageTransformations(
-            m_header.pixelDimensions(),
-            m_header.spacing(),
-            m_header.origin(),
-            m_header.directions() );
+        if ( ! image )
+        {
+            spdlog::error( "Null image for file '{}' following downcast from ImageBase", fileName );
+            throw_debug( "Null image" )
+        }
 
-        m_settings = ImageSettings(
-            getFileName( fileName, false ),
-            m_header.numComponentsPerPixel(),
-            m_header.memoryComponentType(),
-            std::move( componentStats ) );
+        const ReadComponentType* buffer = image->GetBufferPointer();
+
+        if ( ! buffer )
+        {
+            spdlog::error( "Null buffer of scalar image from file '{}'", fileName );
+            throw_debug( "Null buffer of scalar image" )
+        }
+
+        if ( ImageRepresentation::Segmentation == m_imageRep )
+        {
+            if ( ! loadSegBuffer<ReadComponentType>( buffer, numPixels ) )
+            {
+                spdlog::error( "Error loading segmentation image buffer for file '{}'", fileName );
+                throw_debug( "Error loading segmentation image buffer" )
+            }
+        }
+        else
+        {
+            if ( ! loadImageBuffer<ReadComponentType>( buffer, numPixels ) )
+            {
+                spdlog::error( "Error loading image buffer for file '{}'", fileName );
+                throw_debug( "Error loading image buffer" )
+            }
+        }
+
+        componentStats.emplace_back( computeImageStatistics<ReadComponentType, StatsType, 3>( image ) );
     }
-    catch ( const std::exception& e )
-    {
-        spdlog::error( "Exception while constructing image from file '{}': {}", fileName, e.what() );
-        throw_debug( "Exception while constructing image" )
-    }
-    catch ( ... )
-    {
-        spdlog::error( "Exception while constructing image from file '{}'", fileName );
-        throw_debug( "Exception while constructing image" )
-    }
+
+    m_header = ImageHeader(
+        m_ioInfoOnDisk, m_ioInfoInMemory, ( MultiComponentBufferType::InterleavedImage == m_bufferType ) );
+
+    m_tx = ImageTransformations(
+        m_header.pixelDimensions(), m_header.spacing(), m_header.origin(), m_header.directions() );
+
+    m_settings = ImageSettings(
+        getFileName( fileName, false ), m_header.numComponentsPerPixel(),
+        m_header.memoryComponentType(), std::move( componentStats ) );
 
     m_headerOverrides = ImageHeaderOverrides(
-        m_header.pixelDimensions(),
-        m_header.spacing(),
-        m_header.origin(),
-        m_header.directions() );
+        m_header.pixelDimensions(), m_header.spacing(), m_header.origin(), m_header.directions() );
 }
 
 
@@ -381,14 +359,14 @@ Image::Image(
             {
                 if ( ImageRepresentation::Segmentation == m_imageRep )
                 {
-                    if ( ! loadSegBuffer( buffer.data(), numPixels ) )
+                    if ( ! loadSegBuffer<TempComponentType>( buffer.data(), numPixels ) )
                     {
                         throw_debug( "Error loading segmentation image buffer" )
                     }
                 }
                 else
                 {
-                    if ( ! loadImageBuffer( buffer.data(), numPixels ) )
+                    if ( ! loadImageBuffer<TempComponentType>( buffer.data(), numPixels ) )
                     {
                         throw_debug( "Error loading image buffer" )
                     }
@@ -404,14 +382,14 @@ Image::Image(
 
             if ( ImageRepresentation::Segmentation == m_imageRep )
             {
-                if ( ! loadSegBuffer( allComponentBuffers.data(), N ) )
+                if ( ! loadSegBuffer<TempComponentType>( allComponentBuffers.data(), N ) )
                 {
                     throw_debug( "Error loading segmentation image buffer" )
                 }
             }
             else
             {
-                if ( ! loadImageBuffer( allComponentBuffers.data(), N ) )
+                if ( ! loadImageBuffer<TempComponentType>( allComponentBuffers.data(), N ) )
                 {
                     throw_debug( "Error loading image buffer" )
                 }
@@ -434,14 +412,14 @@ Image::Image(
 
         if ( ImageRepresentation::Segmentation == m_imageRep )
         {
-            if ( ! loadSegBuffer( buffer.data(), numPixels ) )
+            if ( ! loadSegBuffer<TempComponentType>( buffer.data(), numPixels ) )
             {
                 throw_debug( "Error loading segmentation image buffer" )
             }
         }
         else
         {
-            if ( ! loadImageBuffer( buffer.data(), numPixels ) )
+            if ( ! loadImageBuffer<TempComponentType>( buffer.data(), numPixels ) )
             {
                 throw_debug( "Error loading image buffer" )
             }
@@ -453,261 +431,14 @@ Image::Image(
     }
 
     m_tx = ImageTransformations(
-        m_header.pixelDimensions(),
-        m_header.spacing(),
-        m_header.origin(),
-        m_header.directions() );
+        m_header.pixelDimensions(), m_header.spacing(), m_header.origin(), m_header.directions() );
 
     m_settings = ImageSettings(
-        std::move( displayName ),
-        m_header.numComponentsPerPixel(),
-        m_header.memoryComponentType(),
-        std::move( componentStats ) );
+        std::move( displayName ), m_header.numComponentsPerPixel(),
+        m_header.memoryComponentType(), std::move( componentStats ) );
 
     m_headerOverrides = ImageHeaderOverrides(
-        m_header.pixelDimensions(),
-        m_header.spacing(),
-        m_header.origin(),
-        m_header.directions() );
-}
-
-
-bool Image::loadImageBuffer( const float* buffer, std::size_t numElements )
-{
-    using CType = ::itk::ImageIOBase::IOComponentType;
-
-    bool didCast = false;
-    bool warnSizeConversion = false;
-
-    switch ( m_ioInfoOnDisk.m_componentInfo.m_componentType )
-    {
-    case CType::UCHAR:  m_data_uint8.emplace_back( createBuffer<float, uint8_t>( buffer, numElements ) ); break;
-    case CType::CHAR:   m_data_int8.emplace_back( createBuffer<float, int8_t>( buffer, numElements ) ); break;
-    case CType::USHORT: m_data_uint16.emplace_back( createBuffer<float, uint16_t>( buffer, numElements ) ); break;
-    case CType::SHORT:  m_data_int16.emplace_back( createBuffer<float, int16_t>( buffer, numElements ) ); break;
-    case CType::UINT:   m_data_uint32.emplace_back( createBuffer<float, uint32_t>( buffer, numElements ) ); break;
-    case CType::INT:    m_data_int32.emplace_back( createBuffer<float, int32_t>( buffer, numElements ) ); break;
-    case CType::FLOAT:  m_data_float32.emplace_back( createBuffer<float, float>( buffer, numElements ) ); break;
-
-    case CType::ULONG:
-    case CType::ULONGLONG:
-    {
-        m_data_uint32.emplace_back( createBuffer<float, uint32_t>( buffer, numElements ) );
-        m_ioInfoInMemory.m_componentInfo.m_componentType = CType::UINT;
-        m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes = 4;
-
-        didCast = true;
-        warnSizeConversion = true;
-        break;
-    }
-
-    case CType::LONG:
-    case CType::LONGLONG:
-    {
-        m_data_int32.emplace_back( createBuffer<float, int32_t>( buffer, numElements ) );
-        m_ioInfoInMemory.m_componentInfo.m_componentType = CType::INT;
-        m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes = 4;
-
-        didCast = true;
-        warnSizeConversion = true;
-        break;
-    }
-
-    case CType::DOUBLE:
-    case CType::LDOUBLE:
-    {
-        m_data_float32.emplace_back( createBuffer<float, float>( buffer, numElements ) );
-        m_ioInfoInMemory.m_componentInfo.m_componentType = CType::FLOAT;
-        m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes = 4;
-
-        didCast = true;
-        warnSizeConversion = true;
-        break;
-    }
-
-    case CType::UNKNOWNCOMPONENTTYPE:
-    {
-        spdlog::error( "Unknown component type in image from file '{}'", m_ioInfoOnDisk.m_fileInfo.m_fileName );
-        return false;
-    }
-    }
-
-    if ( didCast )
-    {
-        const std::string newTypeString = itk::ImageIOBase::GetComponentTypeAsString(
-            m_ioInfoInMemory.m_componentInfo.m_componentType );
-
-        m_ioInfoInMemory.m_componentInfo.m_componentTypeString = newTypeString;
-
-        m_ioInfoInMemory.m_sizeInfo.m_imageSizeInBytes =
-            numElements * m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes;
-
-        spdlog::info( "Cast image pixel component from type {} to {}",
-                      m_ioInfoOnDisk.m_componentInfo.m_componentTypeString, newTypeString );
-
-        if ( warnSizeConversion )
-        {
-            spdlog::warn(
-                "Size conversion: "
-                "Possible loss of information when casting image pixel component from type {} to {}",
-                m_ioInfoOnDisk.m_componentInfo.m_componentTypeString, newTypeString );
-        }
-    }
-
-    return true;
-}
-
-
-bool Image::loadSegBuffer( const float* buffer, std::size_t numElements )
-{
-    using CType = ::itk::ImageIOBase::IOComponentType;
-
-    bool didCast = false;
-    bool warnFloatConversion = false;
-    bool warnSizeConversion = false;
-    bool warnSignConversion = false;
-
-    switch ( m_ioInfoOnDisk.m_componentInfo.m_componentType )
-    {
-    // No casting is needed for the cases of unsigned integers with 8, 16, or 32 bytes:
-    case CType::UCHAR:
-    {
-        m_data_uint8.emplace_back( createBuffer<float, uint8_t>( buffer, numElements ) );
-        break;
-    }
-    case CType::USHORT:
-    {
-        m_data_uint16.emplace_back( createBuffer<float, uint16_t>( buffer, numElements ) );
-        break;
-    }
-    case CType::UINT:
-    {
-        m_data_uint32.emplace_back( createBuffer<float, uint32_t>( buffer, numElements ) );
-        break;
-    }
-
-    // Signed 8-, 16-, and 32-bit integers are cast to unsigned 8-, 16-, and 32-bit integers:
-    case CType::CHAR:
-    {
-        m_data_uint8.emplace_back( createBuffer<float, uint8_t>( buffer, numElements ) );
-        m_ioInfoInMemory.m_componentInfo.m_componentType = CType::UCHAR;
-        m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes = 1;
-
-        didCast = true;
-        warnSignConversion = true;
-        break;
-    }
-    case CType::SHORT:
-    {
-        m_data_uint16.emplace_back( createBuffer<float, uint16_t>( buffer, numElements ) );
-        m_ioInfoInMemory.m_componentInfo.m_componentType = CType::USHORT;
-        m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes = 2;
-
-        didCast = true;
-        warnSignConversion = true;
-        break;
-    }
-    case CType::INT:
-    {
-        m_data_uint32.emplace_back( createBuffer<float, uint32_t>( buffer, numElements ) );
-        m_ioInfoInMemory.m_componentInfo.m_componentType = CType::UINT;
-        m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes = 4;
-
-        didCast = true;
-        warnSignConversion = true;
-        break;
-    }
-
-    // Unsigned long (64-bit) and long long (128-bit) integers are cast to unsigned 32-bit integers:
-    case CType::ULONG:
-    case CType::ULONGLONG:
-    {
-        m_data_uint32.emplace_back( createBuffer<float, uint32_t>( buffer, numElements ) );
-        m_ioInfoInMemory.m_componentInfo.m_componentType = CType::UINT;
-        m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes = 4;
-
-        didCast = true;
-        warnSizeConversion = true;
-        break;
-    }
-
-    // Signed long (64-bit) and long long (128-bit) integers are cast to unsigned 32-bit integers:
-    case CType::LONG:
-    case CType::LONGLONG:
-    {
-        m_data_uint32.emplace_back( createBuffer<float, uint32_t>( buffer, numElements ) );
-        m_ioInfoInMemory.m_componentInfo.m_componentType = CType::UINT;
-        m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes = 4;
-
-        didCast = true;
-        warnSizeConversion = true;
-        warnSignConversion = true;
-        break;
-    }
-
-    // Floating-points are cast to unsigned 32-bit integers:
-    case CType::FLOAT:
-    case CType::DOUBLE:
-    case CType::LDOUBLE:
-    {
-        m_data_uint32.emplace_back( createBuffer<float, uint32_t>( buffer, numElements ) );
-        m_ioInfoInMemory.m_componentInfo.m_componentType = CType::UINT;
-        m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes = 4;
-
-        didCast = true;
-        warnFloatConversion = true;
-        warnSignConversion = true;
-        break;
-    }
-
-    case CType::UNKNOWNCOMPONENTTYPE:
-    {
-        spdlog::error( "Unknown component type in image from file '{}'", m_ioInfoOnDisk.m_fileInfo.m_fileName );
-        return false;
-    }
-    }
-
-    if ( didCast )
-    {
-        const std::string newTypeString = itk::ImageIOBase::GetComponentTypeAsString(
-            m_ioInfoInMemory.m_componentInfo.m_componentType );
-
-        m_ioInfoInMemory.m_componentInfo.m_componentTypeString = newTypeString;
-
-        m_ioInfoInMemory.m_sizeInfo.m_imageSizeInBytes =
-            numElements * m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes;
-
-        spdlog::info(
-            "Casted segmentation '{}' pixel component from type {} to {}",
-            m_ioInfoOnDisk.m_fileInfo.m_fileName,
-            m_ioInfoOnDisk.m_componentInfo.m_componentTypeString, newTypeString );
-
-        if ( warnFloatConversion )
-        {
-            spdlog::warn(
-                "Floating point to integer conversion: "
-                "Possible loss of precision and information when casting segmentation pixel component from type {} to {}",
-                m_ioInfoOnDisk.m_componentInfo.m_componentTypeString, newTypeString );
-        }
-
-        if ( warnSizeConversion )
-        {
-            spdlog::warn(
-                "Size conversion: "
-                "Possible loss of information when casting segmentation pixel component from type {} to {}",
-                m_ioInfoOnDisk.m_componentInfo.m_componentTypeString, newTypeString );
-        }
-
-        if ( warnSignConversion )
-        {
-            spdlog::warn(
-                "Signed to unsigned integer conversion: "
-                "Possible loss of information when casting segmentation pixel component from type {} to {}",
-                m_ioInfoOnDisk.m_componentInfo.m_componentTypeString, newTypeString );
-        }
-    }
-
-    return true;
+        m_header.pixelDimensions(), m_header.spacing(), m_header.origin(), m_header.directions() );
 }
 
 

@@ -7,6 +7,8 @@
 #include "image/ImageSettings.h"
 #include "image/ImageTransformations.h"
 
+#include <spdlog/spdlog.h>
+
 #include <optional>
 #include <ostream>
 #include <string>
@@ -203,11 +205,266 @@ public:
 
 private:
 
+    template< typename SrcComponentType, typename DestComponentType >
+    std::vector<DestComponentType> createBuffer( const SrcComponentType* buffer, std::size_t numElements )
+    {
+        // Lowest and max values of destination component type, cast to source component type
+        static constexpr auto sk_lowestValue = static_cast<SrcComponentType>( std::numeric_limits<DestComponentType>::lowest() );
+        static constexpr auto sk_maximumValue = static_cast<SrcComponentType>( std::numeric_limits<DestComponentType>::max() );
+
+        std::vector<DestComponentType> data( numElements, 0 );
+
+        // Clamp values to destination range [lowest, maximum] prior to cast:
+        for ( std::size_t i = 0; i < numElements; ++i )
+        {
+            data[i] = static_cast<DestComponentType>( std::min( std::max( buffer[i], sk_lowestValue ), sk_maximumValue ) );
+        }
+
+        return data;
+    }
+
     /// Load a buffer as an image component
-    bool loadImageBuffer( const float* buffer, std::size_t numElements );
+    template< typename SrcBufferCompType >
+    bool loadImageBuffer( const SrcBufferCompType* buffer, std::size_t numElements )
+    {
+        using CType = ::itk::ImageIOBase::IOComponentType;
+
+        bool didCast = false;
+        bool warnSizeConversion = false;
+
+        switch ( m_ioInfoOnDisk.m_componentInfo.m_componentType )
+        {
+        case CType::UCHAR:  m_data_uint8.emplace_back( createBuffer<SrcBufferCompType, uint8_t>( buffer, numElements ) ); break;
+        case CType::CHAR:   m_data_int8.emplace_back( createBuffer<SrcBufferCompType, int8_t>( buffer, numElements ) ); break;
+        case CType::USHORT: m_data_uint16.emplace_back( createBuffer<SrcBufferCompType, uint16_t>( buffer, numElements ) ); break;
+        case CType::SHORT:  m_data_int16.emplace_back( createBuffer<SrcBufferCompType, int16_t>( buffer, numElements ) ); break;
+        case CType::UINT:   m_data_uint32.emplace_back( createBuffer<SrcBufferCompType, uint32_t>( buffer, numElements ) ); break;
+        case CType::INT:    m_data_int32.emplace_back( createBuffer<SrcBufferCompType, int32_t>( buffer, numElements ) ); break;
+        case CType::FLOAT:  m_data_float32.emplace_back( createBuffer<SrcBufferCompType, float>( buffer, numElements ) ); break;
+
+        case CType::ULONG:
+        case CType::ULONGLONG:
+        {
+            m_data_uint32.emplace_back( createBuffer<SrcBufferCompType, uint32_t>( buffer, numElements ) );
+            m_ioInfoInMemory.m_componentInfo.m_componentType = CType::UINT;
+            m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes = 4;
+
+            didCast = true;
+            warnSizeConversion = true;
+            break;
+        }
+
+        case CType::LONG:
+        case CType::LONGLONG:
+        {
+            m_data_int32.emplace_back( createBuffer<SrcBufferCompType, int32_t>( buffer, numElements ) );
+            m_ioInfoInMemory.m_componentInfo.m_componentType = CType::INT;
+            m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes = 4;
+
+            didCast = true;
+            warnSizeConversion = true;
+            break;
+        }
+
+        case CType::DOUBLE:
+        case CType::LDOUBLE:
+        {
+            m_data_float32.emplace_back( createBuffer<SrcBufferCompType, float>( buffer, numElements ) );
+            m_ioInfoInMemory.m_componentInfo.m_componentType = CType::FLOAT;
+            m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes = 4;
+
+            didCast = true;
+            warnSizeConversion = true;
+            break;
+        }
+
+        case CType::UNKNOWNCOMPONENTTYPE:
+        {
+            spdlog::error( "Unknown component type in image from file '{}'", m_ioInfoOnDisk.m_fileInfo.m_fileName );
+            return false;
+        }
+        }
+
+        if ( didCast )
+        {
+            const std::string newTypeString = itk::ImageIOBase::GetComponentTypeAsString(
+                m_ioInfoInMemory.m_componentInfo.m_componentType );
+
+            m_ioInfoInMemory.m_componentInfo.m_componentTypeString = newTypeString;
+
+            m_ioInfoInMemory.m_sizeInfo.m_imageSizeInBytes =
+                numElements * m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes;
+
+            spdlog::info( "Cast image pixel component from type {} to {}",
+                m_ioInfoOnDisk.m_componentInfo.m_componentTypeString, newTypeString );
+
+            if ( warnSizeConversion )
+            {
+                spdlog::warn( 
+                    "Size conversion: "
+                    "Possible loss of information when casting image pixel component from type {} to {}",
+                    m_ioInfoOnDisk.m_componentInfo.m_componentTypeString, newTypeString );
+            }
+        }
+
+        return true;
+    }
 
     /// Load a buffer as a segmentation component
-    bool loadSegBuffer( const float* buffer, std::size_t numElements );
+    template< typename SrcBufferCompType >
+    bool loadSegBuffer( const SrcBufferCompType* buffer, std::size_t numElements )
+    {
+        using CType = ::itk::ImageIOBase::IOComponentType;
+
+        bool didCast = false;
+        bool warnFloatConversion = false;
+        bool warnSizeConversion = false;
+        bool warnSignConversion = false;
+
+        switch ( m_ioInfoOnDisk.m_componentInfo.m_componentType )
+        {
+        // No casting is needed for the cases of unsigned integers with 8, 16, or 32 bytes:
+        case CType::UCHAR:
+        {
+            m_data_uint8.emplace_back( createBuffer<SrcBufferCompType, uint8_t>( buffer, numElements ) );
+            break;
+        }
+        case CType::USHORT:
+        {
+            m_data_uint16.emplace_back( createBuffer<SrcBufferCompType, uint16_t>( buffer, numElements ) );
+            break;
+        }
+        case CType::UINT:
+        {
+            m_data_uint32.emplace_back( createBuffer<SrcBufferCompType, uint32_t>( buffer, numElements ) );
+            break;
+        }
+
+        // Signed 8-, 16-, and 32-bit integers are cast to unsigned 8-, 16-, and 32-bit integers:
+        case CType::CHAR:
+        {
+            m_data_uint8.emplace_back( createBuffer<SrcBufferCompType, uint8_t>( buffer, numElements ) );
+            m_ioInfoInMemory.m_componentInfo.m_componentType = CType::UCHAR;
+            m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes = 1;
+
+            didCast = true;
+            warnSignConversion = true;
+            break;
+        }
+        case CType::SHORT:
+        {
+            m_data_uint16.emplace_back( createBuffer<SrcBufferCompType, uint16_t>( buffer, numElements ) );
+            m_ioInfoInMemory.m_componentInfo.m_componentType = CType::USHORT;
+            m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes = 2;
+
+            didCast = true;
+            warnSignConversion = true;
+            break;
+        }
+        case CType::INT:
+        {
+            m_data_uint32.emplace_back( createBuffer<SrcBufferCompType, uint32_t>( buffer, numElements ) );
+            m_ioInfoInMemory.m_componentInfo.m_componentType = CType::UINT;
+            m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes = 4;
+
+            didCast = true;
+            warnSignConversion = true;
+            break;
+        }
+
+        // Unsigned long (64-bit) and long long (128-bit) integers are cast to unsigned 32-bit integers:
+        case CType::ULONG:
+        case CType::ULONGLONG:
+        {
+            m_data_uint32.emplace_back( createBuffer<SrcBufferCompType, uint32_t>( buffer, numElements ) );
+            m_ioInfoInMemory.m_componentInfo.m_componentType = CType::UINT;
+            m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes = 4;
+
+            didCast = true;
+            warnSizeConversion = true;
+            break;
+        }
+
+        // Signed long (64-bit) and long long (128-bit) integers are cast to unsigned 32-bit integers:
+        case CType::LONG:
+        case CType::LONGLONG:
+        {
+            m_data_uint32.emplace_back( createBuffer<SrcBufferCompType, uint32_t>( buffer, numElements ) );
+            m_ioInfoInMemory.m_componentInfo.m_componentType = CType::UINT;
+            m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes = 4;
+
+            didCast = true;
+            warnSizeConversion = true;
+            warnSignConversion = true;
+            break;
+        }
+
+        // Floating-points are cast to unsigned 32-bit integers:
+        case CType::FLOAT:
+        case CType::DOUBLE:
+        case CType::LDOUBLE:
+        {
+            m_data_uint32.emplace_back( createBuffer<SrcBufferCompType, uint32_t>( buffer, numElements ) );
+            m_ioInfoInMemory.m_componentInfo.m_componentType = CType::UINT;
+            m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes = 4;
+
+            didCast = true;
+            warnFloatConversion = true;
+            warnSignConversion = true;
+            break;
+        }
+
+        case CType::UNKNOWNCOMPONENTTYPE:
+        {
+            spdlog::error( "Unknown component type in image from file '{}'",
+                           m_ioInfoOnDisk.m_fileInfo.m_fileName );
+            return false;
+        }
+        }
+
+        if ( didCast )
+        {
+            const std::string newTypeString = itk::ImageIOBase::GetComponentTypeAsString(
+                m_ioInfoInMemory.m_componentInfo.m_componentType );
+
+            m_ioInfoInMemory.m_componentInfo.m_componentTypeString = newTypeString;
+
+            m_ioInfoInMemory.m_sizeInfo.m_imageSizeInBytes =
+                numElements * m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes;
+
+            spdlog::info(
+                "Casted segmentation '{}' pixel component from type {} to {}",
+                m_ioInfoOnDisk.m_fileInfo.m_fileName,
+                m_ioInfoOnDisk.m_componentInfo.m_componentTypeString, newTypeString );
+
+            if ( warnFloatConversion )
+            {
+                spdlog::warn(
+                    "Floating point to integer conversion: "
+                    "Possible loss of precision and information when casting segmentation pixel component from type {} to {}",
+                    m_ioInfoOnDisk.m_componentInfo.m_componentTypeString, newTypeString );
+            }
+
+            if ( warnSizeConversion )
+            {
+                spdlog::warn(
+                    "Size conversion: "
+                    "Possible loss of information when casting segmentation pixel component from type {} to {}",
+                    m_ioInfoOnDisk.m_componentInfo.m_componentTypeString, newTypeString );
+            }
+
+            if ( warnSignConversion )
+            {
+                spdlog::warn(
+                    "Signed to unsigned integer conversion: "
+                    "Possible loss of information when casting segmentation pixel component from type {} to {}",
+                    m_ioInfoOnDisk.m_componentInfo.m_componentTypeString, newTypeString );
+            }
+        }
+
+        return true;
+    }
+
 
     /// For a given image component and 3D pixel indices, return a pair consisting of:
     /// 1) component buffer to index

@@ -211,7 +211,7 @@ typename itk::ImageIOBase::Pointer createStandardImageIo( const char* fileName )
     try
     {
         const itk::ImageIOBase::Pointer imageIo =
-                itk::ImageIOFactory::CreateImageIO( fileName, itk::ImageIOFactory::ReadMode );
+            itk::ImageIOFactory::CreateImageIO( fileName, itk::ImageIOFactory::ReadMode );
 
         if ( ! imageIo || imageIo.IsNull() )
         {
