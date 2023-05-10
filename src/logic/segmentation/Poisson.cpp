@@ -1,11 +1,10 @@
 #include "logic/segmentation/Poisson.h"
 
-#include <cmath>
-#include <fstream>
-#include <iostream>
-#include <limits>
-#include <string>
+#include "image/Image.h"
 
+#include <spdlog/spdlog.h>
+
+#include <cmath>
 
 namespace
 {
@@ -38,28 +37,24 @@ namespace
 }
 
 
-void sor( const std::vector<BndType>& bnd,
-         const std::vector<ImgType>& img,
-         std::vector<PotType>& pot,
-         const std::array<int, 3>& dims,
-         const std::array<double, 3>& spacing,
-         double rjac,
-         size_t maxits,
-         double beta )
+void sor(
+    const Image& bnd, const Image& img, Image& pot,
+    uint32_t imComp,
+    float rjac, uint32_t maxits, float beta )
 {
-    size_t n = 0;
-    size_t p = 0;
-
     int isw, jsw, ksw;
 
     double omega = 1.0;
-    double val, grad, weight;
+    double grad, weight;
 
-    for ( size_t iter = 0; iter < maxits; ++iter )
+    const glm::ivec3 dims = glm::ivec3{ img.header().pixelDimensions() };
+    const glm::vec3 spacing = img.header().spacing();
+
+    for ( uint32_t iter = 0; iter < maxits; ++iter )
     {
         if ( 0 == iter % 100 )
         {
-            std::cout << "\n\niter " << iter << ": " << std::flush;
+            spdlog::trace( "Iteration {}", iter );
         }
 
         double absResid = 0.0;
@@ -71,86 +66,79 @@ void sor( const std::vector<BndType>& bnd,
         {
             jsw = ksw;
 
-            for ( int k = 0; k < dims[2]; ++k )
+            for ( int k = 0; k < dims.z; ++k )
             {
                 isw = jsw;
 
-                for ( int j = 0; j < dims[1]; ++j )
+                for ( int j = 0; j < dims.y; ++j )
                 {
-                    for ( int i = isw; i < dims[0]; i += 2 )
+                    for ( int i = isw; i < dims.x; i += 2 )
                     {
-                        n = (k*dims[1] + j)*dims[0] + i;
-
                         // Do not update nodes on boundary
-                        if ( 0 != bnd[n] )
+                        if ( 0 != bnd.value<int64_t>(0, i, j, k).value_or(0) )
                         {
                             continue;
                         }
 
-                        val = img[n];
+                        const float val = img.value<float>(imComp, i, j, k).value_or(0.0f);
 
-                        double resid = 0.0;
-                        double total = 0.0;
+                        float resid = 0.0f;
+                        float total = 0.0f;
 
-                        if ( k + 1 <= dims[2] - 1 )
+                        if ( k < dims.z - 1 )
                         {
-                            p = ((k+1)*dims[1] + j)*dims[0] + i;
-                            grad = (val - img[p]) / beta;
-                            weight = std::exp(-grad*grad/2.0) / spacing[2];
-                            resid += weight * pot[p];
+                            grad = (val - img.value<float>(imComp, i, j, k + 1).value_or(0.0f)) / beta;
+                            weight = std::exp( -grad*grad / 2.0f ) / spacing.z;
+                            resid += weight * pot.value<float>(0, i, j, k + 1).value_or(0.0f);
                             total -= weight;
                         }
 
-                        if ( k  -1 >= 0 )
+                        if ( k > 0 )
                         {
-                            p = ((k-1)*dims[1] + j)*dims[0] + i;
-                            grad = (val - img[p]) / beta;
-                            weight = std::exp(-grad*grad/2.0) / spacing[2];
-                            resid += weight * pot[p];
+                            grad = (val - img.value<float>(imComp, i, j, k - 1).value_or(0.0f)) / beta;
+                            weight = std::exp( -grad*grad / 2.0f ) / spacing.z;
+                            resid += weight * pot.value<float>(0, i, j, k - 1).value_or(0.0f);
                             total -= weight;
                         }
 
-                        if ( j + 1 <= dims[1] - 1 )
+                        if ( j < dims.y - 1 )
                         {
-                            p = (k*dims[1] + (j+1))*dims[0] + i;
-                            grad = (val - img[p]) / beta;
-                            weight = std::exp(-grad*grad/2.0) / spacing[1];
-                            resid += weight * pot[p];
+                            grad = (val - img.value<float>(imComp, i, j + 1, k).value_or(0.0f)) / beta;
+                            weight = std::exp( -grad*grad / 2.0f ) / spacing.y;
+                            resid += weight * pot.value<float>(0, i, j + 1, k).value_or(0.0f);
                             total -= weight;
                         }
 
-                        if ( j - 1 >= 0 )
+                        if ( j > 0 )
                         {
-                            p = (k*dims[1] + (j-1))*dims[0] + i;
-                            grad = (val - img[p]) / beta;
-                            weight = std::exp(-grad*grad/2.0) / spacing[1];
-                            resid += weight * pot[p];
+                            grad = (val - img.value<float>(imComp, i, j - 1, k).value_or(0.0f)) / beta;
+                            weight = std::exp( -grad*grad / 2.0f ) / spacing.y;
+                            resid += weight * pot.value<float>(0, i, j - 1, k).value_or(0.0f);
                             total -= weight;
                         }
 
-                        if ( i + 1 <= dims[0] - 1 )
+                        if ( i < dims.x - 1 )
                         {
-                            p = (k*dims[1] + j)*dims[0] + (i+1);
-                            grad = (val - img[p]) / beta;
-                            weight = std::exp(-grad*grad/2.0) / spacing[0];
-                            resid += weight * pot[p];
+                            grad = (val - img.value<float>(imComp, i + 1, j, k).value_or(0.0f)) / beta;
+                            weight = std::exp( -grad*grad/2.0f ) / spacing.x;
+                            resid += weight * pot.value<float>(0, i + 1, j, k).value_or(0.0f);
                             total -= weight;
                         }
 
-                        if ( i - 1 >= 0 )
+                        if ( i > 0 )
                         {
-                            p = (k*dims[1] + j)*dims[0] + (i-1);
-                            grad = (val - img[p]) / beta;
-                            weight = std::exp(-grad*grad/2.0) / spacing[0];
-                            resid += weight * pot[p];
+                            grad = (val - img.value<float>(imComp, i - 1, j, k).value_or(0.0f)) / beta;
+                            weight = std::exp( -grad*grad / 2.0 ) / spacing.x;
+                            resid += weight * pot.value<float>(0, i - 1, j, k).value_or(0.0f);
                             total -= weight;
                         }
 
+                        const float p = pot.value<float>(0, i, j, k).value_or(0.0f);
 
-                        resid += total * pot[n];
+                        resid += total * p;
+                        pot.setValue(0, i, j, k, p - omega * resid / total );
 
                         absResid += std::fabs(resid);
-                        pot[n] -= omega * resid / total;
                     }
 
                     isw = 1 - isw;
@@ -161,202 +149,61 @@ void sor( const std::vector<BndType>& bnd,
 
             ksw = 1 - ksw;
 
-            // These update formulae are designed for the 2D case and do not apply
-            // exactly in the 3D case
             omega =	(iter == 0 && pass == 0 )
-                        ? 1.0 / ( 1.0 - 0.5 * rjac * rjac )
-                        : 1.0 / ( 1.0 - 0.25 * rjac * rjac * omega );
+                ? 1.0 / ( 1.0 - 0.5 * rjac * rjac )
+                : 1.0 / ( 1.0 - 0.25 * rjac * rjac * omega );
         }
 
-        std::cout << absResid << " " << std::flush;
+        spdlog::debug( "absResid = {}", absResid );
     }
-
-    std::cout << std::endl;
 }
 
 
-// Compute a decent value for the 'beta' parameter used in SOR.
-double computeBeta(
-    const std::vector<ImgType>& img,
-    const std::array<int, 3>& dims )
+float computeBeta( const Image& img, uint32_t imComp )
 {
-    ImgType val = 0.0;
-    ImgType grad = 0.0;
+    const glm::ivec3 dims = glm::ivec3{ img.header().pixelDimensions() };
 
-    for ( int k = 0; k < dims[2]; ++k )
-    {
-        for ( int j = 0; j < dims[1]; ++j )
-        {
-            for ( int i = 0; i < dims[0]; ++i )
+    float grad = 0.0f;
+
+    for ( int k = 0; k < dims.z; ++k ) {
+        for ( int j = 0; j < dims.y; ++j ) {
+            for ( int i = 0; i < dims.x; ++i )
             {
-                const size_t n = (k*dims[1] + j)*dims[0] + i;
-                val = img[n];
+                const float val = img.value<float>(imComp, i, j, k).value_or(0.0f);
 
-                if (k+1 <= dims[2]-1)
-                {
-                    size_t p = ((k+1)*dims[1] + j)*dims[0] + i;
-                    grad += std::fabs((val - img[p]));
+                if (k < dims[2] - 1) {
+                    grad += std::fabs( val - img.value<float>(imComp, i, j, k + 1).value_or(0.0f) );
                 }
 
-                if (k-1 >= 0)
-                {
-                    size_t p = ((k-1)*dims[1] + j)*dims[0] + i;
-                    grad += std::fabs((val - img[p]));
+                if (k > 0) {
+                    grad += std::fabs( val - img.value<float>(imComp, i, j, k - 1).value_or(0.0f) );
                 }
 
-                if (j+1 <= dims[1]-1)
-                {
-                    size_t p = (k*dims[1] + (j+1))*dims[0] + i;
-                    grad += std::fabs((val - img[p]));
+                if (j < dims.y - 1) {
+                    grad += std::fabs( val - img.value<float>(imComp, i, j + 1, k).value_or(0.0f) );
                 }
 
-                if (j-1 >= 0)
-                {
-                    size_t p = (k*dims[1] + (j-1))*dims[0] + i;
-                    grad += std::fabs((val - img[p]));
+                if (j > 0) {
+                    grad += std::fabs( val - img.value<float>(imComp, i, j - 1, k).value_or(0.0f) );
                 }
 
-                if (i+1 <= dims[0]-1)
-                {
-                    size_t p = (k*dims[1] + j)*dims[0] + (i+1);
-                    grad += std::fabs((val - img[p]));
+                if (i < dims.x - 1) {
+                    grad += std::fabs( val - img.value<float>(imComp, i + 1, j, k).value_or(0.0f) );
                 }
 
-                if (i-1 >= 0)
-                {
-                    size_t p = (k*dims[1] + j)*dims[0] + (i-1);
-                    grad += std::fabs((val - img[p]));
+                if (i > 0) {
+                    grad += std::fabs( val - img.value<float>(imComp, i - 1, j, k).value_or(0.0f) );
                 }
             }
         }
     }
 
-    return grad / static_cast<ImgType>( dims[0] * dims[1] * dims[2] );
+    return grad / static_cast<float>( dims.x * dims.y * dims.z );
 }
 
 
-
-// Input parameters:
-// 0: poisson
-// 1: potential boundary values in (int16_t format)
-// 2: input initial approximation to  potential (double format)
-// 3: output potential (double format)
-// 4: x dimensions of all images
-// 5: y dimensions of all images
-// 6: z dimensions of all images
-// 7: x voxel spacing of all images
-// 8: y voxel spacing of all images
-// 9: z voxel spacing of all images
-// 10: maximum number of SOR iterations
-// 11: rjac
-// 12 (optional): input conductivity image in (double format)
-
-#if 0
-int main( int argc, char** argv )
-{
-    if ( argc < 12 )
-    {
-        return 1;
-    }
-
-    const std::string bndPath( argv[1] ); // fixed potential boundary values (input)
-    const std::string inputPotPath( argv[2] ); // initial scalar potential (input)
-    const std::string outPotPath( argv[3] ); // output scalar potential (output)
-
-    // image dimensions (x, y, z)
-    const std::array<int, 3> dims{
-                                  std::atoi( argv[4] ),
-                                  std::atoi( argv[5] ),
-                                  std::atoi( argv[6] ) };
-
-    // image voxel spacing (x, y, z)
-    const std::array<double, 3> spacing{
-                                        std::atof( argv[7] ),
-                                        std::atof( argv[8] ),
-                                        std::atof( argv[9] ) };
-
-    const size_t maxits = atoi( argv[10] );
-    const double rjac = atof( argv[11] );
-    double beta = 1.0;
-
-    const size_t N = dims[0] * dims[1] * dims[2];
-
-    std::vector<BndType> bnd( N ); // potential boundary conditions
-    std::vector<ImgType> img( N, 0.0 ); // image (default to zero)
-    std::vector<ImgType> pot( N ); // potential
-
-    // Load boundary conditions:
-    std::ifstream ifs( bndPath, std::ifstream::in | std::ifstream::binary );
-
-    if ( ifs.is_open() )
-    {
-        ifs.read( (char*) bnd.data(), N * sizeof(BndType) );
-        ifs.close();
-    }
-    else
-    {
-        std::cout << "Unable to open input boundary condition file" << std::endl;
-        ifs.close();
-        return 1;
-    }
-
-    // Load initial potential:
-    ifs.open( inputPotPath, std::ifstream::in | std::ifstream::binary) ;
-
-    if ( ifs.is_open() )
-    {
-        ifs.read( (char*) pot.data(), N * sizeof(PotType) );
-        ifs.close();
-    }
-    else
-    {
-        std::cout << "Unable to open input initial potential file" << std::endl;
-        ifs.close();
-        return 1;
-    }
-
-    if ( 13 == argc )
-    {
-        // Image provided for 'electrical conductivity':
-        const std::string imgPath( argv[12] );
-
-        ifs.open( imgPath, std::ifstream::in | std::ifstream::binary );
-
-        if ( ifs.is_open() )
-        {
-            ifs.read( (char*) img.data(), N * sizeof(ImgType) );
-            ifs.close();
-        }
-        else
-        {
-            std::cout << "Unable to open input image" << std::endl;
-            ifs.close();
-            return 1;
-        }
-
-        normalize( img );
-
-        beta = computeBeta( img, dims );
-        std::cout << std::endl << "beta = " << beta << std::endl;
-    }
-
-
-    sor( bnd, img, pot, dims, spacing, rjac, maxits, beta );
-
-    std::ofstream ofs( outPotPath, std::ios::out | std::ios::binary );
-
-    if ( ofs.is_open() )
-    {
-        ofs.write( (char*) pot.data(), N * sizeof(PotType) );
-    }
-    else
-    {
-        std::cout << "Unable to open output potential file" << std::endl;
-        return 1;
-    }
-
-    ofs.close();
-
-    return 0;
-}
-#endif
+//input initial approximation to  potential (double format)
+//output potential (double format)
+//potential boundary values in (int16_t format)
+//maximum number of SOR iterations
+//(optional): input conductivity image in (double format)

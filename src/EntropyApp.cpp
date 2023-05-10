@@ -1546,6 +1546,16 @@ void EntropyApp::setCallbacks()
                     imageUid, seedSegUid, resultSegUid, segType );
             },
 
+            [this] (
+                const uuids::uuid& imageUid,
+                const uuids::uuid& seedSegUid,
+                const uuids::uuid& resultSegUid,
+                const std::vector<uuids::uuid>& potUids ) -> bool
+            {
+                return m_callbackHandler.executePoissonSegmentation(
+                    imageUid, seedSegUid, resultSegUid, potUids );
+            },
+
             [this] ( const uuids::uuid& imageUid, bool locked ) -> bool
             {
                 return m_callbackHandler.setLockManualImageTransformation( imageUid, locked );

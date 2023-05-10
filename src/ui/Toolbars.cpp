@@ -639,7 +639,8 @@ void renderSegToolbar(
         const std::function< void (void) >& readjustViewport,
         const std::function< void( const uuids::uuid& imageUid ) >& updateImageUniforms,
         const std::function< std::optional<uuids::uuid>( const uuids::uuid& matchingImageUid, const std::string& segDisplayName ) >& createBlankSeg,
-        const std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const uuids::uuid& resultSegUid, const GraphCutsSegmentationType& segType ) >& executeGraphCutsSeg )
+        const std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const uuids::uuid& resultSegUid, const GraphCutsSegmentationType& segType ) >& executeGraphCutsSeg,
+        const std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const uuids::uuid& resultSegUid, const std::vector<uuids::uuid>& potUids ) > executePoissonSeg )
 {
     // Show the segmentation toolbar in either Segmentation mode,
     // in Annotation mode (when the Fill button is also visible),
@@ -1317,6 +1318,40 @@ void renderSegToolbar(
                         {
                             updateImageUniforms( *imageUid );
                             executeGraphCutsSeg( *imageUid, *seedSegUid, *blankSegUid, GraphCutsSegmentationType::MultiLabel );
+                        }
+                    }
+                }
+            }
+            if ( ImGui::IsItemHovered() )
+            {
+                ImGui::SetTooltip( "%s", "Execute multi-label Graph Cuts segmentation" );
+            }
+
+            if ( isHoriz ) ImGui::SameLine();
+            if ( ImGui::Button( ICON_FK_CUBES, buttonSize) )
+            {
+                const auto imageUid = appData.activeImageUid();
+                const Image* image = appData.activeImage();
+
+                if ( imageUid && image )
+                {
+                    if ( const auto seedSegUid = appData.imageToActiveSegUid( *imageUid ) )
+                    {
+                        const size_t numSegsForImage = appData.imageToSegUids( *imageUid ).size();
+
+                        const std::string multilabelSegDisplayName =
+                            std::string( "Multi-label graph cuts segmentation " ) +
+                            std::to_string( numSegsForImage + 1 ) +
+                            " for image '" + image->settings().displayName() + "'";
+
+                        const auto blankSegUid = createBlankSeg( *imageUid, std::move( multilabelSegDisplayName ) );
+                        
+                        std::vector<uuids::uuid> potUids(1);
+                        
+                        if ( blankSegUid )
+                        {
+                            updateImageUniforms( *imageUid );
+                            executePoissonSeg( *imageUid, *seedSegUid, *blankSegUid, potUids );
                         }
                     }
                 }

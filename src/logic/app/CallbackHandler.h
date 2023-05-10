@@ -10,6 +10,8 @@
 
 #include <glm/fwd.hpp>
 
+#include <vector>
+
 
 class AppData;
 class GlfwWrapper;
@@ -39,6 +41,14 @@ public:
         const uuids::uuid& seedSegUid,
         const uuids::uuid& resultSegUid,
         const GraphCutsSegmentationType& segType );
+
+    bool executePoissonSegmentation(
+        const uuids::uuid& imageUid,
+        const uuids::uuid& seedSegUid,
+        const uuids::uuid& resultSegUid,
+        const std::vector<uuids::uuid>& potUids );
+
+
 
     /**
      * @brief Move the crosshairs

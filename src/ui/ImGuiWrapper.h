@@ -14,6 +14,7 @@
 #include <mutex>
 #include <queue>
 #include <unordered_map>
+#include <vector>
 
 class AppData;
 class CallbackHandler;
@@ -56,6 +57,7 @@ public:
             std::function< bool ( const uuids::uuid& segUid ) > clearSeg,
             std::function< bool ( const uuids::uuid& segUid ) > removeSeg,
             std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const uuids::uuid& resultSegUid, const GraphCutsSegmentationType& segType ) > executeGraphCutsSeg,
+            std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const uuids::uuid& resultSegUid, const std::vector<uuids::uuid>& potUids ) > executePoissonSeg,
             std::function< bool ( const uuids::uuid& imageUid, bool locked ) > setLockManualImageTransformation,
             std::function< void () > paintActiveSegmentationWithActivePolygon );
 
@@ -95,6 +97,7 @@ private:
     std::function< bool ( const uuids::uuid& segUid ) > m_clearSeg = nullptr;
     std::function< bool ( const uuids::uuid& segUid ) > m_removeSeg = nullptr;
     std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const uuids::uuid& resultSegUid, const GraphCutsSegmentationType& segType ) > m_executeGraphCutsSeg = nullptr;
+    std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const uuids::uuid& resultSegUid, const std::vector<uuids::uuid>& potUids ) > m_executePoissonSeg = nullptr;
     std::function< bool ( const uuids::uuid& imageUid, bool locked ) > m_setLockManualImageTransformation = nullptr;
     std::function< void () > m_paintActiveSegmentationWithActivePolygon = nullptr;
 

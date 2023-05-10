@@ -156,13 +156,10 @@ bool CallbackHandler::executeGraphCutsSegmentation(
 
     const uint32_t imComp = image->settings().activeComponent();
 
-    const VoxelDistances voxelDists = computeVoxelDistances(
-        image->header().spacing(), true );
+    const VoxelDistances voxelDists = computeVoxelDistances( image->header().spacing(), true );
 
     const double imLow = image->settings().componentStatistics(imComp).m_quantiles[10];
     const double imHigh = image->settings().componentStatistics(imComp).m_quantiles[990];
-
-// https://itk.org/Doxygen/html/classitk_1_1NoiseImageFilter.html
 
     auto weight = [this, &imLow, &imHigh] (double diff) -> double
     {
@@ -250,6 +247,18 @@ bool CallbackHandler::executeGraphCutsSegmentation(
 
     return true;
 }
+
+
+bool CallbackHandler::executePoissonSegmentation(
+    const uuids::uuid&,// imageUid,
+    const uuids::uuid&,// seedSegUid,
+    const uuids::uuid&,// resultSegUid,
+    const std::vector<uuids::uuid>& )
+    //  potUids )
+{
+    return true;
+}
+
 
 void CallbackHandler::recenterViews(
         const ImageSelection& imageSelection,

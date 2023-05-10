@@ -158,6 +158,7 @@ void ImGuiWrapper::setCallbacks(
         std::function< bool ( const uuids::uuid& segUid ) > clearSeg,
         std::function< bool ( const uuids::uuid& segUid ) > removeSeg,
         std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const uuids::uuid& resultSegUid, const GraphCutsSegmentationType& segType ) > executeGraphCutsSeg,
+        std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const uuids::uuid& resultSegUid, const std::vector<uuids::uuid>& potUids ) > executePoissonSeg,
         std::function< bool ( const uuids::uuid& imageUid, bool locked ) > setLockManualImageTransformation,
         std::function< void () > paintActiveSegmentationWithActivePolygon )
 {
@@ -184,6 +185,7 @@ void ImGuiWrapper::setCallbacks(
     m_clearSeg = clearSeg;
     m_removeSeg = removeSeg;
     m_executeGraphCutsSeg = executeGraphCutsSeg;
+    m_executePoissonSeg = executePoissonSeg;
     m_setLockManualImageTransformation = setLockManualImageTransformation;
     m_paintActiveSegmentationWithActivePolygon = paintActiveSegmentationWithActivePolygon;
 }
@@ -859,7 +861,8 @@ void ImGuiWrapper::render()
                     m_readjustViewport,
                     m_updateImageUniforms,
                     m_createBlankSeg,
-                    m_executeGraphCutsSeg );
+                    m_executeGraphCutsSeg,
+                    m_executePoissonSeg );
 
         annotationToolbar( m_paintActiveSegmentationWithActivePolygon );
     }

@@ -1,35 +1,20 @@
 #ifndef POISSON_H
 #define POISSON_H
 
-#include <array>
-#include <vector>
+#include <cstdint>
 
-using BndType = short;
-using ImgType = float;
-using PotType = float;
+class Image;
 
 /**
- * @brief sor
- * @param bnd
- * @param img
- * @param pot
- * @param dims
- * @param spacing
- * @param rjac
- * @param maxits
- * @param beta
- *
  * @cite This code is a 3D extension of the algorithm from "Numerical Recipes in C":
  * "Successive over-relaxation solution of equation (19.5.25) with Chebyshev acceleration"
  * 'rjac' is input as the spectral radius of the Jacobi iteration, or an estimate of it.
  */
-void sor( const std::vector<BndType>& bnd,
-         const std::vector<ImgType>& img,
-         std::vector<PotType>& pot,
-         const std::array<int, 3>& dims,
-         const std::array<double, 3>& spacing,
-         double rjac,
-         std::size_t maxits,
-         double beta );
+void sor(
+    const Image& bnd, const Image& img, Image& pot,
+    uint32_t imComp, float rjac, uint32_t maxits, float beta );
+
+// Compute a decent value for the 'beta' parameter used in SOR.
+float computeBeta( const Image& img, uint32_t imComp );
 
 #endif // POISSON_H
