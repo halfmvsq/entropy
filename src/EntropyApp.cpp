@@ -1029,14 +1029,17 @@ bool EntropyApp::loadSerializedImage(
             const float minThreshold = static_cast<float>( stats.m_quantiles[sk_thresholdQuantile] );
             const float maxThreshold = static_cast<float>( stats.m_maximum );
 
-            const auto distMapImage = computeEuclideanDistanceMap<ImageComponentType, DistanceMapComponentType>(
-                        imageComp, comp, minThreshold, maxThreshold, sk_downsamplingFactor );
+            const auto distMapItkImage =
+                computeEuclideanDistanceMap<ImageComponentType, DistanceMapComponentType>(
+                    imageComp, comp, minThreshold, maxThreshold, sk_downsamplingFactor );
 
-            if ( distMapImage )
+            if ( distMapItkImage )
             {
-                m_data.addDistanceMap( *imageUid, comp, distMapImage, static_cast<double>( minThreshold ) );
+                // const Image distMapImage = createImageFromItkImage<DistanceMapComponentType>( distMapItkImage, "Distance Map" );
+                // m_data.addImage( distMapImage );
+                m_data.addDistanceMap( *imageUid, comp, distMapItkImage, static_cast<double>( minThreshold ) );
 
-                const auto mapSize = distMapImage->GetLargestPossibleRegion().GetSize();
+                const auto mapSize = distMapItkImage->GetLargestPossibleRegion().GetSize();
 
                 spdlog::debug( "Created distance map (with dimensions {}x{}x{} voxels) to foreground region [{}, {}] "
                                "of component {} of image {}", mapSize[0], mapSize[1], mapSize[2],

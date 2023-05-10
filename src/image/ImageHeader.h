@@ -103,7 +103,7 @@ public:
 
 private:
 
-    void setSpace( const ImageIoInfo& ioInfo );
+    void setSpace( const SpaceInfo& spaceInfo );
     void setBoundingBox();
 
     /// Hold onto the original image information, even though these get never be retrieved by the client

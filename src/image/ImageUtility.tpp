@@ -27,6 +27,7 @@
 
 #include <array>
 #include <chrono>
+#include <filesystem>
 #include <string>
 #include <type_traits>
 #include <utility>
@@ -37,8 +38,6 @@
 #undef max
 
 #define DEBUG_IMAGE_OUTPUT 0
-
-
 
 
 template< class T >
@@ -574,62 +573,6 @@ splitImageIntoComponents( const typename ::itk::ImageBase<NDim>::Pointer& imageB
 }
 
 
-/**
- * @brief Create an Entropy image from an ITK image
- *
- * @todo Finish this function and use it to convert the distance maps (stored as ITK images)
- * into Entropy images.
- *
- * @tparam T Component type of image
- * @param[in] itkImage ITK image
- * @param[in] displayName Image display name
- *
- * @return The created image
- */
-template< class T >
-Image createImageFromItkImage(
-    const typename itk::Image<T, 3>::Pointer itkImage,
-    const std::string& displayName )
-{
-//    ImageIoInfo ioInfo( itkImage->GetIoBase() );
-
-    using DirectionType = itk::Image<T, 3>::DirectionType;
-    using PointType = itk::Image<T, 3>::PointType;
-    using RegionType = itk::Image<T, 3>::RegionType;
-    using SizeType = itk::Image<T, 3>::SizeType;
-    using SpacingType = itk::Image<T, 3>::SpacingType;
-
-    const DirectionType itkDir = itkImage->GetDirection();
-    const PointType itkOrigin = itkImage->GetOrigin();
-    const RegionType itkRegion = itkImage->GetLargestPossibleRegion();
-    const SizeType itkSize = itkRegion.GetSize();
-    const SpacingType itkSpacing = itkImage->GetSpacing();
-
-    const glm::uvec3 dims{ itkSize[0], itkSize[1], itkSize[2] };
-    const glm::vec3 origin{ itkOrigin[0], itkOrigin[1], itkOrigin[2] };
-    const glm::vec3 spacing{ itkSpacing[0], itkSpacing[1], itkSpacing[2] };
-
-    // Set matrix of direction vectors in column-major order
-    const glm::mat3 directions{
-        itkDir[0][0], itkDir[0][1], itkDir[0][2],
-        itkDir[1][0], itkDir[1][1], itkDir[1][2],
-        itkDir[2][0], itkDir[2][1], itkDir[2][2]
-    };
-
-    ImageHeader header;
-    header.setExistsOnDisk( false );
-    header.setNumComponentsPerPixel( 1 );
-    header.setHeaderOverrides( ImageHeaderOverrides( dims, spacing, origin, directions ) );
-
-    Image image( header, displayName,
-                 Image::ImageRepresentation::Image,
-                 Image::MultiComponentBufferType::SeparateImages,
-                 std::vector<const T*>{ itkImage->GetBufferPointer() } );
-
-    return image;
-}
-
-
 template< class ComponentType, uint32_t NDim, bool PixelIsVector >
 typename itk::ImageBase<NDim>::Pointer readImage( const std::string& fileName )
 {
@@ -698,6 +641,82 @@ bool writeImage(
         spdlog::error( "Exception writing image to '{}': {}", fileName, e.what() );
         return false;
     }
+}
+
+
+
+/**
+ * @brief Create an Entropy image from an ITK image
+ *
+ * @todo Finish this function and use it to convert the distance maps (stored as ITK images)
+ * into Entropy images.
+ *
+ * @tparam T Component type of image
+ * @param[in] itkImage ITK image
+ * @param[in] displayName Image display name
+ *
+ * @return The created image
+ */
+template< class T >
+Image createImageFromItkImage(
+    const typename itk::Image<T, 3>::Pointer itkImage,
+    const std::string& displayName )
+{
+    /*
+    using DirectionType = itk::Image<T, 3>::DirectionType;
+    using PointType = itk::Image<T, 3>::PointType;
+    using RegionType = itk::Image<T, 3>::RegionType;
+    using SizeType = itk::Image<T, 3>::SizeType;
+    using SpacingType = itk::Image<T, 3>::SpacingType;
+
+    const DirectionType itkDir = itkImage->GetDirection();
+    const PointType itkOrigin = itkImage->GetOrigin();
+    const RegionType itkRegion = itkImage->GetLargestPossibleRegion();
+    const SizeType itkSize = itkRegion.GetSize();
+    const SpacingType itkSpacing = itkImage->GetSpacing();
+
+    const glm::uvec3 dims{ itkSize[0], itkSize[1], itkSize[2] };
+    const glm::vec3 origin{ itkOrigin[0], itkOrigin[1], itkOrigin[2] };
+    const glm::vec3 spacing{ itkSpacing[0], itkSpacing[1], itkSpacing[2] };
+
+    // Set matrix of direction vectors in column-major order
+    const glm::mat3 directions{
+        itkDir[0][0], itkDir[0][1], itkDir[0][2],
+        itkDir[1][0], itkDir[1][1], itkDir[1][2],
+        itkDir[2][0], itkDir[2][1], itkDir[2][2]
+    };
+
+    ImageHeader header;
+    header.setFileName( "<none>" );
+    header.setExistsOnDisk( false );
+    header.setNumComponentsPerPixel( 1 );
+    header.setHeaderOverrides( ImageHeaderOverrides( dims, spacing, origin, directions ) );
+    */
+
+    // Image image( header, displayName,
+    //              Image::ImageRepresentation::Image,
+    //              Image::MultiComponentBufferType::SeparateImages,
+    //              std::vector<const T*>{ itkImage->GetBufferPointer() } );
+
+    // return image;
+
+    const std::filesystem::path filename = std::filesystem::temp_directory_path() / "temp.nii.gz";
+    
+    writeImage<T, 3, false>( itkImage, filename.string() );
+    spdlog::debug( "Wrote temporary image file '{}'", filename );
+
+    Image image( filename, Image::ImageRepresentation::Image, Image::MultiComponentBufferType::SeparateImages );
+
+    image.header().setExistsOnDisk( false );
+    image.header().setFileName( "<none>" );
+    image.settings().setDisplayName( displayName );
+    
+    if ( ! std::remove( filename.string().c_str() ) )
+    {
+        spdlog::warn( "Unable to remove temporary image file '{}'", filename );
+    }
+
+    return image;
 }
 
 

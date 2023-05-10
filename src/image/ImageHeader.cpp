@@ -56,14 +56,14 @@ ImageHeader::ImageHeader(
     m_headerOverrides = ImageHeaderOverrides(
         m_pixelDimensions, m_spacing, m_origin, m_directions );
 
-    setSpace( m_ioInfoInMemory );
+    setSpace( m_ioInfoInMemory.m_spaceInfo );
 }
 
 
 void ImageHeader::setHeaderOverrides( const ImageHeaderOverrides& overrides )
 {
     m_headerOverrides = overrides;
-    setSpace( m_ioInfoInMemory );
+    setSpace( m_ioInfoInMemory.m_spaceInfo );
 }
 
 const ImageHeaderOverrides& ImageHeader::getHeaderOverrides() const
@@ -72,13 +72,13 @@ const ImageHeaderOverrides& ImageHeader::getHeaderOverrides() const
 }
 
 
-void ImageHeader::setSpace( const ImageIoInfo& ioInfo )
+void ImageHeader::setSpace( const SpaceInfo& spaceInfo )
 {
-    const uint32_t numDim = ioInfo.m_spaceInfo.m_numDimensions;
-    std::vector<size_t> dims = ioInfo.m_spaceInfo.m_dimensions;
-    std::vector<double> orig = ioInfo.m_spaceInfo.m_origin;
-    std::vector<double> space = ioInfo.m_spaceInfo.m_spacing;
-    std::vector< std::vector<double> > dirs = ioInfo.m_spaceInfo.m_directions;
+    const uint32_t numDim = spaceInfo.m_numDimensions;
+    std::vector<size_t> dims = spaceInfo.m_dimensions;
+    std::vector<double> orig = spaceInfo.m_origin;
+    std::vector<double> space = spaceInfo.m_spacing;
+    std::vector< std::vector<double> > dirs = spaceInfo.m_directions;
 
     // Expect a 3D image
     if ( numDim != 3 || orig.size() != 3 || space.size() != 3 || dims.size() != 3 || dirs.size() != 3 )
