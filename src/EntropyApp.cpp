@@ -1011,10 +1011,10 @@ bool EntropyApp::loadSerializedImage(
     }
     else
     {
-        // Cast the image components to float for computing the distance maps and noise estimates.
+        // Create an ITK image with float components from which distance maps and noise estimates are computed
         using ImageCompType = float;
 
-        // To save memory, use uint8_t components for the distance map image
+        // To save GPU memory, use uint8_t components for the distance map image
         using DistanceMapCompType = uint8_t;
 
         using ImageType = itk::Image<ImageCompType, 3>;
@@ -1023,11 +1023,16 @@ bool EntropyApp::loadSerializedImage(
 
         for ( uint32_t comp = 0; comp < image->header().numComponentsPerPixel(); ++comp )
         {
-            const ImageType::Pointer imageComp = createItkImageFromImageComponent<ImageCompType>( *image, comp );
+            /// @note It is somewhat wasteful to recreate an ITK image for each component,
+            /// especially since the image was originally loaded using ITK. But the utility
+            /// functions that we use require an ITK image as input.
+
+            const ImageType::Pointer compImage = createItkImageFromImageComponent<ImageCompType>( *image, comp );
 
 
-            // COMPUTE NOISE ESTIMATE FOR COMPONENT
-            const NoiseImageType::Pointer noiseEstimateItkImage = computeNoiseEstimate<ImageCompType>( imageComp, 1 );
+            // Compute noise estimate for image component:
+            const uint32_t radius = 1;
+            const NoiseImageType::Pointer noiseEstimateItkImage = computeNoiseEstimate<ImageCompType>( compImage, 1 );
 
             if ( noiseEstimateItkImage )
             {
@@ -1037,24 +1042,25 @@ bool EntropyApp::loadSerializedImage(
                 Image noiseEstimateImage = createImageFromItkImage<ImageCompType>(
                     noiseEstimateItkImage, std::move(displayName) );
 
-                m_data.addImage( noiseEstimateImage ); // Add noise estimate as an image for debug purposes
+                const glm::uvec3& noiseSize = noiseEstimateImage.header().pixelDimensions();
 
+                spdlog::debug( "Created noise estimate map (with dimensions {}x{}x{} voxels) with radius {} for "
+                               "component {} of image {}", noiseSize.x, noiseSize.y, noiseSize.z,
+                               radius, comp, *imageUid );
+
+                // m_data.addImage( noiseEstimateImage ); // Add noise estimate as an image for debug purposes
+                m_data.addNoiseEstimate( *imageUid, comp, std::move(noiseEstimateImage), radius );
             }
 
 
-            // COMPUTE DISTANCE MAP FOR COMPONENT
-
-            /// @note It is somewhat wasteful to recreate an ITK image for each component,
-            /// especially since the image was originally loaded using ITK. But the utility
-            /// function that we wrote requires an ITK image as input.
-
+            // Compute foreground distance map for image component:
             const auto& stats = image->settings().componentStatistics( comp );
             const float minThreshold = static_cast<float>( stats.m_quantiles[sk_thresholdQuantile] );
             const float maxThreshold = static_cast<float>( stats.m_maximum );
 
             const DistanceMapImageType::Pointer distMapItkImage =
                 computeEuclideanDistanceMap<ImageCompType, DistanceMapCompType>(
-                    imageComp, comp, minThreshold, maxThreshold, sk_downsamplingFactor );
+                    compImage, comp, minThreshold, maxThreshold, sk_downsamplingFactor );
 
             if ( distMapItkImage )
             {
@@ -1065,7 +1071,6 @@ bool EntropyApp::loadSerializedImage(
                     distMapItkImage, std::move(displayName) );
 
                 // m_data.addImage( distMapImage ); // Add distance map as an image for debug purposes
-
                 m_data.addDistanceMap( *imageUid, comp, std::move(distMapImage), static_cast<double>( minThreshold ) );
 
                 const glm::uvec3& mapSize = distMapImage.header().pixelDimensions();
@@ -1080,6 +1085,7 @@ bool EntropyApp::loadSerializedImage(
             }
         }
     }
+
 
     // Load segmentation images:
 

@@ -131,9 +131,9 @@ public:
         const uuids::uuid& imageUid, ComponentIndexType component,
         Image distanceMap, double boundaryIsoValue );
 
-    // bool addNoiseEstimate(
-    //     const uuids::uuid& imageUid, ComponentIndexType component,
-    //     NoiseEstimateType noiseEstimate );
+    bool addNoiseEstimate(
+        const uuids::uuid& imageUid, ComponentIndexType component,
+        Image noiseEstimate, uint32_t radius );
 
     /**
      * @brief Add an isosurface to an image component.
@@ -180,6 +180,10 @@ public:
 
     /// Get the distance maps (keyed by isosurface value) associated with an image component
     const std::map< double, Image >& distanceMaps(
+        const uuids::uuid& imageUid, ComponentIndexType component ) const;
+
+    /// Get the noise estimate images (keyed by radius value) associated with an image component
+    const std::map< uint32_t, Image >& noiseEstimates(
         const uuids::uuid& imageUid, ComponentIndexType component ) const;
 
     /**
