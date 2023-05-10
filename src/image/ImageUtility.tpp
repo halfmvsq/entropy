@@ -16,6 +16,7 @@
 #include <itkImageToVTKImageFilter.h>
 #include <itkImportImageFilter.h>
 #include <itkLinearInterpolateImageFunction.h>
+#include <itkNoiseImageFilter.h>
 #include <itkResampleImageFilter.h>
 #include <itkSignedMaurerDistanceMapImageFilter.h>
 #include <itkStatisticsImageFilter.h>
@@ -711,6 +712,23 @@ Image createImageFromItkImage(
     }
 
     return image;
+}
+
+
+template< typename T >
+typename itk::Image<T, 3>::Pointer computeNoiseEstimate(
+    const typename itk::Image<T, 3>::Pointer image,
+    uint32_t radius )
+{
+    using ImageType = itk::Image<T, 3>;
+    using NoiseImageFilterType = itk::NoiseImageFilter<ImageType, ImageType>;
+
+    auto noiseFilter = NoiseImageFilterType::New();
+    noiseFilter->SetInput( image );
+    noiseFilter->SetRadius( radius );
+    noiseFilter->Update();
+
+    return noiseFilter->GetOutput();
 }
 
 

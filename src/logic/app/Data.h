@@ -378,8 +378,9 @@ private:
         /// Distance maps for the component, keyed by boundary isosurface value
         std::map< double, Image > m_distanceMaps;
 
-        /// Voxel-wise noise estimate of the image
-        // NoiseEstimateType m_noiseEstimate;
+        /// Voxel-wise noise estimates of the image, keyed by the radius of the neighborhood
+        /// used for computing the estimate
+        std::map< uint32_t, Image > m_noiseEstimates;
 
         /// Isosurfaces for the component
         std::unordered_map< uuids::uuid, Isosurface > m_isosurfaces;

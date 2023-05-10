@@ -1011,33 +1011,58 @@ bool EntropyApp::loadSerializedImage(
     }
     else
     {
+        // Cast the image components to float for computing the distance maps and noise estimates.
+        using ImageCompType = float;
+
+        // To save memory, use uint8_t components for the distance map image
+        using DistanceMapCompType = uint8_t;
+
+        using ImageType = itk::Image<ImageCompType, 3>;
+        using NoiseImageType = itk::Image<ImageCompType, 3>;
+        using DistanceMapImageType = itk::Image<DistanceMapCompType, 3>;
+
         for ( uint32_t comp = 0; comp < image->header().numComponentsPerPixel(); ++comp )
         {
+            const ImageType::Pointer imageComp = createItkImageFromImageComponent<ImageCompType>( *image, comp );
+
+
+            // COMPUTE NOISE ESTIMATE FOR COMPONENT
+            const NoiseImageType::Pointer noiseEstimateItkImage = computeNoiseEstimate<ImageCompType>( imageComp, 1 );
+
+            if ( noiseEstimateItkImage )
+            {
+                std::string displayName = std::string( "Noise estimate for component ") +
+                    std::to_string(comp) + " of '" + image->settings().displayName() + "'";
+
+                Image noiseEstimateImage = createImageFromItkImage<ImageCompType>(
+                    noiseEstimateItkImage, std::move(displayName) );
+
+                m_data.addImage( noiseEstimateImage ); // Add noise estimate as an image for debug purposes
+
+            }
+
+
+            // COMPUTE DISTANCE MAP FOR COMPONENT
+
             /// @note It is somewhat wasteful to recreate an ITK image for each component,
             /// especially since the image was originally loaded using ITK. But the utility
             /// function that we wrote requires an ITK image as input.
-
-            // Cast the image components to float for computing the distance map.
-            using ImageCompType = float;
-
-            // To save memory, use uint8_t components for the distance map image
-            using DistanceMapCompType = uint8_t;
-
-            const auto imageComp = createItkImageFromImageComponent<ImageCompType>( *image, comp );
 
             const auto& stats = image->settings().componentStatistics( comp );
             const float minThreshold = static_cast<float>( stats.m_quantiles[sk_thresholdQuantile] );
             const float maxThreshold = static_cast<float>( stats.m_maximum );
 
-            const auto distMapItkImage =
+            const DistanceMapImageType::Pointer distMapItkImage =
                 computeEuclideanDistanceMap<ImageCompType, DistanceMapCompType>(
                     imageComp, comp, minThreshold, maxThreshold, sk_downsamplingFactor );
 
             if ( distMapItkImage )
             {
+                std::string displayName = std::string( "Distance map for component ") +
+                    std::to_string(comp) + " of '" + image->settings().displayName() + "'";
+
                 Image distMapImage = createImageFromItkImage<DistanceMapCompType>(
-                    distMapItkImage,
-                    std::string( "Distance map for '") + image->settings().displayName() + "'" );
+                    distMapItkImage, std::move(displayName) );
 
                 // m_data.addImage( distMapImage ); // Add distance map as an image for debug purposes
 
