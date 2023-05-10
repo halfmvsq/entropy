@@ -424,7 +424,7 @@ std::vector< ComponentStats<T> > computeImageStatistics( const Image& image )
             spdlog::error( "Invalid component type '{}'",
                 componentTypeString( image.header().memoryComponentType() ) );
 
-            throw_debug( "Invalid component type" );
+            throw_debug( "Invalid component type" )
         }
         }
     }
@@ -591,12 +591,40 @@ Image createImageFromItkImage(
     const typename itk::Image<T, 3>::Pointer itkImage,
     const std::string& displayName )
 {
+//    ImageIoInfo ioInfo( itkImage->GetIoBase() );
+
+    using DirectionType = itk::Image<T, 3>::DirectionType;
+    using PointType = itk::Image<T, 3>::PointType;
+    using RegionType = itk::Image<T, 3>::RegionType;
+    using SizeType = itk::Image<T, 3>::SizeType;
+    using SpacingType = itk::Image<T, 3>::SpacingType;
+
+    const DirectionType itkDir = itkImage->GetDirection();
+    const PointType itkOrigin = itkImage->GetOrigin();
+    const RegionType itkRegion = itkImage->GetLargestPossibleRegion();
+    const SizeType itkSize = itkRegion.GetSize();
+    const SpacingType itkSpacing = itkImage->GetSpacing();
+
+    const glm::uvec3 dims{ itkSize[0], itkSize[1], itkSize[2] };
+    const glm::vec3 origin{ itkOrigin[0], itkOrigin[1], itkOrigin[2] };
+    const glm::vec3 spacing{ itkSpacing[0], itkSpacing[1], itkSpacing[2] };
+
+    // Set matrix of direction vectors in column-major order
+    const glm::mat3 directions{
+        itkDir[0][0], itkDir[0][1], itkDir[0][2],
+        itkDir[1][0], itkDir[1][1], itkDir[1][2],
+        itkDir[2][0], itkDir[2][1], itkDir[2][2]
+    };
+
     ImageHeader header;
+    header.setExistsOnDisk( false );
+    header.setNumComponentsPerPixel( 1 );
+    header.setHeaderOverrides( ImageHeaderOverrides( dims, spacing, origin, directions ) );
 
     Image image( header, displayName,
                  Image::ImageRepresentation::Image,
                  Image::MultiComponentBufferType::SeparateImages,
-                 static_cast<void*>( itkImage->GetBufferPointer() ) );
+                 std::vector<const T*>{ itkImage->GetBufferPointer() } );
 
     return image;
 }

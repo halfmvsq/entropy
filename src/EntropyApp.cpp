@@ -578,10 +578,10 @@ std::optional<uuids::uuid> EntropyApp::createBlankSeg(
     segHeader.adjustToScalarUCharFormat();
 
     // Data buffer for component 0 of segmentation
-    const std::vector<float> buffer( segHeader.numPixels(), 0.0f );
+    const std::vector<uint8_t> buffer( segHeader.numPixels(), 0u );
 
-    // Vector holding the buffer
-    const std::vector<const float*> imageData{ buffer.data() };
+    // Vector pointing to the buffer
+    const std::vector<const void*> imageData{ static_cast<const void*>( buffer.data() ) };
 
     Image seg( segHeader,
                segDisplayName,

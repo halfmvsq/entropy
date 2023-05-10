@@ -1,7 +1,5 @@
 #include "image/ImageUtility.h"
-#include "image/ImageUtility.tpp"
 
-#include "common/Exception.hpp"
 #include "common/MathFuncs.h"
 
 #include <spdlog/spdlog.h>
