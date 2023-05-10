@@ -1039,9 +1039,7 @@ Rendering::bindImageTextures( const ImgSegPair& p )
         }
 
 
-        DistanceMapType distMap = nullptr;
-
-        static uint32_t numWarnings = 0;
+        static bool alreadyShowedWarning = false;
 
         if ( useDistMap )
         {
@@ -1049,32 +1047,38 @@ Rendering::bindImageTextures( const ImgSegPair& p )
 
             if ( distMaps.empty() )
             {
-                ++numWarnings;
-
-                if ( numWarnings < 10 )
+                if ( ! alreadyShowedWarning )
                 {
                     spdlog::warn( "No distance map for component {} of image {}", activeComp, *imageUid );
-                }
-            }
-            else
-            {
-                // Get the first map:
-                distMap = distMaps.begin()->second;
+                    alreadyShowedWarning = true;
 
-                if ( ! distMap )
-                {
-                    spdlog::warn( "Null distance map for component {} of image {}", activeComp, *imageUid );
+                    // Disable use of distance map for this image:
+                    if ( Image* image2 = ( imageUid ? m_appData.image( *imageUid ) : nullptr ) )
+                    {
+                        image2->settings().setUseDistanceMapForRaycasting( false );
+                    }
                 }
             }
         }
+    
+        bool foundMap = false;
 
-        if ( distMap )
+        if ( useDistMap )
         {
-            GLTexture& distTex = R.m_distanceMapTextures.at( *imageUid ).at( activeComp );
-            distTex.bind( msk_jumpTexSampler.index );
-            textures.push_back( distTex );
+            auto it = R.m_distanceMapTextures.find( *imageUid );
+            if ( std::end(R.m_distanceMapTextures) != it )
+            {
+                auto it2 = it->second.find( activeComp );
+                if ( std::end(it->second) != it2 )
+                {
+                    foundMap = true;
+                    GLTexture& distTex = it2->second;
+                    distTex.bind( msk_jumpTexSampler.index );
+                    textures.push_back( distTex );
+                }
+            }
         }
-        else
+        else if ( ! useDistMap || ! foundMap )
         {
             // Bind blank (zero) distance map:
             GLTexture& distTex = R.m_blankDistMapTexture;

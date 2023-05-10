@@ -1017,32 +1017,36 @@ bool EntropyApp::loadSerializedImage(
             /// especially since the image was originally loaded using ITK. But the utility
             /// function that we wrote requires an ITK image as input.
 
-            // Create a floating-point ITK image
-            using ImageComponentType = float;
+            // Cast the image components to float for computing the distance map.
+            using ImageCompType = float;
 
-            // To save memory, use uint8_t components for the distance map
-            using DistanceMapComponentType = uint8_t;
+            // To save memory, use uint8_t components for the distance map image
+            using DistanceMapCompType = uint8_t;
 
-            const auto imageComp = createItkImageFromImageComponent<ImageComponentType>( *image, comp );
+            const auto imageComp = createItkImageFromImageComponent<ImageCompType>( *image, comp );
 
             const auto& stats = image->settings().componentStatistics( comp );
             const float minThreshold = static_cast<float>( stats.m_quantiles[sk_thresholdQuantile] );
             const float maxThreshold = static_cast<float>( stats.m_maximum );
 
             const auto distMapItkImage =
-                computeEuclideanDistanceMap<ImageComponentType, DistanceMapComponentType>(
+                computeEuclideanDistanceMap<ImageCompType, DistanceMapCompType>(
                     imageComp, comp, minThreshold, maxThreshold, sk_downsamplingFactor );
 
             if ( distMapItkImage )
             {
-                // const Image distMapImage = createImageFromItkImage<DistanceMapComponentType>( distMapItkImage, "Distance Map" );
-                // m_data.addImage( distMapImage );
-                m_data.addDistanceMap( *imageUid, comp, distMapItkImage, static_cast<double>( minThreshold ) );
+                Image distMapImage = createImageFromItkImage<DistanceMapCompType>(
+                    distMapItkImage,
+                    std::string( "Distance map for '") + image->settings().displayName() + "'" );
 
-                const auto mapSize = distMapItkImage->GetLargestPossibleRegion().GetSize();
+                // m_data.addImage( distMapImage ); // Add distance map as an image for debug purposes
+
+                m_data.addDistanceMap( *imageUid, comp, std::move(distMapImage), static_cast<double>( minThreshold ) );
+
+                const glm::uvec3& mapSize = distMapImage.header().pixelDimensions();
 
                 spdlog::debug( "Created distance map (with dimensions {}x{}x{} voxels) to foreground region [{}, {}] "
-                               "of component {} of image {}", mapSize[0], mapSize[1], mapSize[2],
+                               "of component {} of image {}", mapSize.x, mapSize.y, mapSize.z,
                                minThreshold, maxThreshold, comp, *imageUid );
             }
             else

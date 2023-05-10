@@ -24,9 +24,6 @@
 
 #include <uuid.h>
 
-/// @todo Remove this when distance maps are represented as Entropy images
-#include <itkImage.h>
-
 #include <list>
 #include <map>
 #include <memory>
@@ -39,8 +36,6 @@
 
 
 using ComponentIndexType = uint32_t;
-using DistanceMapType = typename itk::Image<uint8_t, 3>::Pointer;
-using NoiseEstimateType = typename itk::Image<float, 3>::Pointer;
 
 
 /**
@@ -134,11 +129,11 @@ public:
      */
     bool addDistanceMap(
         const uuids::uuid& imageUid, ComponentIndexType component,
-        DistanceMapType distanceMap, double boundaryIsoValue );
+        Image distanceMap, double boundaryIsoValue );
 
-    bool addNoiseEstimate(
-        const uuids::uuid& imageUid, ComponentIndexType component,
-        NoiseEstimateType noiseEstimate );
+    // bool addNoiseEstimate(
+    //     const uuids::uuid& imageUid, ComponentIndexType component,
+    //     NoiseEstimateType noiseEstimate );
 
     /**
      * @brief Add an isosurface to an image component.
@@ -184,7 +179,7 @@ public:
     Image* def( const uuids::uuid& defUid );
 
     /// Get the distance maps (keyed by isosurface value) associated with an image component
-    const std::map< double, DistanceMapType >& distanceMaps(
+    const std::map< double, Image >& distanceMaps(
         const uuids::uuid& imageUid, ComponentIndexType component ) const;
 
     /**
@@ -381,10 +376,10 @@ private:
         /// distance map. Each map is paired with its corresponding boundary isosurface value.
 
         /// Distance maps for the component, keyed by boundary isosurface value
-        std::map< double, DistanceMapType > m_distanceMaps;
+        std::map< double, Image > m_distanceMaps;
 
         /// Voxel-wise noise estimate of the image
-        NoiseEstimateType m_noiseEstimate;
+        // NoiseEstimateType m_noiseEstimate;
 
         /// Isosurfaces for the component
         std::unordered_map< uuids::uuid, Isosurface > m_isosurfaces;

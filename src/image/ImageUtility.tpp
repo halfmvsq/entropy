@@ -74,7 +74,7 @@ typename itk::Image<T, 3>::Pointer makeScalarImage(
 
         for ( uint32_t j = 0; j < 3; ++j )
         {
-            direction[i][j] = imageDirection[i][j];
+            direction[i][j] = imageDirection[j][i];
         }
     }
 
@@ -168,7 +168,6 @@ typename itk::Image<T, 3>::Pointer createItkImageFromImageComponent(
             reinterpret_cast<const S*>( image.bufferAsVoid( component ) ) );
 
         if ( ! compImage ) return nullptr;
-
         caster->SetInput( compImage );
         caster->Update();
         return caster->GetOutput();
@@ -185,7 +184,6 @@ typename itk::Image<T, 3>::Pointer createItkImageFromImageComponent(
             reinterpret_cast<const S*>( image.bufferAsVoid( component ) ) );
 
         if ( ! compImage ) return nullptr;
-
         caster->SetInput( compImage );
         caster->Update();
         return caster->GetOutput();
@@ -202,7 +200,6 @@ typename itk::Image<T, 3>::Pointer createItkImageFromImageComponent(
             reinterpret_cast<const S*>( image.bufferAsVoid( component ) ) );
 
         if ( ! compImage ) return nullptr;
-
         caster->SetInput( compImage );
         caster->Update();
         return caster->GetOutput();
@@ -219,7 +216,6 @@ typename itk::Image<T, 3>::Pointer createItkImageFromImageComponent(
             reinterpret_cast<const S*>( image.bufferAsVoid( component ) ) );
 
         if ( ! compImage ) return nullptr;
-
         caster->SetInput( compImage );
         caster->Update();
         return caster->GetOutput();
@@ -236,7 +232,6 @@ typename itk::Image<T, 3>::Pointer createItkImageFromImageComponent(
             reinterpret_cast<const S*>( image.bufferAsVoid( component ) ) );
 
         if ( ! compImage ) return nullptr;
-
         caster->SetInput( compImage );
         caster->Update();
         return caster->GetOutput();
@@ -253,7 +248,6 @@ typename itk::Image<T, 3>::Pointer createItkImageFromImageComponent(
             reinterpret_cast<const S*>( image.bufferAsVoid( component ) ) );
 
         if ( ! compImage ) return nullptr;
-
         caster->SetInput( compImage );
         caster->Update();
         return caster->GetOutput();
@@ -270,7 +264,6 @@ typename itk::Image<T, 3>::Pointer createItkImageFromImageComponent(
             reinterpret_cast<const S*>( image.bufferAsVoid( component ) ) );
 
         if ( ! compImage ) return nullptr;
-
         caster->SetInput( compImage );
         caster->Update();
         return caster->GetOutput();
@@ -680,6 +673,7 @@ Image createImageFromItkImage(
     const glm::vec3 spacing{ itkSpacing[0], itkSpacing[1], itkSpacing[2] };
 
     // Set matrix of direction vectors in column-major order
+    // Todo: make sure that this isn't transposed!
     const glm::mat3 directions{
         itkDir[0][0], itkDir[0][1], itkDir[0][2],
         itkDir[1][0], itkDir[1][1], itkDir[1][2],

@@ -284,7 +284,7 @@ createDistanceMapTextures( const AppData& appData )
 
         for ( uint32_t comp = 0; comp < numComp; ++comp )
         {
-            const std::map<double, DistanceMapType> maps = appData.distanceMaps( imageUid, comp );
+            const std::map<double, Image>& maps = appData.distanceMaps( imageUid, comp );
 
             if ( maps.empty() )
             {
@@ -293,13 +293,7 @@ createDistanceMapTextures( const AppData& appData )
             }
 
             // Get the first map:
-            const auto firstMap = maps.begin()->second;
-
-            if ( ! firstMap )
-            {
-                spdlog::warn( "Null distance map for component {} of image {}", comp, imageUid );
-                continue;
-            }
+            const Image& map = maps.begin()->second;
 
             auto it = componentTextures.emplace(
                 std::piecewise_construct,
@@ -309,21 +303,19 @@ createDistanceMapTextures( const AppData& appData )
                     GLTexture::MultisampleSettings(),
                     pixelPackSettings, pixelUnpackSettings ) );
 
-            const auto& mapSize = firstMap->GetLargestPossibleRegion().GetSize();
-
             it.first->second.generate();
             it.first->second.setMinificationFilter( sk_minFilter );
             it.first->second.setMagnificationFilter( sk_maxFilter );
             it.first->second.setWrapMode( sk_wrapModeClampToEdge );
             it.first->second.setAutoGenerateMipmaps( false );
-            it.first->second.setSize( glm::uvec3{ mapSize[0], mapSize[1], mapSize[2] } );
+            it.first->second.setSize( map.header().pixelDimensions() );
 
             it.first->second.setData(
                 sk_mipmapLevel,
                 k_sizedInternalNormalizedFormat,
                 k_bufferPixelNormalizedFormat,
                 GLTexture::getBufferPixelDataType( sk_compType ),
-                static_cast<void*>( firstMap->GetBufferPointer() ) );
+                map.bufferAsVoid(0) );
         }
 
         spdlog::debug( "Done creating {} distance map textures for image components",

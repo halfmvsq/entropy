@@ -310,7 +310,7 @@ std::optional<uuids::uuid> AppData::addAnnotation(
 bool AppData::addDistanceMap(
         const uuids::uuid& imageUid,
         ComponentIndexType component,
-        DistanceMapType distanceMap,
+        Image distanceMap,
         double boundaryIsoValue )
 {
     std::lock_guard< std::mutex > lock( m_componentDataMutex );
@@ -338,7 +338,7 @@ bool AppData::addDistanceMap(
             compDataIt->second.resize( numComps );
         }
 
-        compDataIt->second.at( component ).m_distanceMaps.emplace( boundaryIsoValue, distanceMap );
+        compDataIt->second.at( component ).m_distanceMaps.emplace( boundaryIsoValue, std::move(distanceMap) );
         return true;
     }
     else
@@ -624,12 +624,12 @@ Image* AppData::def( const uuids::uuid& defUid )
     return const_cast<Image*>( const_cast<const AppData*>(this)->def( defUid ) );
 }
 
-const std::map< double, DistanceMapType >& AppData::distanceMaps(
+const std::map< double, Image >& AppData::distanceMaps(
         const uuids::uuid& imageUid,
         ComponentIndexType component ) const
 {
     // Map of distance maps (keyed by isosurface value) for the component:
-    static const std::map< double, DistanceMapType > EMPTY;
+    static const std::map< double, Image > EMPTY;
 
     std::lock_guard< std::mutex > lock( m_componentDataMutex );
 
