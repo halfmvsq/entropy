@@ -84,12 +84,20 @@ public:
             const glm::uvec3& sizeInVoxels,
             const void* data );
 
+    /// @todo Is this function needed?
     void updateSegTexture(
             const uuids::uuid& segUid,
             const ComponentType& compType,
             const glm::uvec3& startOffsetVoxel,
             const glm::uvec3& sizeInVoxels,
             const int64_t* data );
+
+    void updateImageTexture(
+        const uuids::uuid& imageUid,
+        const ComponentType& compType,
+        const glm::uvec3& startOffsetVoxel,
+        const glm::uvec3& sizeInVoxels,
+        const void* data );
 
     bool createLabelColorTableTexture( const uuids::uuid& labelTableUid );
 

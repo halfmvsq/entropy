@@ -520,8 +520,18 @@ void Rendering::updateSegTexture(
     }
 }
 
+// void Rendering::updateImageTexture(
+//         const uuids::uuid& segUid,
+//         const ComponentType& compType,
+//         const glm::uvec3& startOffsetVoxel,
+//         const glm::uvec3& sizeInVoxels,
+//         const void* data )
+// {
+
+// }
+            
 Rendering::CurrentImages Rendering::getImageAndSegUidsForMetricShaders(
-        const std::list<uuids::uuid>& metricImageUids ) const
+    const std::list<uuids::uuid>& metricImageUids ) const
 {
     CurrentImages I;
 

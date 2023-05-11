@@ -698,7 +698,6 @@ void renderImageHeader(
                 }
             }
 
-
             // Global visibility (all components) checkbox:
             bool globalVisibility = imgSettings.globalVisibility();
 
@@ -709,16 +708,17 @@ void renderImageHeader(
             }
             ImGui::SameLine(); helpMarker( "Show/hide all image components on all views (W)" );
 
-
-            bool segVisible = activeSeg->settings().visibility();
-
-            if ( ImGui::Checkbox( "Segmentation visible", &segVisible ) )
+            if ( activeSeg )
             {
-                activeSeg->settings().setVisibility( segVisible );
-                updateAllImageUniforms();
-            }
-            ImGui::SameLine(); helpMarker( "Show/hide the segmentation on all views (S)" );
+                bool segVisible = activeSeg->settings().visibility();
 
+                if ( ImGui::Checkbox( "Segmentation visible", &segVisible ) )
+                {
+                    activeSeg->settings().setVisibility( segVisible );
+                    updateAllImageUniforms();
+                }
+                ImGui::SameLine(); helpMarker( "Show/hide the segmentation on all views (S)" );
+            }
 
             // Global image opacity slider:
             double globalImageOpacity = imgSettings.globalOpacity();
@@ -729,24 +729,26 @@ void renderImageHeader(
             }
             ImGui::SameLine(); helpMarker( "Image layer opacity" );
 
-
-            double segOpacity = activeSeg->settings().opacity();
-            if ( mySliderF64( "Seg. opacity", &segOpacity, 0.0, 1.0 ) )
+            if ( activeSeg )
             {
-                activeSeg->settings().setOpacity( segOpacity );
-                updateAllImageUniforms();
+                double segOpacity = activeSeg->settings().opacity();
+                if ( mySliderF64( "Seg. opacity", &segOpacity, 0.0, 1.0 ) )
+                {
+                    activeSeg->settings().setOpacity( segOpacity );
+                    updateAllImageUniforms();
+                }
+                ImGui::SameLine(); helpMarker( "Segmentation layer opacity" );
             }
-            ImGui::SameLine(); helpMarker( "Segmentation layer opacity" );
 
             ImGui::Spacing();
             ImGui::Separator();
             ImGui::Spacing();
 
-
             static const std::vector<std::string> sk_rgbaLetters{ " (red)", " (green)", " (blue)", " (alpha)" };
 
             const std::string previewValue = ( imgSettings.displayImageAsColor() )
-                    ? std::to_string( imgSettings.activeComponent() ) + sk_rgbaLetters[imgSettings.activeComponent()]
+                    ? std::to_string( imgSettings.activeComponent() ) +
+                        sk_rgbaLetters[imgSettings.activeComponent()]
                     : std::to_string( imgSettings.activeComponent() );
 
             if ( ImGui::BeginCombo( "Image component", previewValue.c_str() ) )
@@ -776,7 +778,6 @@ void renderImageHeader(
             ImGui::Dummy( ImVec2( 0.0f, 1.0f ) );
         }
 
-
         // Visibility checkbox:
         bool visible = imgSettings.visibility();
 
@@ -792,7 +793,6 @@ void renderImageHeader(
         const char* opacitySliderText = ( image->header().numComponentsPerPixel() > 1 )
                 ? sk_compOpacityText.c_str()
                 : sk_imageOpacityText.c_str();
-
 
         if ( ImGui::Checkbox( visibleCheckText, &visible ) )
         {
@@ -813,7 +813,6 @@ void renderImageHeader(
             ImGui::SameLine(); helpMarker( "Show/hide the segmentation on all views (S)" );
         }
 
-
 //        if ( visible )
         {
             // Image opacity slider:
@@ -824,7 +823,6 @@ void renderImageHeader(
                 updateImageUniforms();
             }
             ImGui::SameLine(); helpMarker( "Image layer opacity" );
-
 
             // Segmentation opacity slider:
             if ( activeSeg && ! showComponentSelection )

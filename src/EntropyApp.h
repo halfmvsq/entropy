@@ -130,7 +130,8 @@ private:
     std::optional<uuids::uuid> createBlankImage(
         const uuids::uuid& matchImageUid,
         uint32_t numComponents,
-        std::string displayName );
+        std::string displayName,
+        bool createSegmentation );
 
     /// Create a blank segmentation with the same header as the given image
     std::optional<uuids::uuid> createBlankSeg(

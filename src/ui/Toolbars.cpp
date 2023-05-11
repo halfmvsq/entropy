@@ -1345,7 +1345,8 @@ void renderSegToolbar(
                             std::to_string( numSegsForImage + 1 ) +
                             " for image '" + image->settings().displayName() + "'";
 
-                        const auto blankSegUid = createBlankSeg( *imageUid, std::move( multilabelSegDisplayName ) );
+                        const auto blankSegUid = createBlankSeg(
+                            *imageUid, std::move( multilabelSegDisplayName ) );
                         
                         const std::string potDisplayName =
                             std::string( "Potential maps for image '" ) +
@@ -1353,7 +1354,8 @@ void renderSegToolbar(
 
                         const uint32_t numComps = 3;
 
-                        const auto blankPotImageUid = createBlankImage( *imageUid, std::move( potDisplayName ), numComps );
+                        const auto blankPotImageUid = createBlankImage(
+                            *imageUid, std::move( potDisplayName ), numComps );
 
                         if ( blankSegUid && blankPotImageUid )
                         {

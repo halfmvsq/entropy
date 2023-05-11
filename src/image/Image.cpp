@@ -564,7 +564,8 @@ bool Image::saveComponentToDisk( uint32_t component, const std::optional<std::st
 
 
 bool Image::loadImageBuffer(
-    const void* buffer, std::size_t numElements,
+    const void* buffer,
+    std::size_t numElements,
     const itk::IOComponentEnum& srcComponentType,
     const itk::IOComponentEnum& dstComponentType )
 {

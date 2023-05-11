@@ -258,7 +258,6 @@ bool CallbackHandler::executePoissonSegmentation(
 {
     const Image* image = m_appData.image( imageUid );
     const Image* seedSeg = m_appData.seg( seedSegUid );
-
     Image* resultSeg = m_appData.seg( resultSegUid );
     Image* potImage = m_appData.image( potentialUid );
 

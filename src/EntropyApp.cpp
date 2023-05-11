@@ -557,10 +557,12 @@ EntropyApp::loadDeformationField( const std::string& fileName )
 }
 
 
+/// @note This does not create a segmentation for the image
 std::optional<uuids::uuid> EntropyApp::createBlankImage(
     const uuids::uuid& matchImageUid,
     uint32_t numComponents,
-    std::string displayName )
+    std::string displayName,
+    bool createSegmentation )
 {
     const Image* matchImg = m_data.image( matchImageUid );
 
@@ -580,13 +582,8 @@ std::optional<uuids::uuid> EntropyApp::createBlankImage(
     // Data buffers for each image component
     const std::vector<float> buffer( header.numPixels(), 0.0f );
 
-    // Vector pointing to the component buffers
-    std::vector<const void*> imageDataComponents( numComponents );
-
-    for ( uint32_t i = 0; i < imageDataComponents.size(); ++i )
-    {
-        imageDataComponents[i] = buffer.data();
-    }
+    // Vector holding pointers to the component buffers
+    std::vector<const void*> imageDataComponents( numComponents, buffer.data() );
 
     Image image(
         header,
@@ -597,14 +594,20 @@ std::optional<uuids::uuid> EntropyApp::createBlankImage(
 
     image.setHeaderOverrides( matchImg->getHeaderOverrides() );
 
-    // Set the default opacity:
-    image.settings().setOpacity( 1.0 );
-
     spdlog::info( "Created image matching header of image {}", matchImageUid );
     spdlog::debug( "Header:\n{}", image.header() );
     spdlog::debug( "Transformation:\n{}", image.transformations() );
 
     const auto imageUid = m_data.addImage( std::move( image ) );
+
+    if ( createSegmentation )
+    {
+        const std::string segDisplayName =
+            std::string( "Untitled segmentation for image '" ) +
+            image.settings().displayName() + "'";
+
+        createBlankSegWithColorTable( imageUid, segDisplayName );
+    }
 
     // Update uniforms for all images
     m_rendering.updateImageUniforms( m_data.imageUidsOrdered() );
@@ -770,7 +773,7 @@ bool EntropyApp::loadSerializedImage(
         spdlog::debug( "Attempting to load image from \"{}\"", serializedImage.m_imageFileName );
 
         std::tie( imageUid, isNewImage ) =
-                loadImage( serializedImage.m_imageFileName, sk_ignoreImageIfAlreadyLoaded );
+            loadImage( serializedImage.m_imageFileName, sk_ignoreImageIfAlreadyLoaded );
     }
     catch ( const std::exception& e )
     {
@@ -1576,7 +1579,7 @@ void EntropyApp::setCallbacks()
             },
 
             [this] ( const uuids::uuid& matchingImageUid, const std::string& displayName, uint32_t numComponents ) {
-                return createBlankImage( matchingImageUid, numComponents, displayName );
+                return createBlankImage( matchingImageUid, numComponents, displayName, true );
             },
 
             [this] ( const uuids::uuid& matchingImageUid, const std::string& segDisplayName ) {
