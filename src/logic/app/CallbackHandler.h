@@ -46,7 +46,7 @@ public:
         const uuids::uuid& imageUid,
         const uuids::uuid& seedSegUid,
         const uuids::uuid& resultSegUid,
-        const std::vector<uuids::uuid>& potUids );
+        const uuids::uuid& potentialUid );
 
 
 

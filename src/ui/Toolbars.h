@@ -41,9 +41,10 @@ void renderSegToolbar(
         const std::function< void ( size_t imageIndex, bool set ) >& setImageHasActiveSeg,
         const std::function< void (void) >& readjustViewport,
         const std::function< void( const uuids::uuid& imageUid ) >& updateImageUniforms,
+        const std::function< std::optional<uuids::uuid>( const uuids::uuid& matchingImageUid, const std::string& displayName, uint32_t numComponents ) >& createBlankImage,
         const std::function< std::optional<uuids::uuid>( const uuids::uuid& matchingImageUid, const std::string& segDisplayName ) >& createBlankSeg,
         const std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const uuids::uuid& resultSegUid, const GraphCutsSegmentationType& segType ) >& executeGraphCutsSeg,
-        const std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const uuids::uuid& resultSegUid, const std::vector<uuids::uuid>& potUids ) > executePoissonSeg );
+        const std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const uuids::uuid& resultSegUid, const uuids::uuid& potentialUid ) > executePoissonSeg );
 
 
 void renderAnnotationToolbar(

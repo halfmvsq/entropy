@@ -53,11 +53,12 @@ public:
             std::function< void ( size_t imageIndex, const glm::ivec3& voxelPos ) > setVoxelPos,
             std::function< std::vector< double > ( size_t imageIndex, bool getOnlyActiveComponent ) > getImageValues,
             std::function< std::optional<int64_t> ( size_t imageIndex ) > getSegLabel,
+            std::function< std::optional<uuids::uuid>( const uuids::uuid& matchingImageUid, const std::string& displayName, uint32_t numComponents ) > createBlankImage,
             std::function< std::optional<uuids::uuid>( const uuids::uuid& matchingImageUid, const std::string& segDisplayName ) > createBlankSeg,
             std::function< bool ( const uuids::uuid& segUid ) > clearSeg,
             std::function< bool ( const uuids::uuid& segUid ) > removeSeg,
             std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const uuids::uuid& resultSegUid, const GraphCutsSegmentationType& segType ) > executeGraphCutsSeg,
-            std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const uuids::uuid& resultSegUid, const std::vector<uuids::uuid>& potUids ) > executePoissonSeg,
+            std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const uuids::uuid& resultSegUid, const uuids::uuid& potentialUid ) > executePoissonSeg,
             std::function< bool ( const uuids::uuid& imageUid, bool locked ) > setLockManualImageTransformation,
             std::function< void () > paintActiveSegmentationWithActivePolygon );
 
@@ -93,11 +94,12 @@ private:
     std::function< void ( size_t imageIndex, const glm::ivec3& voxelPos ) > m_setVoxelPos = nullptr;
     std::function< std::vector< double > ( size_t imageIndex, bool getOnlyActiveComponent ) > m_getImageValues = nullptr;
     std::function< std::optional<int64_t> ( size_t imageIndex ) > m_getSegLabel = nullptr;
+    std::function< std::optional<uuids::uuid>( const uuids::uuid& matchingImageUid, const std::string& displayName, uint32_t numComponents ) > m_createBlankImage = nullptr;
     std::function< std::optional<uuids::uuid>( const uuids::uuid& matchingImageUid, const std::string& segDisplayName ) > m_createBlankSeg = nullptr;
     std::function< bool ( const uuids::uuid& segUid ) > m_clearSeg = nullptr;
     std::function< bool ( const uuids::uuid& segUid ) > m_removeSeg = nullptr;
     std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const uuids::uuid& resultSegUid, const GraphCutsSegmentationType& segType ) > m_executeGraphCutsSeg = nullptr;
-    std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const uuids::uuid& resultSegUid, const std::vector<uuids::uuid>& potUids ) > m_executePoissonSeg = nullptr;
+    std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const uuids::uuid& resultSegUid, const uuids::uuid& potentialUid ) > m_executePoissonSeg = nullptr;
     std::function< bool ( const uuids::uuid& imageUid, bool locked ) > m_setLockManualImageTransformation = nullptr;
     std::function< void () > m_paintActiveSegmentationWithActivePolygon = nullptr;
 

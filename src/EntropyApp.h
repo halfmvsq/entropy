@@ -126,6 +126,12 @@ private:
     std::pair< std::optional<uuids::uuid>, bool >
     loadImage( const std::string& fileName, bool ignoreIfAlreadyLoaded );
 
+    /// Create a blank multi-component image with the same header as the given image
+    std::optional<uuids::uuid> createBlankImage(
+        const uuids::uuid& matchImageUid,
+        uint32_t numComponents,
+        std::string displayName );
+
     /// Create a blank segmentation with the same header as the given image
     std::optional<uuids::uuid> createBlankSeg(
         const uuids::uuid& matchImageUid,

@@ -185,6 +185,90 @@ void ImageHeader::adjustToScalarUCharFormat()
 }
 
 
+void ImageHeader::adjustComponents( const ComponentType& componentType, uint32_t numComponents )
+{
+    if ( numComponents < 1 )
+    {
+        return;
+    }
+
+    std::string compString;
+    uint32_t sizeInBytes;
+
+    switch ( componentType )
+    {
+    case ComponentType::Int8:
+    {
+        compString = "char";
+        sizeInBytes =  1;
+        break;
+    };
+    case ComponentType::UInt8:
+    {
+        compString = "uchar";
+        sizeInBytes =  1;
+        break;
+    };
+    case ComponentType::Int16:
+    {
+        compString = "short";
+        sizeInBytes =  2;
+        break;
+    };
+    case ComponentType::UInt16:
+    {
+        compString = "ushort";
+        sizeInBytes =  2;
+        break;
+    };
+    case ComponentType::Int32:
+    {
+        compString = "int";
+        sizeInBytes =  4;
+        break;
+    };
+    case ComponentType::UInt32:
+    {
+        compString = "uint";
+        sizeInBytes =  4;
+        break;
+    };
+    case ComponentType::Float32:
+    {
+        compString = "float";
+        sizeInBytes =  4;
+        break;
+    };
+
+    default:
+    case ComponentType::Float64:
+    case ComponentType::Long:
+    case ComponentType::ULong:
+    case ComponentType::LongLong:
+    case ComponentType::ULongLong:
+    case ComponentType::LongDouble:
+    case ComponentType::Undefined:
+    {
+        return;
+    }
+    }
+
+    m_numComponentsPerPixel = numComponents;
+
+    m_pixelType = ( numComponents > 1 ) ? PixelType::Vector : PixelType::Scalar;
+    m_pixelTypeAsString = ( numComponents > 1 ) ? "vector" : "scalar";
+
+    m_fileComponentType = componentType;
+    m_fileComponentTypeAsString = compString;
+    m_fileComponentSizeInBytes = sizeInBytes;
+    m_fileImageSizeInBytes = m_fileComponentSizeInBytes * m_numComponentsPerPixel * m_numPixels;
+
+    m_memoryComponentType = m_fileComponentType;
+    m_memoryComponentTypeAsString = m_fileComponentTypeAsString;
+    m_memoryComponentSizeInBytes = m_fileComponentSizeInBytes;
+    m_memoryImageSizeInBytes = m_fileImageSizeInBytes;
+}
+
 bool ImageHeader::existsOnDisk() const { return m_existsOnDisk; }
 void ImageHeader::setExistsOnDisk( bool onDisk ) { m_existsOnDisk = onDisk; }
 

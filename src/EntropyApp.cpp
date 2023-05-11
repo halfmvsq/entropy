@@ -557,6 +557,62 @@ EntropyApp::loadDeformationField( const std::string& fileName )
 }
 
 
+std::optional<uuids::uuid> EntropyApp::createBlankImage(
+    const uuids::uuid& matchImageUid,
+    uint32_t numComponents,
+    std::string displayName )
+{
+    const Image* matchImg = m_data.image( matchImageUid );
+
+    if ( ! matchImg )
+    {
+        spdlog::debug( "Cannot create blank image for invalid matching image {}", matchImageUid );
+        return std::nullopt; // Invalid image provided
+    }
+
+    // Copy the image header, changing it to have the given number of components:
+    ImageHeader header = matchImg->header();
+
+    header.setExistsOnDisk( false );
+    header.setFileName( "<unsaved>" );
+    header.adjustComponents( ComponentType::Float32, numComponents );
+
+    // Data buffers for each image component
+    const std::vector<float> buffer( header.numPixels(), 0.0f );
+
+    // Vector pointing to the component buffers
+    std::vector<const void*> imageDataComponents( numComponents );
+
+    for ( uint32_t i = 0; i < imageDataComponents.size(); ++i )
+    {
+        imageDataComponents[i] = buffer.data();
+    }
+
+    Image image(
+        header,
+        displayName,
+        Image::ImageRepresentation::Image,
+        Image::MultiComponentBufferType::SeparateImages,
+        imageDataComponents );
+
+    image.setHeaderOverrides( matchImg->getHeaderOverrides() );
+
+    // Set the default opacity:
+    image.settings().setOpacity( 1.0 );
+
+    spdlog::info( "Created image matching header of image {}", matchImageUid );
+    spdlog::debug( "Header:\n{}", image.header() );
+    spdlog::debug( "Transformation:\n{}", image.transformations() );
+
+    const auto imageUid = m_data.addImage( std::move( image ) );
+
+    // Update uniforms for all images
+    m_rendering.updateImageUniforms( m_data.imageUidsOrdered() );
+
+    return imageUid;
+}
+
+
 std::optional<uuids::uuid> EntropyApp::createBlankSeg(
         const uuids::uuid& matchImageUid,
         std::string segDisplayName )
@@ -565,8 +621,7 @@ std::optional<uuids::uuid> EntropyApp::createBlankSeg(
 
     if ( ! matchImg )
     {
-        spdlog::debug( "Cannot create blank segmentation for invalid matching image {}",
-                       matchImageUid );
+        spdlog::debug( "Cannot create blank segmentation for invalid matching image {}", matchImageUid );
         return std::nullopt; // Invalid image provided
     }
 
@@ -1520,6 +1575,10 @@ void EntropyApp::setCallbacks()
                 return std::nullopt;
             },
 
+            [this] ( const uuids::uuid& matchingImageUid, const std::string& displayName, uint32_t numComponents ) {
+                return createBlankImage( matchingImageUid, numComponents, displayName );
+            },
+
             [this] ( const uuids::uuid& matchingImageUid, const std::string& segDisplayName ) {
                 return createBlankSegWithColorTable( matchingImageUid, segDisplayName );
             },
@@ -1550,10 +1609,10 @@ void EntropyApp::setCallbacks()
                 const uuids::uuid& imageUid,
                 const uuids::uuid& seedSegUid,
                 const uuids::uuid& resultSegUid,
-                const std::vector<uuids::uuid>& potUids ) -> bool
+                const uuids::uuid& potentialUid ) -> bool
             {
                 return m_callbackHandler.executePoissonSegmentation(
-                    imageUid, seedSegUid, resultSegUid, potUids );
+                    imageUid, seedSegUid, resultSegUid, potentialUid );
             },
 
             [this] ( const uuids::uuid& imageUid, bool locked ) -> bool

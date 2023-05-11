@@ -11,6 +11,7 @@
 #include "logic/camera/MathUtility.h"
 
 #include "logic/segmentation/GraphCuts.h"
+#include "logic/segmentation/Poisson.h"
 
 #include "rendering/Rendering.h"
 
@@ -250,12 +251,97 @@ bool CallbackHandler::executeGraphCutsSegmentation(
 
 
 bool CallbackHandler::executePoissonSegmentation(
-    const uuids::uuid&,// imageUid,
-    const uuids::uuid&,// seedSegUid,
-    const uuids::uuid&,// resultSegUid,
-    const std::vector<uuids::uuid>& )
-    //  potUids )
+    const uuids::uuid& imageUid,
+    const uuids::uuid& seedSegUid,
+    const uuids::uuid& resultSegUid,
+    const uuids::uuid& potentialUid )
 {
+    const Image* image = m_appData.image( imageUid );
+    const Image* seedSeg = m_appData.seg( seedSegUid );
+
+    Image* resultSeg = m_appData.seg( resultSegUid );
+    Image* potImage = m_appData.image( potentialUid );
+
+    if ( ! image )
+    {
+        spdlog::error( "Null image {} to segment using Poisson", imageUid );
+        return false;
+    }
+
+    if ( ! seedSeg )
+    {
+        spdlog::error( "Null seed segmentation {} for Poisson", seedSegUid );
+        return false;
+    }
+
+    if ( ! resultSeg )
+    {
+        spdlog::error( "Null result segmentation {} for Poisson", resultSegUid );
+        return false;
+    }
+
+    if ( ! potImage )
+    {
+        spdlog::error( "Null potential image {} for Poisson", potentialUid );
+        return false;
+    }
+
+    if ( image->header().pixelDimensions() != seedSeg->header().pixelDimensions() )
+    {
+        spdlog::error( "Dimensions of image {} ({}) and seed segmentation {} ({}) do not match",
+                      imageUid, glm::to_string( image->header().pixelDimensions() ),
+                      seedSegUid, glm::to_string( seedSeg->header().pixelDimensions() ) );
+        return false;
+    }
+
+    if ( image->header().pixelDimensions() != resultSeg->header().pixelDimensions() )
+    {
+        spdlog::error( "Dimensions of image {} ({}) and result segmentation {} ({}) do not match",
+                      imageUid, glm::to_string( image->header().pixelDimensions() ),
+                      resultSegUid, glm::to_string( resultSeg->header().pixelDimensions() ) );
+        return false;
+    }
+
+    if ( image->header().pixelDimensions() != potImage->header().pixelDimensions() )
+    {
+        spdlog::error( "Dimensions of image {} ({}) and potential image {} ({}) do not match",
+                      imageUid, glm::to_string( image->header().pixelDimensions() ),
+                      potentialUid, glm::to_string( potImage->header().pixelDimensions() ) );
+        return false;
+    }
+
+    spdlog::info( "Executing Poisson segmentation on image {} with seeds {}; "
+                  "resulting segmentation: {}", imageUid, seedSegUid, resultSegUid );
+
+    const uint32_t imComp = image->settings().activeComponent();
+    const float beta = computeBeta( *image, imComp );;
+    
+    const uint32_t maxIterations = 2;
+    sor( *seedSeg, *image, *potImage, imComp, 0.6f, maxIterations, beta );
+
+    spdlog::debug( "Start updating potential image texture" );
+    
+    // m_rendering.updateSegTexture(
+    //     resultSegUid,
+    //     resultSeg->header().memoryComponentType(),
+    //     glm::uvec3{0},
+    //     resultSeg->header().pixelDimensions(),
+    //     resultSeg->bufferAsVoid(imComp) );
+
+    spdlog::debug( "Done updating potential image texture" );
+
+
+    spdlog::debug( "Start updating segmentation texture" );
+    
+    m_rendering.updateSegTexture(
+        resultSegUid,
+        resultSeg->header().memoryComponentType(),
+        glm::uvec3{0},
+        resultSeg->header().pixelDimensions(),
+        resultSeg->bufferAsVoid(imComp) );
+
+    spdlog::debug( "Done updating segmentation texture" );
+
     return true;
 }
 

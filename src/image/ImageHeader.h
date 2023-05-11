@@ -42,6 +42,8 @@ public:
 
     void adjustToScalarUCharFormat();
 
+    void adjustComponents( const ComponentType& componentType, uint32_t numComponents );
+
     bool existsOnDisk() const;
     void setExistsOnDisk( bool );
 
