@@ -129,8 +129,9 @@ private:
     /// Create a blank multi-component image with the same header as the given image
     std::optional<uuids::uuid> createBlankImage(
         const uuids::uuid& matchImageUid,
+        const ComponentType& componentType,
         uint32_t numComponents,
-        std::string displayName,
+        const std::string& displayName,
         bool createSegmentation );
 
     /// Create a blank segmentation with the same header as the given image

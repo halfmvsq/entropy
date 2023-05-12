@@ -379,6 +379,10 @@ public:
     const ComponentStats<double>& componentStatistics( uint32_t component ) const;
     const ComponentStats<double>& componentStatistics() const;
 
+    void updateWithNewComponentStatistics(
+        std::vector< ComponentStats<double> > componentStats,
+        bool setDefaultSettings );
+
     /// Set the active component
     void setActiveComponent( uint32_t component );
 

@@ -207,6 +207,8 @@ public:
     /// @brief Get the image meta data
     std::ostream& metaData( std::ostream& os ) const;
 
+    void updateComponentStats();
+
 
 private:
 

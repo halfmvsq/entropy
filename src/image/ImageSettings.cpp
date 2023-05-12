@@ -30,69 +30,16 @@ ImageSettings::ImageSettings(
       m_isosurfaceOpacityModulator{ 1.0f },
       m_numComponents( numComponents ),
       m_componentType( std::move( componentType ) ),
-      m_componentStats( std::move( componentStats ) ),
       m_activeComponent( 0 )
 {
-    // Default window covers 1st to 99th quantile intensity range of the first pixel component
-    static constexpr int qLow = 10; // 1%
-    static constexpr int qHigh = 990; // 99%
-    static constexpr int qMax = 1000; // 100%
-
-    if ( m_componentStats.empty() )
+    if ( componentStats.size() != m_numComponents )
     {
-        spdlog::error( "No components in image settings" );
-        throw_debug( "No components in image settings" )
+        spdlog::error( "Wrong number of components image settings" );
+        throw_debug( "Wrong number of components image settings" )
     }
 
-    for ( uint32_t i = 0; i < m_componentStats.size(); ++i )
-    {
-        const auto& stat = m_componentStats[i];
-
-        ComponentSettings setting;
-
-        // Min/max window and threshold ranges are based on min/max component values
-
-        setting.m_minMaxImageRange = std::make_pair( stat.m_minimum, stat.m_maximum );
-        setting.m_minMaxThresholdRange = std::make_pair( stat.m_minimum, stat.m_maximum );
-        setting.m_minMaxWindowRange = std::make_pair( stat.m_minimum, stat.m_maximum );
-
-        // Default thresholds are min/max values:
-        setting.m_thresholds = std::make_pair( stat.m_minimum, stat.m_maximum );
-
-        // Default window limits are the low and high quantiles:
-        setting.m_window = std::make_pair( stat.m_quantiles[qLow], stat.m_quantiles[qHigh] );
-
-        // Use the [1%, 100%] intensity range to define foreground
-        // (until we have an algorithm to compute a foreground mask)
-        setting.m_foregroundThresholds =
-                std::make_pair( stat.m_quantiles[qLow], stat.m_quantiles[qMax] );
-
-
-        // Default to max opacity and nearest neighbor interpolation
-        setting.m_opacity = 1.0;
-        setting.m_visible = true;
-
-        setting.m_showEdges = false;
-        setting.m_thresholdEdges = false;
-        setting.m_useFreiChen = false;
-        setting.m_edgeMagnitude = 0.25;
-        setting.m_windowedEdges = false;
-        setting.m_overlayEdges = false;
-        setting.m_colormapEdges = false;
-        setting.m_edgeColor = glm::vec3{ 1.0f, 0.0f, 1.0f };
-        setting.m_edgeOpacity = 1.0;
-
-        setting.m_interpolationMode = InterpolationMode::Trilinear;
-
-        // Use the first color map and label table
-        setting.m_colorMapIndex = 0;
-        setting.m_colorMapInverted = false;
-        setting.m_labelTableIndex = 0;
-
-        m_componentSettings.emplace_back( std::move( setting ) );
-    }
-
-    updateInternals();
+    m_componentSettings.resize( m_numComponents );
+    updateWithNewComponentStatistics( componentStats, true );
 }
 
 void ImageSettings::setDisplayName( std::string name ) { m_displayName = std::move( name ); }
@@ -508,6 +455,72 @@ void ImageSettings::setActiveComponent( uint32_t component )
                        "(only {} componnets total for image {})",
                        component, m_numComponents, m_displayName );
     }
+}
+
+void ImageSettings::updateWithNewComponentStatistics(
+    std::vector< ComponentStats<double> > componentStats,
+    bool setDefaultSettings )
+{
+    // Default window covers 1st to 99th quantile intensity range of the first pixel component
+    static constexpr int qLow = 10; // 1%
+    static constexpr int qHigh = 990; // 99%
+    static constexpr int qMax = 1000; // 100%
+
+    if ( componentStats.size() != m_numComponents )
+    {
+        return;
+    }
+
+    m_componentStats = std::move( componentStats );
+
+    for ( uint32_t i = 0; i < m_componentStats.size(); ++i )
+    {
+        const auto& stat = m_componentStats[i];
+
+        ComponentSettings& setting = m_componentSettings[i];
+
+        // Min/max window and threshold ranges are based on min/max component values
+
+        setting.m_minMaxImageRange = std::make_pair( stat.m_minimum, stat.m_maximum );
+        setting.m_minMaxThresholdRange = std::make_pair( stat.m_minimum, stat.m_maximum );
+        setting.m_minMaxWindowRange = std::make_pair( stat.m_minimum, stat.m_maximum );
+
+        // Default thresholds are min/max values:
+        setting.m_thresholds = std::make_pair( stat.m_minimum, stat.m_maximum );
+
+        // Default window limits are the low and high quantiles:
+        setting.m_window = std::make_pair( stat.m_quantiles[qLow], stat.m_quantiles[qHigh] );
+
+        // Use the [1%, 100%] intensity range to define foreground
+        // (until we have an algorithm to compute a foreground mask)
+        setting.m_foregroundThresholds = std::make_pair( stat.m_quantiles[qLow], stat.m_quantiles[qMax] );
+
+        if ( setDefaultSettings )
+        {
+            // Default to max opacity and nearest neighbor interpolation
+            setting.m_opacity = 1.0;
+            setting.m_visible = true;
+
+            setting.m_showEdges = false;
+            setting.m_thresholdEdges = false;
+            setting.m_useFreiChen = false;
+            setting.m_edgeMagnitude = 0.25;
+            setting.m_windowedEdges = false;
+            setting.m_overlayEdges = false;
+            setting.m_colormapEdges = false;
+            setting.m_edgeColor = glm::vec3{ 1.0f, 0.0f, 1.0f };
+            setting.m_edgeOpacity = 1.0;
+
+            setting.m_interpolationMode = InterpolationMode::Trilinear;
+
+            // Use the first color map and label table
+            setting.m_colorMapIndex = 0;
+            setting.m_colorMapInverted = false;
+            setting.m_labelTableIndex = 0;
+        }
+    }
+
+    updateInternals();
 }
 
 uint32_t ImageSettings::activeComponent() const { return m_activeComponent; }

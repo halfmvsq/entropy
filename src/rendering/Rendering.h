@@ -85,7 +85,7 @@ public:
             const void* data );
 
     /// @todo Is this function needed?
-    void updateSegTexture(
+    void updateSegTextureWithInt64Data(
             const uuids::uuid& segUid,
             const ComponentType& compType,
             const glm::uvec3& startOffsetVoxel,
@@ -94,17 +94,13 @@ public:
 
     void updateImageTexture(
         const uuids::uuid& imageUid,
+        uint32_t comp,
         const ComponentType& compType,
         const glm::uvec3& startOffsetVoxel,
         const glm::uvec3& sizeInVoxels,
         const void* data );
 
     bool createLabelColorTableTexture( const uuids::uuid& labelTableUid );
-
-    /// @brief  A one-off version of createSegTextures (plural)
-    /// @param segUid 
-    /// @return 
-    bool createSegTexture( const uuids::uuid& segUid );
     
     bool removeSegTexture( const uuids::uuid& segUid );
 

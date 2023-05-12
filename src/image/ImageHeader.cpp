@@ -165,26 +165,6 @@ void ImageHeader::setBoundingBox()
 }
 
 
-void ImageHeader::adjustToScalarUCharFormat()
-{
-    m_numComponentsPerPixel = 1;
-
-    m_pixelType = PixelType::Scalar;
-    m_pixelTypeAsString = "scalar";
-
-    m_fileComponentType = ComponentType::UInt8;
-    m_fileComponentTypeAsString = "uchar";
-    m_fileComponentSizeInBytes =  1;
-
-    m_memoryComponentType = ComponentType::UInt8;
-    m_memoryComponentTypeAsString = "uchar";
-    m_memoryComponentSizeInBytes = 1;
-
-    m_fileImageSizeInBytes = m_fileComponentSizeInBytes * m_numComponentsPerPixel * m_numPixels;
-    m_memoryImageSizeInBytes = m_memoryComponentSizeInBytes * m_numComponentsPerPixel * m_numPixels;
-}
-
-
 void ImageHeader::adjustComponents( const ComponentType& componentType, uint32_t numComponents )
 {
     if ( numComponents < 1 )
@@ -255,8 +235,16 @@ void ImageHeader::adjustComponents( const ComponentType& componentType, uint32_t
 
     m_numComponentsPerPixel = numComponents;
 
-    m_pixelType = ( numComponents > 1 ) ? PixelType::Vector : PixelType::Scalar;
-    m_pixelTypeAsString = ( numComponents > 1 ) ? "vector" : "scalar";
+    if ( 1 == numComponents )
+    {
+        m_pixelType = PixelType::Scalar;
+        m_pixelTypeAsString = "scalar";
+    }
+    else
+    {
+        m_pixelType = PixelType::Vector;
+        m_pixelTypeAsString = "vector";
+    }
 
     m_fileComponentType = componentType;
     m_fileComponentTypeAsString = compString;

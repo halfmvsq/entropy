@@ -52,7 +52,7 @@ void sor(
 
     for ( uint32_t iter = 0; iter < maxits; ++iter )
     {
-        if ( 0 == iter % 100 )
+        if ( 0 == iter % 1 )
         {
             spdlog::trace( "Iteration {}", iter );
         }
@@ -87,10 +87,16 @@ void sor(
 
                         if ( k < dims.z - 1 )
                         {
-                            grad = (val - img.value<float>(imComp, i, j, k + 1).value_or(0.0f)) / beta;
+                            float val2 = img.value<float>(imComp, i, j, k + 1).value_or(0.0f);
+                            grad = (val - val2) / beta;
                             weight = std::exp( -grad*grad / 2.0f ) / spacing.z;
-                            resid += weight * pot.value<float>(0, i, j, k + 1).value_or(0.0f);
+
+                            float pp = pot.value<float>(0, i, j, k + 1).value_or(0.0f);
+                            resid += weight * pp;
                             total -= weight;
+
+//                            spdlog::debug( "val2 = {}, grad = {}, weight = {}, pp = {}, resid = {}, total = {}",
+//                                val2, grad, weight, pp, resid, total );
                         }
 
                         if ( k > 0 )

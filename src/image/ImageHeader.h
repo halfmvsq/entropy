@@ -40,8 +40,6 @@ public:
     void setHeaderOverrides( const ImageHeaderOverrides& overrides );
     const ImageHeaderOverrides& getHeaderOverrides() const;
 
-    void adjustToScalarUCharFormat();
-
     void adjustComponents( const ComponentType& componentType, uint32_t numComponents );
 
     bool existsOnDisk() const;

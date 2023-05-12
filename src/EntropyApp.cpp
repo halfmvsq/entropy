@@ -17,6 +17,8 @@
 #include "logic/states/FsmList.hpp"
 //#include "logic/ipc/IPCMessage.h"
 
+#include "rendering/TextureSetup.h"
+
 #include <glm/glm.hpp>
 
 #define GLM_ENABLE_EXPERIMENTAL
@@ -557,11 +559,11 @@ EntropyApp::loadDeformationField( const std::string& fileName )
 }
 
 
-/// @note This does not create a segmentation for the image
 std::optional<uuids::uuid> EntropyApp::createBlankImage(
     const uuids::uuid& matchImageUid,
+    const ComponentType& componentType,
     uint32_t numComponents,
-    std::string displayName,
+    const std::string& displayName,
     bool createSegmentation )
 {
     const Image* matchImg = m_data.image( matchImageUid );
@@ -577,28 +579,107 @@ std::optional<uuids::uuid> EntropyApp::createBlankImage(
 
     header.setExistsOnDisk( false );
     header.setFileName( "<unsaved>" );
-    header.adjustComponents( ComponentType::Float32, numComponents );
+    header.adjustComponents( componentType, numComponents );
 
-    // Data buffers for each image component
-    const std::vector<float> buffer( header.numPixels(), 0.0f );
+    // Buffer pointing to data for a single image component
+    const void* buffer = nullptr;
 
-    // Vector holding pointers to the component buffers
-    std::vector<const void*> imageDataComponents( numComponents, buffer.data() );
+    std::vector<int8_t> buffer_int8;
+    std::vector<uint8_t> buffer_uint8;
+    std::vector<int16_t> buffer_int16;
+    std::vector<uint16_t> buffer_uint16;
+    std::vector<int32_t> buffer_int32;
+    std::vector<uint32_t> buffer_uint32;
+    std::vector<float> buffer_float;
+
+    switch ( componentType )
+    {
+    case ComponentType::Int8:
+    {
+        buffer_int8.resize(  header.numPixels(), 0 );
+        buffer = static_cast<const void*>( buffer_int8.data() );
+        break;
+    }
+    case ComponentType::UInt8:
+    {
+        buffer_uint8.resize(  header.numPixels(), 0u );
+        buffer = static_cast<const void*>( buffer_uint8.data() );
+        break;
+    }
+    case ComponentType::Int16:
+    {
+        buffer_int16.resize(  header.numPixels(), 0 );
+        buffer = static_cast<const void*>( buffer_int16.data() );
+        break;
+    }
+    case ComponentType::UInt16:
+    {
+        buffer_uint16.resize(  header.numPixels(), 0u );
+        buffer = static_cast<const void*>( buffer_uint16.data() );
+        break;
+    }
+    case ComponentType::Int32:
+    {
+        buffer_int32.resize(  header.numPixels(), 0 );
+        buffer = static_cast<const void*>( buffer_int32.data() );
+        break;
+    }
+    case ComponentType::UInt32:
+    {
+        buffer_uint32.resize(  header.numPixels(), 0u );
+        buffer = static_cast<const void*>( buffer_uint32.data() );
+        break;
+    }
+    case ComponentType::Float32:
+    {
+        buffer_float.resize(  header.numPixels(), 0.0f );
+        buffer = static_cast<const void*>( buffer_float.data() );
+        break;
+    }
+    default:
+    {
+        spdlog::error( "Invalid component type provided to create blank image" );
+        return std::nullopt;
+    }
+    }
+
+    // Vector holding pointers to the component buffer
+    std::vector<const void*> imageComponents( numComponents, buffer );
 
     Image image(
-        header,
-        displayName,
+        header, displayName,
         Image::ImageRepresentation::Image,
         Image::MultiComponentBufferType::SeparateImages,
-        imageDataComponents );
+        imageComponents );
 
     image.setHeaderOverrides( matchImg->getHeaderOverrides() );
 
-    spdlog::info( "Created image matching header of image {}", matchImageUid );
+    // Assign the matching image's affine_T_subject transformation to the newimage:
+    image.transformations().set_affine_T_subject( matchImg->transformations().get_affine_T_subject() );
+
+    const uuids::uuid imageUid = m_data.addImage( std::move( image ) );
+
+    spdlog::trace( "Creating texture for image {}", imageUid );
+    std::vector<uuids::uuid> imageUids{ imageUid };
+
+    const std::vector<uuids::uuid> createdImageTextureUids = createImageTextures( m_data, imageUids );
+
+    if ( createdImageTextureUids.empty() )
+    {
+        spdlog::error( "Unable to create texture for image {}", imageUid );
+
+        /// @todo Need to implement this:
+//        m_data.removeImage( imageUid );
+        return std::nullopt;
+    }
+
+    // Synchronize transformation with image
+    /// @todo we need to implement this!
+    // m_callbackHandler.syncManualImageTransformation( matchImageUid, imageUid );
+
+    spdlog::info( "Created blank image {} matching header of image {}", imageUid, matchImageUid );
     spdlog::debug( "Header:\n{}", image.header() );
     spdlog::debug( "Transformation:\n{}", image.transformations() );
-
-    const auto imageUid = m_data.addImage( std::move( image ) );
 
     if ( createSegmentation )
     {
@@ -616,9 +697,12 @@ std::optional<uuids::uuid> EntropyApp::createBlankImage(
 }
 
 
+/// THIS FUNCTION SHOULD NEVER BE CALLED ON ITS OWN,
+/// since it does not create the texture for the seg.
+/// Turn it into a utility function and remove it out of this class
 std::optional<uuids::uuid> EntropyApp::createBlankSeg(
-        const uuids::uuid& matchImageUid,
-        std::string segDisplayName )
+    const uuids::uuid& matchImageUid,
+    std::string segDisplayName )
 {
     const Image* matchImg = m_data.image( matchImageUid );
 
@@ -633,7 +717,7 @@ std::optional<uuids::uuid> EntropyApp::createBlankSeg(
 
     segHeader.setExistsOnDisk( false );
     segHeader.setFileName( "<unsaved>" );
-    segHeader.adjustToScalarUCharFormat();
+    segHeader.adjustComponents( ComponentType::UInt8, 1 );
 
     // Data buffer for component 0 of segmentation
     const std::vector<uint8_t> buffer( segHeader.numPixels(), 0u );
@@ -669,8 +753,8 @@ std::optional<uuids::uuid> EntropyApp::createBlankSeg(
 
 
 std::optional<uuids::uuid> EntropyApp::createBlankSegWithColorTable(
-        const uuids::uuid& matchImageUid,
-        std::string segDisplayName )
+    const uuids::uuid& matchImageUid,
+    std::string segDisplayName )
 {
     spdlog::info( "Creating blank segmentation {} with color table for image {}",
         segDisplayName, matchImageUid );
@@ -734,7 +818,11 @@ std::optional<uuids::uuid> EntropyApp::createBlankSegWithColorTable(
     m_data.assignActiveSegUidToImage( matchImageUid, *segUid );
 
     spdlog::trace( "Creating texture for segmentation {}", *segUid );
-    if ( ! m_rendering.createSegTexture( *segUid ) )
+
+    const std::vector<uuids::uuid> createdSegTexUids =
+        createSegTextures( m_data, std::vector<uuids::uuid>{ *segUid } );
+
+    if ( createdSegTexUids.empty() )
     {
         spdlog::error( "Unable to create texture for segmentation {}", *segUid );
         m_data.removeSeg( *segUid );
@@ -755,8 +843,8 @@ std::optional<uuids::uuid> EntropyApp::createBlankSegWithColorTable(
 
 
 bool EntropyApp::loadSerializedImage(
-        const serialize::Image& serializedImage,
-        bool isReferenceImage )
+    const serialize::Image& serializedImage,
+    bool isReferenceImage )
 {
     static constexpr size_t sk_defaultImageColorMapIndex = 0;
 
@@ -1431,8 +1519,8 @@ void EntropyApp::loadImagesFromParams( const InputParams& params )
 void EntropyApp::setCallbacks()
 {
     m_glfw.setCallbacks(
-                [this](){ m_rendering.render(); },
-                [this](){ m_imgui.render(); } );
+        [this](){ m_rendering.render(); },
+        [this](){ m_imgui.render(); } );
 
     m_imgui.setCallbacks(
         [this] () { m_glfw.postEmptyEvent(); },
@@ -1578,11 +1666,13 @@ void EntropyApp::setCallbacks()
                 return std::nullopt;
             },
 
-            [this] ( const uuids::uuid& matchingImageUid, const std::string& displayName, uint32_t numComponents ) {
-                return createBlankImage( matchingImageUid, numComponents, displayName, true );
+            [this] ( const uuids::uuid& matchingImageUid, const std::string& displayName, uint32_t numComponents )
+            {
+                return createBlankImage( matchingImageUid, ComponentType::Float32, numComponents, displayName, false );
             },
 
-            [this] ( const uuids::uuid& matchingImageUid, const std::string& segDisplayName ) {
+            [this] ( const uuids::uuid& matchingImageUid, const std::string& segDisplayName )
+            {
                 return createBlankSegWithColorTable( matchingImageUid, segDisplayName );
             },
 

@@ -6,8 +6,7 @@
 #include <spdlog/fmt/ostr.h>
 
 
-std::unordered_map< uuids::uuid, std::vector<GLTexture> >
-createImageTextures( const AppData& appData )
+std::vector<uuids::uuid> createImageTextures( AppData& appData, uuid_range_t imageUids )
 {
     static constexpr GLint sk_mipmapLevel = 0; // Load image data into first mipmap level
     static constexpr GLint sk_alignment = 1; // Pixel pack/unpack alignment is 1 byte
@@ -22,11 +21,7 @@ createImageTextures( const AppData& appData )
     // Images with interleaved components will have one component texture.
     std::unordered_map< uuids::uuid, std::vector<GLTexture> > imageTextures;
 
-    if ( 0 == appData.numImages() )
-    {
-        spdlog::warn( "No images are loaded for which to create textures" );
-        return imageTextures;
-    }
+    std::vector<uuids::uuid> createdImageTexUids;
 
     spdlog::debug( "Begin creating 3D image textures" );
 
@@ -34,7 +29,7 @@ createImageTextures( const AppData& appData )
     pixelPackSettings.m_alignment = sk_alignment;
     GLTexture::PixelStoreSettings pixelUnpackSettings = pixelPackSettings;
 
-    for ( const auto& imageUid : appData.imageUidsOrdered() )
+    for ( const auto& imageUid : imageUids )
     {
         spdlog::debug( "Begin creating texture(s) for components of image {}", imageUid );
 
@@ -211,14 +206,18 @@ createImageTextures( const AppData& appData )
         }
         } // end switch ( image->bufferType() )
 
-        imageTextures.emplace( imageUid, std::move( componentTextures ) );
+        appData.renderData().m_imageTextures.emplace(
+            imageUid, std::move( componentTextures ) );
+
+        createdImageTexUids.push_back( imageUid );
 
         spdlog::debug( "Done creating texture(s) for image {} ('{}')",
                        imageUid, image->settings().displayName() );
     } // end for ( const auto& imageUid : appData.imageUidsOrdered() )
 
     spdlog::debug( "Done creating textures for {} image(s)", imageTextures.size() );
-    return imageTextures;
+
+    return createdImageTexUids;
 }
 
 
@@ -329,8 +328,7 @@ createDistanceMapTextures( const AppData& appData )
 }
 
 
-std::unordered_map< uuids::uuid, GLTexture >
-createSegTextures( const AppData& appData )
+std::vector<uuids::uuid> createSegTextures( AppData& appData, uuid_range_t segUids )
 {
     // Load the first pixel component of the segmentation image.
     // (Segmentations should have only one component.)
@@ -348,11 +346,7 @@ createSegTextures( const AppData& appData )
 
     std::unordered_map< uuids::uuid, GLTexture > textures;
 
-    if ( 0 == appData.numSegs() )
-    {
-        spdlog::info( "No image segmentations loaded for which to create textures" );
-        return textures;
-    }
+    std::vector<uuids::uuid> createdSegTexUids;
 
     spdlog::debug( "Begin creating 3D segmentation textures" );
 
@@ -361,7 +355,7 @@ createSegTextures( const AppData& appData )
     GLTexture::PixelStoreSettings pixelUnpackSettings = pixelPackSettings;
 
     // Loop through images in order of index
-    for ( const auto& segUid : appData.segUidsOrdered() )
+    for ( const auto& segUid : segUids )
     {
         const auto* seg = appData.seg( segUid );
         if ( ! seg )
@@ -372,7 +366,7 @@ createSegTextures( const AppData& appData )
 
         const ComponentType compType = seg->header().memoryComponentType();
 
-        auto it = textures.try_emplace(
+        auto it = appData.renderData().m_segTextures.try_emplace(
             segUid,
             tex::Target::Texture3D,
             GLTexture::MultisampleSettings(),
@@ -397,10 +391,12 @@ createSegTextures( const AppData& appData )
 
         spdlog::debug( "Created texture for segmentation {} ('{}')",
                        segUid, seg->settings().displayName() );
+
+        createdSegTexUids.push_back( segUid );
     }
 
     spdlog::debug( "Done creating {} segmentation textures", textures.size() );
-    return textures;
+    return createdSegTexUids;
 }
 
 

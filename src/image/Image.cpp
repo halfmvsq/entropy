@@ -18,6 +18,9 @@ namespace
 // Default source component type and value
 using DefaultSrcComponentType = float;
 
+// Statistics per component are stored as double
+using StatsType = double;
+
 }
 
 
@@ -43,9 +46,6 @@ Image::Image(
     // Read all data from disk to an ITK image with 32-bit floating point pixel components
     using ReadComponentType = float;
     using ComponentImageType = ::itk::Image<ReadComponentType, 3>;
-
-    // Statistics per component are stored as double
-    using StatsType = double;
 
     // Maximum number of components to load for images with interleaved buffer components
     static constexpr uint32_t MAX_COMPS = 4;
@@ -301,9 +301,6 @@ Image::Image(
 
     m_header( header )
 {
-    // Statistics per component are stored as double
-    using StatsType = double;
-
     // Maximum number of components to create for images with interleaved buffers
     static constexpr uint32_t MAX_COMPS = 4;
 
@@ -1000,4 +997,10 @@ std::ostream& Image::metaData( std::ostream& os ) const
         os << std::endl;
     }
     return os;
+}
+
+void Image::updateComponentStats()
+{
+    m_settings.updateWithNewComponentStatistics(
+        computeImageStatistics<StatsType>( *this ), false );
 }

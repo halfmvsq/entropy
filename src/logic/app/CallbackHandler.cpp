@@ -310,22 +310,30 @@ bool CallbackHandler::executePoissonSegmentation(
     }
 
     spdlog::info( "Executing Poisson segmentation on image {} with seeds {}; "
-                  "resulting segmentation: {}", imageUid, seedSegUid, resultSegUid );
+                  "resulting segmentation: {}; resulting potential: {}",
+                  imageUid, seedSegUid, resultSegUid, potentialUid );
 
     const uint32_t imComp = image->settings().activeComponent();
-    const float beta = computeBeta( *image, imComp );;
+
+    const float beta = computeBeta( *image, imComp );
+    spdlog::debug( "Poisson beta = {}", beta );
     
-    const uint32_t maxIterations = 2;
-    sor( *seedSeg, *image, *potImage, imComp, 0.6f, maxIterations, beta );
+    const uint32_t maxIterations = 100;
+    const float rjac = 0.6f;
+
+    sor( *seedSeg, *image, *potImage, imComp, rjac, maxIterations, beta );
+
+    potImage->updateComponentStats();
 
     spdlog::debug( "Start updating potential image texture" );
-    
-    // m_rendering.updateSegTexture(
-    //     resultSegUid,
-    //     resultSeg->header().memoryComponentType(),
-    //     glm::uvec3{0},
-    //     resultSeg->header().pixelDimensions(),
-    //     resultSeg->bufferAsVoid(imComp) );
+
+     m_rendering.updateImageTexture(
+        potentialUid,
+        imComp,
+        potImage->header().memoryComponentType(),
+        glm::uvec3{0},
+        potImage->header().pixelDimensions(),
+        potImage->bufferAsVoid(imComp) );
 
     spdlog::debug( "Done updating potential image texture" );
 
@@ -533,7 +541,8 @@ void CallbackHandler::doSegment( const ViewHit& hit, bool swapFgAndBg )
                 ( const ComponentType& memoryComponentType, const glm::uvec3& dataOffset,
                   const glm::uvec3& dataSize, const LabelType* data )
         {
-            m_rendering.updateSegTexture( segUid, memoryComponentType, dataOffset, dataSize, data );
+            m_rendering.updateSegTextureWithInt64Data(
+                segUid, memoryComponentType, dataOffset, dataSize, data );
         };
 
         paintSegmentation(
@@ -600,7 +609,9 @@ void CallbackHandler::paintActiveSegmentationWithAnnotation()
               const glm::uvec3& dataSize, const LabelType* data )
     {
         if ( ! activeSegUid ) return;
-        m_rendering.updateSegTexture( *activeSegUid, memoryComponentType, dataOffset, dataSize, data );
+
+        m_rendering.updateSegTextureWithInt64Data(
+            *activeSegUid, memoryComponentType, dataOffset, dataSize, data );
     };
 
     fillSegmentationWithPolygon(

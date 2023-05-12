@@ -316,9 +316,26 @@ void Rendering::initTextures()
         throw_debug( "No image color map textures loaded" )
     }
 
-    m_appData.renderData().m_imageTextures = createImageTextures( m_appData );
-    m_appData.renderData().m_segTextures = createSegTextures( m_appData );
-    m_appData.renderData().m_distanceMapTextures = createDistanceMapTextures( m_appData );
+    const std::vector<uuids::uuid> imageUidsOfCreatedTextures =
+        createImageTextures( m_appData, m_appData.imageUidsOrdered() );
+
+    if ( imageUidsOfCreatedTextures.size() != m_appData.numImages() )
+    {
+        spdlog::error( "Not all image textures were created" );
+        /// TODO: remove the image sfor which the texture was not created
+    }
+
+    const std::vector<uuids::uuid> segUidsOfCreatedTextures =
+        createSegTextures( m_appData, m_appData.segUidsOrdered() );
+
+    if ( segUidsOfCreatedTextures.size() != m_appData.numSegs() )
+    {
+        spdlog::error( "Not all segmentation textures were created" );
+        /// TODO: remove the segs for which the texture was not created
+    }
+
+    m_appData.renderData().m_distanceMapTextures =
+        createDistanceMapTextures( m_appData );
 
     m_isAppDoneLoadingImages = true;
 }
@@ -362,12 +379,31 @@ bool Rendering::createLabelColorTableTexture( const uuids::uuid& labelTableUid )
     return true;
 }
 
-bool Rendering::createSegTexture( const uuids::uuid& segUid )
-{
-    // Load the first pixel component of the segmentation.
-    // (Segmentations should have only one component.)
-    static constexpr uint32_t comp = 0;
 
+bool Rendering::removeSegTexture( const uuids::uuid& segUid )
+{
+    const auto* seg = m_appData.seg( segUid );
+    if ( ! seg )
+    {
+        spdlog::warn( "Segmentation {} is invalid", segUid );
+        return false;
+    }
+
+    auto it = m_appData.renderData().m_segTextures.find( segUid );
+
+    if ( std::end( m_appData.renderData().m_segTextures ) == it )
+    {
+        spdlog::warn( "Texture for segmentation {} does not exist and cannot be removed", segUid );
+        return false;
+    }
+
+    m_appData.renderData().m_segTextures.erase( it );
+    return true;
+}
+
+/*
+bool Rendering::createImageTexture( const uuids::uuid& imageUid )
+{
     static constexpr GLint sk_mipmapLevel = 0; // Load seg data into first mipmap level
     static constexpr GLint sk_alignment = 1; // Pixel pack/unpack alignment is 1 byte
     static const tex::WrapMode sk_wrapMode = tex::WrapMode::ClampToBorder;
@@ -390,10 +426,10 @@ bool Rendering::createSegTexture( const uuids::uuid& segUid )
     const ComponentType compType = seg->header().memoryComponentType();
 
     auto it = m_appData.renderData().m_segTextures.try_emplace(
-                segUid,
-                tex::Target::Texture3D,
-                GLTexture::MultisampleSettings(),
-                pixelPackSettings, pixelUnpackSettings );
+        segUid,
+        tex::Target::Texture3D,
+        GLTexture::MultisampleSettings(),
+        pixelPackSettings, pixelUnpackSettings );
 
     if ( ! it.second ) return false;
     GLTexture& T = it.first->second;
@@ -407,37 +443,17 @@ bool Rendering::createSegTexture( const uuids::uuid& segUid )
     T.setSize( seg->header().pixelDimensions() );
 
     T.setData( sk_mipmapLevel,
-               GLTexture::getSizedInternalRedFormat( compType ),
-               GLTexture::getBufferPixelRedFormat( compType ),
-               GLTexture::getBufferPixelDataType( compType ),
-               seg->bufferAsVoid( comp ) );
+              GLTexture::getSizedInternalRedFormat( compType ),
+              GLTexture::getBufferPixelRedFormat( compType ),
+              GLTexture::getBufferPixelDataType( compType ),
+              seg->bufferAsVoid( comp ) );
 
     spdlog::debug( "Created texture for segmentation {} ('{}')",
-                   segUid, seg->settings().displayName() );
+                  segUid, seg->settings().displayName() );
 
     return true;
 }
-
-bool Rendering::removeSegTexture( const uuids::uuid& segUid )
-{
-    const auto* seg = m_appData.seg( segUid );
-    if ( ! seg )
-    {
-        spdlog::warn( "Segmentation {} is invalid", segUid );
-        return false;
-    }
-
-    auto it = m_appData.renderData().m_segTextures.find( segUid );
-
-    if ( std::end( m_appData.renderData().m_segTextures ) == it )
-    {
-        spdlog::warn( "Texture for segmentation {} does not exist and cannot be removed", segUid );
-        return false;
-    }
-
-    m_appData.renderData().m_segTextures.erase( it );
-    return true;
-}
+*/
 
 void Rendering::updateSegTexture(
         const uuids::uuid& segUid,
@@ -474,7 +490,7 @@ void Rendering::updateSegTexture(
                   data );
 }
 
-void Rendering::updateSegTexture(
+void Rendering::updateSegTextureWithInt64Data(
         const uuids::uuid& segUid,
         const ComponentType& compType,
         const glm::uvec3& startOffsetVoxel,
@@ -504,31 +520,66 @@ void Rendering::updateSegTexture(
     case ComponentType::UInt8:
     {
         const std::vector<uint8_t> castData( data, data + N );
-        return updateSegTexture( segUid, compType, startOffsetVoxel, sizeInVoxels, castData.data() );
+        return updateSegTexture( segUid, compType, startOffsetVoxel, sizeInVoxels,
+            static_cast<const void*>( castData.data() ) );
     }
     case ComponentType::UInt16:
     {
         const std::vector<uint16_t> castData( data, data + N );
-        return updateSegTexture( segUid, compType, startOffsetVoxel, sizeInVoxels, castData.data() );
+        return updateSegTexture( segUid, compType, startOffsetVoxel, sizeInVoxels,
+            static_cast<const void*>( castData.data() ) );
     }
     case ComponentType::UInt32:
     {
         const std::vector<uint32_t> castData( data, data + N );
-        return updateSegTexture( segUid, compType, startOffsetVoxel, sizeInVoxels, castData.data() );
+        return updateSegTexture( segUid, compType, startOffsetVoxel, sizeInVoxels,
+            static_cast<const void*>( castData.data() ) );
     }
     default: return;
     }
 }
 
-// void Rendering::updateImageTexture(
-//         const uuids::uuid& segUid,
-//         const ComponentType& compType,
-//         const glm::uvec3& startOffsetVoxel,
-//         const glm::uvec3& sizeInVoxels,
-//         const void* data )
-// {
+void Rendering::updateImageTexture(
+    const uuids::uuid& imageUid,
+    uint32_t comp,
+    const ComponentType& compType,
+    const glm::uvec3& startOffsetVoxel,
+    const glm::uvec3& sizeInVoxels,
+    const void* data )
+{
+    // Load data into first mipmap level
+    static constexpr GLint sk_mipmapLevel = 0;
 
-// }
+    auto it = m_appData.renderData().m_imageTextures.find( imageUid );
+    if ( std::end( m_appData.renderData().m_imageTextures ) == it )
+    {
+        spdlog::error( "Cannot update image {}: texture not found.", imageUid );
+        return;
+    }
+
+    std::vector<GLTexture>& T = it->second;
+
+    if ( comp >= T.size() )
+    {
+        spdlog::error( "Cannot update invalid component {} of image {}", comp, imageUid );
+        return;
+    }
+
+    const auto* img = m_appData.image( imageUid );
+
+    if ( ! img )
+    {
+        spdlog::warn( "Segmentation {} is invalid", imageUid );
+        return;
+    }
+
+    T.at( comp ).setSubData( sk_mipmapLevel,
+        startOffsetVoxel,
+        sizeInVoxels,
+        GLTexture::getBufferPixelRedFormat( compType ),
+        GLTexture::getBufferPixelDataType( compType ),
+        data );
+}
             
 Rendering::CurrentImages Rendering::getImageAndSegUidsForMetricShaders(
     const std::list<uuids::uuid>& metricImageUids ) const
@@ -1088,7 +1139,8 @@ Rendering::bindImageTextures( const ImgSegPair& p )
                 }
             }
         }
-        else if ( ! useDistMap || ! foundMap )
+
+        if ( ! useDistMap || ! foundMap )
         {
             // Bind blank (zero) distance map:
             GLTexture& distTex = R.m_blankDistMapTexture;
