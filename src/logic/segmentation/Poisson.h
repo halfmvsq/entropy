@@ -11,7 +11,9 @@ class Image;
  * 'rjac' is input as the spectral radius of the Jacobi iteration, or an estimate of it.
  */
 void sor(
-    const Image& bnd, const Image& img, Image& pot,
+    const Image& seedSeg,
+    const Image& image,
+    Image& potentialImage,
     uint32_t imComp, float rjac, uint32_t maxits, float beta );
 
 // Compute a decent value for the 'beta' parameter used in SOR.

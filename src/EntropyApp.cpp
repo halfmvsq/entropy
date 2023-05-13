@@ -574,12 +574,11 @@ std::optional<uuids::uuid> EntropyApp::createBlankImage(
         return std::nullopt; // Invalid image provided
     }
 
-    // Copy the image header, changing it to have the given number of components:
-    ImageHeader header = matchImg->header();
-
-    header.setExistsOnDisk( false );
-    header.setFileName( "<unsaved>" );
-    header.adjustComponents( componentType, numComponents );
+    // Copy the image header, changing it to have the given type and number of components:
+    ImageHeader newHeader = matchImg->header();
+    newHeader.setExistsOnDisk( false );
+    newHeader.setFileName( "<unsaved>" );
+    newHeader.adjustComponents( componentType, numComponents );
 
     // Buffer pointing to data for a single image component
     const void* buffer = nullptr;
@@ -596,43 +595,43 @@ std::optional<uuids::uuid> EntropyApp::createBlankImage(
     {
     case ComponentType::Int8:
     {
-        buffer_int8.resize(  header.numPixels(), 0 );
+        buffer_int8.resize(  newHeader.numPixels(), 0 );
         buffer = static_cast<const void*>( buffer_int8.data() );
         break;
     }
     case ComponentType::UInt8:
     {
-        buffer_uint8.resize(  header.numPixels(), 0u );
+        buffer_uint8.resize(  newHeader.numPixels(), 0u );
         buffer = static_cast<const void*>( buffer_uint8.data() );
         break;
     }
     case ComponentType::Int16:
     {
-        buffer_int16.resize(  header.numPixels(), 0 );
+        buffer_int16.resize(  newHeader.numPixels(), 0 );
         buffer = static_cast<const void*>( buffer_int16.data() );
         break;
     }
     case ComponentType::UInt16:
     {
-        buffer_uint16.resize(  header.numPixels(), 0u );
+        buffer_uint16.resize(  newHeader.numPixels(), 0u );
         buffer = static_cast<const void*>( buffer_uint16.data() );
         break;
     }
     case ComponentType::Int32:
     {
-        buffer_int32.resize(  header.numPixels(), 0 );
+        buffer_int32.resize(  newHeader.numPixels(), 0 );
         buffer = static_cast<const void*>( buffer_int32.data() );
         break;
     }
     case ComponentType::UInt32:
     {
-        buffer_uint32.resize(  header.numPixels(), 0u );
+        buffer_uint32.resize(  newHeader.numPixels(), 0u );
         buffer = static_cast<const void*>( buffer_uint32.data() );
         break;
     }
     case ComponentType::Float32:
     {
-        buffer_float.resize(  header.numPixels(), 0.0f );
+        buffer_float.resize(  newHeader.numPixels(), 0.0f );
         buffer = static_cast<const void*>( buffer_float.data() );
         break;
     }
@@ -647,7 +646,7 @@ std::optional<uuids::uuid> EntropyApp::createBlankImage(
     std::vector<const void*> imageComponents( numComponents, buffer );
 
     Image image(
-        header, displayName,
+        newHeader, displayName,
         Image::ImageRepresentation::Image,
         Image::MultiComponentBufferType::SeparateImages,
         imageComponents );
@@ -713,28 +712,25 @@ std::optional<uuids::uuid> EntropyApp::createBlankSeg(
     }
 
     // Copy the image header, changing it to scalar with uint8_t components:
-    ImageHeader segHeader = matchImg->header();
+    ImageHeader newHeader = matchImg->header();
+    newHeader.setExistsOnDisk( false );
+    newHeader.setFileName( "<unsaved>" );
+    newHeader.adjustComponents( ComponentType::UInt8, 1 );
 
-    segHeader.setExistsOnDisk( false );
-    segHeader.setFileName( "<unsaved>" );
-    segHeader.adjustComponents( ComponentType::UInt8, 1 );
-
-    // Data buffer for component 0 of segmentation
-    const std::vector<uint8_t> buffer( segHeader.numPixels(), 0u );
+    // Create zeroed-out data buffer for component 0 of segmentation
+    const std::vector<uint8_t> buffer( newHeader.numPixels(), 0u );
 
     // Vector pointing to the buffer
     const std::vector<const void*> imageData{ static_cast<const void*>( buffer.data() ) };
 
-    Image seg( segHeader,
+    Image seg( newHeader,
                segDisplayName,
                Image::ImageRepresentation::Segmentation,
                Image::MultiComponentBufferType::SeparateImages,
                imageData );
 
     seg.setHeaderOverrides( matchImg->getHeaderOverrides() );
-
-    // Set the default opacity:
-    seg.settings().setOpacity( 0.5 );
+    seg.settings().setOpacity( 0.5 ); // Set default opacity
 
     spdlog::info( "Created segmentation matching header of image {}", matchImageUid );
     spdlog::debug( "Header:\n{}", seg.header() );
@@ -1668,7 +1664,8 @@ void EntropyApp::setCallbacks()
 
             [this] ( const uuids::uuid& matchingImageUid, const std::string& displayName, uint32_t numComponents )
             {
-                return createBlankImage( matchingImageUid, ComponentType::Float32, numComponents, displayName, false );
+                const bool createSegmentation = false;
+                return createBlankImage( matchingImageUid, ComponentType::Float32, numComponents, displayName, createSegmentation );
             },
 
             [this] ( const uuids::uuid& matchingImageUid, const std::string& segDisplayName )

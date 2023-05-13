@@ -8,38 +8,40 @@
 #undef min
 #undef max
 
+
 ImageSettings::ImageSettings(
         std::string displayName,
         uint32_t numComponents,
         ComponentType componentType,
         std::vector< ComponentStats<double> > componentStats )
     :
-      m_displayName( std::move( displayName ) ),
-      m_globalVisibility( true ),
-      m_globalOpacity( 1.0f ),
-      m_borderColor{ 1.0f, 0.0f, 1.0f },
-      m_lockedToReference{ true },
-      m_displayAsColor{ false },
-      m_ignoreAlpha{ false },
-      m_colorInterpolationMode{ InterpolationMode::Trilinear },
-      m_useDistanceMapForRaycasting{ true },
-      m_isosurfacesVisible{ true },
-      m_applyImageColormapToIsosurfaces{ false },
-      m_showIsosurfacesIn2d{ false },
-      m_isosurfaceWidthIn2d{ 2.5 },
-      m_isosurfaceOpacityModulator{ 1.0f },
-      m_numComponents( numComponents ),
-      m_componentType( std::move( componentType ) ),
-      m_activeComponent( 0 )
+    m_displayName( std::move( displayName ) ),
+    m_globalVisibility( true ),
+    m_globalOpacity( 1.0f ),
+    m_borderColor{ 1.0f, 0.0f, 1.0f },
+    m_lockedToReference{ true },
+    m_displayAsColor{ false },
+    m_ignoreAlpha{ false },
+    m_colorInterpolationMode{ InterpolationMode::Trilinear },
+    m_useDistanceMapForRaycasting{ true },
+    m_isosurfacesVisible{ true },
+    m_applyImageColormapToIsosurfaces{ false },
+    m_showIsosurfacesIn2d{ false },
+    m_isosurfaceWidthIn2d{ 2.5 },
+    m_isosurfaceOpacityModulator{ 1.0f },
+    m_numComponents( numComponents ),
+    m_componentType( std::move( componentType ) ),
+    m_componentSettings( numComponents ),
+    m_activeComponent( 0 )
 {
     if ( componentStats.size() != m_numComponents )
     {
-        spdlog::error( "Wrong number of components image settings" );
-        throw_debug( "Wrong number of components image settings" )
+        spdlog::error( "Wrong number of components ({}) provided to settings for image {}", numComponents, displayName );
+        throw_debug( "Wrong number of components provided to settings for image" )
     }
 
-    m_componentSettings.resize( m_numComponents );
-    updateWithNewComponentStatistics( componentStats, true );
+    static constexpr bool sk_setDefaultVisibilitySettings = true;
+    updateWithNewComponentStatistics( componentStats, sk_setDefaultVisibilitySettings );
 }
 
 void ImageSettings::setDisplayName( std::string name ) { m_displayName = std::move( name ); }
@@ -80,154 +82,168 @@ float ImageSettings::isosurfaceOpacityModulator() const { return m_isosurfaceOpa
 
 std::pair<double, double> ImageSettings::minMaxImageRange( uint32_t i ) const { return m_componentSettings[i].m_minMaxImageRange; }
 std::pair<double, double> ImageSettings::minMaxImageRange() const { return minMaxImageRange( m_activeComponent ); }
-std::pair<double, double> ImageSettings::minMaxWindowRange( uint32_t i ) const { return m_componentSettings[i].m_minMaxWindowRange; }
+
+std::pair<double, double> ImageSettings::minMaxWindowWidthRange( uint32_t i ) const { return m_componentSettings[i].m_minMaxWindowWidthRange; }
+std::pair<double, double> ImageSettings::minMaxWindowWidthRange() const { return minMaxWindowWidthRange( m_activeComponent ); }
+
+std::pair<double, double> ImageSettings::minMaxWindowCenterRange( uint32_t i ) const { return m_componentSettings[i].m_minMaxWindowCenterRange; }
+std::pair<double, double> ImageSettings::minMaxWindowCenterRange() const { return minMaxWindowCenterRange( m_activeComponent ); }
+
+std::pair<double, double> ImageSettings::minMaxWindowRange( uint32_t i ) const
+{
+    return {
+        minMaxWindowCenterRange(i).first - 0.5 * minMaxWindowWidthRange(i).second,
+        minMaxWindowCenterRange(i).second + 0.5 * minMaxWindowWidthRange(i).second
+    };
+}
+
 std::pair<double, double> ImageSettings::minMaxWindowRange() const { return minMaxWindowRange( m_activeComponent ); }
+
 std::pair<double, double> ImageSettings::minMaxThresholdRange( uint32_t i ) const { return m_componentSettings[i].m_minMaxThresholdRange; }
 std::pair<double, double> ImageSettings::minMaxThresholdRange() const { return minMaxThresholdRange( m_activeComponent ); }
 
 void ImageSettings::setWindowLow( uint32_t i, double wLow, bool clampValues )
 {
-    if ( wLow > m_componentSettings[i].m_window.second )
-    {
-        return;
-    }
-
-    if ( wLow < m_componentSettings[i].m_minMaxWindowRange.first )
+    if ( wLow > ( windowLowHigh(i).second - minMaxWindowWidthRange(i).first ) )
     {
         if ( clampValues ) {
-            wLow = m_componentSettings[i].m_minMaxWindowRange.first;
+            wLow = windowLowHigh(i).second - minMaxWindowWidthRange(i).first;
+        }
+        else {
+            return;
+        }
+    }
+
+    if ( wLow < minMaxWindowRange(i).first )
+    {
+        if ( clampValues ) {
+            wLow = minMaxWindowRange(i).first;
         }
         else {
             return;
         }
     }
     
-    if ( m_componentSettings[i].m_minMaxWindowRange.second < wLow )
+    if ( minMaxWindowRange(i).second < wLow )
     {
         if ( clampValues ) {
-            wLow = m_componentSettings[i].m_minMaxWindowRange.second;
+            wLow = minMaxWindowRange(i).second;
         }
         else {
             return;
         }
     }
 
-    m_componentSettings[i].m_window.first =
-            std::max( wLow, m_componentSettings[i].m_minMaxWindowRange.first );
+    const double center = 0.5 * ( wLow + windowLowHigh(i).second );
+    const double width = windowLowHigh(i).second - wLow;
 
-    updateInternals();
+    setWindowCenter( center );
+    setWindowWidth( width );
 }
 
 void ImageSettings::setWindowHigh( uint32_t i, double wHigh, bool clampValues )
 {
-    if ( m_componentSettings[i].m_window.first > wHigh )
-    {
-        return;
-    }
-
-    if ( wHigh < m_componentSettings[i].m_minMaxWindowRange.first )
+    if ( wHigh < ( windowLowHigh(i).first + minMaxWindowWidthRange(i).first ) )
     {
         if ( clampValues ) {
-            wHigh = m_componentSettings[i].m_minMaxWindowRange.first;
-        }
-        else {
-            return;
-        }
-    }
-    
-    if ( m_componentSettings[i].m_minMaxWindowRange.second < wHigh )
-    {
-        if ( clampValues ) {
-            wHigh = m_componentSettings[i].m_minMaxWindowRange.second;
+            wHigh = windowLowHigh(i).first + minMaxWindowWidthRange(i).first;
         }
         else {
             return;
         }
     }
 
-    m_componentSettings[i].m_window.second =
-            std::min( wHigh, m_componentSettings[i].m_minMaxWindowRange.second );
-
-    updateInternals();
-}
-
-void ImageSettings::setWindowLowHigh( uint32_t i, double wLow, double wHigh, bool clampValues )
-{
-    if ( wLow > wHigh )
-    {
-        return;
-    }
-
-    if ( wLow < m_componentSettings[i].m_minMaxWindowRange.first )
+    if ( wHigh < minMaxWindowRange(i).first )
     {
         if ( clampValues ) {
-            wLow = m_componentSettings[i].m_minMaxWindowRange.first;
-        }
-        else {
-            return;
-        }
-    }
-    
-    if ( m_componentSettings[i].m_minMaxWindowRange.second < wLow )
-    {
-        if ( clampValues ) {
-            wLow = m_componentSettings[i].m_minMaxWindowRange.second;
+            wHigh = minMaxWindowRange(i).first;
         }
         else {
             return;
         }
     }
 
-    if ( wHigh < m_componentSettings[i].m_minMaxWindowRange.first )
+    if ( minMaxWindowRange(i).second < wHigh )
     {
         if ( clampValues ) {
-            wHigh = m_componentSettings[i].m_minMaxWindowRange.first;
-        }
-        else {
-            return;
-        }
-    }
-    
-    if ( m_componentSettings[i].m_minMaxWindowRange.second < wHigh )
-    {
-        if ( clampValues ) {
-            wHigh = m_componentSettings[i].m_minMaxWindowRange.second;
+            wHigh = minMaxWindowRange(i).second;
         }
         else {
             return;
         }
     }
 
-    m_componentSettings[i].m_window.first =
-            std::max( wLow, m_componentSettings[i].m_minMaxWindowRange.first );
+    const double center = 0.5 * ( windowLowHigh(i).first + wHigh );
+    const double width = wHigh - windowLowHigh(i).first;
 
-    m_componentSettings[i].m_window.second =
-            std::min( wHigh, m_componentSettings[i].m_minMaxWindowRange.second );
-
-    updateInternals();
+    setWindowCenter( center );
+    setWindowWidth( width );
 }
 
 void ImageSettings::setWindowLow( double wLow, bool clampValues ) { setWindowLow( m_activeComponent, wLow, clampValues ); }
 void ImageSettings::setWindowHigh( double wHigh, bool clampValues ) { setWindowHigh( m_activeComponent, wHigh, clampValues ); }
 
-void ImageSettings::setWindowLowHigh( double wLow, double wHigh, bool clampValues )
-{ setWindowLowHigh( m_activeComponent, wLow, wHigh, clampValues ); }
+std::pair<double, double> ImageSettings::windowLowHigh( uint32_t i ) const
+{
+    return { windowCenter(i) - 0.5 * windowWidth(i), windowCenter(i) + 0.5 * windowWidth(i) };
+}
 
-std::pair<double, double> ImageSettings::windowLowHigh( uint32_t i ) const { return m_componentSettings[i].m_window; }
 std::pair<double, double> ImageSettings::windowLowHigh() const { return windowLowHigh( m_activeComponent ); }
 
-double ImageSettings::windowWidth( uint32_t i ) const
-{ return ( m_componentSettings[i].m_window.second - m_componentSettings[i].m_window.first ); }
 
-double ImageSettings::windowCenter( uint32_t i ) const
-{ return 0.5 * ( m_componentSettings[i].m_window.first + m_componentSettings[i].m_window.second ); }
+double ImageSettings::windowWidth( uint32_t i ) const { return m_componentSettings[i].m_windowWidth; }
+double ImageSettings::windowWidth() const { return windowWidth( m_activeComponent ); }
+
+double ImageSettings::windowCenter( uint32_t i ) const { return m_componentSettings[i].m_windowCenter; }
+double ImageSettings::windowCenter() const { return windowCenter( m_activeComponent ); }
+
+void ImageSettings::setWindowWidth( uint32_t i, double width )
+{
+    double w = width;
+
+    if ( w < minMaxWindowWidthRange(i).first )
+    {
+        w = minMaxWindowWidthRange(i).first;
+    }
+
+    if ( minMaxWindowWidthRange(i).second < w )
+    {
+        w = minMaxWindowWidthRange(i).second;
+    }
+
+    m_componentSettings[i].m_windowWidth = w;
+    updateInternals();
+}
+
+void ImageSettings::setWindowWidth( double width ) { setWindowWidth( m_activeComponent, width ); }
+
+void ImageSettings::setWindowCenter( uint32_t i, double center )
+{
+    double c = center;
+
+    if ( c < minMaxWindowCenterRange(i).first )
+    {
+        c = minMaxWindowCenterRange(i).first;
+    }
+
+    if ( minMaxWindowCenterRange(i).second < c )
+    {
+        c = minMaxWindowCenterRange(i).second;
+    }
+
+    m_componentSettings[i].m_windowCenter = c;
+    updateInternals();
+}
+
+void ImageSettings::setWindowCenter( double center ) { setWindowCenter( m_activeComponent, center ); }
+
 
 void ImageSettings::setThresholdLow( uint32_t i, double tLow )
 {
     if ( tLow <= m_componentSettings[i].m_thresholds.second )
     {
         m_componentSettings[i].m_thresholds.first =
-                std::max( tLow, m_componentSettings[i].m_minMaxThresholdRange.first );
+            std::max( tLow, m_componentSettings[i].m_minMaxThresholdRange.first );
     }
 }
 
@@ -236,14 +252,13 @@ void ImageSettings::setThresholdHigh( uint32_t i, double tHigh )
     if ( m_componentSettings[i].m_thresholds.first <= tHigh )
     {
         m_componentSettings[i].m_thresholds.second =
-                std::min( tHigh, m_componentSettings[i].m_minMaxThresholdRange.second );
+            std::min( tHigh, m_componentSettings[i].m_minMaxThresholdRange.second );
     }
 }
 
-double ImageSettings::windowWidth() const { return windowWidth( m_activeComponent ); }
-double ImageSettings::windowCenter() const { return windowCenter( m_activeComponent ); }
 void ImageSettings::setThresholdLow( double tLow ) { setThresholdLow( m_activeComponent, tLow ); }
 void ImageSettings::setThresholdHigh( double tHigh ) { setThresholdHigh( m_activeComponent, tHigh ); }
+
 std::pair<double, double> ImageSettings::thresholds( uint32_t i ) const { return m_componentSettings[i].m_thresholds; }
 std::pair<double, double> ImageSettings::thresholds() const { return thresholds( m_activeComponent ); }
 
@@ -252,7 +267,7 @@ bool ImageSettings::thresholdsActive( uint32_t i ) const
     const auto& S = m_componentSettings[i];
 
     return ( S.m_minMaxThresholdRange.first < S.m_thresholds.first ||
-             S.m_thresholds.second < S.m_minMaxThresholdRange.second );
+        S.m_thresholds.second < S.m_minMaxThresholdRange.second );
 }
 
 bool ImageSettings::thresholdsActive() const { return thresholdsActive( m_activeComponent ); }
@@ -278,7 +293,9 @@ void ImageSettings::setGlobalVisibility( bool visible ) { m_globalVisibility = v
 bool ImageSettings::globalVisibility() const { return m_globalVisibility; }
 
 void ImageSettings::setGlobalOpacity( double opacity )
-{ m_globalOpacity = static_cast<float>( std::max( std::min( opacity, 1.0 ), 0.0 ) ); }
+{
+    m_globalOpacity = static_cast<float>( std::max( std::min( opacity, 1.0 ), 0.0 ) );
+}
 
 double ImageSettings::globalOpacity() const { return m_globalOpacity; }
 
@@ -425,7 +442,9 @@ float ImageSettings::slope_native_T_texture() const
 }
 
 glm::dvec2 ImageSettings::largestSlopeInterceptTextureVec2( uint32_t i ) const
-{ return { m_componentSettings[i].m_largest_slope_texture, m_componentSettings[i].m_largest_intercept_texture }; }
+{
+    return { m_componentSettings[i].m_largest_slope_texture, m_componentSettings[i].m_largest_intercept_texture };
+}
 
 glm::dvec2 ImageSettings::largestSlopeInterceptTextureVec2() const { return largestSlopeInterceptTextureVec2( m_activeComponent ); }
 
@@ -452,50 +471,58 @@ void ImageSettings::setActiveComponent( uint32_t component )
     else
     {
         spdlog::error( "Attempting to set invalid active component {} "
-                       "(only {} componnets total for image {})",
+                       "(only {} components total for image {})",
                        component, m_numComponents, m_displayName );
     }
 }
 
 void ImageSettings::updateWithNewComponentStatistics(
     std::vector< ComponentStats<double> > componentStats,
-    bool setDefaultSettings )
+    bool setDefaultVisibilitySettings )
 {
-    // Default window covers 1st to 99th quantile intensity range of the first pixel component
-    static constexpr int qLow = 10; // 1%
-    static constexpr int qHigh = 990; // 99%
-    static constexpr int qMax = 1000; // 100%
+    // Default window covers 1st to 99th quantile intensity range of the first pixel component.
+    // Recall that the histogram has 1001 bins.
+    static constexpr int qLow = 10; // 1% level
+    static constexpr int qHigh = 990; // 99% level
+    static constexpr int qMax = 1000; // 100% level
 
     if ( componentStats.size() != m_numComponents )
     {
+        spdlog::error( "Component statistics has {} components, where {} are expected",
+                       componentStats.size(), m_numComponents );
         return;
     }
 
     m_componentStats = std::move( componentStats );
 
-    for ( uint32_t i = 0; i < m_componentStats.size(); ++i )
+    for ( std::size_t i = 0; i < m_componentStats.size(); ++i )
     {
         const auto& stat = m_componentStats[i];
 
         ComponentSettings& setting = m_componentSettings[i];
 
-        // Min/max window and threshold ranges are based on min/max component values
-
+        // Min/max window width/center and threshold ranges are based on min/max component values:
         setting.m_minMaxImageRange = std::make_pair( stat.m_minimum, stat.m_maximum );
         setting.m_minMaxThresholdRange = std::make_pair( stat.m_minimum, stat.m_maximum );
-        setting.m_minMaxWindowRange = std::make_pair( stat.m_minimum, stat.m_maximum );
+
+        setting.m_minMaxWindowCenterRange = std::make_pair( stat.m_minimum, stat.m_maximum );
+        setting.m_minMaxWindowWidthRange = std::make_pair( 0.0, stat.m_maximum - stat.m_minimum );
 
         // Default thresholds are min/max values:
         setting.m_thresholds = std::make_pair( stat.m_minimum, stat.m_maximum );
 
         // Default window limits are the low and high quantiles:
-        setting.m_window = std::make_pair( stat.m_quantiles[qLow], stat.m_quantiles[qHigh] );
+        const double winLow = stat.m_quantiles[qLow];
+        const double winHigh = stat.m_quantiles[qHigh];
+
+        setting.m_windowCenter = 0.5 * (winLow + winHigh);
+        setting.m_windowWidth = winHigh - winLow;
 
         // Use the [1%, 100%] intensity range to define foreground
         // (until we have an algorithm to compute a foreground mask)
         setting.m_foregroundThresholds = std::make_pair( stat.m_quantiles[qLow], stat.m_quantiles[qMax] );
 
-        if ( setDefaultSettings )
+        if ( setDefaultVisibilitySettings )
         {
             // Default to max opacity and nearest neighbor interpolation
             setting.m_opacity = 1.0;
@@ -640,8 +667,7 @@ void ImageSettings::updateInternals()
 
         // Apply windowing and leveling to the slope and intercept:
         S.m_slope_texture = S.m_slope_texture / windowNorm;
-        S.m_intercept_texture = S.m_intercept_texture / windowNorm +
-                ( 0.5 - levelNorm / windowNorm );
+        S.m_intercept_texture = S.m_intercept_texture / windowNorm + ( 0.5 - levelNorm / windowNorm );
     }
 }
 
@@ -712,7 +738,7 @@ std::ostream& operator<< ( std::ostream& os, const ImageSettings& settings )
 {
     os << "Display name: " << settings.m_displayName;
 
-    for ( size_t i = 0; i < settings.m_componentStats.size(); ++i )
+    for ( std::size_t i = 0; i < settings.m_componentStats.size(); ++i )
     {
         const auto& s = settings.m_componentSettings[i];
         const auto& t = settings.m_componentStats[i];
@@ -728,7 +754,8 @@ std::ostream& operator<< ( std::ostream& os, const ImageSettings& settings )
            << "\n\tAvg: " << t.m_mean
            << "\n\tStd: " << t.m_stdDeviation;
 
-        os << "\n\n\tWindow: [" << s.m_window.first << ", " << s.m_window.second << "]"
+        os << "\n\n\tWindow: [" << s.m_windowCenter - 0.5 * s.m_windowWidth << ", "
+           << s.m_windowCenter + 0.5 * s.m_windowWidth << "]"
            << "\n\tThreshold: [" << s.m_thresholds.first << ", " << s.m_thresholds.second << "]";
     }
 

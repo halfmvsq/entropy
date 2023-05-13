@@ -82,7 +82,6 @@ public:
      */
     bool saveComponentToDisk( uint32_t component, const std::optional<std::string>& newFileName );
 
-
     const ImageRepresentation& imageRep() const;
     const MultiComponentBufferType& bufferType() const;
 

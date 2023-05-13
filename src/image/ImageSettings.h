@@ -127,7 +127,14 @@ public:
     std::pair<double, double> minMaxImageRange( uint32_t component ) const;
     std::pair<double, double> minMaxImageRange() const;
 
-    /// Get the min/max window range (in image intensity units) for a given component
+    /// Get the min/max window width range (in image intensity units) for a given component
+    std::pair<double, double> minMaxWindowWidthRange( uint32_t component ) const;
+    std::pair<double, double> minMaxWindowWidthRange() const;
+
+    /// Get the min/max window center range (in image intensity units) for a given component
+    std::pair<double, double> minMaxWindowCenterRange( uint32_t component ) const;
+    std::pair<double, double> minMaxWindowCenterRange() const;
+
     std::pair<double, double> minMaxWindowRange( uint32_t component ) const;
     std::pair<double, double> minMaxWindowRange() const;
 
@@ -137,16 +144,12 @@ public:
 
 
     /// Set lower window value (in image intensity units) for a given component.
-    void setWindowLow( uint32_t component, double wLow, bool clampValues = false );
+    void setWindowLow( uint32_t component, double wLow, bool clampValues = true );
     void setWindowLow( double wLow, bool clampValues = false );
 
     /// Set upper window value (in image intensity units) for a given component.
-    void setWindowHigh( uint32_t component, double wHigh, bool clampValues = false );
+    void setWindowHigh( uint32_t component, double wHigh, bool clampValues = true );
     void setWindowHigh( double wHigh, bool clampValues = false );
-
-    /// Set lower and upper window values (in image intensity units) for a given component.
-    void setWindowLowHigh( uint32_t component, double wLow, double wHigh, bool clampValues = false );
-    void setWindowLowHigh( double wLow, double wHigh, bool clampValues = false );
 
     /// Get window limits (in image intensity units) for a given component
     std::pair<double, double> windowLowHigh( uint32_t component ) const;
@@ -160,7 +163,11 @@ public:
     double windowCenter( uint32_t component ) const;
     double windowCenter() const;
 
+    void setWindowWidth( uint32_t component, double width );
+    void setWindowWidth( double width );
 
+    void setWindowCenter( uint32_t component, double center );
+    void setWindowCenter( double center );
 
     /// Set low threshold (in image intensity units) for a given component
     void setThresholdLow( uint32_t component, double thresh );
@@ -381,7 +388,7 @@ public:
 
     void updateWithNewComponentStatistics(
         std::vector< ComponentStats<double> > componentStats,
-        bool setDefaultSettings );
+        bool setDefaultVisibilitySettings );
 
     /// Set the active component
     void setActiveComponent( uint32_t component );
@@ -407,11 +414,13 @@ private:
         ComponentSettings() {}
 
         std::pair<double, double> m_minMaxImageRange{ 0.0, 0.0 }; //!< Min/max image value range
-        std::pair<double, double> m_minMaxWindowRange{ 0.0, 0.0 }; //!< Valid window range
+        std::pair<double, double> m_minMaxWindowWidthRange{ 0.0, 0.0 }; //!< Valid window width range
+        std::pair<double, double> m_minMaxWindowCenterRange{ 0.0, 0.0 }; //!< Valid window center range
         std::pair<double, double> m_minMaxThresholdRange{ 0.0, 0.0 }; //!< Valid threshold range
 
         /// Low and high limits of the window in native image intensity units
-        std::pair<double, double> m_window{ 0.0, 0.0 };
+        double m_windowCenter = 0.0;
+        double m_windowWidth = 0.0;
 
         /// Low and high threshold values in native image intensity units
         std::pair<double, double> m_thresholds{ 0.0, 0.0 };

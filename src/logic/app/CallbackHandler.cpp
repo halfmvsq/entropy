@@ -254,12 +254,15 @@ bool CallbackHandler::executePoissonSegmentation(
     const uuids::uuid& imageUid,
     const uuids::uuid& seedSegUid,
     const uuids::uuid& resultSegUid,
-    const uuids::uuid& potentialUid )
+    const uuids::uuid& potentialImageUid )
 {
+    // Algorithm inputs:
     const Image* image = m_appData.image( imageUid );
     const Image* seedSeg = m_appData.seg( seedSegUid );
+
+    // Algorithm outputs:
     Image* resultSeg = m_appData.seg( resultSegUid );
-    Image* potImage = m_appData.image( potentialUid );
+    Image* potImage = m_appData.image( potentialImageUid );
 
     if ( ! image )
     {
@@ -281,7 +284,7 @@ bool CallbackHandler::executePoissonSegmentation(
 
     if ( ! potImage )
     {
-        spdlog::error( "Null potential image {} for Poisson", potentialUid );
+        spdlog::error( "Null potential image {} for Poisson", potentialImageUid );
         return false;
     }
 
@@ -305,18 +308,18 @@ bool CallbackHandler::executePoissonSegmentation(
     {
         spdlog::error( "Dimensions of image {} ({}) and potential image {} ({}) do not match",
                       imageUid, glm::to_string( image->header().pixelDimensions() ),
-                      potentialUid, glm::to_string( potImage->header().pixelDimensions() ) );
+                      potentialImageUid, glm::to_string( potImage->header().pixelDimensions() ) );
         return false;
     }
 
     spdlog::info( "Executing Poisson segmentation on image {} with seeds {}; "
                   "resulting segmentation: {}; resulting potential: {}",
-                  imageUid, seedSegUid, resultSegUid, potentialUid );
+                  imageUid, seedSegUid, resultSegUid, potentialImageUid );
 
     const uint32_t imComp = image->settings().activeComponent();
 
     const float beta = computeBeta( *image, imComp );
-    spdlog::debug( "Poisson beta = {}", beta );
+    spdlog::info( "Poisson beta = {}", beta );
     
     const uint32_t maxIterations = 100;
     const float rjac = 0.6f;
@@ -324,11 +327,15 @@ bool CallbackHandler::executePoissonSegmentation(
     sor( *seedSeg, *image, *potImage, imComp, rjac, maxIterations, beta );
 
     potImage->updateComponentStats();
+    resultSeg->updateComponentStats();
+
+    spdlog::debug( "Potential image stats: {}", potImage->settings() );
+    spdlog::debug( "Resulting segmentation image stats: {}", resultSeg->settings() );
 
     spdlog::debug( "Start updating potential image texture" );
 
      m_rendering.updateImageTexture(
-        potentialUid,
+        potentialImageUid,
         imComp,
         potImage->header().memoryComponentType(),
         glm::uvec3{0},
@@ -674,22 +681,21 @@ void CallbackHandler::doWindowLevel(
 
         auto& S = activeImage->settings();
 
-        const double maxWindowRange = S.minMaxWindowRange().second - S.minMaxWindowRange().first;
-        const double maxLevelRange = S.minMaxImageRange().second - S.minMaxImageRange().first;
+        const double centerDelta =
+            ( S.minMaxWindowCenterRange().second - S.minMaxWindowCenterRange().first ) *
+            static_cast<double>( currHit.windowClipPos.y - prevHit.windowClipPos.y ) / 2.0;
 
-        const double levelDelta = maxLevelRange *
-                static_cast<double>( currHit.windowClipPos.y - prevHit.windowClipPos.y ) / 2.0;
+        const double windowDelta =
+            ( S.minMaxWindowWidthRange().second - S.minMaxWindowWidthRange().first ) *
+            static_cast<double>( currHit.windowClipPos.x - prevHit.windowClipPos.x ) / 2.0;
 
-        const double windowDelta = maxWindowRange *
-                static_cast<double>( currHit.windowClipPos.x - prevHit.windowClipPos.x ) / 2.0;
-
-        const double newCenter = S.windowCenter() + levelDelta;
+        const double newCenter = S.windowCenter() + centerDelta;
         const double newWidth = S.windowWidth() + windowDelta;
 
-        /// @todo Whether to clamp values should be an option
-        static constexpr bool sk_clampValues = true;
-        
-        S.setWindowLowHigh( newCenter - 0.5 * newWidth, newCenter + 0.5 * newWidth, sk_clampValues );
+//        static constexpr bool sk_clampValues = false;
+//        S.setWindowLowHigh( newCenter - 0.5 * newWidth, newCenter + 0.5 * newWidth, sk_clampValues );
+        S.setWindowWidth( newWidth );
+        S.setWindowCenter( newCenter );
 
         m_rendering.updateImageUniforms( *activeImageUid );
     }

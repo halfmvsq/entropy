@@ -843,10 +843,6 @@ void renderImageHeader(
         if ( ComponentType::Float32 == imgHeader.memoryComponentType() ||
              ComponentType::Float64 == imgHeader.memoryComponentType() )
         {
-            // Image range:
-            const float imageMin = static_cast<float>( imgSettings.minMaxImageRange().first );
-            const float imageMax = static_cast<float>( imgSettings.minMaxImageRange().second );
-
             // Threshold range:
             const float threshMin = static_cast<float>( imgSettings.thresholdRange().first );
             const float threshMax = static_cast<float>( imgSettings.thresholdRange().second );
@@ -854,8 +850,8 @@ void renderImageHeader(
             float threshLow = static_cast<float>( imgSettings.thresholds().first );
             float threshHigh = static_cast<float>( imgSettings.thresholds().second );
 
-            // Speed of range slider is based on the image range
-            const float speed = static_cast<float>( imageMax - imageMin ) / 1000.0f;
+            // Speed of range slider is based on the range
+            const float speed = static_cast<float>( threshMax - threshMin ) / 1000.0f;
 
             if ( ImGui::DragFloatRange2( "Threshold", &threshLow, &threshHigh,
                                          speed, threshMin, threshMax,
@@ -871,67 +867,49 @@ void renderImageHeader(
 
 
             // Window/level sliders:
+            const float windowWidthMin = static_cast<float>( imgSettings.minMaxWindowWidthRange().first );
+            const float windowWidthMax = static_cast<float>( imgSettings.minMaxWindowWidthRange().second );
+
+            const float windowCenterMin = static_cast<float>( imgSettings.minMaxWindowCenterRange().first );
+            const float windowCenterMax = static_cast<float>( imgSettings.minMaxWindowCenterRange().second );
+
             const float windowMin = static_cast<float>( imgSettings.minMaxWindowRange().first );
             const float windowMax = static_cast<float>( imgSettings.minMaxWindowRange().second );
 
             float windowLow = static_cast<float>( imgSettings.windowLowHigh().first );
             float windowHigh = static_cast<float>( imgSettings.windowLowHigh().second );
 
-            if ( ImGui::DragFloatRange2( "Window", &windowLow, &windowHigh,
-                                         speed, windowMin, windowMax,
-                                         minValuesFormat, maxValuesFormat,
-                                         ImGuiSliderFlags_AlwaysClamp ) )
+            if ( ImGui::DragFloatRange2(
+                "Window", &windowLow, &windowHigh, speed, windowMin, windowMax,
+                minValuesFormat, maxValuesFormat, ImGuiSliderFlags_AlwaysClamp ) )
             {
-                imgSettings.setWindowLowHigh( windowLow, windowHigh );
+                imgSettings.setWindowLow( windowLow );
+                imgSettings.setWindowHigh( windowHigh );
                 updateImageUniforms();
             }
             ImGui::SameLine(); helpMarker( "Set the minimum and maximum of the window range" );
 
 
-            const float maxWindowRange = static_cast<float>( imgSettings.minMaxWindowRange().second -
-                    imgSettings.minMaxWindowRange().first );
-
             float windowWidth = static_cast<float>( imgSettings.windowWidth() );
+            float windowCenter = static_cast<float>( imgSettings.windowCenter() );
 
-            if ( mySliderF32( "Width", &windowWidth, 0.0f, maxWindowRange, valuesFormat ) )
+            if ( mySliderF32( "Width", &windowWidth, windowWidthMin, windowWidthMax, valuesFormat ) )
             {
-                const float c = static_cast<float>( imgSettings.windowCenter() );
-
-//                const float w1 = std::max( c - 0.5f * windowWidth, windowMin );
-//                const float w2 = std::min( c + 0.5f * windowWidth, windowMax );
-
-                const float w1 = c - 0.5f * windowWidth;
-                const float w2 = c + 0.5f * windowWidth;
-
-                imgSettings.setWindowLowHigh( w1, w2 );
+                imgSettings.setWindowWidth( windowWidth );
                 updateImageUniforms();
             }
             ImGui::SameLine(); helpMarker( "Window width" );
 
 
-            float windowCenter = static_cast<float>( imgSettings.windowCenter() );
-
-            if ( mySliderF32( "Level", &windowCenter, imageMin, imageMax, valuesFormat ) )
+            if ( mySliderF32( "Level", &windowCenter, windowCenterMin, windowCenterMax, valuesFormat ) )
             {
-                const float width = static_cast<float>( imgSettings.windowWidth() );
-
-//                const float w1 = std::max( windowCenter - 0.5f * width, windowMin );
-//                const float w2 = std::min( windowCenter + 0.5f * width, windowMax );
-
-                const float w1 = windowCenter - 0.5f * width;
-                const float w2 = windowCenter + 0.5f * width;
-
-                imgSettings.setWindowLowHigh( w1, w2 );
+                imgSettings.setWindowCenter( windowCenter );
                 updateImageUniforms();
             }
             ImGui::SameLine(); helpMarker( "Window level (center)" );
         }
         else
         {
-            // Image range:
-            const int32_t imageMin = static_cast<int32_t>( imgSettings.minMaxImageRange().first );
-            const int32_t imageMax = static_cast<int32_t>( imgSettings.minMaxImageRange().second );
-
             // Threshold range:
             const int32_t threshMin = static_cast<int32_t>( imgSettings.thresholdRange().first );
             const int32_t threshMax = static_cast<int32_t>( imgSettings.thresholdRange().second );
@@ -943,10 +921,9 @@ void renderImageHeader(
             const float speed = 1.0f;
 
             /// Speed of range slider is based on the image range
-            if ( ImGui::DragIntRange2( "Threshold", &threshLow, &threshHigh,
-                                       speed, threshMin, threshMax,
-                                       "Min: %d", "Max: %d",
-                                       ImGuiSliderFlags_AlwaysClamp ) )
+            if ( ImGui::DragIntRange2(
+                "Threshold", &threshLow, &threshHigh, speed, threshMin, threshMax,
+                "Min: %d", "Max: %d", ImGuiSliderFlags_AlwaysClamp ) )
             {
                 imgSettings.setThresholdLow( static_cast<double>( threshLow ) );
                 imgSettings.setThresholdHigh( static_cast<double>( threshHigh ) );
@@ -957,70 +934,43 @@ void renderImageHeader(
 
 
             // Window/level sliders:
-            const int32_t windowMin = static_cast<int32_t>( imgSettings.minMaxWindowRange().first );
-            const int32_t windowMax = static_cast<int32_t>( imgSettings.minMaxWindowRange().second );
+            const int32_t windowWidthMin = static_cast<int32_t>( std::floor( imgSettings.minMaxWindowWidthRange().first ) );
+            const int32_t windowWidthMax = static_cast<int32_t>( std::ceil( imgSettings.minMaxWindowWidthRange().second ) );
+
+            const int32_t windowCenterMin = static_cast<int32_t>( std::floor( imgSettings.minMaxWindowCenterRange().first ) );
+            const int32_t windowCenterMax = static_cast<int32_t>( std::ceil( imgSettings.minMaxWindowCenterRange().second ) );
+
+            const int32_t windowMin = static_cast<int32_t>( std::floor( imgSettings.minMaxWindowRange().first ) );
+            const int32_t windowMax = static_cast<int32_t>( std::ceil( imgSettings.minMaxWindowRange().second ) );
 
             int32_t windowLow = static_cast<int32_t>( imgSettings.windowLowHigh().first );
             int32_t windowHigh = static_cast<int32_t>( imgSettings.windowLowHigh().second );
 
-            if ( ImGui::DragIntRange2( "Window", &windowLow, &windowHigh,
-                                       speed, windowMin, windowMax,
-                                       "Min: %d", "Max: %d",
-                                       ImGuiSliderFlags_AlwaysClamp ) )
+            if ( ImGui::DragIntRange2(
+                "Window", &windowLow, &windowHigh, speed, windowMin, windowMax,
+                "Min: %d", "Max: %d", ImGuiSliderFlags_AlwaysClamp ) )
             {
-                imgSettings.setWindowLowHigh( windowLow, windowHigh );
+                imgSettings.setWindowLow( windowLow );
+                imgSettings.setWindowHigh( windowHigh );
                 updateImageUniforms();
             }
             ImGui::SameLine(); helpMarker( "Set the minimum and maximum of the window range" );
 
 
-            const int32_t maxWindowRange = static_cast<int32_t>(
-                imgSettings.minMaxWindowRange().second - imgSettings.minMaxWindowRange().first );
-
             int32_t windowWidth = static_cast<int32_t>( imgSettings.windowWidth() );
+            int32_t windowCenter = static_cast<int32_t>( imgSettings.windowCenter() );
 
-            if ( mySliderS32( "Width", &windowWidth, 0, maxWindowRange ) )
+            if ( mySliderS32( "Width", &windowWidth, windowWidthMin, windowWidthMax ) )
             {
-                const double c = imgSettings.windowCenter();
-
-//                const int32_t w1 = static_cast<int32_t>(
-//                            std::max( c - 0.5 * static_cast<double>( windowWidth ),
-//                                      imgSettings.minMaxWindowRange().first ) );
-
-//                const int32_t w2 = static_cast<int32_t>(
-//                            std::min( c + 0.5 * static_cast<double>( windowWidth ),
-//                                      imgSettings.minMaxWindowRange().second ) );
-
-                const int32_t w1 = static_cast<int32_t>( c - 0.5 * static_cast<double>( windowWidth ) );
-                const int32_t w2 = static_cast<int32_t>( c + 0.5 * static_cast<double>( windowWidth ) );
-
-                imgSettings.setWindowLowHigh( w1, w2 );
+                imgSettings.setWindowWidth( windowWidth );
                 updateImageUniforms();
             }
             ImGui::SameLine(); helpMarker( "Window width" );
 
 
-            int32_t windowCenter = static_cast<int32_t>( imgSettings.windowCenter() );
-
-            if ( mySliderS32( "Level", &windowCenter, imageMin, imageMax ) )
+            if ( mySliderS32( "Level", &windowCenter, windowCenterMin, windowCenterMax ) )
             {
-                const double width = imgSettings.windowWidth();
-
-//                const int32_t w1 = static_cast<int32_t>(
-//                            std::max( static_cast<double>( windowCenter ) - 0.5 * width,
-//                                      imgSettings.minMaxWindowRange().first ) );
-
-//                const int32_t w2 = static_cast<int32_t>(
-//                            std::min( static_cast<double>( windowCenter ) + 0.5 * width,
-//                                      imgSettings.minMaxWindowRange().second ) );
-
-                const int32_t w1 = static_cast<int32_t>(
-                            static_cast<double>( windowCenter ) - 0.5 * width );
-
-                const int32_t w2 = static_cast<int32_t>(
-                            static_cast<double>( windowCenter ) + 0.5 * width );
-
-                imgSettings.setWindowLowHigh( w1, w2 );
+                imgSettings.setWindowCenter( windowCenter );
                 updateImageUniforms();
             }
             ImGui::SameLine(); helpMarker( "Window level (center)" );
@@ -1099,10 +1049,10 @@ void renderImageHeader(
                 snprintf( label, 128, "%s##cmap_%zu", cmap->name().c_str(), imageIndex );
 
                 ImGui::paletteButton(
-                            label, static_cast<int>( cmap->numColors() ),
-                            cmap->data_RGBA_F32(),
-                            imgSettings.isColorMapInverted(),
-                            ImVec2( contentWidth, height ) );
+                    label, static_cast<int>( cmap->numColors() ),
+                    cmap->data_RGBA_F32(),
+                    imgSettings.isColorMapInverted(),
+                    ImVec2( contentWidth, height ) );
 
                 if ( ImGui::IsItemHovered() )
                 {
@@ -1119,35 +1069,40 @@ void renderImageHeader(
 
             if ( ImGui::Button( "Max" ) )
             {
-                imgSettings.setWindowLowHigh( stats.m_minimum, stats.m_maximum );
+                imgSettings.setWindowLow( stats.m_minimum );
+                imgSettings.setWindowHigh( stats.m_maximum );
                 updateImageUniforms();
             }
             ImGui::SameLine();
 
             if ( ImGui::Button( "99\%" ) )
             {
-                imgSettings.setWindowLowHigh( stats.m_quantiles[10], stats.m_quantiles[990] );
+                imgSettings.setWindowLow( stats.m_quantiles[10] );
+                imgSettings.setWindowHigh( stats.m_quantiles[990] );
                 updateImageUniforms();
             }
             ImGui::SameLine();
 
             if ( ImGui::Button( "98\%" ) )
             {
-                imgSettings.setWindowLowHigh( stats.m_quantiles[20], stats.m_quantiles[980] );
+                imgSettings.setWindowLow( stats.m_quantiles[20] );
+                imgSettings.setWindowHigh( stats.m_quantiles[980] );
                 updateImageUniforms();
             }
             ImGui::SameLine();
 
             if ( ImGui::Button( "95\%" ) )
             {
-                imgSettings.setWindowLowHigh( stats.m_quantiles[50], stats.m_quantiles[950] );
+                imgSettings.setWindowLow( stats.m_quantiles[50] );
+                imgSettings.setWindowHigh( stats.m_quantiles[950] );
                 updateImageUniforms();
             }
             ImGui::SameLine();
 
             if ( ImGui::Button( "90\%" ) )
             {
-                imgSettings.setWindowLowHigh( stats.m_quantiles[100], stats.m_quantiles[900] );
+                imgSettings.setWindowLow( stats.m_quantiles[100] );
+                imgSettings.setWindowHigh( stats.m_quantiles[900] );
                 updateImageUniforms();
             }
             ImGui::SameLine(); helpMarker( "Set window based on percentiles of the image histogram" );

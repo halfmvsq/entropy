@@ -38,17 +38,25 @@ namespace
 
 
 void sor(
-    const Image& bnd, const Image& img, Image& pot,
-    uint32_t imComp,
-    float rjac, uint32_t maxits, float beta )
+    const Image& seedSeg, const Image& image, Image& potentialImage,
+    uint32_t imComp, float rjac, uint32_t maxits, float beta )
 {
+    const uint8_t* seedData = static_cast<const uint8_t*>( seedSeg.bufferAsVoid(0) );
+    const int16_t* imageData = static_cast<const int16_t*>( image.bufferAsVoid(imComp) );
+    float* potData = static_cast<float*>( potentialImage.bufferAsVoid(0) );
+
+    int n = 0;
     int isw, jsw, ksw;
 
-    double omega = 1.0;
-    double grad, weight;
+    float omega = 1.0f;
+    float val, pot, grad, weight;
 
-    const glm::ivec3 dims = glm::ivec3{ img.header().pixelDimensions() };
-    const glm::vec3 spacing = img.header().spacing();
+    const glm::ivec3 dims = glm::ivec3{ image.header().pixelDimensions() };
+    const glm::vec3 spacing = image.header().spacing();
+
+    const int zDelta = dims.x * dims.y;
+    const int yDelta = dims.x;
+    const int xDelta = 1;
 
     for ( uint32_t iter = 0; iter < maxits; ++iter )
     {
@@ -57,7 +65,7 @@ void sor(
             spdlog::trace( "Iteration {}", iter );
         }
 
-        double absResid = 0.0;
+        float absResid = 0.0f;
 
         // Split updates into even and odd stencil passes:
         ksw = 0;
@@ -74,76 +82,71 @@ void sor(
                 {
                     for ( int i = isw; i < dims.x; i += 2 )
                     {
-                        // Do not update nodes on boundary
-                        if ( 0 != bnd.value<int64_t>(0, i, j, k).value_or(0) )
+                        n = k * zDelta + j * yDelta + i;
+
+                        if ( 0 != seedData[n] )
                         {
+                            // Do not update nodes on boundary
+                            potData[n] = seedData[n];
                             continue;
                         }
 
-                        const float val = img.value<float>(imComp, i, j, k).value_or(0.0f);
+                        val = imageData[n];
+                        pot = potData[n];
 
                         float resid = 0.0f;
                         float total = 0.0f;
 
                         if ( k < dims.z - 1 )
                         {
-                            float val2 = img.value<float>(imComp, i, j, k + 1).value_or(0.0f);
-                            grad = (val - val2) / beta;
-                            weight = std::exp( -grad*grad / 2.0f ) / spacing.z;
-
-                            float pp = pot.value<float>(0, i, j, k + 1).value_or(0.0f);
-                            resid += weight * pp;
+                            grad = (val - imageData[n + zDelta]) / beta;
+                            weight = std::exp( -0.5f * grad * grad ) / spacing.z;
+                            resid += weight * potData[n + zDelta];
                             total -= weight;
-
-//                            spdlog::debug( "val2 = {}, grad = {}, weight = {}, pp = {}, resid = {}, total = {}",
-//                                val2, grad, weight, pp, resid, total );
                         }
 
                         if ( k > 0 )
                         {
-                            grad = (val - img.value<float>(imComp, i, j, k - 1).value_or(0.0f)) / beta;
-                            weight = std::exp( -grad*grad / 2.0f ) / spacing.z;
-                            resid += weight * pot.value<float>(0, i, j, k - 1).value_or(0.0f);
+                            grad = (val - imageData[n - zDelta]) / beta;
+                            weight = std::exp( -0.5f * grad * grad ) / spacing.z;
+                            resid += weight * potData[n - zDelta];
                             total -= weight;
                         }
 
                         if ( j < dims.y - 1 )
                         {
-                            grad = (val - img.value<float>(imComp, i, j + 1, k).value_or(0.0f)) / beta;
-                            weight = std::exp( -grad*grad / 2.0f ) / spacing.y;
-                            resid += weight * pot.value<float>(0, i, j + 1, k).value_or(0.0f);
+                            grad = (val - imageData[n + yDelta]) / beta;
+                            weight = std::exp( -0.5f * grad * grad ) / spacing.y;
+                            resid += weight * potData[n + yDelta];
                             total -= weight;
                         }
 
                         if ( j > 0 )
                         {
-                            grad = (val - img.value<float>(imComp, i, j - 1, k).value_or(0.0f)) / beta;
-                            weight = std::exp( -grad*grad / 2.0f ) / spacing.y;
-                            resid += weight * pot.value<float>(0, i, j - 1, k).value_or(0.0f);
+                            grad = (val - imageData[n - yDelta]) / beta;
+                            weight = std::exp( -0.5f * grad * grad ) / spacing.y;
+                            resid += weight * potData[n - yDelta];
                             total -= weight;
                         }
 
                         if ( i < dims.x - 1 )
                         {
-                            grad = (val - img.value<float>(imComp, i + 1, j, k).value_or(0.0f)) / beta;
-                            weight = std::exp( -grad*grad/2.0f ) / spacing.x;
-                            resid += weight * pot.value<float>(0, i + 1, j, k).value_or(0.0f);
+                            grad = (val - imageData[n + xDelta]) / beta;
+                            weight = std::exp( -0.5f * grad * grad ) / spacing.x;
+                            resid += weight * potData[n + xDelta];
                             total -= weight;
                         }
 
                         if ( i > 0 )
                         {
-                            grad = (val - img.value<float>(imComp, i - 1, j, k).value_or(0.0f)) / beta;
-                            weight = std::exp( -grad*grad / 2.0 ) / spacing.x;
-                            resid += weight * pot.value<float>(0, i - 1, j, k).value_or(0.0f);
+                            grad = (val - imageData[n - xDelta]) / beta;
+                            weight = std::exp( -0.5f * grad * grad ) / spacing.x;
+                            resid += weight * potData[n - xDelta];
                             total -= weight;
                         }
 
-                        const float p = pot.value<float>(0, i, j, k).value_or(0.0f);
-
-                        resid += total * p;
-                        pot.setValue(0, i, j, k, p - omega * resid / total );
-
+                        resid += total * pot;
+                        potData[n] -= omega * resid / total;
                         absResid += std::fabs(resid);
                     }
 
@@ -155,9 +158,9 @@ void sor(
 
             ksw = 1 - ksw;
 
-            omega =	(iter == 0 && pass == 0 )
-                ? 1.0 / ( 1.0 - 0.5 * rjac * rjac )
-                : 1.0 / ( 1.0 - 0.25 * rjac * rjac * omega );
+            omega =	( 0 == iter && 0 == pass )
+                ? 1.0f / ( 1.0f - 0.5f * rjac * rjac )
+                : 1.0f / ( 1.0f - 0.25f * rjac * rjac * omega );
         }
 
         spdlog::debug( "absResid = {}", absResid );
