@@ -6,27 +6,27 @@
 
 
 AppSettings::AppSettings()
-    :   
-      m_synchronizeZoom( true ),
-      m_overlays( true ),
+    :
+    m_synchronizeZoom( true ),
+    m_overlays( true ),
 
-      m_foregroundLabel( 1u ),
-      m_backgroundLabel( 0u ),
-      m_replaceBackgroundWithForeground( false ),
-      m_use3dBrush( false ),
-      m_useIsotropicBrush( true ),
-      m_useVoxelBrushSize( true ),
-      m_useRoundBrush( true ),
-      m_crosshairsMoveWithBrush( false ),
-      m_brushSizeInVoxels( 1 ),
-      m_brushSizeInMm( 1.0f ),
+    m_foregroundLabel( 1u ),
+    m_backgroundLabel( 0u ),
+    m_replaceBackgroundWithForeground( false ),
+    m_use3dBrush( false ),
+    m_useIsotropicBrush( true ),
+    m_useVoxelBrushSize( true ),
+    m_useRoundBrush( true ),
+    m_crosshairsMoveWithBrush( false ),
+    m_brushSizeInVoxels( 1 ),
+    m_brushSizeInMm( 1.0f ),
 
-      m_graphCutsWeightsAmplitude( 1.0 ),
-      m_graphCutsWeightsSigma( 0.01 ),
-      m_graphCutsNeighborhood( GraphCutsNeighborhoodType::Neighbors6 ),
+    m_graphCutsWeightsAmplitude( 1.0 ),
+    m_graphCutsWeightsSigma( 0.01 ),
+    m_graphCutsNeighborhood( GraphCutsNeighborhoodType::Neighbors6 ),
 
-      m_crosshairsMoveWhileAnnotating( false ),
-      m_lockAnatomicalCoordinateAxesWithReferenceImage( false )
+    m_crosshairsMoveWhileAnnotating( false ),
+    m_lockAnatomicalCoordinateAxesWithReferenceImage( false )
 {
 }
 

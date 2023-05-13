@@ -36,8 +36,8 @@ ImageSettings::ImageSettings(
 {
     if ( componentStats.size() != m_numComponents )
     {
-        spdlog::error( "Wrong number of components ({}) provided to settings for image {}", numComponents, displayName );
-        throw_debug( "Wrong number of components provided to settings for image" )
+        spdlog::error( "Invalid number of components ({}) provided to construct settings for image {}", numComponents, displayName );
+        throw_debug( "Invalid number of components provided to construct settings for image" )
     }
 
     static constexpr bool sk_setDefaultVisibilitySettings = true;
@@ -454,6 +454,7 @@ const ComponentStats<double>& ImageSettings::componentStatistics( uint32_t i ) c
 {
     if ( m_componentStats.size() <= i )
     {
+        spdlog::error( "Invalid image component {}", i );
         throw_debug( "Invalid image component" )
     }
 

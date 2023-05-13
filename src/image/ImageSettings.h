@@ -418,7 +418,7 @@ private:
         std::pair<double, double> m_minMaxWindowCenterRange{ 0.0, 0.0 }; //!< Valid window center range
         std::pair<double, double> m_minMaxThresholdRange{ 0.0, 0.0 }; //!< Valid threshold range
 
-        /// Low and high limits of the window in native image intensity units
+        /// Window center and width in native image intensity units
         double m_windowCenter = 0.0;
         double m_windowWidth = 0.0;
 

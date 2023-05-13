@@ -14,6 +14,7 @@
 #include "logic/segmentation/Poisson.h"
 
 #include "rendering/Rendering.h"
+#include "rendering/TextureSetup.h"
 
 #include "windowing/GlfwWrapper.h"
 
@@ -70,9 +71,9 @@ CallbackHandler::CallbackHandler(
         GlfwWrapper& glfwWrapper,
         Rendering& rendering )
     :
-      m_appData( appData ),
-      m_glfw( glfwWrapper ),
-      m_rendering( rendering )
+    m_appData( appData ),
+    m_glfw( glfwWrapper ),
+    m_rendering( rendering )
 {
 }
 
@@ -86,10 +87,9 @@ bool CallbackHandler::clearSegVoxels( const uuids::uuid& segUid )
 
     const glm::ivec3 dataSizeInt{ seg->header().pixelDimensions() };
 
-    for ( int k = 0; k < dataSizeInt.z; ++k )
-    {
-        for ( int j = 0; j < dataSizeInt.y; ++j )
-        {
+    /// @todo speed this up using raw buffer
+    for ( int k = 0; k < dataSizeInt.z; ++k ) {
+        for ( int j = 0; j < dataSizeInt.y; ++j ) {
             for ( int i = 0; i < dataSizeInt.x; ++i )
             {
                 seg->setValue( 0, i, j, k, ZERO_VAL );
@@ -101,10 +101,282 @@ bool CallbackHandler::clearSegVoxels( const uuids::uuid& segUid )
     const glm::uvec3 dataSize = glm::uvec3{ seg->header().pixelDimensions() };
 
     m_rendering.updateSegTexture(
-                segUid, seg->header().memoryComponentType(),
-                dataOffset, dataSize, seg->bufferAsVoid( 0 ) );
+        segUid, seg->header().memoryComponentType(),
+        dataOffset, dataSize, seg->bufferAsVoid( 0 ) );
 
     return true;
+}
+
+
+std::optional<uuids::uuid> CallbackHandler::createBlankImageAndTexture(
+    const uuids::uuid& matchImageUid,
+    const ComponentType& componentType,
+    uint32_t numComponents,
+    const std::string& displayName,
+    bool createSegmentation )
+{
+    const Image* matchImg = m_appData.image( matchImageUid );
+
+    if ( ! matchImg )
+    {
+        spdlog::debug( "Cannot create blank image for invalid matching image {}", matchImageUid );
+        return std::nullopt; // Invalid matching image provided
+    }
+
+    // Copy the image header, changing it to have the given type and number of components:
+    ImageHeader newHeader = matchImg->header();
+    newHeader.setExistsOnDisk( false );
+    newHeader.setFileName( "<unsaved>" );
+    newHeader.adjustComponents( componentType, numComponents );
+
+    // Buffer pointing to data for a single image component
+    const void* buffer = nullptr;
+
+    std::vector<int8_t> buffer_int8;
+    std::vector<uint8_t> buffer_uint8;
+    std::vector<int16_t> buffer_int16;
+    std::vector<uint16_t> buffer_uint16;
+    std::vector<int32_t> buffer_int32;
+    std::vector<uint32_t> buffer_uint32;
+    std::vector<float> buffer_float;
+
+    switch ( componentType )
+    {
+    case ComponentType::Int8:
+    {
+        buffer_int8.resize(  newHeader.numPixels(), 0 );
+        buffer = static_cast<const void*>( buffer_int8.data() );
+        break;
+    }
+    case ComponentType::UInt8:
+    {
+        buffer_uint8.resize(  newHeader.numPixels(), 0u );
+        buffer = static_cast<const void*>( buffer_uint8.data() );
+        break;
+    }
+    case ComponentType::Int16:
+    {
+        buffer_int16.resize(  newHeader.numPixels(), 0 );
+        buffer = static_cast<const void*>( buffer_int16.data() );
+        break;
+    }
+    case ComponentType::UInt16:
+    {
+        buffer_uint16.resize(  newHeader.numPixels(), 0u );
+        buffer = static_cast<const void*>( buffer_uint16.data() );
+        break;
+    }
+    case ComponentType::Int32:
+    {
+        buffer_int32.resize(  newHeader.numPixels(), 0 );
+        buffer = static_cast<const void*>( buffer_int32.data() );
+        break;
+    }
+    case ComponentType::UInt32:
+    {
+        buffer_uint32.resize(  newHeader.numPixels(), 0u );
+        buffer = static_cast<const void*>( buffer_uint32.data() );
+        break;
+    }
+    case ComponentType::Float32:
+    {
+        buffer_float.resize(  newHeader.numPixels(), 0.0f );
+        buffer = static_cast<const void*>( buffer_float.data() );
+        break;
+    }
+    default:
+    {
+        spdlog::error( "Invalid component type provided to create blank image" );
+        return std::nullopt;
+    }
+    }
+
+    // Vector holding numComponents pointers to the same component buffer
+    std::vector<const void*> imageComponents( numComponents, buffer );
+
+    Image image(
+        newHeader, displayName,
+        Image::ImageRepresentation::Image,
+        Image::MultiComponentBufferType::SeparateImages,
+        imageComponents );
+
+    image.setHeaderOverrides( matchImg->getHeaderOverrides() );
+
+    // Assign the matching image's affine_T_subject transformation to the new image:
+    image.transformations().set_affine_T_subject( matchImg->transformations().get_affine_T_subject() );
+
+    const uuids::uuid imageUid = m_appData.addImage( std::move( image ) );
+
+    spdlog::trace( "Creating texture for image {}", imageUid );
+
+    const std::vector<uuids::uuid> createdImageTextureUids =
+        createImageTextures( m_appData, std::vector<uuids::uuid>{ imageUid } );
+
+    if ( createdImageTextureUids.empty() )
+    {
+        spdlog::error( "Unable to create texture for image {}", imageUid );
+
+        // m_data.removeImage( imageUid ); //!< @todo Need to implement this
+        return std::nullopt;
+    }
+
+    // Synchronize transformation with matching image
+    syncManualImageTransformation( matchImageUid, imageUid );
+
+    spdlog::info( "Created blank image {} matching header of image {}", imageUid, matchImageUid );
+    spdlog::debug( "Header:\n{}", image.header() );
+    spdlog::debug( "Transformation:\n{}", image.transformations() );
+
+    if ( createSegmentation )
+    {
+        const std::string segDisplayName =
+            std::string( "Untitled segmentation for image '" ) +
+            image.settings().displayName() + "'";
+
+        createBlankSegWithColorTableAndTextures( imageUid, segDisplayName );
+    }
+
+    // Update uniforms for all images
+    m_rendering.updateImageUniforms( m_appData.imageUidsOrdered() );
+
+    return imageUid;
+}
+
+
+std::optional<uuids::uuid> CallbackHandler::createBlankSeg(
+    const uuids::uuid& matchImageUid,
+    const std::string& displayName )
+{
+    const Image* matchImg = m_appData.image( matchImageUid );
+
+    if ( ! matchImg )
+    {
+        spdlog::debug( "Cannot create blank segmentation for invalid matching image {}", matchImageUid );
+        return std::nullopt; // Invalid image provided
+    }
+
+    // Copy the image header, changing it to scalar with uint8_t components
+    ImageHeader newHeader = matchImg->header();
+    newHeader.setExistsOnDisk( false );
+    newHeader.setFileName( "<unsaved>" );
+    newHeader.adjustComponents( ComponentType::UInt8, 1 );
+
+    // Create zeroed-out data buffer for component 0 of segmentation and vector pointing to the buffer
+    const std::vector<uint8_t> buffer( newHeader.numPixels(), 0u );
+    const std::vector<const void*> imageData{ static_cast<const void*>( buffer.data() ) };
+
+    Image seg( newHeader,
+        displayName,
+        Image::ImageRepresentation::Segmentation,
+        Image::MultiComponentBufferType::SeparateImages,
+        imageData );
+
+    seg.setHeaderOverrides( matchImg->getHeaderOverrides() );
+    seg.settings().setOpacity( 0.5 ); // Default opacity
+
+    spdlog::info( "Created segmentation matching header of image {}", matchImageUid );
+    spdlog::debug( "Header:\n{}", seg.header() );
+    spdlog::debug( "Transformation:\n{}", seg.transformations() );
+
+    const auto segUid = m_appData.addSeg( std::move( seg ) );
+
+    // Synchronize transformation on all segmentations of the image
+    syncManualImageTransformationOnSegs( matchImageUid );
+
+    // Update uniforms for all images
+    m_rendering.updateImageUniforms( m_appData.imageUidsOrdered() );
+
+    return segUid;
+}
+
+
+std::optional<uuids::uuid> CallbackHandler::createBlankSegWithColorTableAndTextures(
+    const uuids::uuid& matchImageUid,
+    const std::string& displayName )
+{
+    spdlog::info( "Creating blank segmentation {} with color table for image {}",
+                 displayName, matchImageUid );
+
+    const Image* matchImage = m_appData.image( matchImageUid );
+    if ( ! matchImage )
+    {
+        spdlog::error( "Cannot create blank segmentation for invalid image {}", matchImageUid );
+        return std::nullopt;
+    }
+
+    auto segUid = createBlankSeg( matchImageUid, displayName );
+    if ( ! segUid )
+    {
+        spdlog::error( "Error creating blank segmentation for image {}", matchImageUid );
+        return std::nullopt;
+    }
+
+    spdlog::debug( "Created blank segmentation {} ('{}') for image {}",
+                  matchImageUid, displayName, matchImageUid );
+
+    Image* seg = m_appData.seg( *segUid );
+    if ( ! seg )
+    {
+        spdlog::error( "Null segmentation created {}", *segUid );
+        m_appData.removeSeg( *segUid );
+        return std::nullopt;
+    }
+
+    const auto tableUid = data::createLabelColorTableForSegmentation( m_appData, *segUid );
+    bool createdTableTexture = false;
+
+    if ( tableUid )
+    {
+        spdlog::trace( "Creating texture for label color table {}", *tableUid );
+        createdTableTexture = m_rendering.createLabelColorTableTexture( *tableUid );
+    }
+
+    if ( ! tableUid || ! createdTableTexture )
+    {
+        constexpr size_t k_defaultTableIndex = 0;
+
+        spdlog::error( "Unable to create label color table for segmentation {}. "
+                      "Defaulting to table index {}.", *segUid, k_defaultTableIndex );
+
+        seg->settings().setLabelTableIndex( k_defaultTableIndex );
+    }
+
+    if ( m_appData.assignSegUidToImage( matchImageUid, *segUid ) )
+    {
+        spdlog::info( "Assigned segmentation {} to image {}", *segUid, matchImageUid );
+    }
+    else
+    {
+        spdlog::error( "Unable to assign segmentation {} to image {}", *segUid, matchImageUid );
+        m_appData.removeSeg( *segUid );
+        return std::nullopt;
+    }
+
+    // Make it the active segmentation
+    m_appData.assignActiveSegUidToImage( matchImageUid, *segUid );
+
+    spdlog::trace( "Creating texture for segmentation {}", *segUid );
+
+    const std::vector<uuids::uuid> createdSegTexUids =
+        createSegTextures( m_appData, std::vector<uuids::uuid>{ *segUid } );
+
+    if ( createdSegTexUids.empty() )
+    {
+        spdlog::error( "Unable to create texture for segmentation {}", *segUid );
+        m_appData.removeSeg( *segUid );
+        return std::nullopt;
+    }
+
+    // Assign the image's affine_T_subject transformation to its segmentation:
+    seg->transformations().set_affine_T_subject( matchImage->transformations().get_affine_T_subject() );
+
+    // Synchronize transformation on all segmentations of the image:
+    syncManualImageTransformationOnSegs( matchImageUid );
+
+    // Update uniforms for all images
+    m_rendering.updateImageUniforms( m_appData.imageUidsOrdered() );
+
+    return *segUid;
 }
 
 
@@ -252,39 +524,67 @@ bool CallbackHandler::executeGraphCutsSegmentation(
 
 bool CallbackHandler::executePoissonSegmentation(
     const uuids::uuid& imageUid,
-    const uuids::uuid& seedSegUid,
-    const uuids::uuid& resultSegUid,
-    const uuids::uuid& potentialImageUid )
+    const uuids::uuid& seedSegUid )
 {
     // Algorithm inputs:
     const Image* image = m_appData.image( imageUid );
     const Image* seedSeg = m_appData.seg( seedSegUid );
 
-    // Algorithm outputs:
-    Image* resultSeg = m_appData.seg( resultSegUid );
-    Image* potImage = m_appData.image( potentialImageUid );
-
     if ( ! image )
     {
-        spdlog::error( "Null image {} to segment using Poisson", imageUid );
+        spdlog::error( "Null image {} input to Poisson segmentation", imageUid );
         return false;
     }
 
     if ( ! seedSeg )
     {
-        spdlog::error( "Null seed segmentation {} for Poisson", seedSegUid );
+        spdlog::error( "Null seed segmentation {} input to Poisson segmentation", seedSegUid );
         return false;
     }
 
+    const size_t numSegsForImage = m_appData.imageToSegUids( imageUid ).size();
+
+    const std::string multilabelSegDisplayName =
+        std::string( "Poisson segmentation " ) + std::to_string( numSegsForImage + 1 ) +
+        " for image '" + image->settings().displayName() + "'";
+
+    const auto resultSegUid = createBlankSegWithColorTableAndTextures(
+        imageUid, multilabelSegDisplayName );
+
+    if ( ! resultSegUid )
+    {
+        spdlog::error( "Unable to create blank segmentation matching image {}", imageUid );
+        return false;
+    }
+
+    const std::string potDisplayName =
+        std::string( "Potential maps for image '" ) + image->settings().displayName() + "'";
+
+    /// @todo Set this accordingly...
+    const uint32_t numComps = 3;
+
+    const auto potImageUid = createBlankImageAndTexture(
+        imageUid, ComponentType::Float32, numComps, potDisplayName, numComps );
+
+    if ( ! potImageUid )
+    {
+        spdlog::error( "Unable to create blank potential image matching image {}", imageUid );
+        return false;
+    }
+
+    // Algorithm outputs:
+    Image* resultSeg = m_appData.seg( *resultSegUid );
+    Image* potImage = m_appData.image( *potImageUid );
+
     if ( ! resultSeg )
     {
-        spdlog::error( "Null result segmentation {} for Poisson", resultSegUid );
+        spdlog::error( "Null result segmentation {} for Poisson", *resultSegUid );
         return false;
     }
 
     if ( ! potImage )
     {
-        spdlog::error( "Null potential image {} for Poisson", potentialImageUid );
+        spdlog::error( "Null potential image {} for Poisson", *potImageUid );
         return false;
     }
 
@@ -299,22 +599,22 @@ bool CallbackHandler::executePoissonSegmentation(
     if ( image->header().pixelDimensions() != resultSeg->header().pixelDimensions() )
     {
         spdlog::error( "Dimensions of image {} ({}) and result segmentation {} ({}) do not match",
-                      imageUid, glm::to_string( image->header().pixelDimensions() ),
-                      resultSegUid, glm::to_string( resultSeg->header().pixelDimensions() ) );
+                       imageUid, glm::to_string( image->header().pixelDimensions() ),
+                       *resultSegUid, glm::to_string( resultSeg->header().pixelDimensions() ) );
         return false;
     }
 
     if ( image->header().pixelDimensions() != potImage->header().pixelDimensions() )
     {
         spdlog::error( "Dimensions of image {} ({}) and potential image {} ({}) do not match",
-                      imageUid, glm::to_string( image->header().pixelDimensions() ),
-                      potentialImageUid, glm::to_string( potImage->header().pixelDimensions() ) );
+                       imageUid, glm::to_string( image->header().pixelDimensions() ),
+                       *potImageUid, glm::to_string( potImage->header().pixelDimensions() ) );
         return false;
     }
 
     spdlog::info( "Executing Poisson segmentation on image {} with seeds {}; "
                   "resulting segmentation: {}; resulting potential: {}",
-                  imageUid, seedSegUid, resultSegUid, potentialImageUid );
+                  imageUid, seedSegUid, *resultSegUid, *potImageUid );
 
     const uint32_t imComp = image->settings().activeComponent();
 
@@ -335,7 +635,7 @@ bool CallbackHandler::executePoissonSegmentation(
     spdlog::debug( "Start updating potential image texture" );
 
      m_rendering.updateImageTexture(
-        potentialImageUid,
+        *potImageUid,
         imComp,
         potImage->header().memoryComponentType(),
         glm::uvec3{0},
@@ -348,7 +648,7 @@ bool CallbackHandler::executePoissonSegmentation(
     spdlog::debug( "Start updating segmentation texture" );
     
     m_rendering.updateSegTexture(
-        resultSegUid,
+        *resultSegUid,
         resultSeg->header().memoryComponentType(),
         glm::uvec3{0},
         resultSeg->header().pixelDimensions(),
@@ -689,13 +989,8 @@ void CallbackHandler::doWindowLevel(
             ( S.minMaxWindowWidthRange().second - S.minMaxWindowWidthRange().first ) *
             static_cast<double>( currHit.windowClipPos.x - prevHit.windowClipPos.x ) / 2.0;
 
-        const double newCenter = S.windowCenter() + centerDelta;
-        const double newWidth = S.windowWidth() + windowDelta;
-
-//        static constexpr bool sk_clampValues = false;
-//        S.setWindowLowHigh( newCenter - 0.5 * newWidth, newCenter + 0.5 * newWidth, sk_clampValues );
-        S.setWindowWidth( newWidth );
-        S.setWindowCenter( newCenter );
+        S.setWindowCenter( S.windowCenter() + centerDelta );
+        S.setWindowWidth( S.windowWidth() + windowDelta );
 
         m_rendering.updateImageUniforms( *activeImageUid );
     }
@@ -726,8 +1021,7 @@ void CallbackHandler::doOpacity( const ViewHit& prevHit, const ViewHit& currHit 
             static_cast<double>( currHit.windowClipPos.y - prevHit.windowClipPos.y ) / 2.0;
 
     const double newOpacity = std::min(
-                std::max( activeImage->settings().opacity() +
-                          opacityDelta, sk_opMin ), sk_opMax );
+        std::max( activeImage->settings().opacity() + opacityDelta, sk_opMin ), sk_opMax );
 
     activeImage->settings().setOpacity( newOpacity );
 
@@ -736,9 +1030,9 @@ void CallbackHandler::doOpacity( const ViewHit& prevHit, const ViewHit& currHit 
 
 
 void CallbackHandler::doCameraTranslate2d(
-        const ViewHit& startHit,
-        const ViewHit& prevHit,
-        const ViewHit& currHit )
+    const ViewHit& startHit,
+    const ViewHit& prevHit,
+    const ViewHit& currHit )
 {
     const glm::vec3 worldOrigin = m_appData.state().worldCrosshairs().worldOrigin();
 
@@ -768,14 +1062,14 @@ void CallbackHandler::doCameraTranslate2d(
             if ( syncedView->viewType() != viewToTranslate->viewType() ) continue;
 
             if ( camera::areViewDirectionsParallel(
-                     syncedView->camera(), backupCamera,
-                     Directions::View::Back, sk_parallelThreshold_degrees ) )
+                    syncedView->camera(), backupCamera,
+                    Directions::View::Back, sk_parallelThreshold_degrees ) )
             {
                 panRelativeToWorldPosition(
-                            syncedView->camera(),
-                            prevHit.viewClipPos,
-                            currHit.viewClipPos,
-                            worldOrigin );
+                    syncedView->camera(),
+                    prevHit.viewClipPos,
+                    currHit.viewClipPos,
+                    worldOrigin );
             }
         }
     }
@@ -783,10 +1077,10 @@ void CallbackHandler::doCameraTranslate2d(
 
 
 void CallbackHandler::doCameraRotate2d(
-        const ViewHit& startHit,
-        const ViewHit& prevHit,
-        const ViewHit& currHit,
-        const RotationOrigin& rotationOrigin )
+    const ViewHit& startHit,
+    const ViewHit& prevHit,
+    const ViewHit& currHit,
+    const RotationOrigin& rotationOrigin )
 {
     View* viewToRotate = startHit.view;
     if ( ! viewToRotate ) return;
@@ -1798,9 +2092,27 @@ bool CallbackHandler::setLockManualImageTransformation(
 }
 
 
+bool CallbackHandler::syncManualImageTransformation(
+    const uuids::uuid& refImageUid,
+    const uuids::uuid& otherImageUid )
+{
+    const Image* refImage = m_appData.image( refImageUid );
+    if ( ! refImage ) return false;
+
+    Image* otherImage = m_appData.image( otherImageUid );
+    if ( ! otherImage ) return false;
+
+    otherImage->transformations().set_worldDef_T_affine_locked( refImage->transformations().is_worldDef_T_affine_locked() );
+    otherImage->transformations().set_worldDef_T_affine_scale( refImage->transformations().get_worldDef_T_affine_scale() );
+    otherImage->transformations().set_worldDef_T_affine_rotation( refImage->transformations().get_worldDef_T_affine_rotation() );
+    otherImage->transformations().set_worldDef_T_affine_translation( refImage->transformations().get_worldDef_T_affine_translation() );
+
+    return true;
+}
+
 bool CallbackHandler::syncManualImageTransformationOnSegs( const uuids::uuid& imageUid )
 {
-    Image* image = m_appData.image( imageUid );
+    const Image* image = m_appData.image( imageUid );
     if ( ! image ) return false;
 
     for ( const auto segUid : m_appData.imageToSegUids( imageUid ) )

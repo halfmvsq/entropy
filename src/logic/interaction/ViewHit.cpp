@@ -6,9 +6,9 @@
 
 
 std::optional<ViewHit> getViewHit(
-        AppData& appData,
-        const glm::vec2& windowPos,
-        const std::optional<uuids::uuid>& viewUidForOverride )
+    AppData& appData,
+    const glm::vec2& windowPos,
+    const std::optional<uuids::uuid>& viewUidForOverride )
 {
     ViewHit hit;
 
@@ -38,8 +38,8 @@ std::optional<ViewHit> getViewHit(
 
     // View to use for transformations. Use the override if provided:
     const View* txView = ( viewUidForOverride )
-            ? appData.windowData().getCurrentView( *viewUidForOverride )
-            : hit.view;
+        ? appData.windowData().getCurrentView( *viewUidForOverride )
+        : hit.view;
 
     if ( ! txView )
     {
@@ -55,8 +55,8 @@ std::optional<ViewHit> getViewHit(
     hit.worldFrontAxis = camera::worldDirection( txView->camera(), Directions::View::Front );
 
     const glm::vec4 winClipPos(
-                camera::windowNdc_T_window( appData.windowData().viewport(), windowPos ),
-                txView->clipPlaneDepth(), 1.0f );
+        camera::windowNdc_T_window( appData.windowData().viewport(), windowPos ),
+        txView->clipPlaneDepth(), 1.0f );
 
     hit.windowClipPos = glm::vec2{ winClipPos };
 
@@ -69,7 +69,7 @@ std::optional<ViewHit> getViewHit(
 
     // Apply view's offset from crosshairs in order to calculate the view plane position:
     const float offsetDist = data::computeViewOffsetDistance(
-                appData, txView->offsetSetting(), hit.worldFrontAxis );
+        appData, txView->offsetSetting(), hit.worldFrontAxis );
 
     const glm::vec4 offset{ offsetDist * hit.worldFrontAxis, 0.0f };
 

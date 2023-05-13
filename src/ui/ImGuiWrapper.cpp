@@ -154,12 +154,11 @@ void ImGuiWrapper::setCallbacks(
         std::function< void ( size_t imageIndex, const glm::ivec3& voxelPos ) > setVoxelPos,
         std::function< std::vector< double> ( size_t imageIndex, bool getOnlyActiveComponent ) > getImageValues,
         std::function< std::optional<int64_t> ( size_t imageIndex ) > getSegLabel,
-        std::function< std::optional<uuids::uuid>( const uuids::uuid& matchingImageUid, const std::string& displayName, uint32_t numComponents ) > createBlankImage,
         std::function< std::optional<uuids::uuid>( const uuids::uuid& matchingImageUid, const std::string& segDisplayName ) > createBlankSeg,
         std::function< bool ( const uuids::uuid& segUid ) > clearSeg,
         std::function< bool ( const uuids::uuid& segUid ) > removeSeg,
         std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const uuids::uuid& resultSegUid, const GraphCutsSegmentationType& segType ) > executeGraphCutsSeg,
-        std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const uuids::uuid& resultSegUid, const uuids::uuid& potentialUid ) > executePoissonSeg,
+        std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid ) > executePoissonSeg,
         std::function< bool ( const uuids::uuid& imageUid, bool locked ) > setLockManualImageTransformation,
         std::function< void () > paintActiveSegmentationWithActivePolygon )
 {
@@ -182,7 +181,6 @@ void ImGuiWrapper::setCallbacks(
     m_setVoxelPos = setVoxelPos;
     m_getImageValues = getImageValues;
     m_getSegLabel = getSegLabel;
-    m_createBlankImage = createBlankImage;
     m_createBlankSeg = createBlankSeg;
     m_clearSeg = clearSeg;
     m_removeSeg = removeSeg;
@@ -862,7 +860,6 @@ void ImGuiWrapper::render()
                     setImageHasActiveSeg,
                     m_readjustViewport,
                     m_updateImageUniforms,
-                    m_createBlankImage,
                     m_createBlankSeg,
                     m_executeGraphCutsSeg,
                     m_executePoissonSeg );

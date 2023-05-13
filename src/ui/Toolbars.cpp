@@ -638,10 +638,9 @@ void renderSegToolbar(
         const std::function< void ( size_t imageIndex, bool set ) >& setImageHasActiveSeg,
         const std::function< void (void) >& readjustViewport,
         const std::function< void( const uuids::uuid& imageUid ) >& updateImageUniforms,
-        const std::function< std::optional<uuids::uuid>( const uuids::uuid& matchingImageUid, const std::string& displayName, uint32_t numComponents ) >& createBlankImage,
         const std::function< std::optional<uuids::uuid>( const uuids::uuid& matchingImageUid, const std::string& segDisplayName ) >& createBlankSeg,
         const std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const uuids::uuid& resultSegUid, const GraphCutsSegmentationType& segType ) >& executeGraphCutsSeg,
-        const std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const uuids::uuid& resultSegUid, const uuids::uuid& potentialUid ) > executePoissonSeg )
+        const std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid ) > executePoissonSeg )
 {
     // Show the segmentation toolbar in either Segmentation mode,
     // in Annotation mode (when the Fill button is also visible),
@@ -1338,34 +1337,14 @@ void renderSegToolbar(
                 {
                     if ( const auto seedSegUid = appData.imageToActiveSegUid( *imageUid ) )
                     {
-                        const size_t numSegsForImage = appData.imageToSegUids( *imageUid ).size();
-
-                        const std::string multilabelSegDisplayName =
-                            std::string( "Poisson segmentation " ) +
-                            std::to_string( numSegsForImage + 1 ) +
-                            " for image '" + image->settings().displayName() + "'";
-
-                        const auto blankSegUid = createBlankSeg( *imageUid, multilabelSegDisplayName );
-                        
-                        const std::string potDisplayName = std::string( "Potential maps for image '" ) +
-                            image->settings().displayName() + "'";
-
-                        /// @todo Set this accordingly...
-                        const uint32_t numComps = 3;
-
-                        const auto blankPotImageUid = createBlankImage( *imageUid, potDisplayName, numComps );
-
-                        if ( blankSegUid && blankPotImageUid )
-                        {
-                            updateImageUniforms( *imageUid );
-                            executePoissonSeg( *imageUid, *seedSegUid, *blankSegUid, *blankPotImageUid );
-                        }
+                        updateImageUniforms( *imageUid );
+                        executePoissonSeg( *imageUid, *seedSegUid );
                     }
                 }
             }
             if ( ImGui::IsItemHovered() )
             {
-                ImGui::SetTooltip( "%s", "Execute multi-label Graph Cuts segmentation" );
+                ImGui::SetTooltip( "%s", "Execute multi-label Poisson segmentation" );
             }
         }
 

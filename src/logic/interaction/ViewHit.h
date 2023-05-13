@@ -29,8 +29,8 @@ struct ViewHit
 
 /// @todo Interface instead of appData
 std::optional<ViewHit> getViewHit(
-        AppData& appData,
-        const glm::vec2& windowPos,
-        const std::optional<uuids::uuid>& viewUidForOverride = std::nullopt );
+    AppData& appData,
+    const glm::vec2& windowPos,
+    const std::optional<uuids::uuid>& viewUidForOverride = std::nullopt );
 
 #endif // VIEW_HIT_H

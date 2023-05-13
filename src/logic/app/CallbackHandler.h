@@ -10,6 +10,7 @@
 
 #include <glm/fwd.hpp>
 
+#include <optional>
 #include <vector>
 
 
@@ -36,6 +37,25 @@ public:
      */
     bool clearSegVoxels( const uuids::uuid& segUid );
 
+    /// Create a blank multi-component image with the same header as the given image
+    std::optional<uuids::uuid> createBlankImageAndTexture(
+        const uuids::uuid& matchImageUid,
+        const ComponentType& componentType,
+        uint32_t numComponents,
+        const std::string& displayName,
+        bool createSegmentation );
+
+    /// Create a blank segmentation with the same header as the given image
+    /// Does not create texture
+    std::optional<uuids::uuid> createBlankSeg(
+        const uuids::uuid& matchImageUid,
+        const std::string& displayName );
+
+    /// Create a blank segmentation with the same header as the given image
+    std::optional<uuids::uuid> createBlankSegWithColorTableAndTextures(
+        const uuids::uuid& matchImageUid,
+        const std::string& displayName );
+
     bool executeGraphCutsSegmentation(
         const uuids::uuid& imageUid,
         const uuids::uuid& seedSegUid,
@@ -44,9 +64,7 @@ public:
 
     bool executePoissonSegmentation(
         const uuids::uuid& imageUid,
-        const uuids::uuid& seedSegUid,
-        const uuids::uuid& resultSegUid,
-        const uuids::uuid& potentialUid );
+        const uuids::uuid& seedSegUid );
 
 
 
@@ -286,6 +304,11 @@ public:
 
     /// Set whether manual transformation are locked on an image and all of its segmentations
     bool setLockManualImageTransformation( const uuids::uuid& imageUid, bool locked );
+
+    /// Synchronize the lock on an image to another image
+    bool syncManualImageTransformation(
+        const uuids::uuid& refImageUid,
+        const uuids::uuid& otherImageUid );
 
     /// Synchronize the lock on all segmentations of the image
     bool syncManualImageTransformationOnSegs( const uuids::uuid& imageUid );

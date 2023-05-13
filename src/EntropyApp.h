@@ -13,8 +13,6 @@
 
 #include "windowing/GlfwWrapper.h"
 
-#include <glm/vec3.hpp>
-
 #include <uuid.h>
 
 #include <atomic>
@@ -125,24 +123,6 @@ private:
     /// False indcates that it was already loaded and that we are returning an existing image.
     std::pair< std::optional<uuids::uuid>, bool >
     loadImage( const std::string& fileName, bool ignoreIfAlreadyLoaded );
-
-    /// Create a blank multi-component image with the same header as the given image
-    std::optional<uuids::uuid> createBlankImage(
-        const uuids::uuid& matchImageUid,
-        const ComponentType& componentType,
-        uint32_t numComponents,
-        const std::string& displayName,
-        bool createSegmentation );
-
-    /// Create a blank segmentation with the same header as the given image
-    std::optional<uuids::uuid> createBlankSeg(
-        const uuids::uuid& matchImageUid,
-        std::string segDisplayName );
-
-    /// Create a blank segmentation with the same header as the given image
-    std::optional<uuids::uuid> createBlankSegWithColorTable(
-        const uuids::uuid& matchImageUid,
-        std::string segDisplayName );
 
 
     std::future<void> m_futureLoadProject;
