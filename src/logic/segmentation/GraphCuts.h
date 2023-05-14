@@ -1,15 +1,13 @@
 #ifndef GRAPHCUTS_H
 #define GRAPHCUTS_H
 
-#include "common/GraphCutsTypes.h"
+#include "common/SegmentationTypes.h"
 
 #include <uuid.h>
 #include <glm/fwd.hpp>
 
 #include <functional>
 
-
-using LabelType = int64_t;
 
 // Distances between voxel neighbors
 struct VoxelDistances
@@ -27,7 +25,7 @@ struct VoxelDistances
 
 
 bool graphCutsBinarySegmentation(
-    const GraphCutsNeighborhoodType& hoodType,
+    const GraphNeighborhoodType& hoodType,
     double terminalCapacity,
     const LabelType& fgSeedValue,
     const LabelType& bgSeedValue,
@@ -38,7 +36,7 @@ bool graphCutsBinarySegmentation(
     std::function< void (int x, int y, int z, const LabelType& value) > setResultSegValue );
 
 bool graphCutsMultiLabelSegmentation(
-    const GraphCutsNeighborhoodType& hoodType,
+    const GraphNeighborhoodType& hoodType,
     double terminalCapacity,
     const glm::ivec3& dims,
     const VoxelDistances& voxelDistances,

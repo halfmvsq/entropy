@@ -80,19 +80,19 @@ ImVec2 scaledPad( const glm::vec2& contentScale )
 
 
 void renderModeToolbar(
-        AppData& appData,
-        const std::function< MouseMode (void) >& getMouseMode,
-        const std::function< void (MouseMode) >& setMouseMode,
-        const std::function< void (void) >& readjustViewport,
-        const AllViewsRecenterType& recenterAllViews,
-        const std::function< bool (void) >& getOverlayVisibility,
-        const std::function< void (bool) >& setOverlayVisibility,
-        const std::function< void (int step) >& cycleViews,
+    AppData& appData,
+    const std::function< MouseMode (void) >& getMouseMode,
+    const std::function< void (MouseMode) >& setMouseMode,
+    const std::function< void (void) >& readjustViewport,
+    const AllViewsRecenterType& recenterAllViews,
+    const std::function< bool (void) >& getOverlayVisibility,
+    const std::function< void (bool) >& setOverlayVisibility,
+    const std::function< void (int step) >& cycleViews,
 
-        size_t numImages,
-        const std::function< std::pair<const char*, const char* >( size_t index ) >& getImageDisplayAndFileName,
-        const std::function< size_t (void) >& getActiveImageIndex,
-        const std::function< void (size_t) >& setActiveImageIndex )
+    size_t numImages,
+    const std::function< std::pair<const char*, const char* >( size_t index ) >& getImageDisplayAndFileName,
+    const std::function< size_t (void) >& getActiveImageIndex,
+    const std::function< void (size_t) >& setActiveImageIndex )
 {
     static constexpr bool sk_recenterCrosshairs = true;
     static constexpr bool sk_doNotRecenterOnCurrentCrosshairsPosition = false;
@@ -629,17 +629,17 @@ void renderModeToolbar(
 
 
 void renderSegToolbar(
-        AppData& appData,
-        size_t numImages,
-        const std::function< std::pair<const char*, const char* >( size_t index ) >& getImageDisplayAndFileName,
-        const std::function< size_t (void) >& getActiveImageIndex,
-        const std::function< void (size_t) >& setActiveImageIndex,
-        const std::function< bool ( size_t imageIndex ) >& getImageHasActiveSeg,
-        const std::function< void ( size_t imageIndex, bool set ) >& setImageHasActiveSeg,
-        const std::function< void (void) >& readjustViewport,
-        const std::function< void( const uuids::uuid& imageUid ) >& updateImageUniforms,
-        const std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const GraphCutsSegmentationType& ) >& executeGraphCutsSeg,
-        const std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid ) > executePoissonSeg )
+    AppData& appData,
+    size_t numImages,
+    const std::function< std::pair<const char*, const char* >( size_t index ) >& getImageDisplayAndFileName,
+    const std::function< size_t (void) >& getActiveImageIndex,
+    const std::function< void (size_t) >& setActiveImageIndex,
+    const std::function< bool ( size_t imageIndex ) >& getImageHasActiveSeg,
+    const std::function< void ( size_t imageIndex, bool set ) >& setImageHasActiveSeg,
+    const std::function< void (void) >& readjustViewport,
+    const std::function< void( const uuids::uuid& imageUid ) >& updateImageUniforms,
+    const std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const SeedSegmentationType& ) >& executeGraphCutsSeg,
+    const std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const SeedSegmentationType& ) >& executePoissonSeg )
 {
     // Show the segmentation toolbar in either Segmentation mode,
     // in Annotation mode (when the Fill button is also visible),
@@ -1200,19 +1200,19 @@ void renderSegToolbar(
                 }
                 ImGui::SameLine(); helpMarker( "Sigma" );
 
-                GraphCutsNeighborhoodType hoodType = appData.settings().graphCutsNeighborhood();
+                GraphNeighborhoodType hoodType = appData.settings().graphCutsNeighborhood();
 
                 ImGui::Text( "Neighborhood type: " ); ImGui::SameLine();
-                if ( ImGui::RadioButton( "6", GraphCutsNeighborhoodType::Neighbors6 == hoodType ) )
+                if ( ImGui::RadioButton( "6", GraphNeighborhoodType::Neighbors6 == hoodType ) )
                 {
-                    hoodType = GraphCutsNeighborhoodType::Neighbors6;
+                    hoodType = GraphNeighborhoodType::Neighbors6;
                     appData.settings().setGraphCutsNeighborhood( hoodType );
                 }
 
                 ImGui::SameLine();
-                if ( ImGui::RadioButton( "26", GraphCutsNeighborhoodType::Neighbors26 == hoodType ) )
+                if ( ImGui::RadioButton( "26", GraphNeighborhoodType::Neighbors26 == hoodType ) )
                 {
-                    hoodType = GraphCutsNeighborhoodType::Neighbors26;
+                    hoodType = GraphNeighborhoodType::Neighbors26;
                     appData.settings().setGraphCutsNeighborhood( hoodType );
                 }
                 ImGui::SameLine(); helpMarker( "Set 3D neighborhood type for graph construction" );
@@ -1274,7 +1274,7 @@ void renderSegToolbar(
 
                 if ( imageUid && seedSegUid )
                 {
-                    executeGraphCutsSeg( *imageUid, *seedSegUid, GraphCutsSegmentationType::Binary );
+                    executeGraphCutsSeg( *imageUid, *seedSegUid, SeedSegmentationType::Binary );
                     updateImageUniforms( *imageUid );
                 }
             }
@@ -1291,7 +1291,7 @@ void renderSegToolbar(
 
                 if ( imageUid && seedSegUid )
                 {
-                    executeGraphCutsSeg( *imageUid, *seedSegUid, GraphCutsSegmentationType::MultiLabel );
+                    executeGraphCutsSeg( *imageUid, *seedSegUid, SeedSegmentationType::MultiLabel );
                     updateImageUniforms( *imageUid );
                 }
             }
@@ -1307,7 +1307,7 @@ void renderSegToolbar(
                 {
                     if ( const auto seedSegUid = appData.imageToActiveSegUid( *imageUid ) )
                     {
-                        executePoissonSeg( *imageUid, *seedSegUid );
+                        executePoissonSeg( *imageUid, *seedSegUid, SeedSegmentationType::Binary );
                         updateImageUniforms( *imageUid );
                     }
                 }
@@ -1456,9 +1456,9 @@ void renderSegToolbar(
 
 
 void renderAnnotationToolbar(
-        AppData& appData,
-        const FrameBounds& mindowFrameBounds,
-        const std::function< void () > paintActiveAnnotation )
+    AppData& appData,
+    const FrameBounds& mindowFrameBounds,
+    const std::function< void () > paintActiveAnnotation )
 {
     // Always keep the toolbar open by setting this to null
     static bool* toolbarWindowOpen = nullptr;

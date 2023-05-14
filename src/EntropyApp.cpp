@@ -1406,14 +1406,15 @@ void EntropyApp::setCallbacks()
             },
 
             [this] ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid,
-                     const GraphCutsSegmentationType& segType ) -> bool
+               const SeedSegmentationType& segType ) -> bool
             {
                 return m_callbackHandler.executeGraphCutsSegmentation( imageUid, seedSegUid, segType );
             },
 
-            [this] ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid ) -> bool
+            [this] ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid,
+                const SeedSegmentationType& segType ) -> bool
             {
-                return m_callbackHandler.executePoissonSegmentation( imageUid, seedSegUid );
+                return m_callbackHandler.executePoissonSegmentation( imageUid, seedSegUid, segType );
             },
 
             [this] ( const uuids::uuid& imageUid, bool locked ) -> bool

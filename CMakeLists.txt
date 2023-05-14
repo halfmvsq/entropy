@@ -417,6 +417,7 @@ set( ENTROPY_SOURCES
 
     ${SRC_DIR}/logic/segmentation/GraphCuts.cpp
     ${SRC_DIR}/logic/segmentation/Poisson.cpp
+    ${SRC_DIR}/logic/segmentation/SegHelpers.cpp
 
     ${SRC_DIR}/logic/serialization/ProjectSerialization.cpp
 

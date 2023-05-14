@@ -164,37 +164,37 @@ std::optional<uuids::uuid> CallbackHandler::createBlankImageAndTexture(
     {
     case ComponentType::Int8:
     {
-        buffer_int8.resize(  newHeader.numPixels(), 0 );
+        buffer_int8.resize( newHeader.numPixels(), 0 );
         buffer = static_cast<const void*>( buffer_int8.data() ); break;
     }
     case ComponentType::UInt8:
     {
-        buffer_uint8.resize(  newHeader.numPixels(), 0u );
+        buffer_uint8.resize( newHeader.numPixels(), 0u );
         buffer = static_cast<const void*>( buffer_uint8.data() ); break;
     }
     case ComponentType::Int16:
     {
-        buffer_int16.resize(  newHeader.numPixels(), 0 );
+        buffer_int16.resize( newHeader.numPixels(), 0 );
         buffer = static_cast<const void*>( buffer_int16.data() ); break;
     }
     case ComponentType::UInt16:
     {
-        buffer_uint16.resize(  newHeader.numPixels(), 0u );
+        buffer_uint16.resize( newHeader.numPixels(), 0u );
         buffer = static_cast<const void*>( buffer_uint16.data() ); break;
     }
     case ComponentType::Int32:
     {
-        buffer_int32.resize(  newHeader.numPixels(), 0 );
+        buffer_int32.resize( newHeader.numPixels(), 0 );
         buffer = static_cast<const void*>( buffer_int32.data() ); break;
     }
     case ComponentType::UInt32:
     {
-        buffer_uint32.resize(  newHeader.numPixels(), 0u );
+        buffer_uint32.resize( newHeader.numPixels(), 0u );
         buffer = static_cast<const void*>( buffer_uint32.data() ); break;
     }
     case ComponentType::Float32:
     {
-        buffer_float.resize(  newHeader.numPixels(), 0.0f );
+        buffer_float.resize( newHeader.numPixels(), 0.0f );
         buffer = static_cast<const void*>( buffer_float.data() ); break;
     }
     default:
@@ -396,26 +396,27 @@ std::optional<uuids::uuid> CallbackHandler::createBlankSegWithColorTableAndTextu
 bool CallbackHandler::executeGraphCutsSegmentation(
     const uuids::uuid& imageUid,
     const uuids::uuid& seedSegUid,
-    const GraphCutsSegmentationType& segType )
+    const SeedSegmentationType& segType )
 {
+    // Inputs to algorithm:
     const Image* image = m_appData.image( imageUid );
     const Image* seedSeg = m_appData.seg( seedSegUid );
 
     if ( ! image )
     {
-        spdlog::error( "Null image {} to segment using graph cuts", imageUid );
+        spdlog::error( "Null image {} input to graph cuts segmentation", imageUid );
         return false;
     }
 
     if ( ! seedSeg )
     {
-        spdlog::error( "Null seed segmentation {} for graph cuts", seedSegUid );
+        spdlog::error( "Null seed segmentation {} input to graph cuts segmentation", seedSegUid );
         return false;
     }
 
     if ( image->header().pixelDimensions() != seedSeg->header().pixelDimensions() )
     {
-        spdlog::error( "Dimensions of image {} ({}) and seed segmentation {} ({}) do not match",
+        spdlog::error( "Dimensions of input image {} ({}) and seed segmentation {} ({}) do not match",
                        imageUid, glm::to_string( image->header().pixelDimensions() ),
                        seedSegUid, glm::to_string( seedSeg->header().pixelDimensions() ) );
         return false;
@@ -424,7 +425,7 @@ bool CallbackHandler::executeGraphCutsSegmentation(
     const size_t numSegsForImage = m_appData.imageToSegUids( imageUid ).size();
 
     const std::string resultSegDisplayName =
-        ( GraphCutsSegmentationType::Binary == segType )
+        ( SeedSegmentationType::Binary == segType )
             ? std::string( "Binary graph cuts segmentation " )
             : std::string( "Multi-label graph cuts segmentation " )
         +
@@ -508,7 +509,7 @@ bool CallbackHandler::executeGraphCutsSegmentation(
 
     switch ( segType )
     {
-    case GraphCutsSegmentationType::Binary:
+    case SeedSegmentationType::Binary:
     {
         success = graphCutsBinarySegmentation(
             m_appData.settings().graphCutsNeighborhood(),
@@ -520,7 +521,7 @@ bool CallbackHandler::executeGraphCutsSegmentation(
             getImageWeight, getSeedValue, setResultSegValue );
         break;
     }
-    case GraphCutsSegmentationType::MultiLabel:
+    case SeedSegmentationType::MultiLabel:
     {
         success = graphCutsMultiLabelSegmentation(
             m_appData.settings().graphCutsNeighborhood(),
@@ -556,7 +557,8 @@ bool CallbackHandler::executeGraphCutsSegmentation(
 
 bool CallbackHandler::executePoissonSegmentation(
     const uuids::uuid& imageUid,
-    const uuids::uuid& seedSegUid )
+    const uuids::uuid& seedSegUid,
+    const SeedSegmentationType& segType )
 {
     // Algorithm inputs:
     const Image* image = m_appData.image( imageUid );
@@ -576,12 +578,16 @@ bool CallbackHandler::executePoissonSegmentation(
 
     const size_t numSegsForImage = m_appData.imageToSegUids( imageUid ).size();
 
-    const std::string multilabelSegDisplayName =
-        std::string( "Poisson segmentation " ) + std::to_string( numSegsForImage + 1 ) +
-        " for image '" + image->settings().displayName() + "'";
+    const std::string resultSegDisplayName =
+        ( SeedSegmentationType::Binary == segType )
+            ? std::string( "Binary Poisson segmentation " )
+            : std::string( "Multi-label Poisson segmentation " )
+            +
+            std::to_string( numSegsForImage + 1 ) +
+            " for image '" + image->settings().displayName() + "'";
 
     const auto resultSegUid = createBlankSegWithColorTableAndTextures(
-        imageUid, multilabelSegDisplayName );
+        imageUid, resultSegDisplayName );
 
     if ( ! resultSegUid )
     {

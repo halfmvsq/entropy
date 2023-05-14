@@ -1,7 +1,7 @@
 #ifndef CALLBACK_HANDLER_H
 #define CALLBACK_HANDLER_H
 
-#include "common/GraphCutsTypes.h"
+#include "common/SegmentationTypes.h"
 #include "common/Types.h"
 
 #include "logic/interaction/ViewHit.h"
@@ -59,11 +59,12 @@ public:
     bool executeGraphCutsSegmentation(
         const uuids::uuid& imageUid,
         const uuids::uuid& seedSegUid,
-        const GraphCutsSegmentationType& segType );
+        const SeedSegmentationType& segType );
 
     bool executePoissonSegmentation(
         const uuids::uuid& imageUid,
-        const uuids::uuid& seedSegUid );
+        const uuids::uuid& seedSegUid,
+        const SeedSegmentationType& segType );
 
 
 
@@ -269,9 +270,7 @@ public:
      * @brief Recenter one view
      * @param viewUid
      */
-    void recenterView(
-        const ImageSelection&,
-        const uuids::uuid& viewUid );
+    void recenterView( const ImageSelection&, const uuids::uuid& viewUid );
 
     void flipImageInterpolation();
     void toggleImageVisibility();

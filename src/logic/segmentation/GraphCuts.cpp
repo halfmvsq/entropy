@@ -1,5 +1,6 @@
 #include "logic/segmentation/GraphCuts.h"
 #include "logic/segmentation/GridCutsWrappers.h"
+#include "logic/segmentation/SegHelpers.h"
 
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/ostr.h>
@@ -16,55 +17,11 @@ namespace
 
 static const int32_t NUM_THREADS = static_cast<int32_t>( std::thread::hardware_concurrency() );
 
-struct LabelMaps
-{
-    /// Map from segmentation label to GridCuts label index
-    std::unordered_map<LabelType, std::size_t> labelToIndex;
-
-    /// Map from GridCuts label index to segmentation label
-    std::unordered_map<std::size_t, LabelType> indexToLabel;
-};
-
-
-/**
- * @brief Compute the number of non-zero labels in a segmentation
- */
-LabelMaps createLabelMaps(
-    const glm::ivec3& dims,
-    std::function< LabelType (int x, int y, int z) > getSeedValue )
-{
-    LabelMaps labelMaps;
-
-    std::size_t labelIndex = 0;
-
-    for ( int z = 0; z < dims.z; ++z ) {
-        for ( int y = 0; y < dims.y; ++y ) {
-            for ( int x = 0; x < dims.x; ++x )
-            {
-                const LabelType seedLabel = getSeedValue(x, y, z);
-
-                // Ignore the background (0) label
-                if ( seedLabel > 0 )
-                {
-                    const auto [iter, inserted] = labelMaps.labelToIndex.emplace( seedLabel, labelIndex );
-
-                    if ( inserted )
-                    {
-                        labelMaps.indexToLabel.emplace( labelIndex++, seedLabel );
-                    }
-                }
-            }
-        }
-    }
-
-    return labelMaps;
-}
-
 } // anonymous
 
 
 bool graphCutsBinarySegmentation(
-    const GraphCutsNeighborhoodType& hoodType,
+    const GraphNeighborhoodType& hoodType,
     double terminalCapacity,
     const LabelType& fgSeedValue,
     const LabelType& /*bgSeedValue*/,
@@ -91,7 +48,7 @@ bool graphCutsBinarySegmentation(
 
     switch ( hoodType )
     {
-    case GraphCutsNeighborhoodType::Neighbors6:
+    case GraphNeighborhoodType::Neighbors6:
     {
         if ( multithread )
         {
@@ -105,7 +62,7 @@ bool graphCutsBinarySegmentation(
         }
         break;
     }
-    case GraphCutsNeighborhoodType::Neighbors26:
+    case GraphNeighborhoodType::Neighbors26:
     {
         grid = std::make_unique< GridGraph_3D_26C_Wrapper<T, T, T> >( dims.x, dims.y, dims.z );
         break;
@@ -128,7 +85,7 @@ bool graphCutsBinarySegmentation(
     spdlog::debug( "Start filling grid" );
     start = high_resolution_clock::now();
 
-    if ( multithread && GraphCutsNeighborhoodType::Neighbors6 == hoodType )
+    if ( multithread && GraphNeighborhoodType::Neighbors6 == hoodType )
     {
         const std::size_t N = dims.x * dims.y * dims.z;
 
@@ -219,7 +176,7 @@ bool graphCutsBinarySegmentation(
                     if (YH) { setNeighCaps(x, y, z, 0, 1, 0, voxelDistances.distY); }
                     if (ZH) { setNeighCaps(x, y, z, 0, 0, 1, voxelDistances.distZ); }
 
-                    if ( GraphCutsNeighborhoodType::Neighbors26 == hoodType )
+                    if ( GraphNeighborhoodType::Neighbors26 == hoodType )
                     {
                         // 12 edge neighbors:
                         if (XH && YH) { setNeighCaps(x, y, z,  1,  1,  0, voxelDistances.distXY); }
@@ -276,7 +233,7 @@ bool graphCutsBinarySegmentation(
 
 
 bool graphCutsMultiLabelSegmentation(
-    const GraphCutsNeighborhoodType& hoodType,
+    const GraphNeighborhoodType& hoodType,
     double terminalCapacity,
     const glm::ivec3& dims,
     const VoxelDistances& voxelDistances,
@@ -292,7 +249,7 @@ bool graphCutsMultiLabelSegmentation(
     // -resulting energy
     using T = float;
 
-    const LabelMaps labelMaps = createLabelMaps(dims, getSeedValue);
+    const LabelIndexMaps labelMaps = createLabelIndexMaps(dims, getSeedValue);
     const std::size_t numLabels = labelMaps.labelToIndex.size();
 
     spdlog::debug( "Start creating expansion" );
@@ -418,7 +375,7 @@ bool graphCutsMultiLabelSegmentation(
 
     switch ( hoodType )
     {
-    case GraphCutsNeighborhoodType::Neighbors6:
+    case GraphNeighborhoodType::Neighbors6:
     {
         const int blockSize = std::max( 32, std::min( dims.x, std::min( dims.y, dims.z) ) / NUM_THREADS );
         spdlog::info( "Number of threads: {}; block size: {}", NUM_THREADS, blockSize );
@@ -427,7 +384,7 @@ bool graphCutsMultiLabelSegmentation(
             dims.x, dims.y, dims.z, numLabels, dataCosts.data(), smoothFn, NUM_THREADS, blockSize );
         break;
     }
-    case GraphCutsNeighborhoodType::Neighbors26:
+    case GraphNeighborhoodType::Neighbors26:
     {
         expansion = std::make_unique< AlphaExpansion_3D_26C_Wrapper<LabelType, T, T> >(
             dims.x, dims.y, dims.z, numLabels, dataCosts.data(), smoothFn );

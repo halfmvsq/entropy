@@ -21,6 +21,9 @@ using DefaultSrcComponentType = float;
 // Statistics per component are stored as double
 using StatsType = double;
 
+// Maximum number of components to load for images with interleaved buffer components
+static constexpr uint32_t MAX_INTERLEAVED_COMPS = 4;
+
 }
 
 
@@ -46,9 +49,6 @@ Image::Image(
     // Read all data from disk to an ITK image with 32-bit floating point pixel components
     using ReadComponentType = float;
     using ComponentImageType = ::itk::Image<ReadComponentType, 3>;
-
-    // Maximum number of components to load for images with interleaved buffer components
-    static constexpr uint32_t MAX_COMPS = 4;
 
     const itk::ImageIOBase::Pointer imageIo = createStandardImageIo( fileName.c_str() );
 
@@ -95,12 +95,12 @@ Image::Image(
 
         if ( MultiComponentBufferType::InterleavedImage == m_bufferType )
         {
-            numCompsToLoad = std::min( numCompsToLoad, MAX_COMPS );
+            numCompsToLoad = std::min( numCompsToLoad, MAX_INTERLEAVED_COMPS );
 
-            if ( numComps > MAX_COMPS )
+            if ( numComps > MAX_INTERLEAVED_COMPS )
             {
                 spdlog::warn( "The number of image components ({}) exceeds that maximum that will be loaded ({}) "
-                              "because this image uses interleaved buffer format", numComps, MAX_COMPS );
+                              "because this image uses interleaved buffer format", numComps, MAX_INTERLEAVED_COMPS );
             }
         }
 
@@ -301,9 +301,6 @@ Image::Image(
 
     m_header( header )
 {
-    // Maximum number of components to create for images with interleaved buffers
-    static constexpr uint32_t MAX_COMPS = 4;
-
     if ( imageDataComponents.empty() )
     {
         spdlog::error( "No image data buffers provided for constructing Image" );
@@ -360,12 +357,12 @@ Image::Image(
         if ( MultiComponentBufferType::InterleavedImage == m_bufferType )
         {
             // Set a maximum of MAX_COMPS components
-            numCompsToLoad = std::min( numCompsToLoad, MAX_COMPS );
+            numCompsToLoad = std::min( numCompsToLoad, MAX_INTERLEAVED_COMPS );
 
-            if ( numComps > MAX_COMPS )
+            if ( numComps > MAX_INTERLEAVED_COMPS )
             {
                 spdlog::warn( "The number of image components ({}) exceeds that maximum that will be created ({}) "
-                              "because this image uses interleaved buffer format", numComps, MAX_COMPS );
+                              "because this image uses interleaved buffer format", numComps, MAX_INTERLEAVED_COMPS );
             }
         }
 
