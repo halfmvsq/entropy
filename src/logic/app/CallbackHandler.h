@@ -101,9 +101,9 @@ public:
      * @param windowCurrPos
      */
     void doWindowLevel(
-            const ViewHit& startHit,
-            const ViewHit& prevHit,
-            const ViewHit& currHit );
+        const ViewHit& startHit,
+        const ViewHit& prevHit,
+        const ViewHit& currHit );
 
     /**
      * @brief Adjust image opacity
@@ -119,9 +119,9 @@ public:
      * @param windowStartPos
      */
     void doCameraTranslate2d(
-            const ViewHit& startHit,
-            const ViewHit& prevHit,
-            const ViewHit& currHit );
+        const ViewHit& startHit,
+        const ViewHit& prevHit,
+        const ViewHit& currHit );
 
     /**
      * @brief 2D rotation of the camera
@@ -131,10 +131,10 @@ public:
      * @param[in] rotationOrigin
      */
     void doCameraRotate2d(
-            const ViewHit& startHit,
-            const ViewHit& prevHit,
-            const ViewHit& currHit,
-            const RotationOrigin& rotationOrigin );
+        const ViewHit& startHit,
+        const ViewHit& prevHit,
+        const ViewHit& currHit,
+        const RotationOrigin& rotationOrigin );
 
     /**
      * @brief 3D rotation of the camera
@@ -145,11 +145,11 @@ public:
      * @param[in] constraint
      */
     void doCameraRotate3d(
-            const ViewHit& startHit,
-            const ViewHit& prevHit,
-            const ViewHit& currHit,
-            const RotationOrigin& rotationOrigin,
-            const AxisConstraint& constraint );
+        const ViewHit& startHit,
+        const ViewHit& prevHit,
+        const ViewHit& currHit,
+        const RotationOrigin& rotationOrigin,
+        const AxisConstraint& constraint );
 
     /**
      * @brief 3D rotation of the camera
@@ -157,16 +157,16 @@ public:
      * @param camera_T_world_rotationDelta
      */
     void doCameraRotate3d(
-            const uuids::uuid& viewUid,
-            const glm::quat& camera_T_world_rotationDelta );
+        const uuids::uuid& viewUid,
+        const glm::quat& camera_T_world_rotationDelta );
 
     /**
      * @brief Set the forward direction of a view and synchronize with its linked views
      * @param worldForwardDirection
      */
     void handleSetViewForwardDirection(
-            const uuids::uuid& viewUid,
-            const glm::vec3& worldForwardDirection );
+        const uuids::uuid& viewUid,
+        const glm::vec3& worldForwardDirection );
 
     /**
      * @brief 2D zoom of the camera
@@ -177,11 +177,11 @@ public:
      * @param syncZoomForAllViews
      */
     void doCameraZoomDrag(
-            const ViewHit& startHit,
-            const ViewHit& prevHit,
-            const ViewHit& currHit,
-            const ZoomBehavior& zoomBehavior,
-            bool syncZoomForAllViews );
+        const ViewHit& startHit,
+        const ViewHit& prevHit,
+        const ViewHit& currHit,
+        const ZoomBehavior& zoomBehavior,
+        bool syncZoomForAllViews );
 
     /**
      * @brief doCameraZoomScroll
@@ -191,10 +191,10 @@ public:
      * @param syncZoomForAllViews
      */
     void doCameraZoomScroll(
-            const ViewHit& hit,
-            const glm::vec2& scrollOffset,
-            const ZoomBehavior& zoomBehavior,
-            bool syncZoomForAllViews );
+        const ViewHit& hit,
+        const glm::vec2& scrollOffset,
+        const ZoomBehavior& zoomBehavior,
+        bool syncZoomForAllViews );
 
     /**
      * @brief Image rotation
@@ -204,10 +204,10 @@ public:
      * @param inPlane
      */
     void doImageRotate(
-            const ViewHit& startHit,
-            const ViewHit& prevHit,
-            const ViewHit& currHit,
-            bool inPlane );
+        const ViewHit& startHit,
+        const ViewHit& prevHit,
+        const ViewHit& currHit,
+        bool inPlane );
 
     /**
      * @brief Image translation
@@ -217,10 +217,10 @@ public:
      * @param inPlane
      */
     void doImageTranslate(
-            const ViewHit& startHit,
-            const ViewHit& prevHit,
-            const ViewHit& currHit,
-            bool inPlane );
+        const ViewHit& startHit,
+        const ViewHit& prevHit,
+        const ViewHit& currHit,
+        bool inPlane );
 
     /**
      * @brief Image scale
@@ -230,10 +230,10 @@ public:
      * @param constrainIsotropic
      */
     void doImageScale(
-            const ViewHit& startHit,
-            const ViewHit& prevHit,
-            const ViewHit& currHit,
-            bool constrainIsotropic );
+        const ViewHit& startHit,
+        const ViewHit& prevHit,
+        const ViewHit& currHit,
+        bool constrainIsotropic );
 
     /**
      * @brief scrollViewSlice
@@ -259,19 +259,19 @@ public:
      * @param resetObliqueOrientation
      */
     void recenterViews(
-            const ImageSelection&,
-            bool recenterCrosshairs,
-            bool recenterOnCurrentCrosshairsPos,
-            bool resetObliqueOrientation,
-            const std::optional<bool>& resetZoom = std::nullopt );
+        const ImageSelection&,
+        bool recenterCrosshairs,
+        bool recenterOnCurrentCrosshairsPos,
+        bool resetObliqueOrientation,
+        const std::optional<bool>& resetZoom = std::nullopt );
 
     /**
      * @brief Recenter one view
      * @param viewUid
      */
     void recenterView(
-            const ImageSelection&,
-            const uuids::uuid& viewUid );
+        const ImageSelection&,
+        const uuids::uuid& viewUid );
 
     void flipImageInterpolation();
     void toggleImageVisibility();

@@ -866,7 +866,6 @@ void* Image::bufferAsVoid( uint32_t comp )
     return const_cast<void*>( const_cast<const Image*>(this)->bufferAsVoid( comp ) );
 }
 
-
 std::optional< std::pair< std::size_t, std::size_t > >
 Image::getComponentAndOffsetForBuffer( uint32_t comp, int i, int j, int k ) const
 {

@@ -99,7 +99,6 @@ public:
      */
     const void* bufferAsVoid( uint32_t component ) const;
 
-
     /// @brief Get a non-const void pointer to the raw buffer data of an image component.
     void* bufferAsVoid( uint32_t component );
 

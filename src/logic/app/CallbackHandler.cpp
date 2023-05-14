@@ -63,6 +63,38 @@ VoxelDistances computeVoxelDistances( const glm::vec3& spacing, bool normalized 
     return v;
 }
 
+template< typename T >
+std::optional<glm::vec3> computePixelCentroid(
+    const void* data, const glm::ivec3& dims, const LabelType& label )
+{
+    glm::vec3 coordSum{ 0.0f, 0.0f, 0.0f };
+    std::size_t count = 0;
+
+    const T* dataCast = static_cast<const T*>( data );
+
+    for ( int k = 0; k < dims.z; ++k ) {
+        for ( int j = 0; j < dims.y; ++j ) {
+            for ( int i = 0; i < dims.x; ++i )
+            {
+                if ( label == static_cast<LabelType>( dataCast[k * dims.x*dims.y + j * dims.x + i] ) )
+                {
+                    coordSum += glm::vec3{ i, j, k };
+                    ++count;
+                }
+            }
+        }
+    }
+
+    if ( 0 == count )
+    {
+        // No voxels found with this segmentation label. Return null so that we don't
+        // divide by zero and move crosshairs to an invalid location.
+        return std::nullopt;
+    }
+
+    return coordSum / static_cast<float>( count );
+}
+
 } // anonymous
 
 
@@ -133,44 +165,37 @@ std::optional<uuids::uuid> CallbackHandler::createBlankImageAndTexture(
     case ComponentType::Int8:
     {
         buffer_int8.resize(  newHeader.numPixels(), 0 );
-        buffer = static_cast<const void*>( buffer_int8.data() );
-        break;
+        buffer = static_cast<const void*>( buffer_int8.data() ); break;
     }
     case ComponentType::UInt8:
     {
         buffer_uint8.resize(  newHeader.numPixels(), 0u );
-        buffer = static_cast<const void*>( buffer_uint8.data() );
-        break;
+        buffer = static_cast<const void*>( buffer_uint8.data() ); break;
     }
     case ComponentType::Int16:
     {
         buffer_int16.resize(  newHeader.numPixels(), 0 );
-        buffer = static_cast<const void*>( buffer_int16.data() );
-        break;
+        buffer = static_cast<const void*>( buffer_int16.data() ); break;
     }
     case ComponentType::UInt16:
     {
         buffer_uint16.resize(  newHeader.numPixels(), 0u );
-        buffer = static_cast<const void*>( buffer_uint16.data() );
-        break;
+        buffer = static_cast<const void*>( buffer_uint16.data() ); break;
     }
     case ComponentType::Int32:
     {
         buffer_int32.resize(  newHeader.numPixels(), 0 );
-        buffer = static_cast<const void*>( buffer_int32.data() );
-        break;
+        buffer = static_cast<const void*>( buffer_int32.data() ); break;
     }
     case ComponentType::UInt32:
     {
         buffer_uint32.resize(  newHeader.numPixels(), 0u );
-        buffer = static_cast<const void*>( buffer_uint32.data() );
-        break;
+        buffer = static_cast<const void*>( buffer_uint32.data() ); break;
     }
     case ComponentType::Float32:
     {
         buffer_float.resize(  newHeader.numPixels(), 0.0f );
-        buffer = static_cast<const void*>( buffer_float.data() );
-        break;
+        buffer = static_cast<const void*>( buffer_float.data() ); break;
     }
     default:
     {
@@ -668,11 +693,11 @@ bool CallbackHandler::executePoissonSegmentation(
 
 
 void CallbackHandler::recenterViews(
-        const ImageSelection& imageSelection,
-        bool recenterCrosshairs,
-        bool recenterOnCurrentCrosshairsPos,
-        bool resetObliqueOrientation,
-        const std::optional<bool>& resetZoom )
+    const ImageSelection& imageSelection,
+    bool recenterCrosshairs,
+    bool recenterOnCurrentCrosshairsPos,
+    bool resetObliqueOrientation,
+    const std::optional<bool>& resetZoom )
 {
     // On view recenter, force the crosshairs and views to snap to the center of the
     // reference image voxels. This is so that crosshairs/views don't land on a voxel
@@ -709,8 +734,8 @@ void CallbackHandler::recenterViews(
 
 
 void CallbackHandler::recenterView(
-        const ImageSelection& imageSelection,
-        const uuids::uuid& viewUid )
+    const ImageSelection& imageSelection,
+    const uuids::uuid& viewUid )
 {
     // On view recenter, force the crosshairs and views to snap to the center of the
     // reference image voxels. This is so that crosshairs/views don't land on a voxel
@@ -751,8 +776,8 @@ void CallbackHandler::doCrosshairsMove( const ViewHit& hit )
 
 
 void CallbackHandler::doCrosshairsScroll(
-        const ViewHit& hit,
-        const glm::vec2& scrollOffset )
+    const ViewHit& hit,
+    const glm::vec2& scrollOffset )
 {
     const float scrollDistance = data::sliceScrollDistance(
                 m_appData, hit.worldFrontAxis,
@@ -938,9 +963,9 @@ void CallbackHandler::paintActiveSegmentationWithAnnotation()
 
 
 void CallbackHandler::doWindowLevel(
-        const ViewHit& startHit,
-        const ViewHit& prevHit,
-        const ViewHit& currHit )
+    const ViewHit& startHit,
+    const ViewHit& prevHit,
+    const ViewHit& currHit )
 {
     View* viewToWL = startHit.view;
 
@@ -1160,11 +1185,11 @@ void CallbackHandler::doCameraRotate2d(
 
 
 void CallbackHandler::doCameraRotate3d(
-        const ViewHit& startHit,
-        const ViewHit& prevHit,
-        const ViewHit& currHit,
-        const RotationOrigin& rotationOrigin,
-        const AxisConstraint& constraint )
+    const ViewHit& startHit,
+    const ViewHit& prevHit,
+    const ViewHit& currHit,
+    const RotationOrigin& rotationOrigin,
+    const AxisConstraint& constraint )
 {
     View* viewToRotate = startHit.view;
     if ( ! viewToRotate ) return;
@@ -1222,8 +1247,8 @@ void CallbackHandler::doCameraRotate3d(
     }
 
     camera::rotateAboutWorldPoint(
-                viewToRotate->camera(), viewClipPrevPos, viewClipCurrPos,
-                worldRotationCenterPos );
+        viewToRotate->camera(), viewClipPrevPos, viewClipCurrPos,
+        worldRotationCenterPos );
 
     const auto backupCamera = viewToRotate->camera();
 
@@ -1256,8 +1281,8 @@ void CallbackHandler::doCameraRotate3d(
 
 
 void CallbackHandler::doCameraRotate3d(
-        const uuids::uuid& viewUid,
-        const glm::quat& camera_T_world_rotationDelta )
+    const uuids::uuid& viewUid,
+    const glm::quat& camera_T_world_rotationDelta )
 {
     auto& windowData = m_appData.windowData();
 
@@ -1272,9 +1297,9 @@ void CallbackHandler::doCameraRotate3d(
     const auto backupCamera = view->camera();
 
     camera::applyViewRotationAboutWorldPoint(
-                view->camera(),
-                camera_T_world_rotationDelta,
-                worldOrigin );
+        view->camera(),
+        camera_T_world_rotationDelta,
+        worldOrigin );
 
     if ( const auto rotGroupUid = view->cameraRotationSyncGroupUid() )
     {
@@ -1296,17 +1321,17 @@ void CallbackHandler::doCameraRotate3d(
             }
 
             camera::applyViewRotationAboutWorldPoint(
-                        syncedView->camera(),
-                        camera_T_world_rotationDelta,
-                        worldOrigin );
+                syncedView->camera(),
+                camera_T_world_rotationDelta,
+                worldOrigin );
         }
     }
 }
 
 
 void CallbackHandler::handleSetViewForwardDirection(
-        const uuids::uuid& viewUid,
-        const glm::vec3& worldForwardDirection )
+    const uuids::uuid& viewUid,
+    const glm::vec3& worldForwardDirection )
 {
     auto& windowData = m_appData.windowData();
 
@@ -1340,11 +1365,11 @@ void CallbackHandler::handleSetViewForwardDirection(
 
 
 void CallbackHandler::doCameraZoomDrag(
-        const ViewHit& startHit,
-        const ViewHit& prevHit,
-        const ViewHit& currHit,
-        const ZoomBehavior& zoomBehavior,
-        bool syncZoomForAllViews )
+    const ViewHit& startHit,
+    const ViewHit& prevHit,
+    const ViewHit& currHit,
+    const ZoomBehavior& zoomBehavior,
+    bool syncZoomForAllViews )
 {
     static const glm::vec2 sk_ndcCenter{ 0.0f, 0.0f };
 
@@ -1419,10 +1444,10 @@ void CallbackHandler::doCameraZoomDrag(
 
 
 void CallbackHandler::doCameraZoomScroll(
-        const ViewHit& hit,
-        const glm::vec2& scrollOffset,
-        const ZoomBehavior& zoomBehavior,
-        bool syncZoomForAllViews )
+    const ViewHit& hit,
+    const glm::vec2& scrollOffset,
+    const ZoomBehavior& zoomBehavior,
+    bool syncZoomForAllViews )
 {
     static constexpr float sk_zoomFactor = 0.01f;
     static const glm::vec2 sk_ndcCenter{ 0.0f, 0.0f };
@@ -1441,13 +1466,12 @@ void CallbackHandler::doCameraZoomScroll(
         case ZoomBehavior::ToCrosshairs:
         {
             viewClipCenterPos = camera::ndc_T_world(
-                        view->camera(), m_appData.state().worldCrosshairs().worldOrigin() );
+                view->camera(), m_appData.state().worldCrosshairs().worldOrigin() );
             break;
         }
         case ZoomBehavior::ToStartPosition:
         {
-            const glm::vec4 _viewClipCurrPos =
-                    camera::clip_T_world( view->camera() ) * hit.worldPos;
+            const glm::vec4 _viewClipCurrPos = camera::clip_T_world( view->camera() ) * hit.worldPos;
             viewClipCenterPos = glm::vec2{ _viewClipCurrPos / _viewClipCurrPos.w };
             break;
         }
@@ -1511,10 +1535,10 @@ void CallbackHandler::scrollViewSlice( const ViewHit& hit, int numSlices )
 
 
 void CallbackHandler::doImageTranslate(
-        const ViewHit& startHit,
-        const ViewHit& prevHit,
-        const ViewHit& currHit,
-        bool inPlane )
+    const ViewHit& startHit,
+    const ViewHit& prevHit,
+    const ViewHit& currHit,
+    bool inPlane )
 {
     View* viewToUse = startHit.view;
 
@@ -1581,10 +1605,10 @@ void CallbackHandler::doImageTranslate(
 
 
 void CallbackHandler::doImageRotate(
-        const ViewHit& startHit,
-        const ViewHit& prevHit,
-        const ViewHit& currHit,
-        bool inPlane )
+    const ViewHit& startHit,
+    const ViewHit& prevHit,
+    const ViewHit& currHit,
+    bool inPlane )
 {
     View* viewToUse = startHit.view;
     if ( ! viewToUse ) return;
@@ -1653,10 +1677,10 @@ void CallbackHandler::doImageRotate(
 
 
 void CallbackHandler::doImageScale(
-        const ViewHit& startHit,
-        const ViewHit& prevHit,
-        const ViewHit& currHit,
-        bool constrainIsotropic )
+    const ViewHit& startHit,
+    const ViewHit& prevHit,
+    const ViewHit& currHit,
+    bool constrainIsotropic )
 {
     static const glm::vec3 sk_zero( 0.0f, 0.0f, 0.0f );
     static const glm::vec3 sk_minScale( 0.1f );
@@ -1999,24 +2023,21 @@ void CallbackHandler::moveCrosshairsOnViewSlice(
     const glm::vec3 worldUpAxis = camera::worldDirection( hit.view->camera(), Directions::View::Up );
 
     const glm::vec2 moveDistances = data::sliceMoveDistance(
-                m_appData, worldRightAxis, worldUpAxis,
-                ImageSelection::VisibleImagesInView, hit.view );
+        m_appData, worldRightAxis, worldUpAxis,
+        ImageSelection::VisibleImagesInView, hit.view );
 
     const glm::vec3 worldCrosshairs = m_appData.state().worldCrosshairs().worldOrigin();
 
     m_appData.state().setWorldCrosshairsPos(
-                worldCrosshairs +
-                static_cast<float>( stepX ) * moveDistances.x * worldRightAxis +
-                static_cast<float>( stepY ) * moveDistances.y * worldUpAxis );
+        worldCrosshairs +
+        static_cast<float>( stepX ) * moveDistances.x * worldRightAxis +
+        static_cast<float>( stepY ) * moveDistances.y * worldUpAxis );
 }
 
 
 void CallbackHandler::moveCrosshairsToSegLabelCentroid(
     const uuids::uuid& imageUid, std::size_t labelIndex )
 {
-    /// @todo This computation can take some time.
-    /// Put it into a thread.
-
     static constexpr uint32_t sk_comp0 = 0;
 
     const auto activeSegUid = m_appData.imageToActiveSegUid( imageUid );
@@ -2025,38 +2046,30 @@ void CallbackHandler::moveCrosshairsToSegLabelCentroid(
     Image* seg = m_appData.seg( *activeSegUid );
     if ( ! seg ) return;
 
+    const void* data = seg->bufferAsVoid( sk_comp0 );
     const glm::ivec3 dims{ seg->header().pixelDimensions() };
     const LabelType label = static_cast<LabelType>( labelIndex );
 
-    glm::vec3 coordSum{ 0.0f, 0.0f, 0.0f };
-    std::size_t count = 0;
+    std::optional<glm::vec3> pixelCentroid = std::nullopt;
 
-    for ( int k = 0; k < dims.z; ++k ) {
-        for ( int j = 0; j < dims.y; ++j ) {
-            for ( int i = 0; i < dims.x; ++i )
-            {
-                if ( auto value = seg->value<int64_t>( sk_comp0, i, j, k ) )
-                {
-                    if ( label == *value )
-                    {
-                        coordSum += glm::vec3{ i, j, k };
-                        ++count;
-                    }
-                }
-            }
-        }
+    switch ( seg->header().memoryComponentType() )
+    {
+    case ComponentType::Int8: pixelCentroid = computePixelCentroid<int8_t>( data, dims, label ); break;
+    case ComponentType::UInt8: pixelCentroid = computePixelCentroid<uint8_t>( data, dims, label ); break;
+    case ComponentType::Int16: pixelCentroid = computePixelCentroid<int16_t>( data, dims, label ); break;
+    case ComponentType::UInt16: pixelCentroid = computePixelCentroid<uint16_t>( data, dims, label ); break;
+    case ComponentType::Int32: pixelCentroid = computePixelCentroid<int32_t>( data, dims, label ); break;
+    case ComponentType::UInt32: pixelCentroid = computePixelCentroid<uint32_t>( data, dims, label ); break;
+    case ComponentType::Float32: pixelCentroid = computePixelCentroid<float>( data, dims, label ); break;
+    default: pixelCentroid = std::nullopt; break;
     }
 
-    if ( 0 == count )
+    if ( ! pixelCentroid )
     {
-        // No voxels found with this segmentation label. Return so that we don't
-        // divide by zero and move crosshairs to an invalid location.
         return;
     }
 
-    glm::vec4 worldCentroid = seg->transformations().worldDef_T_pixel() *
-        glm::vec4{ coordSum / static_cast<float>( count ), 1.0f };
-
+    const glm::vec4 worldCentroid = seg->transformations().worldDef_T_pixel() * glm::vec4{ *pixelCentroid, 1.0f };
     glm::vec3 worldPos{ worldCentroid / worldCentroid.w };
 
     worldPos = data::snapWorldPointToImageVoxels( m_appData, worldPos );
@@ -2078,8 +2091,7 @@ void CallbackHandler::toggleFullScreenMode( bool forceWindowMode )
 
 
 bool CallbackHandler::setLockManualImageTransformation(
-        const uuids::uuid& imageUid,
-        bool locked )
+    const uuids::uuid& imageUid, bool locked )
 {
     Image* image = m_appData.image( imageUid );
     if ( ! image ) return false;
