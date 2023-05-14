@@ -41,8 +41,7 @@ void renderSegToolbar(
         const std::function< void ( size_t imageIndex, bool set ) >& setImageHasActiveSeg,
         const std::function< void (void) >& readjustViewport,
         const std::function< void( const uuids::uuid& imageUid ) >& updateImageUniforms,
-        const std::function< std::optional<uuids::uuid>( const uuids::uuid& matchingImageUid, const std::string& segDisplayName ) >& createBlankSeg,
-        const std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const uuids::uuid& resultSegUid, const GraphCutsSegmentationType& segType ) >& executeGraphCutsSeg,
+        const std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const GraphCutsSegmentationType& ) >& executeGraphCutsSeg,
         const std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid ) > executePoissonSeg );
 
 

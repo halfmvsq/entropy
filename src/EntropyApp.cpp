@@ -1268,8 +1268,9 @@ void EntropyApp::setCallbacks()
         [this] ( const uuids::uuid& imageUid ) { m_rendering.updateImageInterpolation( imageUid ); },
         [this] ( size_t labelColorTableIndex ) { m_rendering.updateLabelColorTableTexture( labelColorTableIndex ); },
 
-            // moveCrosshairsToSegLabelCentroid
-        [this] ( const uuids::uuid& imageUid, size_t labelIndex ) {
+        // moveCrosshairsToSegLabelCentroid
+        [this] ( const uuids::uuid& imageUid, size_t labelIndex )
+        {
             m_callbackHandler.moveCrosshairsToSegLabelCentroid( imageUid, labelIndex );
         },
 
@@ -1391,7 +1392,8 @@ void EntropyApp::setCallbacks()
             return m_callbackHandler.createBlankSegWithColorTableAndTextures( matchingImageUid, segDisplayName );
             },
 
-            [this] ( const uuids::uuid& segUid ) -> bool {
+            [this] ( const uuids::uuid& segUid ) -> bool
+            {
                 return m_callbackHandler.clearSegVoxels( segUid );
             },
 
@@ -1403,14 +1405,10 @@ void EntropyApp::setCallbacks()
                 return success;
             },
 
-            [this] (
-                const uuids::uuid& imageUid,
-                const uuids::uuid& seedSegUid,
-                const uuids::uuid& resultSegUid,
-                const GraphCutsSegmentationType& segType ) -> bool
+            [this] ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid,
+                     const GraphCutsSegmentationType& segType ) -> bool
             {
-                return m_callbackHandler.executeGraphCutsSegmentation(
-                    imageUid, seedSegUid, resultSegUid, segType );
+                return m_callbackHandler.executeGraphCutsSegmentation( imageUid, seedSegUid, segType );
             },
 
             [this] ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid ) -> bool

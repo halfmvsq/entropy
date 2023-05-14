@@ -638,8 +638,7 @@ void renderSegToolbar(
         const std::function< void ( size_t imageIndex, bool set ) >& setImageHasActiveSeg,
         const std::function< void (void) >& readjustViewport,
         const std::function< void( const uuids::uuid& imageUid ) >& updateImageUniforms,
-        const std::function< std::optional<uuids::uuid>( const uuids::uuid& matchingImageUid, const std::string& segDisplayName ) >& createBlankSeg,
-        const std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const uuids::uuid& resultSegUid, const GraphCutsSegmentationType& segType ) >& executeGraphCutsSeg,
+        const std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const GraphCutsSegmentationType& ) >& executeGraphCutsSeg,
         const std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid ) > executePoissonSeg )
 {
     // Show the segmentation toolbar in either Segmentation mode,
@@ -1271,25 +1270,12 @@ void renderSegToolbar(
             if ( ImGui::Button( ICON_FK_CUBE, buttonSize) )
             {
                 const auto imageUid = appData.activeImageUid();
-                const Image* image = appData.activeImage();
+                const auto seedSegUid = appData.imageToActiveSegUid( *imageUid );
 
-                if ( imageUid && image )
+                if ( imageUid && seedSegUid )
                 {
-                    if ( const auto seedSegUid = appData.imageToActiveSegUid( *imageUid ) )
-                    {
-                        const size_t numSegsForImage = appData.imageToSegUids( *imageUid ).size();
-
-                        const std::string binarySegDisplayName =
-                                std::string( "Binary graph cuts segmentation " ) +
-                                std::to_string( numSegsForImage + 1 ) +
-                                " for image '" + image->settings().displayName() + "'";
-
-                        if ( const auto blankSegUid = createBlankSeg( *imageUid, std::move( binarySegDisplayName ) ) )
-                        {
-                            updateImageUniforms( *imageUid );
-                            executeGraphCutsSeg( *imageUid, *seedSegUid, *blankSegUid, GraphCutsSegmentationType::Binary );
-                        }
-                    }
+                    executeGraphCutsSeg( *imageUid, *seedSegUid, GraphCutsSegmentationType::Binary );
+                    updateImageUniforms( *imageUid );
                 }
             }
             if ( ImGui::IsItemHovered() )
@@ -1301,25 +1287,12 @@ void renderSegToolbar(
             if ( ImGui::Button( ICON_FK_CUBES, buttonSize) )
             {
                 const auto imageUid = appData.activeImageUid();
-                const Image* image = appData.activeImage();
+                const auto seedSegUid = appData.imageToActiveSegUid( *imageUid );
 
-                if ( imageUid && image )
+                if ( imageUid && seedSegUid )
                 {
-                    if ( const auto seedSegUid = appData.imageToActiveSegUid( *imageUid ) )
-                    {
-                        const size_t numSegsForImage = appData.imageToSegUids( *imageUid ).size();
-
-                        const std::string multilabelSegDisplayName =
-                            std::string( "Multi-label graph cuts segmentation " ) +
-                            std::to_string( numSegsForImage + 1 ) +
-                            " for image '" + image->settings().displayName() + "'";
-
-                        if ( const auto blankSegUid = createBlankSeg( *imageUid, std::move( multilabelSegDisplayName ) ) )
-                        {
-                            updateImageUniforms( *imageUid );
-                            executeGraphCutsSeg( *imageUid, *seedSegUid, *blankSegUid, GraphCutsSegmentationType::MultiLabel );
-                        }
-                    }
+                    executeGraphCutsSeg( *imageUid, *seedSegUid, GraphCutsSegmentationType::MultiLabel );
+                    updateImageUniforms( *imageUid );
                 }
             }
             if ( ImGui::IsItemHovered() )
@@ -1330,15 +1303,12 @@ void renderSegToolbar(
             if ( isHoriz ) ImGui::SameLine();
             if ( ImGui::Button( ICON_FK_CONNECTDEVELOP, buttonSize) )
             {
-                const auto imageUid = appData.activeImageUid();
-                const Image* image = appData.activeImage();
-
-                if ( imageUid && image )
+                if ( const auto imageUid = appData.activeImageUid() )
                 {
                     if ( const auto seedSegUid = appData.imageToActiveSegUid( *imageUid ) )
                     {
-                        updateImageUniforms( *imageUid );
                         executePoissonSeg( *imageUid, *seedSegUid );
+                        updateImageUniforms( *imageUid );
                     }
                 }
             }

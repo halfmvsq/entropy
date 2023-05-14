@@ -59,7 +59,6 @@ public:
     bool executeGraphCutsSegmentation(
         const uuids::uuid& imageUid,
         const uuids::uuid& seedSegUid,
-        const uuids::uuid& resultSegUid,
         const GraphCutsSegmentationType& segType );
 
     bool executePoissonSegmentation(

@@ -157,7 +157,7 @@ void ImGuiWrapper::setCallbacks(
         std::function< std::optional<uuids::uuid>( const uuids::uuid& matchingImageUid, const std::string& segDisplayName ) > createBlankSeg,
         std::function< bool ( const uuids::uuid& segUid ) > clearSeg,
         std::function< bool ( const uuids::uuid& segUid ) > removeSeg,
-        std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const uuids::uuid& resultSegUid, const GraphCutsSegmentationType& segType ) > executeGraphCutsSeg,
+        std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const GraphCutsSegmentationType& ) > executeGraphCutsSeg,
         std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid ) > executePoissonSeg,
         std::function< bool ( const uuids::uuid& imageUid, bool locked ) > setLockManualImageTransformation,
         std::function< void () > paintActiveSegmentationWithActivePolygon )
@@ -860,7 +860,6 @@ void ImGuiWrapper::render()
                     setImageHasActiveSeg,
                     m_readjustViewport,
                     m_updateImageUniforms,
-                    m_createBlankSeg,
                     m_executeGraphCutsSeg,
                     m_executePoissonSeg );
 

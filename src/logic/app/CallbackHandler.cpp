@@ -80,22 +80,10 @@ CallbackHandler::CallbackHandler(
 
 bool CallbackHandler::clearSegVoxels( const uuids::uuid& segUid )
 {
-    static constexpr LabelType ZERO_VAL = 0;
-
     Image* seg = m_appData.seg( segUid );
     if ( ! seg ) return false;
 
-    const glm::ivec3 dataSizeInt{ seg->header().pixelDimensions() };
-
-    /// @todo speed this up using raw buffer
-    for ( int k = 0; k < dataSizeInt.z; ++k ) {
-        for ( int j = 0; j < dataSizeInt.y; ++j ) {
-            for ( int i = 0; i < dataSizeInt.x; ++i )
-            {
-                seg->setValue( 0, i, j, k, ZERO_VAL );
-            }
-        }
-    }
+    seg->setAllValues( 0 );
 
     const glm::uvec3 dataOffset = glm::uvec3{ 0 };
     const glm::uvec3 dataSize = glm::uvec3{ seg->header().pixelDimensions() };
@@ -383,12 +371,10 @@ std::optional<uuids::uuid> CallbackHandler::createBlankSegWithColorTableAndTextu
 bool CallbackHandler::executeGraphCutsSegmentation(
     const uuids::uuid& imageUid,
     const uuids::uuid& seedSegUid,
-    const uuids::uuid& resultSegUid,
     const GraphCutsSegmentationType& segType )
 {
     const Image* image = m_appData.image( imageUid );
     const Image* seedSeg = m_appData.seg( seedSegUid );
-    Image* resultSeg = m_appData.seg( resultSegUid );
 
     if ( ! image )
     {
@@ -402,30 +388,51 @@ bool CallbackHandler::executeGraphCutsSegmentation(
         return false;
     }
 
-    if ( ! resultSeg )
-    {
-        spdlog::error( "Null result segmentation {} for graph cuts", resultSegUid );
-        return false;
-    }
-
     if ( image->header().pixelDimensions() != seedSeg->header().pixelDimensions() )
     {
         spdlog::error( "Dimensions of image {} ({}) and seed segmentation {} ({}) do not match",
-                      imageUid, glm::to_string( image->header().pixelDimensions() ),
-                      seedSegUid, glm::to_string( seedSeg->header().pixelDimensions() ) );
+                       imageUid, glm::to_string( image->header().pixelDimensions() ),
+                       seedSegUid, glm::to_string( seedSeg->header().pixelDimensions() ) );
+        return false;
+    }
+
+    const size_t numSegsForImage = m_appData.imageToSegUids( imageUid ).size();
+
+    const std::string resultSegDisplayName =
+        ( GraphCutsSegmentationType::Binary == segType )
+            ? std::string( "Binary graph cuts segmentation " )
+            : std::string( "Multi-label graph cuts segmentation " )
+        +
+        std::to_string( numSegsForImage + 1 ) +
+        " for image '" + image->settings().displayName() + "'";
+
+    const auto resultSegUid = createBlankSegWithColorTableAndTextures(
+        imageUid, resultSegDisplayName );
+
+    if ( ! resultSegUid )
+    {
+        spdlog::error( "Unable to create blank segmentation for graph cuts" );
+        return false;
+    }
+
+    Image* resultSeg = m_appData.seg( *resultSegUid );
+
+    if ( ! resultSeg )
+    {
+        spdlog::error( "Null result segmentation {} for graph cuts", *resultSegUid );
         return false;
     }
 
     if ( image->header().pixelDimensions() != resultSeg->header().pixelDimensions() )
     {
         spdlog::error( "Dimensions of image {} ({}) and result segmentation {} ({}) do not match",
-                      imageUid, glm::to_string( image->header().pixelDimensions() ),
-                      resultSegUid, glm::to_string( resultSeg->header().pixelDimensions() ) );
+                       imageUid, glm::to_string( image->header().pixelDimensions() ),
+                       *resultSegUid, glm::to_string( resultSeg->header().pixelDimensions() ) );
         return false;
     }
 
     spdlog::info( "Executing graph cuts segmentation on image {} with seeds {}; "
-                  "resulting segmentation: {}", imageUid, seedSegUid, resultSegUid );
+                  "resulting segmentation: {}", imageUid, seedSegUid, *resultSegUid );
 
     const uint32_t imComp = image->settings().activeComponent();
 
@@ -510,7 +517,7 @@ bool CallbackHandler::executeGraphCutsSegmentation(
     spdlog::debug( "Start updating segmentation texture" );
     
     m_rendering.updateSegTexture(
-        resultSegUid,
+        *resultSegUid,
         resultSeg->header().memoryComponentType(),
         glm::uvec3{0},
         resultSeg->header().pixelDimensions(),
@@ -591,8 +598,8 @@ bool CallbackHandler::executePoissonSegmentation(
     if ( image->header().pixelDimensions() != seedSeg->header().pixelDimensions() )
     {
         spdlog::error( "Dimensions of image {} ({}) and seed segmentation {} ({}) do not match",
-                      imageUid, glm::to_string( image->header().pixelDimensions() ),
-                      seedSegUid, glm::to_string( seedSeg->header().pixelDimensions() ) );
+                       imageUid, glm::to_string( image->header().pixelDimensions() ),
+                       seedSegUid, glm::to_string( seedSeg->header().pixelDimensions() ) );
         return false;
     }
 
@@ -2005,7 +2012,7 @@ void CallbackHandler::moveCrosshairsOnViewSlice(
 
 
 void CallbackHandler::moveCrosshairsToSegLabelCentroid(
-        const uuids::uuid& imageUid, std::size_t labelIndex )
+    const uuids::uuid& imageUid, std::size_t labelIndex )
 {
     /// @todo This computation can take some time.
     /// Put it into a thread.
@@ -2018,15 +2025,15 @@ void CallbackHandler::moveCrosshairsToSegLabelCentroid(
     Image* seg = m_appData.seg( *activeSegUid );
     if ( ! seg ) return;
 
-    const glm::ivec3 dataSizeInt{ seg->header().pixelDimensions() };
+    const glm::ivec3 dims{ seg->header().pixelDimensions() };
     const LabelType label = static_cast<LabelType>( labelIndex );
 
     glm::vec3 coordSum{ 0.0f, 0.0f, 0.0f };
     std::size_t count = 0;
 
-    for ( int k = 0; k < dataSizeInt.z; ++k ) {
-        for ( int j = 0; j < dataSizeInt.y; ++j ) {
-            for ( int i = 0; i < dataSizeInt.x; ++i )
+    for ( int k = 0; k < dims.z; ++k ) {
+        for ( int j = 0; j < dims.y; ++j ) {
+            for ( int i = 0; i < dims.x; ++i )
             {
                 if ( auto value = seg->value<int64_t>( sk_comp0, i, j, k ) )
                 {
@@ -2043,12 +2050,12 @@ void CallbackHandler::moveCrosshairsToSegLabelCentroid(
     if ( 0 == count )
     {
         // No voxels found with this segmentation label. Return so that we don't
-        // divide by zero and move crosshiars to an invalid location.
+        // divide by zero and move crosshairs to an invalid location.
         return;
     }
 
     glm::vec4 worldCentroid = seg->transformations().worldDef_T_pixel() *
-            glm::vec4{ coordSum / static_cast<float>( count ), 1.0f };
+        glm::vec4{ coordSum / static_cast<float>( count ), 1.0f };
 
     glm::vec3 worldPos{ worldCentroid / worldCentroid.w };
 

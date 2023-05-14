@@ -7,6 +7,7 @@
 #include "image/ImageSettings.h"
 #include "image/ImageTransformations.h"
 
+#include <algorithm>
 #include <optional>
 #include <ostream>
 #include <string>
@@ -174,6 +175,23 @@ public:
 
         return false;
     }
+
+    template<typename T>
+    void setAllValues( T v )
+    {
+        switch ( m_header.memoryComponentType() )
+        {
+        case ComponentType::Int8: { for ( auto& C : m_data_int8 ) { std::fill( std::begin(C), std::end(C), v ); } return; }
+        case ComponentType::UInt8: { for ( auto& C : m_data_uint8 ) { std::fill( std::begin(C), std::end(C), v ); } return; }
+        case ComponentType::Int16: { for ( auto& C : m_data_int16 ) { std::fill( std::begin(C), std::end(C), v ); } return; }
+        case ComponentType::UInt16: { for ( auto& C : m_data_uint16 ) { std::fill( std::begin(C), std::end(C), v ); } return; }
+        case ComponentType::Int32: { for ( auto& C : m_data_int32 ) { std::fill( std::begin(C), std::end(C), v ); } return; }
+        case ComponentType::UInt32: { for ( auto& C : m_data_uint32 ) { std::fill( std::begin(C), std::end(C), v ); } return; }
+        case ComponentType::Float32: { for ( auto& C : m_data_float32 ) { std::fill( std::begin(C), std::end(C), v ); } return; }
+        default: return;
+        }
+    }
+
 
     void setUseIdentityPixelSpacings( bool identitySpacings );
     bool getUseIdentityPixelSpacings() const;
