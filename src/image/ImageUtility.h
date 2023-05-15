@@ -4,7 +4,7 @@
 #include "common/Types.h"
 
 #include "image/Image.h"
-#include "image/ImageIoInfo.h"
+//#include "image/ImageIoInfo.h"
 
 #include <glm/vec3.hpp>
 

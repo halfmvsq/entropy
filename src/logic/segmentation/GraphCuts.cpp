@@ -249,7 +249,8 @@ bool graphCutsMultiLabelSegmentation(
     // -resulting energy
     using T = float;
 
-    const LabelIndexMaps labelMaps = createLabelIndexMaps(dims, getSeedValue);
+    static constexpr bool sk_ignoreBackgroundLabel = true;
+    const LabelIndexMaps labelMaps = createLabelIndexMaps(dims, getSeedValue, sk_ignoreBackgroundLabel);
     const std::size_t numLabels = labelMaps.labelToIndex.size();
 
     spdlog::debug( "Start creating expansion" );

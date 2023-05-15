@@ -9,21 +9,6 @@
 #include <functional>
 
 
-// Distances between voxel neighbors
-struct VoxelDistances
-{
-    float distX;
-    float distY;
-    float distZ;
-
-    float distXY;
-    float distXZ;
-    float distYZ;
-
-    float distXYZ;
-};
-
-
 bool graphCutsBinarySegmentation(
     const GraphNeighborhoodType& hoodType,
     double terminalCapacity,

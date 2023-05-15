@@ -1,50 +1,117 @@
 #include "logic/segmentation/Poisson.h"
 
-#include "image/Image.h"
-
+#include <glm/glm.hpp>
 #include <spdlog/spdlog.h>
 
 #include <cmath>
+#include <limits>
 
 
 namespace
 {
 
 // Normalize image to rage [0.0, 1.0].
-// void normalize( std::vector<ImgType>& img )
-// {
-//     ImgType maxVal = std::numeric_limits<ImgType>::lowest();
-//     ImgType minVal = std::numeric_limits<ImgType>::max();
+//void normalize( const float* image, float* imageNorm, std::size_t N )
+//{
+//    float maxVal = std::numeric_limits<float>::lowest();
+//    float minVal = std::numeric_limits<float>::max();
 
-//     for ( const auto& val : img )
-//     {
-//         if ( val > maxVal )
-//         {
-//             maxVal = val;
-//         }
+//    for ( std::size_t i = 0; i < N; ++i )
+//    {
+//        const float val = image[i];
 
-//         if ( val < minVal )
-//         {
-//             minVal = val;
-//         }
-//     }
+//        if ( val > maxVal )
+//        {
+//            maxVal = val;
+//        }
 
-//     for ( size_t i = 0; i < img.size(); ++i )
-//     {
-//         img[i] = ( img[i] - minVal ) / ( maxVal - minVal );
-//     }
-// }
+//        if ( val < minVal )
+//        {
+//            minVal = val;
+//        }
+//    }
+
+//    for ( std::size_t i = 0; i < N; ++i )
+//    {
+//        imageNorm[i] = ( image[i] - minVal ) / ( maxVal - minVal );
+//    }
+//}
 
 }
 
 
-void sor(
-    const Image& seedSeg, const Image& image, Image& potentialImage,
-    uint32_t imComp, float rjac, uint32_t maxits, float beta )
+
+void initializePotential(
+    const uint8_t* seeds,
+    float* potential,
+    const glm::ivec3& dims )
 {
-    const uint8_t* seedData = static_cast<const uint8_t*>( seedSeg.bufferAsVoid(0) );
-    const int16_t* imageData = static_cast<const int16_t*>( image.bufferAsVoid(imComp) );
-    float* potData = static_cast<float*>( potentialImage.bufferAsVoid(0) );
+    int n = 0;
+
+    const int zDelta = dims.x * dims.y;
+    const int yDelta = dims.x;
+
+    for ( int k = 0; k < dims.z; ++k ) {
+        for ( int j = 0; j < dims.y; ++j ) {
+            for ( int i = 0; i < dims.x; ++i )
+            {
+                n = k * zDelta + j * yDelta + i;
+                potential[n] = static_cast<float>( seeds[n] );
+            }
+        }
+    }
+}
+
+
+void computeResultSeg(
+    const float* potential,
+    uint8_t* resultSeg,
+    const glm::ivec3& dims )
+{
+    int n = 0;
+
+    const int zDelta = dims.x * dims.y;
+    const int yDelta = dims.x;
+
+    for ( int k = 0; k < dims.z; ++k ) {
+        for ( int j = 0; j < dims.y; ++j ) {
+            for ( int i = 0; i < dims.x; ++i )
+            {
+                n = k * zDelta + j * yDelta + i;
+
+                if ( 1.0f <= potential[n] && potential[n] < 1.5f )
+                {
+                    resultSeg[n] = 1u;
+                }
+                else if ( 1.5f <= potential[n] && potential[n] <= 2.0f )
+                {
+                    resultSeg[n] = 2u;
+                }
+                else if ( potential[n] < 1.0f )
+                {
+                    resultSeg[n] = 0u;
+                }
+            }
+        }
+    }
+}
+
+
+void sor(
+    const uint8_t* seeds,
+    const float* /*image*/,
+    float* potential,
+    const glm::ivec3& dims,
+    const VoxelDistances& distances,
+    float rjac, uint32_t maxits, float /*beta*/ )
+{
+    const std::size_t N = dims.x * dims.y * dims.z;
+
+    std::vector<float> imageNorm( N, 0.0f );
+
+//    normalize( image, imageNorm.data(), N );
+
+    const float BETA = 1.0f; //computeBeta( imageNorm.data(), dims );
 
     int n = 0;
     int isw, jsw, ksw;
@@ -52,8 +119,8 @@ void sor(
     float omega = 1.0f;
     float val, pot, grad, weight;
 
-    const glm::ivec3 dims = glm::ivec3{ image.header().pixelDimensions() };
-    const glm::vec3 spacing = image.header().spacing();
+    float resid = 0.0f;
+    float total = 0.0f;
 
     const int zDelta = dims.x * dims.y;
     const int yDelta = dims.x;
@@ -85,69 +152,68 @@ void sor(
                     {
                         n = k * zDelta + j * yDelta + i;
 
-                        if ( 0 != seedData[n] )
+                        if ( 0 != seeds[n] )
                         {
                             // Do not update nodes on boundary
-                            potData[n] = seedData[n];
                             continue;
                         }
 
-                        val = imageData[n];
-                        pot = potData[n];
+                        val = imageNorm[n];
+                        pot = potential[n];
 
-                        float resid = 0.0f;
-                        float total = 0.0f;
+                        resid = 0.0f;
+                        total = 0.0f;
 
                         if ( k < dims.z - 1 )
                         {
-                            grad = (val - imageData[n + zDelta]) / beta;
-                            weight = std::exp( -0.5f * grad * grad ) / spacing.z;
-                            resid += weight * potData[n + zDelta];
+                            grad = 0.0f * (val - imageNorm[n + zDelta]) / BETA;
+                            weight = std::exp( -0.5f * grad * grad ) / distances.distZ;
+                            resid += weight * potential[n + zDelta];
                             total -= weight;
                         }
 
                         if ( k > 0 )
                         {
-                            grad = (val - imageData[n - zDelta]) / beta;
-                            weight = std::exp( -0.5f * grad * grad ) / spacing.z;
-                            resid += weight * potData[n - zDelta];
+                            grad = 0.0f * (val - imageNorm[n - zDelta]) / BETA;
+                            weight = std::exp( -0.5f * grad * grad ) / distances.distZ;
+                            resid += weight * potential[n - zDelta];
                             total -= weight;
                         }
 
                         if ( j < dims.y - 1 )
                         {
-                            grad = (val - imageData[n + yDelta]) / beta;
-                            weight = std::exp( -0.5f * grad * grad ) / spacing.y;
-                            resid += weight * potData[n + yDelta];
+                            grad = 0.0f * (val - imageNorm[n + yDelta]) / BETA;
+                            weight = std::exp( -0.5f * grad * grad ) / distances.distY;
+                            resid += weight * potential[n + yDelta];
                             total -= weight;
                         }
 
                         if ( j > 0 )
                         {
-                            grad = (val - imageData[n - yDelta]) / beta;
-                            weight = std::exp( -0.5f * grad * grad ) / spacing.y;
-                            resid += weight * potData[n - yDelta];
+                            grad = 0.0f * (val - imageNorm[n - yDelta]) / BETA;
+                            weight = std::exp( -0.5f * grad * grad ) / distances.distY;
+                            resid += weight * potential[n - yDelta];
                             total -= weight;
                         }
 
                         if ( i < dims.x - 1 )
                         {
-                            grad = (val - imageData[n + xDelta]) / beta;
-                            weight = std::exp( -0.5f * grad * grad ) / spacing.x;
-                            resid += weight * potData[n + xDelta];
+                            grad = 0.0f * (val - imageNorm[n + xDelta]) / BETA;
+                            weight = std::exp( -0.5f * grad * grad ) / distances.distX;
+                            resid += weight * potential[n + xDelta];
                             total -= weight;
                         }
 
                         if ( i > 0 )
                         {
-                            grad = (val - imageData[n - xDelta]) / beta;
-                            weight = std::exp( -0.5f * grad * grad ) / spacing.x;
-                            resid += weight * potData[n - xDelta];
+                            grad = 0.0f * (val - imageNorm[n - xDelta]) / BETA;
+                            weight = std::exp( -0.5f * grad * grad ) / distances.distX;
+                            resid += weight * potential[n - xDelta];
                             total -= weight;
                         }
 
                         resid += total * pot;
-                        potData[n] -= omega * resid / total;
+                        potential[n] -= omega * resid / total;
                         absResid += std::fabs(resid);
                     }
 
@@ -169,40 +235,44 @@ void sor(
 }
 
 
-float computeBeta( const Image& img, uint32_t imComp )
+float computeBeta( const float* image, const glm::ivec3& dims )
 {
-    const glm::ivec3 dims = glm::ivec3{ img.header().pixelDimensions() };
-
+    int n = 0;
     float grad = 0.0f;
+
+    const int zDelta = dims.x * dims.y;
+    const int yDelta = dims.x;
+    const int xDelta = 1;
 
     for ( int k = 0; k < dims.z; ++k ) {
         for ( int j = 0; j < dims.y; ++j ) {
             for ( int i = 0; i < dims.x; ++i )
             {
-                const float val = img.value<float>(imComp, i, j, k).value_or(0.0f);
+                n = k * zDelta + j * yDelta + i;
+                const float val = image[n];
 
                 if (k < dims[2] - 1) {
-                    grad += std::fabs( val - img.value<float>(imComp, i, j, k + 1).value_or(0.0f) );
+                    grad += std::fabs( val - image[n + zDelta] );
                 }
 
                 if (k > 0) {
-                    grad += std::fabs( val - img.value<float>(imComp, i, j, k - 1).value_or(0.0f) );
+                    grad += std::fabs( val - image[n - zDelta] );
                 }
 
                 if (j < dims.y - 1) {
-                    grad += std::fabs( val - img.value<float>(imComp, i, j + 1, k).value_or(0.0f) );
+                    grad += std::fabs( val - image[n + yDelta] );
                 }
 
                 if (j > 0) {
-                    grad += std::fabs( val - img.value<float>(imComp, i, j - 1, k).value_or(0.0f) );
+                    grad += std::fabs( val - image[n - yDelta] );
                 }
 
                 if (i < dims.x - 1) {
-                    grad += std::fabs( val - img.value<float>(imComp, i + 1, j, k).value_or(0.0f) );
+                    grad += std::fabs( val - image[n + xDelta] );
                 }
 
                 if (i > 0) {
-                    grad += std::fabs( val - img.value<float>(imComp, i - 1, j, k).value_or(0.0f) );
+                    grad += std::fabs( val - image[n - xDelta] );
                 }
             }
         }

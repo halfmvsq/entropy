@@ -6,24 +6,20 @@
 #include <glm/fwd.hpp>
 
 #include <functional>
-#include <map>
-
-
-struct LabelIndexMaps
-{
-    /// Map from segmentation label to label index
-    std::map<LabelType, std::size_t> labelToIndex;
-
-    /// Map from label index to segmentation label
-    std::map<std::size_t, LabelType> indexToLabel;
-};
-
 
 /**
  * @brief Compute the number of non-zero labels in a segmentation
  */
 LabelIndexMaps createLabelIndexMaps(
     const glm::ivec3& dims,
-    std::function< LabelType (int x, int y, int z) > getSeedValue );
+    std::function< LabelType (int x, int y, int z) > getSeedValue,
+    bool ignoreBackgroundZeroLabel );
+
+
+VoxelDistances computeVoxelDistances( const glm::vec3& spacing, bool normalized );
+
+void remapSegLabelsToIndices( uint8_t* segLabels, const glm::ivec3& dims, const LabelIndexMaps& labelMaps );
+
+void remapSegIndicesToLabels( uint8_t* segIndices, const glm::ivec3& dims, const LabelIndexMaps& labelMaps );
 
 #endif // SEGMENTATION_HELPERS_H

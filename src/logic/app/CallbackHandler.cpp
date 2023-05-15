@@ -2,6 +2,7 @@
 
 #include "common/DataHelper.h"
 #include "common/MathFuncs.h"
+#include "common/SegmentationTypes.h"
 #include "common/Types.h"
 
 #include "image/SegUtil.h"
@@ -12,6 +13,8 @@
 
 #include "logic/segmentation/GraphCuts.h"
 #include "logic/segmentation/Poisson.h"
+#include "logic/segmentation/SegHelpers.h"
+#include "logic/segmentation/SegHelpers.tpp"
 
 #include "rendering/Rendering.h"
 #include "rendering/TextureSetup.h"
@@ -35,65 +38,12 @@
 namespace
 {
 
-using LabelType = int64_t;
-
 static constexpr float sk_viewAABBoxScaleFactor = 1.10f;
 
 // Angle threshold (in degrees) for checking whether two vectors are parallel
 static constexpr float sk_parallelThreshold_degrees = 0.1f;
 
 static constexpr float sk_imageFrontBackTranslationScaleFactor = 10.0f;
-
-VoxelDistances computeVoxelDistances( const glm::vec3& spacing, bool normalized )
-{
-    VoxelDistances v;
-
-    const double L = ( normalized ) ? glm::length( spacing ) : 1.0f;
-
-    v.distXYZ = glm::length( spacing ) / L;
-
-    v.distX = glm::length( glm::vec3{spacing.x, 0, 0} ) / L;
-    v.distY = glm::length( glm::vec3{0, spacing.y, 0} ) / L;
-    v.distZ = glm::length( glm::vec3{0, 0, spacing.z} ) / L;
-
-    v.distXY = glm::length( glm::vec3{spacing.x, spacing.y, 0} ) / L;
-    v.distXZ = glm::length( glm::vec3{spacing.x, 0, spacing.z} ) / L;
-    v.distYZ = glm::length( glm::vec3{0, spacing.y, spacing.z} ) / L;
-
-    return v;
-}
-
-template< typename T >
-std::optional<glm::vec3> computePixelCentroid(
-    const void* data, const glm::ivec3& dims, const LabelType& label )
-{
-    glm::vec3 coordSum{ 0.0f, 0.0f, 0.0f };
-    std::size_t count = 0;
-
-    const T* dataCast = static_cast<const T*>( data );
-
-    for ( int k = 0; k < dims.z; ++k ) {
-        for ( int j = 0; j < dims.y; ++j ) {
-            for ( int i = 0; i < dims.x; ++i )
-            {
-                if ( label == static_cast<LabelType>( dataCast[k * dims.x*dims.y + j * dims.x + i] ) )
-                {
-                    coordSum += glm::vec3{ i, j, k };
-                    ++count;
-                }
-            }
-        }
-    }
-
-    if ( 0 == count )
-    {
-        // No voxels found with this segmentation label. Return null so that we don't
-        // divide by zero and move crosshairs to an invalid location.
-        return std::nullopt;
-    }
-
-    return coordSum / static_cast<float>( count );
-}
 
 } // anonymous
 
@@ -576,18 +526,67 @@ bool CallbackHandler::executePoissonSegmentation(
         return false;
     }
 
+    if ( image->header().pixelDimensions() != seedSeg->header().pixelDimensions() )
+    {
+        spdlog::error( "Dimensions of image {} ({}) and seed segmentation {} ({}) do not match",
+                       imageUid, glm::to_string( image->header().pixelDimensions() ),
+                       seedSegUid, glm::to_string( seedSeg->header().pixelDimensions() ) );
+        return false;
+    }
+
+    const uint32_t imComp = image->settings().activeComponent();
+    const uint32_t sk_seedComp = 0;
+
+    const glm::ivec3 dims{ seedSeg->header().pixelDimensions() };
+
+    // Buffer will either point to data of the image (if the image has float components)
+    // or to data of a vector with float components:
+    const float* imageBuffer = nullptr;
+    std::vector<float> imageVector;
+
+    if ( ComponentType::Float32 == image->header().memoryComponentType() )
+    {
+        imageBuffer = static_cast<const float*>( image->bufferAsVoid( imComp ) );
+    }
+    else
+    {
+        imageVector.resize( image->header().numPixels(), 0.0f );
+        for ( std::size_t i = 0; i < image->header().numPixels(); ++i ) {
+            imageVector[i] = image->value<float>(imComp, i).value_or( 0.0f );
+        }
+        imageBuffer = imageVector.data();
+    }
+
+    // Buffer will either point to data of the seed segmentation, with all components converted to uint8_t
+    // and labels compressed to be in a contiguous range.
+    static constexpr bool sk_ignoreBackgroundLabel = false;
+
+    std::vector<uint8_t> seedSegVector( seedSeg->header().numPixels(), 0u );
+
+    for ( std::size_t i = 0; i < seedSeg->header().numPixels(); ++i )
+    {
+        seedSegVector[i] = seedSeg->value<uint8_t>(sk_seedComp, i).value_or( 0u );
+    }
+
+    const uint8_t* seedSegBuffer = seedSegVector.data();
+
+    const LabelIndexMaps labelMaps = createLabelIndexMaps(
+        dims, seedSegBuffer, sk_ignoreBackgroundLabel );
+
+
     const size_t numSegsForImage = m_appData.imageToSegUids( imageUid ).size();
 
     const std::string resultSegDisplayName =
-        ( SeedSegmentationType::Binary == segType )
-            ? std::string( "Binary Poisson segmentation " )
-            : std::string( "Multi-label Poisson segmentation " )
-            +
-            std::to_string( numSegsForImage + 1 ) +
-            " for image '" + image->settings().displayName() + "'";
+        ( ( SeedSegmentationType::Binary == segType )
+        ? std::string( "Binary Poisson segmentation " )
+        : std::string( "Multi-label Poisson segmentation " ) )
+        +
+        std::to_string( numSegsForImage + 1 ) +
+        " for image '" + image->settings().displayName() + "'";
 
-    const auto resultSegUid = createBlankSegWithColorTableAndTextures(
-        imageUid, resultSegDisplayName );
+//    spdlog::trace( "resultSegDisplayName = {}", resultSegDisplayName );
+
+    const auto resultSegUid = createBlankSegWithColorTableAndTextures( imageUid, resultSegDisplayName );
 
     if ( ! resultSegUid )
     {
@@ -596,11 +595,15 @@ bool CallbackHandler::executePoissonSegmentation(
     }
 
     const std::string potDisplayName =
-        std::string( "Potential maps for image '" ) + image->settings().displayName() + "'";
+        std::string( "Potential maps for '" ) + image->settings().displayName() + "'";
 
-    /// @todo Set this accordingly...
-    const uint32_t numComps = 3;
+    // The number of components for the output potential image equals the number of
+    // labels in the seed segmentation, including label zero. Component zero of the
+    // image holds the potential for all labels. Component i >= 1 of the image holds the
+    // potential of label index i.
+    const uint32_t numComps = labelMaps.labelToIndex.size();
 
+    // Create potential image with float components
     const auto potImageUid = createBlankImageAndTexture(
         imageUid, ComponentType::Float32, numComps, potDisplayName, numComps );
 
@@ -609,6 +612,8 @@ bool CallbackHandler::executePoissonSegmentation(
         spdlog::error( "Unable to create blank potential image matching image {}", imageUid );
         return false;
     }
+
+    spdlog::debug( "Generated blank potential image {} with {} components", *potImageUid, numComps );
 
     // Algorithm outputs:
     Image* resultSeg = m_appData.seg( *resultSegUid );
@@ -623,14 +628,6 @@ bool CallbackHandler::executePoissonSegmentation(
     if ( ! potImage )
     {
         spdlog::error( "Null potential image {} for Poisson", *potImageUid );
-        return false;
-    }
-
-    if ( image->header().pixelDimensions() != seedSeg->header().pixelDimensions() )
-    {
-        spdlog::error( "Dimensions of image {} ({}) and seed segmentation {} ({}) do not match",
-                       imageUid, glm::to_string( image->header().pixelDimensions() ),
-                       seedSegUid, glm::to_string( seedSeg->header().pixelDimensions() ) );
         return false;
     }
 
@@ -654,44 +651,48 @@ bool CallbackHandler::executePoissonSegmentation(
                   "resulting segmentation: {}; resulting potential: {}",
                   imageUid, seedSegUid, *resultSegUid, *potImageUid );
 
-    const uint32_t imComp = image->settings().activeComponent();
+    const VoxelDistances voxelDists = computeVoxelDistances( image->header().spacing(), true );
 
-    const float beta = computeBeta( *image, imComp );
+    const float beta = computeBeta( imageBuffer, dims );
     spdlog::info( "Poisson beta = {}", beta );
     
-    const uint32_t maxIterations = 100;
+    const uint32_t maxIterations = 10000;
     const float rjac = 0.6f;
 
-    sor( *seedSeg, *image, *potImage, imComp, rjac, maxIterations, beta );
+    float* potBuffer = static_cast<float*>( potImage->bufferAsVoid(0) );
+    uint8_t* resultSegBuffer = static_cast<uint8_t*>( resultSeg->bufferAsVoid(0) );
+
+
+    initializePotential( seedSegBuffer, potBuffer, dims );
+
+    sor( seedSegBuffer, imageBuffer, potBuffer,
+         dims, voxelDists, rjac, maxIterations, beta );
+
+    computeResultSeg( potBuffer, resultSegBuffer, dims );
+
 
     potImage->updateComponentStats();
     resultSeg->updateComponentStats();
 
+
     spdlog::debug( "Potential image stats: {}", potImage->settings() );
     spdlog::debug( "Resulting segmentation image stats: {}", resultSeg->settings() );
 
-    spdlog::debug( "Start updating potential image texture" );
 
+    spdlog::debug( "Start updating potential image texture" );
      m_rendering.updateImageTexture(
         *potImageUid,
-        imComp,
-        potImage->header().memoryComponentType(),
-        glm::uvec3{0},
-        potImage->header().pixelDimensions(),
+        imComp, potImage->header().memoryComponentType(),
+        glm::uvec3{0}, potImage->header().pixelDimensions(),
         potImage->bufferAsVoid(imComp) );
-
     spdlog::debug( "Done updating potential image texture" );
 
-
     spdlog::debug( "Start updating segmentation texture" );
-    
     m_rendering.updateSegTexture(
         *resultSegUid,
         resultSeg->header().memoryComponentType(),
-        glm::uvec3{0},
-        resultSeg->header().pixelDimensions(),
+        glm::uvec3{0}, resultSeg->header().pixelDimensions(),
         resultSeg->bufferAsVoid(imComp) );
-
     spdlog::debug( "Done updating segmentation texture" );
 
     return true;
