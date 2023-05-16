@@ -202,6 +202,9 @@ std::optional<uuids::uuid> CallbackHandler::createBlankImageAndTexture(
     // Update uniforms for all images
     m_rendering.updateImageUniforms( m_appData.imageUidsOrdered() );
 
+    // Reassign rainbow colors
+    m_appData.setRainbowColorsForAllImages();
+
     return imageUid;
 }
 
@@ -598,9 +601,10 @@ bool CallbackHandler::executePoissonSegmentation(
         std::string( "Potential maps for '" ) + image->settings().displayName() + "'";
 
     // The number of components for the output potential image equals the number of
-    // labels in the seed segmentation, including label zero. Component zero of the
+    // labels in the seed segmentation, including label zero. Component 0 of the
     // image holds the potential for all labels. Component i >= 1 of the image holds the
     // potential of label index i.
+    const uint32_t numLabels = labelMaps.labelToIndex.size() - 1;
     const uint32_t numComps = labelMaps.labelToIndex.size();
 
     // Create potential image with float components
@@ -654,38 +658,67 @@ bool CallbackHandler::executePoissonSegmentation(
     const VoxelDistances voxelDists = computeVoxelDistances( image->header().spacing(), true );
 
     const float beta = computeBeta( imageBuffer, dims );
-    spdlog::info( "Poisson beta = {}", beta );
+    spdlog::debug( "Poisson beta = {}", beta );
     
-    const uint32_t maxIterations = 10000;
+    const uint32_t numIts = 10000;
     const float rjac = 0.6f;
+
+//    switch ( segType )
+//    {
+//    case SeedSegmentationType::Binary:
+//    {
+//        // First potential component is for all labels:
+//        float* potBuffer = static_cast<float*>( potImage->bufferAsVoid(0) );
+//        uint8_t* resultSegBuffer = static_cast<uint8_t*>( resultSeg->bufferAsVoid(0) );
+
+//        initializePotential( seedSegBuffer, potBuffer, dims, 0u );
+//        sor( seedSegBuffer, imageBuffer, potBuffer, dims, voxelDists, rjac, numIts, beta );
+//        computeResultSeg( potBuffer, resultSegBuffer, dims );
+//        break;
+//    }
+//    case SeedSegmentationType::MultiLabel:
+//    {
+//        break;
+//    }
+//    }
 
     float* potBuffer = static_cast<float*>( potImage->bufferAsVoid(0) );
     uint8_t* resultSegBuffer = static_cast<uint8_t*>( resultSeg->bufferAsVoid(0) );
 
+    // 0th component of potential initialized by all labels:
+    initializePotential( seedSegBuffer, potBuffer, dims, 0u );
+    sor( seedSegBuffer, imageBuffer, potBuffer, dims, voxelDists, rjac, numIts, beta );
 
-    initializePotential( seedSegBuffer, potBuffer, dims );
+    std::vector<const float*> potBuffers( numLabels );
 
-    sor( seedSegBuffer, imageBuffer, potBuffer,
-         dims, voxelDists, rjac, maxIterations, beta );
+    for ( uint8_t i = 1; i <= numLabels; ++i )
+    {
+        // ith component of potential initialized by label i:
+        potBuffer = static_cast<float*>( potImage->bufferAsVoid(i) );
+        potBuffers[i-1] = potBuffer;
 
-    computeResultSeg( potBuffer, resultSegBuffer, dims );
+        initializePotential( seedSegBuffer, potBuffer, dims, i );
+        sor( seedSegBuffer, imageBuffer, potBuffer, dims, voxelDists, rjac, numIts, beta );
+    }
 
+    computeResultSeg( potBuffers, resultSegBuffer, dims );
 
     potImage->updateComponentStats();
     resultSeg->updateComponentStats();
 
-
     spdlog::debug( "Potential image stats: {}", potImage->settings() );
     spdlog::debug( "Resulting segmentation image stats: {}", resultSeg->settings() );
 
-
-    spdlog::debug( "Start updating potential image texture" );
-     m_rendering.updateImageTexture(
-        *potImageUid,
-        imComp, potImage->header().memoryComponentType(),
-        glm::uvec3{0}, potImage->header().pixelDimensions(),
-        potImage->bufferAsVoid(imComp) );
-    spdlog::debug( "Done updating potential image texture" );
+    spdlog::debug( "Start updating potential image textures" );
+    for ( uint32_t i = 0; i < numComps; ++i )
+    {
+        m_rendering.updateImageTexture(
+            *potImageUid,
+            i, potImage->header().memoryComponentType(),
+            glm::uvec3{0}, potImage->header().pixelDimensions(),
+            potImage->bufferAsVoid(i) );
+    }
+    spdlog::debug( "Done updating potential image textures" );
 
     spdlog::debug( "Start updating segmentation texture" );
     m_rendering.updateSegTexture(

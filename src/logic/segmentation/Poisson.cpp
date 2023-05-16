@@ -44,7 +44,8 @@ namespace
 void initializePotential(
     const uint8_t* seeds,
     float* potential,
-    const glm::ivec3& dims )
+    const glm::ivec3& dims,
+    LabelType label )
 {
     int n = 0;
 
@@ -56,15 +57,40 @@ void initializePotential(
             for ( int i = 0; i < dims.x; ++i )
             {
                 n = k * zDelta + j * yDelta + i;
-                potential[n] = static_cast<float>( seeds[n] );
+
+                const uint8_t seed = seeds[n];
+
+                if ( 0u == label )
+                {
+                    // Set all labels:
+                    potential[n] = static_cast<float>( seed );
+                }
+                else
+                {
+                    // Set one label:
+                    if ( label == seed )
+                    {
+                        // Turn on potential for the label
+                        potential[n] = 2.0f;
+                    }
+                    else if ( 0u < seed )
+                    {
+                        // Ground potential for all other labels
+                        potential[n] = 1.0f;
+                    }
+                    else if ( 0u == seed )
+                    {
+                        potential[n] = 0.0f;
+                    }
+                }
             }
         }
     }
 }
 
 
-void computeResultSeg(
-    const float* potential,
+void computeBinaryResultSeg(
+    const std::array<const float*, 2> potentials,
     uint8_t* resultSeg,
     const glm::ivec3& dims )
 {
@@ -79,18 +105,47 @@ void computeResultSeg(
             {
                 n = k * zDelta + j * yDelta + i;
 
-                if ( 1.0f <= potential[n] && potential[n] < 1.5f )
+                if ( potentials[0][n] > potentials[1][n] )
                 {
                     resultSeg[n] = 1u;
                 }
-                else if ( 1.5f <= potential[n] && potential[n] <= 2.0f )
-                {
-                    resultSeg[n] = 2u;
-                }
-                else if ( potential[n] < 1.0f )
+                else
                 {
                     resultSeg[n] = 0u;
                 }
+            }
+        }
+    }
+}
+
+void computeResultSeg(
+    const std::vector<const float*> potentials,
+    uint8_t* resultSeg,
+    const glm::ivec3& dims )
+{
+    const int zDelta = dims.x * dims.y;
+    const int yDelta = dims.x;
+
+    for ( int k = 0; k < dims.z; ++k ) {
+        for ( int j = 0; j < dims.y; ++j ) {
+            for ( int i = 0; i < dims.x; ++i )
+            {
+                const int n = k * zDelta + j * yDelta + i;
+
+                float maxPotential = 0.0f;
+                uint32_t maxComp = 0u;
+
+                for ( uint32_t c = 0; c < potentials.size(); ++ c )
+                {
+                    const float p = potentials[c][n];
+                    if ( p > maxPotential )
+                    {
+                        maxPotential = p;
+                        maxComp = c;
+                    }
+                }
+
+                resultSeg[n] = std::min( maxComp + 1u, 255u );
             }
         }
     }
@@ -128,7 +183,7 @@ void sor(
 
     for ( uint32_t iter = 0; iter < maxits; ++iter )
     {
-        if ( 0 == iter % 1 )
+        if ( 0 == iter % 100 )
         {
             spdlog::trace( "Iteration {}", iter );
         }

@@ -539,6 +539,8 @@ void Rendering::updateSegTextureWithInt64Data(
     }
 }
 
+/// @todo Need to fix this to handle multicomponent images like
+/// std::vector<uuids::uuid> createImageTextures( AppData& appData, uuid_range_t imageUids )
 void Rendering::updateImageTexture(
     const uuids::uuid& imageUid,
     uint32_t comp,

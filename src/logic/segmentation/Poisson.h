@@ -3,19 +3,28 @@
 
 #include "common/SegmentationTypes.h"
 
-#include <cstdint>
-
 #include <glm/fwd.hpp>
 
+#include <array>
+#include <cstdint>
+#include <vector>
+
 class Image;
+
 
 void initializePotential(
     const uint8_t* seeds,
     float* potential,
-    const glm::ivec3& dims );
+    const glm::ivec3& dims,
+    LabelType label );
 
 void computeResultSeg(
-    const float* potential,
+    const std::vector<const float*> potentials,
+    uint8_t* resultSeg,
+    const glm::ivec3& dims );
+
+void computeBinaryResultSeg(
+    const std::array<const float*, 2> potentials,
     uint8_t* resultSeg,
     const glm::ivec3& dims );
 
