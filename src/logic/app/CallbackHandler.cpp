@@ -691,13 +691,14 @@ bool CallbackHandler::executePoissonSegmentation(
 
     std::vector<const float*> potBuffers( numLabels );
 
+    // Loop over all label indices:
     for ( uint8_t i = 1; i <= numLabels; ++i )
     {
         // ith component of potential initialized by label i:
         potBuffer = static_cast<float*>( potImage->bufferAsVoid(i) );
         potBuffers[i-1] = potBuffer;
 
-        initializePotential( seedSegBuffer, potBuffer, dims, i );
+        initializePotential( seedSegBuffer, potBuffer, dims, labelMaps.indexToLabel.at(i) );
         sor( seedSegBuffer, imageBuffer, potBuffer, dims, voxelDists, rjac, numIts, beta );
     }
 
@@ -877,12 +878,12 @@ void CallbackHandler::doSegment( const ViewHit& hit, bool swapFgAndBg )
     // Therefore, the offset is not applied.
 
     const LabelType labelToPaint = static_cast<LabelType>(
-                ( swapFgAndBg ) ? m_appData.settings().backgroundLabel()
-                                : m_appData.settings().foregroundLabel() );
+        swapFgAndBg ? m_appData.settings().backgroundLabel()
+                    : m_appData.settings().foregroundLabel() );
 
     const LabelType labelToReplace = static_cast<LabelType>(
-                ( swapFgAndBg ) ? m_appData.settings().foregroundLabel()
-                                : m_appData.settings().backgroundLabel() );
+        swapFgAndBg ? m_appData.settings().foregroundLabel()
+                    : m_appData.settings().backgroundLabel() );
 
     const int brushSize = static_cast<int>( m_appData.settings().brushSizeInVoxels() );
 
@@ -910,26 +911,25 @@ void CallbackHandler::doSegment( const ViewHit& hit, bool swapFgAndBg )
 
         // View plane normal vector transformed into Voxel space:
         const glm::vec3 voxelViewPlaneNormal = glm::normalize(
-                    glm::inverseTranspose( glm::mat3( pixel_T_worldDef ) ) *
-                    ( -hit.worldFrontAxis ) );
+            glm::inverseTranspose( glm::mat3( pixel_T_worldDef ) ) * ( -hit.worldFrontAxis ) );
 
         // View plane equation:
         const glm::vec4 voxelViewPlane = math::makePlane( voxelViewPlaneNormal, pixelPos3 );
 
         auto updateSegTexture = [this, &segUid]
-                ( const ComponentType& memoryComponentType, const glm::uvec3& dataOffset,
-                  const glm::uvec3& dataSize, const LabelType* data )
+            ( const ComponentType& memoryComponentType, const glm::uvec3& dataOffset,
+              const glm::uvec3& dataSize, const LabelType* data )
         {
             m_rendering.updateSegTextureWithInt64Data(
                 segUid, memoryComponentType, dataOffset, dataSize, data );
         };
 
         paintSegmentation(
-                    seg, labelToPaint, labelToReplace,
-                    settings.replaceBackgroundWithForeground(),
-                    settings.useRoundBrush(), settings.use3dBrush(), settings.useIsotropicBrush(),
-                    brushSize, roundedPixelPos,
-                    voxelViewPlane, updateSegTexture );
+            *seg, labelToPaint, labelToReplace,
+            settings.replaceBackgroundWithForeground(),
+            settings.useRoundBrush(), settings.use3dBrush(), settings.useIsotropicBrush(),
+            brushSize, roundedPixelPos,
+            voxelViewPlane, updateSegTexture );
     }
 }
 
@@ -994,11 +994,11 @@ void CallbackHandler::paintActiveSegmentationWithAnnotation()
     };
 
     fillSegmentationWithPolygon(
-                seg, annot,
-                static_cast<LabelType>( m_appData.settings().foregroundLabel() ),
-                static_cast<LabelType>( m_appData.settings().backgroundLabel() ),
-                m_appData.settings().replaceBackgroundWithForeground(),
-                updateSegTexture );
+        *seg, annot,
+        static_cast<LabelType>( m_appData.settings().foregroundLabel() ),
+        static_cast<LabelType>( m_appData.settings().backgroundLabel() ),
+        m_appData.settings().replaceBackgroundWithForeground(),
+        updateSegTexture );
 }
 
 
@@ -1564,13 +1564,13 @@ void CallbackHandler::doCameraZoomScroll(
 void CallbackHandler::scrollViewSlice( const ViewHit& hit, int numSlices )
 {
     const float scrollDistance = data::sliceScrollDistance(
-                m_appData, hit.worldFrontAxis,
-                ImageSelection::VisibleImagesInView,
-                hit.view );
+        m_appData, hit.worldFrontAxis,
+        ImageSelection::VisibleImagesInView,
+        hit.view );
 
     m_appData.state().setWorldCrosshairsPos(
-                m_appData.state().worldCrosshairs().worldOrigin() +
-                static_cast<float>( numSlices ) * scrollDistance * hit.worldFrontAxis );
+        m_appData.state().worldCrosshairs().worldOrigin() +
+        static_cast<float>( numSlices ) * scrollDistance * hit.worldFrontAxis );
 }
 
 
@@ -1616,14 +1616,13 @@ void CallbackHandler::doImageTranslate(
     {
         // Translate the image in and out of the view plane. Translate by an amount
         // proportional to the slice distance of the active image (the one being translated)
-        const float scrollDistance = data::sliceScrollDistance(
-                    startHit.worldFrontAxis, *activeImage );
+        const float scrollDistance = data::sliceScrollDistance( startHit.worldFrontAxis, *activeImage );
 
         T = translationAboutCameraFrontBack(
-                    viewToUse->camera(),
-                    prevHit.viewClipPos,
-                    currHit.viewClipPos,
-                    sk_imageFrontBackTranslationScaleFactor * scrollDistance );
+            viewToUse->camera(),
+            prevHit.viewClipPos,
+            currHit.viewClipPos,
+            sk_imageFrontBackTranslationScaleFactor * scrollDistance );
     }
 
     auto& imgTx = activeImage->transformations();
@@ -1635,8 +1634,7 @@ void CallbackHandler::doImageTranslate(
         if ( auto* seg = m_appData.seg( segUid ) )
         {
             auto& segTx = seg->transformations();
-            segTx.set_worldDef_T_affine_translation(
-                        segTx.get_worldDef_T_affine_translation() + T );
+            segTx.set_worldDef_T_affine_translation( segTx.get_worldDef_T_affine_translation() + T );
         }
     }
 
@@ -1678,22 +1676,22 @@ void CallbackHandler::doImageRotate(
     if ( inPlane )
     {
         const glm::vec2 ndcRotationCenter =
-                ndc_T_world( viewToUse->camera(), worldRotationCenter );
+            ndc_T_world( viewToUse->camera(), worldRotationCenter );
 
         const glm::quat R = camera::rotation2dInCameraPlane(
-                    viewToUse->camera(),
-                    prevHit.viewClipPos,
-                    currHit.viewClipPos,
-                    ndcRotationCenter );
+            viewToUse->camera(),
+            prevHit.viewClipPos,
+            currHit.viewClipPos,
+            ndcRotationCenter );
 
         math::rotateFrameAboutWorldPos( imageFrame, R, worldRotationCenter );
     }
     else
     {
         const glm::quat R = rotation3dAboutCameraPlane(
-                    viewToUse->camera(),
-                    prevHit.viewClipPos,
-                    currHit.viewClipPos );
+            viewToUse->camera(),
+            prevHit.viewClipPos,
+            currHit.viewClipPos );
 
         math::rotateFrameAboutWorldPos( imageFrame, R, worldRotationCenter );
     }
@@ -1830,7 +1828,7 @@ void CallbackHandler::flipImageInterpolation()
     if ( ! image ) return;
 
     const InterpolationMode newMode =
-            ( InterpolationMode::NearestNeighbor == image->settings().interpolationMode() )
+        ( InterpolationMode::NearestNeighbor == image->settings().interpolationMode() )
             ? InterpolationMode::Trilinear
             : InterpolationMode::NearestNeighbor;
 
@@ -2055,7 +2053,7 @@ void CallbackHandler::setShowOverlays( bool show )
 
 
 void CallbackHandler::moveCrosshairsOnViewSlice(
-        const ViewHit& hit, int stepX, int stepY )
+    const ViewHit& hit, int stepX, int stepY )
 {
     if ( ! hit.view ) return;
 

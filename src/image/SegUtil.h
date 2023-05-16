@@ -29,7 +29,7 @@ class Image;
  * @param updateSegTexture
  */
 void paintSegmentation(
-        Image* seg,
+        Image& seg,
 
         int64_t labelToPaint,
         int64_t labelToReplace,
@@ -49,7 +49,7 @@ void paintSegmentation(
 
 
 void fillSegmentationWithPolygon(
-        Image* seg,
+        Image& seg,
         const Annotation* annot,
 
         int64_t labelToPaint,

@@ -183,11 +183,6 @@ void sor(
 
     for ( uint32_t iter = 0; iter < maxits; ++iter )
     {
-        if ( 0 == iter % 100 )
-        {
-            spdlog::trace( "Iteration {}", iter );
-        }
-
         float absResid = 0.0f;
 
         // Split updates into even and odd stencil passes:
@@ -285,7 +280,10 @@ void sor(
                 : 1.0f / ( 1.0f - 0.25f * rjac * rjac * omega );
         }
 
-        spdlog::debug( "absResid = {}", absResid );
+        if ( 0 == iter % 100 )
+        {
+            spdlog::trace( "Iteration {}, residual = {}", iter, absResid );
+        }
     }
 }
 
