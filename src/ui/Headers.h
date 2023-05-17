@@ -59,24 +59,25 @@ void renderImageHeaderInformation(
  * @param setLockManualImageTransformation
  */
 void renderImageHeader(
-        AppData& appData,
-        GuiData& guiData,
-        const uuids::uuid& imageUid,
-        size_t imageIndex,
-        Image* image,
-        bool isActiveImage,
-        size_t numImages,
-        const std::function< void ( void ) >& updateAllImageUniforms,
-        const std::function< void ( void ) >& updateImageUniforms,
-        const std::function< void ( void ) >& updateImageInterpolationMode,
-        const std::function< size_t ( void ) >& getNumImageColorMaps,
-        const std::function< const ImageColorMap* ( size_t cmapIndex ) >& getImageColorMap,
-        const std::function< bool ( const uuids::uuid& imageUid ) >& moveImageBackward,
-        const std::function< bool ( const uuids::uuid& imageUid ) >& moveImageForward,
-        const std::function< bool ( const uuids::uuid& imageUid ) >& moveImageToBack,
-        const std::function< bool ( const uuids::uuid& imageUid ) >& moveImageToFront,
-        const std::function< bool ( const uuids::uuid& imageUid, bool locked ) >& setLockManualImageTransformation,
-        const AllViewsRecenterType& recenterAllViews );
+    AppData& appData,
+    GuiData& guiData,
+    const uuids::uuid& imageUid,
+    size_t imageIndex,
+    Image* image,
+    bool isActiveImage,
+    size_t numImages,
+    const std::function< void ( void ) >& updateAllImageUniforms,
+    const std::function< void ( void ) >& updateImageUniforms,
+    const std::function< void ( void ) >& updateImageInterpolationMode,
+    const std::function< void ( std::size_t cmapIndex ) >& updateImageColorMapInterpolationMode,
+    const std::function< size_t ( void ) >& getNumImageColorMaps,
+    const std::function< ImageColorMap* ( size_t cmapIndex ) >& getImageColorMap,
+    const std::function< bool ( const uuids::uuid& imageUid ) >& moveImageBackward,
+    const std::function< bool ( const uuids::uuid& imageUid ) >& moveImageForward,
+    const std::function< bool ( const uuids::uuid& imageUid ) >& moveImageToBack,
+    const std::function< bool ( const uuids::uuid& imageUid ) >& moveImageToFront,
+    const std::function< bool ( const uuids::uuid& imageUid, bool locked ) >& setLockManualImageTransformation,
+    const AllViewsRecenterType& recenterAllViews );
 
 
 /**

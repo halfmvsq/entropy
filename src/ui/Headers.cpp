@@ -9,7 +9,6 @@
 // data::roundPointToNearestImageVoxelCenter
 // data::getAnnotationSubjectPlaneName
 #include "common/DataHelper.h"
-#include "common/MathFuncs.h"
 
 #include "image/Image.h"
 #include "image/ImageColorMap.h"
@@ -18,7 +17,6 @@
 #include "image/ImageTransformations.h"
 
 #include "logic/app/Data.h"
-#include "logic/camera/CameraHelpers.h"
 #include "logic/states/AnnotationStateMachine.h"
 
 #include <IconFontCppHeaders/IconsForkAwesome.h>
@@ -344,24 +342,25 @@ void renderImageHeaderInformation(
 
 
 void renderImageHeader(
-        AppData& appData,
-        GuiData& guiData,
-        const uuids::uuid& imageUid,
-        size_t imageIndex,
-        Image* image,
-        bool isActiveImage,
-        size_t numImages,
-        const std::function< void(void) >& updateAllImageUniforms,
-        const std::function< void(void) >& updateImageUniforms,
-        const std::function< void(void) >& updateImageInterpolationMode,
-        const std::function< size_t(void) >& getNumImageColorMaps,
-        const std::function< const ImageColorMap* ( size_t cmapIndex ) >& getImageColorMap,
-        const std::function< bool ( const uuids::uuid& imageUid ) >& moveImageBackward,
-        const std::function< bool ( const uuids::uuid& imageUid ) >& moveImageForward,
-        const std::function< bool ( const uuids::uuid& imageUid ) >& moveImageToBack,
-        const std::function< bool ( const uuids::uuid& imageUid ) >& moveImageToFront,
-        const std::function< bool ( const uuids::uuid& imageUid, bool locked ) >& setLockManualImageTransformation,
-        const AllViewsRecenterType& recenterAllViews )
+    AppData& appData,
+    GuiData& guiData,
+    const uuids::uuid& imageUid,
+    size_t imageIndex,
+    Image* image,
+    bool isActiveImage,
+    size_t numImages,
+    const std::function< void(void) >& updateAllImageUniforms,
+    const std::function< void(void) >& updateImageUniforms,
+    const std::function< void(void) >& updateImageInterpolationMode,
+    const std::function< void ( std::size_t cmapIndex ) >& updateImageColorMapInterpolationMode,
+    const std::function< size_t(void) >& getNumImageColorMaps,
+    const std::function< ImageColorMap* ( size_t cmapIndex ) >& getImageColorMap,
+    const std::function< bool ( const uuids::uuid& imageUid ) >& moveImageBackward,
+    const std::function< bool ( const uuids::uuid& imageUid ) >& moveImageForward,
+    const std::function< bool ( const uuids::uuid& imageUid ) >& moveImageToBack,
+    const std::function< bool ( const uuids::uuid& imageUid ) >& moveImageToFront,
+    const std::function< bool ( const uuids::uuid& imageUid, bool locked ) >& setLockManualImageTransformation,
+    const AllViewsRecenterType& recenterAllViews )
 {
     static const ImGuiColorEditFlags sk_colorNoAlphaEditFlags =
             ImGuiColorEditFlags_NoInputs |
@@ -978,14 +977,14 @@ void renderImageHeader(
         ImGui::Spacing();
 
 
-        auto getInterpMode = [&imgSettings] ()
+        auto getImageInterpMode = [&imgSettings] ()
         {
             return ( imgSettings.displayImageAsColor() )
                 ? imgSettings.colorInterpolationMode()
                 : imgSettings.interpolationMode();
         };
 
-        auto setInterpMode = [&imgSettings] ( const InterpolationMode& mode )
+        auto setImageInterpMode = [&imgSettings] ( const InterpolationMode& mode )
         {
             ( imgSettings.displayImageAsColor() )
                 ? imgSettings.setColorInterpolationMode( mode )
@@ -993,16 +992,16 @@ void renderImageHeader(
         };
 
 
-        if ( ImGui::BeginCombo( "Interpolation", typeString( getInterpMode() ).c_str() ) )
+        if ( ImGui::BeginCombo( "Interpolation", typeString( getImageInterpMode() ).c_str() ) )
         {
             for ( const auto& mode : AllInterpolationModes )
             {
-                if ( ImGui::Selectable( typeString( mode ).c_str(), ( mode == getInterpMode() ) ) )
+                if ( ImGui::Selectable( typeString( mode ).c_str(), ( mode == getImageInterpMode() ) ) )
                 {
-                    setInterpMode( mode );
+                    setImageInterpMode( mode );
                     updateImageInterpolationMode();
 
-                    if ( mode == getInterpMode() )
+                    if ( mode == getImageInterpMode() )
                     {
                         ImGui::SetItemDefaultFocus();
                     }
@@ -1029,14 +1028,15 @@ void renderImageHeader(
             }
             ImGui::SameLine(); helpMarker( "Select/invert the image colormap" );
 
+
             renderPaletteWindow(
-                        std::string( "Select colormap for image '" + imgSettings.displayName() + "'" ).c_str(),
-                        showImageColormapWindow,
-                        getNumImageColorMaps,
-                        getImageColorMap,
-                        getCurrentImageColormapIndex,
-                        setCurrentImageColormapIndex,
-                        updateImageUniforms );
+                std::string( "Select colormap for image '" + imgSettings.displayName() + "'" ).c_str(),
+                showImageColormapWindow,
+                getNumImageColorMaps,
+                getImageColorMap,
+                getCurrentImageColormapIndex,
+                setCurrentImageColormapIndex,
+                updateImageUniforms );
 
 
             // Colormap preview:
@@ -1044,7 +1044,9 @@ void renderImageHeader(
             const float height = ( ImGui::GetIO().Fonts->Fonts[0]->FontSize * ImGui::GetIO().FontGlobalScale );
 
             char label[128];
-            if ( const ImageColorMap* cmap = getImageColorMap( getCurrentImageColormapIndex() ) )
+            std::size_t cmapIndex = getCurrentImageColormapIndex();
+
+            if ( ImageColorMap* cmap = getImageColorMap( cmapIndex ) )
             {
                 snprintf( label, 128, "%s##cmap_%zu", cmap->name().c_str(), imageIndex );
 
@@ -1058,6 +1060,21 @@ void renderImageHeader(
                 {
                     ImGui::SetTooltip( "%s", cmap->description().c_str() );
                 }
+
+
+                ImageColorMap::InterpolationMode interpMode = cmap->interpolationMode();
+                bool discreteCmap = ( ImageColorMap::InterpolationMode::Nearest == interpMode );
+
+                if ( ImGui::Checkbox( "Discrete##DiscreteColorMap", &discreteCmap ) )
+                {
+                    cmap->setInterpolationMode(
+                        discreteCmap
+                        ? ImageColorMap::InterpolationMode::Nearest
+                        : ImageColorMap::InterpolationMode::Linear );
+
+                    updateImageColorMapInterpolationMode( cmapIndex );
+                }
+                ImGui::SameLine(); helpMarker( "Discrete" );
             }
 
             ImGui::Dummy( ImVec2( 0.0f, 1.0f ) );

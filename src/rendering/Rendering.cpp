@@ -7,7 +7,6 @@
 #include "common/Types.h"
 
 #include "image/ImageColorMap.h"
-#include "image/ImageUtility.h"
 #include "image/SurfaceUtility.h"
 
 #include "logic/app/Data.h"
@@ -15,6 +14,7 @@
 #include "logic/camera/MathUtility.h"
 #include "logic/states/AnnotationStateHelpers.h"
 #include "logic/states/FsmList.hpp"
+
 
 #include "rendering/ImageDrawing.h"
 #include "rendering/TextureSetup.h"
@@ -731,6 +731,59 @@ void Rendering::updateImageInterpolation( const uuids::uuid& imageUid )
             spdlog::debug( "Set image interpolation mode for color image {}", imageUid );
         }
     }
+}
+
+void Rendering::updateImageColorMapInterpolation( std::size_t cmapIndex )
+{
+    const auto cmapUid = m_appData.imageColorMapUid( cmapIndex );
+
+    if ( ! cmapUid )
+    {
+        spdlog::warn( "Image color map index {} is invalid", cmapIndex );
+        return;
+    }
+
+    const auto* map = m_appData.imageColorMap( *cmapUid );
+
+    if ( ! map )
+    {
+        spdlog::warn( "Image color map {} is invalid", *cmapUid );
+        return;
+    }
+
+    ImageColorMap* cmap = m_appData.imageColorMap( *cmapUid );
+
+    if ( ! cmap )
+    {
+        spdlog::warn( "Image color map {} is null", *cmapUid  );
+        return;
+    }
+
+    GLTexture& texture = m_appData.renderData().m_colormapTextures.at( *cmapUid );
+
+    tex::MinificationFilter minFilter;
+    tex::MagnificationFilter maxFilter;
+
+    switch ( cmap->interpolationMode() )
+    {
+    case ImageColorMap::InterpolationMode::Nearest:
+    {
+        minFilter = tex::MinificationFilter::Nearest;
+        maxFilter = tex::MagnificationFilter::Nearest;
+        break;
+    }
+    case ImageColorMap::InterpolationMode::Linear:
+    {
+        minFilter = tex::MinificationFilter::Linear;
+        maxFilter = tex::MagnificationFilter::Linear;
+        break;
+    }
+    }
+
+    texture.setMinificationFilter( minFilter );
+    texture.setMagnificationFilter( maxFilter );
+
+    spdlog::debug( "Set interpolation mode for image color map {}", *cmapUid );
 }
 
 void Rendering::updateLabelColorTableTexture( size_t tableIndex )

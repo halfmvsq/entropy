@@ -59,6 +59,9 @@ public:
     /// Update all texture interpolation parameters for the active image component
     void updateImageInterpolation( const uuids::uuid& imageUid );
 
+    /// Update the texture interpolation parameters for the given image color map
+    void updateImageColorMapInterpolation( std::size_t cmapIndex );
+
     /// Update image uniforms after any settings have changed
     void updateImageUniforms( uuid_range_t imageUids );
     void updateImageUniforms( const uuids::uuid& imageUid );

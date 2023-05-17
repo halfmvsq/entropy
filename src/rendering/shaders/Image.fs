@@ -436,7 +436,13 @@ void main()
     float segAlpha = segOpacity * segInterpOpacity * getSegInteriorAlpha( seg ) * float(segMask);
 
     // Look up image color and apply alpha:
-    vec4 imgLayer = texture( imgCmapTex, imgCmapSlopeIntercept[0] * imgNorm + imgCmapSlopeIntercept[1] ) * imgAlpha;
+//    float cmapSize = textureSize(imgCmapTex, 0);
+
+    float imgNormWindowed = imgCmapSlopeIntercept[0] * imgNorm + imgCmapSlopeIntercept[1];
+//    imgNormWindowed = floor(4.0 * imgNormWindowed) / 4.0;
+//    imgNormWindowed = 0.5 / cmapSize + (cmapSize - 1.0) * imgNormWindowed / cmapSize; // convert to [0.5 / N, (N - 0.5) / N] range
+
+    vec4 imgLayer = texture( imgCmapTex, imgNormWindowed ) * imgAlpha;
 
     // Look up segmentation color and apply:
     vec4 segLayer = computeLabelColor( int(seg) ) * segAlpha;

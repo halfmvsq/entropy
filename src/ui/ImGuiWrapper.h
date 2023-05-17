@@ -34,32 +34,33 @@ public:
     void setContentScale( float scale );
 
     void setCallbacks(
-            std::function< void (void) > postEmptyGlfwEvent,
-            std::function< void (void) > readjustViewport,
-            std::function< void ( const uuids::uuid& viewUid ) > recenterView,
-            AllViewsRecenterType recenterCurrentViews,
-            std::function< bool ( void ) > getOverlayVisibility,
-            std::function< void ( bool ) > setOverlayVisibility,
-            std::function< void ( void ) > updateAllImageUniforms,
-            std::function< void ( const uuids::uuid& viewUid ) > updateImageUniforms,
-            std::function< void ( const uuids::uuid& viewUid ) > updateImageInterpolationMode,
-            std::function< void ( size_t tableIndex ) > updateLabelColorTableTexture,
-            std::function< void ( const uuids::uuid& imageUid, size_t labelIndex ) > moveCrosshairsToSegLabelCentroid,
-            std::function< void ()> updateMetricUniforms,
-            std::function< glm::vec3 () > getWorldDeformedPos,
-            std::function< std::optional<glm::vec3> ( size_t imageIndex ) > getSubjectPos,
-            std::function< std::optional<glm::ivec3> ( size_t imageIndex ) > getVoxelPos,
-            std::function< void ( size_t imageIndex, const glm::vec3& subjectPos ) > setSubjectPos,
-            std::function< void ( size_t imageIndex, const glm::ivec3& voxelPos ) > setVoxelPos,
-            std::function< std::vector< double > ( size_t imageIndex, bool getOnlyActiveComponent ) > getImageValues,
-            std::function< std::optional<int64_t> ( size_t imageIndex ) > getSegLabel,
-            std::function< std::optional<uuids::uuid>( const uuids::uuid& matchingImageUid, const std::string& segDisplayName ) > createBlankSeg,
-            std::function< bool ( const uuids::uuid& segUid ) > clearSeg,
-            std::function< bool ( const uuids::uuid& segUid ) > removeSeg,
+        std::function< void (void) > postEmptyGlfwEvent,
+        std::function< void (void) > readjustViewport,
+        std::function< void ( const uuids::uuid& viewUid ) > recenterView,
+        AllViewsRecenterType recenterCurrentViews,
+        std::function< bool ( void ) > getOverlayVisibility,
+        std::function< void ( bool ) > setOverlayVisibility,
+        std::function< void ( void ) > updateAllImageUniforms,
+        std::function< void ( const uuids::uuid& viewUid ) > updateImageUniforms,
+        std::function< void ( const uuids::uuid& imageUid ) > updateImageInterpolationMode,
+        std::function< void ( std::size_t cmapUid ) > updateImageColorMapInterpolationMode,
+        std::function< void ( size_t tableIndex ) > updateLabelColorTableTexture,
+        std::function< void ( const uuids::uuid& imageUid, size_t labelIndex ) > moveCrosshairsToSegLabelCentroid,
+        std::function< void ()> updateMetricUniforms,
+        std::function< glm::vec3 () > getWorldDeformedPos,
+        std::function< std::optional<glm::vec3> ( size_t imageIndex ) > getSubjectPos,
+        std::function< std::optional<glm::ivec3> ( size_t imageIndex ) > getVoxelPos,
+        std::function< void ( size_t imageIndex, const glm::vec3& subjectPos ) > setSubjectPos,
+        std::function< void ( size_t imageIndex, const glm::ivec3& voxelPos ) > setVoxelPos,
+        std::function< std::vector< double > ( size_t imageIndex, bool getOnlyActiveComponent ) > getImageValues,
+        std::function< std::optional<int64_t> ( size_t imageIndex ) > getSegLabel,
+        std::function< std::optional<uuids::uuid>( const uuids::uuid& matchingImageUid, const std::string& segDisplayName ) > createBlankSeg,
+        std::function< bool ( const uuids::uuid& segUid ) > clearSeg,
+        std::function< bool ( const uuids::uuid& segUid ) > removeSeg,
         std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const SeedSegmentationType& segType ) > executeGraphCutsSeg,
-            std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const SeedSegmentationType& segType ) > executePoissonSeg,
-            std::function< bool ( const uuids::uuid& imageUid, bool locked ) > setLockManualImageTransformation,
-            std::function< void () > paintActiveSegmentationWithActivePolygon );
+        std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const SeedSegmentationType& segType ) > executePoissonSeg,
+        std::function< bool ( const uuids::uuid& imageUid, bool locked ) > setLockManualImageTransformation,
+        std::function< void () > paintActiveSegmentationWithActivePolygon );
 
     void render();
 
@@ -83,6 +84,7 @@ private:
     std::function< void ( void ) > m_updateAllImageUniforms = nullptr;
     std::function< void ( const uuids::uuid& viewUid ) > m_updateImageUniforms = nullptr;
     std::function< void ( const uuids::uuid& viewUid ) > m_updateImageInterpolationMode = nullptr;
+    std::function< void ( std::size_t cmapIndex ) > m_updateImageColorMapInterpolationMode = nullptr;
     std::function< void ( size_t tableIndex ) > m_updateLabelColorTableTexture = nullptr;
     std::function< void ( const uuids::uuid& imageUid, size_t labelIndex ) > m_moveCrosshairsToSegLabelCentroid = nullptr;
     std::function< void ( void ) > m_updateMetricUniforms = nullptr;

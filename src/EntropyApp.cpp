@@ -17,8 +17,6 @@
 #include "logic/states/FsmList.hpp"
 //#include "logic/ipc/IPCMessage.h"
 
-#include "rendering/TextureSetup.h"
-
 #include <glm/glm.hpp>
 
 #define GLM_ENABLE_EXPERIMENTAL
@@ -1266,6 +1264,7 @@ void EntropyApp::setCallbacks()
         [this] () { m_rendering.updateImageUniforms( m_data.imageUidsOrdered() ); },
         [this] ( const uuids::uuid& imageUid ) { m_rendering.updateImageUniforms( imageUid ); },
         [this] ( const uuids::uuid& imageUid ) { m_rendering.updateImageInterpolation( imageUid ); },
+        [this] ( std::size_t cmapIndex ) { m_rendering.updateImageColorMapInterpolation( cmapIndex ); },
         [this] ( size_t labelColorTableIndex ) { m_rendering.updateLabelColorTableTexture( labelColorTableIndex ); },
 
         // moveCrosshairsToSegLabelCentroid

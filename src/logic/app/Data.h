@@ -2,7 +2,6 @@
 #define APP_DATA_H
 
 #include "common/ParcellationLabelTable.h"
-#include "common/Types.h"
 #include "common/UuidRange.h"
 
 #include "image/Image.h"
@@ -218,6 +217,7 @@ public:
         std::unique_ptr<MeshGpuRecord> gpuRecord );
 
     const ImageColorMap* imageColorMap( const uuids::uuid& mapUid ) const;
+    ImageColorMap* imageColorMap( const uuids::uuid& mapUid );
 
     const ParcellationLabelTable* labelTable( const uuids::uuid& tableUid ) const;
     ParcellationLabelTable* labelTable( const uuids::uuid& tableUid );

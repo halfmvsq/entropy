@@ -14,15 +14,16 @@
 
 
 ImageColorMap::ImageColorMap(
-        std::string name,
-        std::string technicalName,
-        std::string description,
-        std::vector< glm::vec3 > colors )
+    std::string name,
+    std::string technicalName,
+    std::string description,
+    std::vector< glm::vec3 > colors )
     :
-      m_name( std::move( name ) ),
-      m_technicalName( std::move( technicalName ) ),
-      m_description( std::move( description ) ),
-      m_preview( 0 )
+    m_name( std::move( name ) ),
+    m_technicalName( std::move( technicalName ) ),
+    m_description( std::move( description ) ),
+    m_preview( 0 ),
+    m_interpolationMode( InterpolationMode::Linear )
 {
     if ( colors.empty() )
     {
@@ -36,16 +37,16 @@ ImageColorMap::ImageColorMap(
 }
 
 ImageColorMap::ImageColorMap(
-        std::string name,
-        std::string technicalName,
-        std::string description,
-        std::vector< glm::vec4 > colors )
+    std::string name,
+    std::string technicalName,
+    std::string description,
+    std::vector< glm::vec4 > colors )
     :
-      m_name( std::move( name ) ),
-      m_technicalName( std::move( technicalName ) ),
-      m_description( std::move( description ) ),
-      m_colors_RGBA_F32( std::move( colors ) ),
-      m_preview( 0 )
+    m_name( std::move( name ) ),
+    m_technicalName( std::move( technicalName ) ),
+    m_description( std::move( description ) ),
+    m_colors_RGBA_F32( std::move( colors ) ),
+    m_preview( 0 )
 {
     if ( m_colors_RGBA_F32.empty() )
     {
@@ -295,4 +296,15 @@ ImageColorMap ImageColorMap::createLinearImageColorMap(
     map.setPreviewMap( previewColors );
 
     return map;
+}
+
+
+void ImageColorMap::setInterpolationMode( const ImageColorMap::InterpolationMode& mode )
+{
+    m_interpolationMode = mode;
+}
+
+ImageColorMap::InterpolationMode ImageColorMap::interpolationMode() const
+{
+    return m_interpolationMode;
 }

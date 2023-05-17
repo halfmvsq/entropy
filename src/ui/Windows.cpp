@@ -884,22 +884,23 @@ void renderViewOrientationToolWindow(
 
 
 void renderImagePropertiesWindow(
-        AppData& appData,
-        size_t numImages,
-        const std::function< std::pair<const char*, const char* >( size_t index ) >& getImageDisplayAndFileName,
-        const std::function< size_t (void) >& getActiveImageIndex,
-        const std::function< void (size_t) >& setActiveImageIndex,
-        const std::function< size_t (void) >& getNumImageColorMaps,
-        const std::function< const ImageColorMap* ( size_t cmapIndex ) >& getImageColorMap,
-        const std::function< bool ( const uuids::uuid& imageUid ) >& moveImageBackward,
-        const std::function< bool ( const uuids::uuid& imageUid ) >& moveImageForward,
-        const std::function< bool ( const uuids::uuid& imageUid ) >& moveImageToBack,
-        const std::function< bool ( const uuids::uuid& imageUid ) >& moveImageToFront,
-        const std::function< void ( void ) >& updateAllImageUniforms,
-        const std::function< void ( const uuids::uuid& imageUid ) >& updateImageUniforms,
-        const std::function< void ( const uuids::uuid& imageUid ) >& updateImageInterpolationMode,
-        const std::function< bool ( const uuids::uuid& imageUid, bool locked ) >& setLockManualImageTransformation,
-        const AllViewsRecenterType& recenterAllViews )
+    AppData& appData,
+    size_t numImages,
+    const std::function< std::pair<const char*, const char* >( size_t index ) >& getImageDisplayAndFileName,
+    const std::function< size_t (void) >& getActiveImageIndex,
+    const std::function< void (size_t) >& setActiveImageIndex,
+    const std::function< size_t (void) >& getNumImageColorMaps,
+    const std::function< ImageColorMap* ( size_t cmapIndex ) >& getImageColorMap,
+    const std::function< bool ( const uuids::uuid& imageUid ) >& moveImageBackward,
+    const std::function< bool ( const uuids::uuid& imageUid ) >& moveImageForward,
+    const std::function< bool ( const uuids::uuid& imageUid ) >& moveImageToBack,
+    const std::function< bool ( const uuids::uuid& imageUid ) >& moveImageToFront,
+    const std::function< void ( void ) >& updateAllImageUniforms,
+    const std::function< void ( const uuids::uuid& imageUid ) >& updateImageUniforms,
+    const std::function< void ( const uuids::uuid& imageUid ) >& updateImageInterpolationMode,
+    const std::function< void ( std::size_t cmapIndex ) >& updateImageColorMapInterpolationMode,
+    const std::function< bool ( const uuids::uuid& imageUid, bool locked ) >& setLockManualImageTransformation,
+    const AllViewsRecenterType& recenterAllViews )
 {
     static const std::string sk_showOpacityMixer = std::string( ICON_FK_SLIDERS ) + " Show opacity mixer";
 
@@ -932,24 +933,25 @@ void renderImagePropertiesWindow(
                 const bool isActiveImage = activeUid && ( imageUid == *activeUid );
 
                 renderImageHeader(
-                            appData,
-                            appData.guiData(),
-                            imageUid,
-                            imageIndex++,
-                            image,
-                            isActiveImage,
-                            appData.numImages(),
-                            updateAllImageUniforms,
-                            [&imageUid, updateImageUniforms] () { updateImageUniforms( imageUid ); },
-                            [&imageUid, updateImageInterpolationMode] () { updateImageInterpolationMode( imageUid ); },
-                            getNumImageColorMaps,
-                            getImageColorMap,
-                            moveImageBackward,
-                            moveImageForward,
-                            moveImageToBack,
-                            moveImageToFront,
-                            setLockManualImageTransformation,
-                            recenterAllViews );
+                    appData,
+                    appData.guiData(),
+                    imageUid,
+                    imageIndex++,
+                    image,
+                    isActiveImage,
+                    appData.numImages(),
+                    updateAllImageUniforms,
+                    [&imageUid, updateImageUniforms] () { updateImageUniforms( imageUid ); },
+                    [&imageUid, updateImageInterpolationMode] () { updateImageInterpolationMode( imageUid ); },
+                    [updateImageColorMapInterpolationMode] ( std::size_t cmapIndex ) { updateImageColorMapInterpolationMode( cmapIndex ); },
+                    getNumImageColorMaps,
+                    getImageColorMap,
+                    moveImageBackward,
+                    moveImageForward,
+                    moveImageToBack,
+                    moveImageToFront,
+                    setLockManualImageTransformation,
+                    recenterAllViews );
             }
         }
 

@@ -17,6 +17,12 @@ class ImageColorMap
 {
 public:
 
+    enum class InterpolationMode
+    {
+        Nearest,
+        Linear
+    };
+
     /**
      * @brief Construct color map from a vector of RGB 32-bit float tuples.
      * The alpha component of each color is assumed to be 1.0.
@@ -27,11 +33,11 @@ public:
      * @param colors Vector of colors, represented as RGB tuples with components
      * in range [0.0, 1.0]. The color's alpha value is assumed to be 1.0.
      */
-    explicit ImageColorMap(
-            std::string name,
-            std::string technicalName,
-            std::string description,
-            std::vector< glm::vec3 > colors );
+    ImageColorMap(
+        std::string name,
+        std::string technicalName,
+        std::string description,
+        std::vector< glm::vec3 > colors );
 
     /**
      * @brief Construct color map from a vector of pre-multiplied RGBA 32-bit float tuples.
@@ -41,11 +47,11 @@ public:
      * @param colors Vector of colors, represented as premultiplied RGBA tuples
      * with components in range [0.0, 1.0]
      */
-    explicit ImageColorMap(
-            std::string name,
-            std::string technicalName,
-            std::string description,
-            std::vector< glm::vec4 > colors );
+    ImageColorMap(
+        std::string name,
+        std::string technicalName,
+        std::string description,
+        std::vector< glm::vec4 > colors );
 
     ImageColorMap( const ImageColorMap& ) = default;
     ImageColorMap& operator=( const ImageColorMap& ) = default;
@@ -110,6 +116,10 @@ public:
     /// Reverse the color map
     void reverse();
 
+    /// @brief Set/get interpolation mode
+    void setInterpolationMode( const InterpolationMode& mode );
+    InterpolationMode interpolationMode() const;
+
     /// Get the sized internal texture format for the color map
     static tex::SizedInternalFormat textureFormat_RGBA_F32();
 
@@ -118,12 +128,12 @@ public:
 
     /// Create a linear colormap that interpolates between given start and end colors
     static ImageColorMap createLinearImageColorMap(
-            const glm::vec3& startColor,
-            const glm::vec3& endColor,
-            size_t numSteps,
-            std::string briefName,
-            std::string description,
-            std::string technicalName );
+        const glm::vec3& startColor,
+        const glm::vec3& endColor,
+        size_t numSteps,
+        std::string briefName,
+        std::string description,
+        std::string technicalName );
 
 
 private:
@@ -144,6 +154,9 @@ private:
 
     /// Preview color map
     std::vector< glm::vec4 > m_preview;
+
+    /// Color map interpolation mode
+    InterpolationMode m_interpolationMode;
 };
 
 #endif // IMAGE_COLORMAP_H

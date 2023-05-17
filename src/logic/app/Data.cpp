@@ -853,6 +853,11 @@ const ImageColorMap* AppData::imageColorMap( const uuids::uuid& colorMapUid ) co
     return nullptr;
 }
 
+ImageColorMap* AppData::imageColorMap( const uuids::uuid& colorMapUid )
+{
+    return const_cast<ImageColorMap*>( const_cast<const AppData*>(this)->imageColorMap( colorMapUid ) );
+}
+
 const ParcellationLabelTable* AppData::labelTable( const uuids::uuid& labelUid ) const
 {
     auto it = m_labelTables.find( labelUid );

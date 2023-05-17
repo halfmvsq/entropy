@@ -143,7 +143,8 @@ void ImGuiWrapper::setCallbacks(
         std::function< void ( bool ) > setOverlayVisibility,
         std::function< void ( void ) > updateAllImageUniforms,
         std::function< void ( const uuids::uuid& viewUid )> updateImageUniforms,
-        std::function< void ( const uuids::uuid& viewUid )> updateImageInterpolationMode,
+        std::function< void ( const uuids::uuid& imageUid )> updateImageInterpolationMode,
+        std::function< void ( std::size_t cmapIndex )> updateImageColorMapInterpolationMode,
         std::function< void ( size_t tableIndex ) > updateLabelColorTableTexture,
         std::function< void ( const uuids::uuid& imageUid, size_t labelIndex ) > moveCrosshairsToSegLabelCentroid,
         std::function< void ()> updateMetricUniforms,
@@ -171,6 +172,7 @@ void ImGuiWrapper::setCallbacks(
     m_updateAllImageUniforms = updateAllImageUniforms;
     m_updateImageUniforms = updateImageUniforms;
     m_updateImageInterpolationMode = updateImageInterpolationMode;
+    m_updateImageColorMapInterpolationMode = updateImageColorMapInterpolationMode;
     m_updateLabelColorTableTexture = updateLabelColorTableTexture;
     m_moveCrosshairsToSegLabelCentroid = moveCrosshairsToSegLabelCentroid;
     m_updateMetricUniforms = updateMetricUniforms;
@@ -583,7 +585,7 @@ void ImGuiWrapper::render()
         return m_appData.numImageColorMaps();
     };
 
-    auto getImageColorMap = [this] ( size_t cmapIndex ) -> const ImageColorMap*
+    auto getImageColorMap = [this] ( size_t cmapIndex ) -> ImageColorMap*
     {
         if ( const auto cmapUid = m_appData.imageColorMapUid( cmapIndex ) )
         {
@@ -758,11 +760,11 @@ void ImGuiWrapper::render()
         if ( m_appData.guiData().m_showSettingsWindow )
         {
             renderSettingsWindow(
-                        m_appData,
-                        getNumImageColorMaps,
-                        getImageColorMap,
-                        m_updateMetricUniforms,
-                        m_recenterAllViews );
+                m_appData,
+                getNumImageColorMaps,
+                getImageColorMap,
+                m_updateMetricUniforms,
+                m_recenterAllViews );
         }
 
         using namespace std::placeholders;
@@ -770,36 +772,37 @@ void ImGuiWrapper::render()
         if ( m_appData.guiData().m_showInspectionWindow )
         {
             renderInspectionWindowWithTable(
-                        m_appData,
-                        std::bind( &ImGuiWrapper::getImageDisplayAndFileNames, this, _1 ),
-                        m_getSubjectPos,
-                        m_getVoxelPos,
-                        m_setSubjectPos,
-                        m_setVoxelPos,
-                        m_getImageValues,
-                        m_getSegLabel,
-                        getLabelTable );
+                m_appData,
+                std::bind( &ImGuiWrapper::getImageDisplayAndFileNames, this, _1 ),
+                m_getSubjectPos,
+                m_getVoxelPos,
+                m_setSubjectPos,
+                m_setVoxelPos,
+                m_getImageValues,
+                m_getSegLabel,
+                getLabelTable );
         }
 
         if ( m_appData.guiData().m_showImagePropertiesWindow )
         {
             renderImagePropertiesWindow(
-                        m_appData,
-                        m_appData.numImages(),
-                        std::bind( &ImGuiWrapper::getImageDisplayAndFileNames, this, _1 ),
-                        getActiveImageIndex,
-                        setActiveImageIndex,
-                        getNumImageColorMaps,
-                        getImageColorMap,
-                        moveImageBackward,
-                        moveImageForward,
-                        moveImageToBack,
-                        moveImageToFront,
-                        m_updateAllImageUniforms,
-                        m_updateImageUniforms,
-                        m_updateImageInterpolationMode,
-                        m_setLockManualImageTransformation,
-                        m_recenterAllViews );
+                m_appData,
+                m_appData.numImages(),
+                std::bind( &ImGuiWrapper::getImageDisplayAndFileNames, this, _1 ),
+                getActiveImageIndex,
+                setActiveImageIndex,
+                getNumImageColorMaps,
+                getImageColorMap,
+                moveImageBackward,
+                moveImageForward,
+                moveImageToBack,
+                moveImageToFront,
+                m_updateAllImageUniforms,
+                m_updateImageUniforms,
+                m_updateImageInterpolationMode,
+                m_updateImageColorMapInterpolationMode,
+                m_setLockManualImageTransformation,
+                m_recenterAllViews );
         }
 
         if ( m_appData.guiData().m_showSegmentationsWindow )
