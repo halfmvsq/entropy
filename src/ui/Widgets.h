@@ -65,12 +65,15 @@ void renderLandmarkChildWindow(
  * @param updateImageUniforms
  */
 void renderPaletteWindow(
-        const char* name,
-        bool* showPaletteWindow,
-        const std::function< size_t (void) >& getNumImageColorMaps,
-        const std::function< const ImageColorMap* ( size_t cmapIndex ) >& getImageColorMap,
-        const std::function< size_t (void) >& getCurrentImageColormapIndex,
-        const std::function< void ( size_t cmapIndex ) >& setCurrentImageColormapIndex,
-        const std::function< void (void) >& updateImageUniforms );
+    const char* name,
+    bool* showPaletteWindow,
+    const std::function< size_t (void) >& getNumImageColorMaps,
+    const std::function< const ImageColorMap* ( std::size_t cmapIndex ) >& getImageColorMap,
+    const std::function< size_t (void) >& getCurrentImageColorMapIndex,
+    const std::function< void ( std::size_t cmapIndex ) >& setCurrentImageColormapIndex,
+    const std::function< bool (void) >& getImageColorMapInverted,
+    const std::function< bool (void) >& getImageColorMapContinuous,
+    const std::function< int (void) >& getImageColorMapLevels,
+    const std::function< void (void) >& updateImageUniforms );
 
 #endif // UI_WIDGETS_H

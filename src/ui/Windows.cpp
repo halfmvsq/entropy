@@ -1208,14 +1208,32 @@ void renderSettingsWindow(
         auto getColormapIndex = [&metricParams] () { return metricParams.m_colorMapIndex; };
         auto setColormapIndex = [&metricParams] ( size_t cmapIndex ) { metricParams.m_colorMapIndex = cmapIndex; };
 
+        auto getImageColorMapInverted = [&metricParams] ()
+        {
+            return metricParams.m_invertCmap;
+        };
+
+        auto getImageColorMapContinuous = [&metricParams] ()
+        {
+            return metricParams.m_cmapContinuous;
+        };
+
+        auto getImageColorMapLevels = [&metricParams] ()
+        {
+            return metricParams.m_cmapQuantizationLevels;
+        };
+
         renderPaletteWindow(
-                    std::string( "Select colormap for metric image" ).c_str(),
-                    showImageColormapWindow,
-                    getNumImageColorMaps,
-                    getImageColorMap,
-                    getColormapIndex,
-                    setColormapIndex,
-                    updateMetricUniforms );
+            std::string( "Select colormap for metric image" ).c_str(),
+            showImageColormapWindow,
+            getNumImageColorMaps,
+            getImageColorMap,
+            getColormapIndex,
+            setColormapIndex,
+            getImageColorMapInverted,
+            getImageColorMapContinuous,
+            getImageColorMapLevels,
+            updateMetricUniforms );
 
 
         // Colormap preview:
@@ -1227,8 +1245,12 @@ void renderSettingsWindow(
         snprintf( label, 128, "%s##cmap_%s", cmap->name().c_str(), name );
 
         ImGui::paletteButton(
-                    label, static_cast<int>( cmap->numColors() ), cmap->data_RGBA_F32(),
-                    metricParams.m_invertCmap, ImVec2( contentWidth, height ) );
+            label,
+            cmap->data_RGBA_asVector(),
+            metricParams.m_invertCmap,
+            metricParams.m_cmapContinuous,
+            metricParams.m_cmapQuantizationLevels,
+            ImVec2( contentWidth, height ) );
 
         if ( ImGui::IsItemHovered() )
         {

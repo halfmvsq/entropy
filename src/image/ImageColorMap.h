@@ -73,7 +73,7 @@ public:
     bool hasPreviewMap() const;
 
     /// Get the number of colors in the preview map
-    size_t numPreviewMapColors() const;
+    std::size_t numPreviewMapColors() const;
 
     /**
      * @brief Get a pointer to the raw preview color buffer
@@ -92,17 +92,20 @@ public:
     const std::string& description() const;
 
     /// Get number of colors in the color map
-    size_t numColors() const;
+    std::size_t numColors() const;
 
     /// Get the color at a given index of the color map
-    glm::vec4 color_RGBA_F32( size_t index ) const;
+    glm::vec4 color_RGBA_F32( std::size_t index ) const;
 
     /// Get the total number of bytes occupied by the color map
-    size_t numBytes_RGBA_F32() const;
+    std::size_t numBytes_RGBA_F32() const;
 
     /// Get a constant raw pointer to the color map RGBA 32-bit floating point data buffer.
     /// The buffer is guaranteed to have length 4 * numColors()
     const float* data_RGBA_F32() const;
+
+    /// Get the vector holding the data
+    const std::vector< glm::vec4 >& data_RGBA_asVector() const;
 
     /// Slope and intercept used to map texels to range [0.0, 1.0]:
     glm::vec2 slopeIntercept( bool inverted = false ) const;
@@ -130,7 +133,7 @@ public:
     static ImageColorMap createLinearImageColorMap(
         const glm::vec3& startColor,
         const glm::vec3& endColor,
-        size_t numSteps,
+        std::size_t numSteps,
         std::string briefName,
         std::string description,
         std::string technicalName );

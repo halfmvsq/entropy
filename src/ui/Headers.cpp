@@ -1077,14 +1077,32 @@ void renderImageHeader(
             }
             ImGui::SameLine(); helpMarker( "Select/invert the image colormap" );
 
+            auto getImageColorMapInverted = [&imgSettings] ()
+            {
+                return imgSettings.isColorMapInverted();
+            };
+
+            auto getImageColorMapContinuous = [&imgSettings] ()
+            {
+                return imgSettings.colorMapContinuous();
+            };
+
+            auto getImageColorMapLevels = [&imgSettings] ()
+            {
+                return imgSettings.colorMapQuantizationLevels();
+            };
 
             renderPaletteWindow(
-                std::string( "Select colormap for image '" + imgSettings.displayName() + "'" ).c_str(),
+                std::string( "Select colormap for image '" + imgSettings.displayName() +
+                             "' (component " + std::to_string( imgSettings.activeComponent() ) + ")" ).c_str(),
                 showImageColormapWindow,
                 getNumImageColorMaps,
                 getImageColorMap,
                 getCurrentImageColormapIndex,
                 setCurrentImageColormapIndex,
+                getImageColorMapInverted,
+                getImageColorMapContinuous,
+                getImageColorMapLevels,
                 updateImageUniforms );
 
 
@@ -1100,9 +1118,11 @@ void renderImageHeader(
                 snprintf( label, 128, "%s##cmap_%zu", cmap->name().c_str(), imageIndex );
 
                 ImGui::paletteButton(
-                    label, static_cast<int>( cmap->numColors() ),
-                    cmap->data_RGBA_F32(),
+                    label,
+                    cmap->data_RGBA_asVector(),
                     imgSettings.isColorMapInverted(),
+                    imgSettings.colorMapContinuous(),
+                    imgSettings.colorMapQuantizationLevels(),
                     ImVec2( contentWidth, height ) );
 
                 if ( ImGui::IsItemHovered() )
@@ -1132,8 +1152,10 @@ void renderImageHeader(
                 {
                     int numColorMapLevels = static_cast<int>( imgSettings.colorMapQuantizationLevels() );
 
-                    if ( mySliderS32( "Levels", &numColorMapLevels, 2, 256 ) )
+                    //if ( mySliderS32( "Levels", &numColorMapLevels, 2, 256 ) )
+                    ImGui::InputInt( "Color levels", &numColorMapLevels );
                     {
+                        numColorMapLevels = std::min( std::max( numColorMapLevels, 2 ), 256 );
                         imgSettings.setColorMapQuantizationLevels( static_cast<uint32_t>( numColorMapLevels ) );
                         updateImageUniforms();
                     }

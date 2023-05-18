@@ -127,6 +127,10 @@ const float* ImageColorMap::data_RGBA_F32() const
     return glm::value_ptr( m_colors_RGBA_F32[0] );
 }
 
+const std::vector< glm::vec4 >& ImageColorMap::data_RGBA_asVector() const
+{
+    return m_colors_RGBA_F32;
+}
 
 glm::vec2 ImageColorMap::slopeIntercept( bool inverted ) const
 {

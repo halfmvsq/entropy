@@ -8,6 +8,7 @@
 // (compared the version on Github) that allow it to work on macOS.
 #include "imgui/imgui-filebrowser/imfilebrowser.h"
 
+#include <glm/glm.hpp>
 
 // On Apple platforms, we must use the alternative ghc::filesystem,
 // because it is not fully implemented or supported prior to macOS 10.15.
@@ -41,11 +42,12 @@ namespace ImGui
  * @note Minor modifications have been made to this function for Entropy
  */
 bool paletteButton(
-        const char* label,
-        int numCol,
-        const float* buff,
-        bool inverted,
-        const ImVec2& size )
+    const char* label,
+    const std::vector<glm::vec4>& colors,
+    bool inverted,
+    bool continuous,
+    int quantizationLevels,
+    const ImVec2& size )
 {
     ImGuiWindow* window = GetCurrentWindow();
 
@@ -58,10 +60,10 @@ bool paletteButton(
     const ImGuiID id = window->GetID( label );
 
     const float lineH = ( window->DC.CurrLineSize.y <= 0 )
-            ? ( ( window->DC.PrevLineSize.y <= 0 )
-                ? size.y
-                : window->DC.PrevLineSize.y )
-            : ( window->DC.CurrLineSize.y );
+         ? ( ( window->DC.PrevLineSize.y <= 0 )
+            ? size.y
+            : window->DC.PrevLineSize.y )
+        : ( window->DC.CurrLineSize.y );
 
     const ImRect bb( ImVec2( window->DC.CursorPos.x + style.FramePadding.x,
                              window->DC.CursorPos.y ),
@@ -80,68 +82,93 @@ bool paletteButton(
 
     ImDrawList* drawList = ImGui::GetWindowDrawList();
 
-    const int N = ( inverted ? 4 * numCol : 0 );
-    const int m = ( inverted ? -1 : 1 );
+//    const int startIndex = ( inverted ? colors.size() - 1 : 0 );
+//    const int dir = ( inverted ? -1 : 1 );
 
+    /*
     auto renderLines = [&] ( const float alpha )
     {
-        const float step = static_cast<float>( numCol ) / static_cast<float>( width );
+        const float step = static_cast<float>( colors.size() ) / static_cast<float>( width );
 
         for ( int i = 0; i < width; ++i )
         {
-            const float ii = static_cast<float>( i );
-            const int idx = N + m * 4 * i * static_cast<int>( step );
+            // 0 to numColors - 1
+            int idx = startIndex + dir * i * static_cast<int>( step );
 
-            drawList->AddLine( ImVec2( posMin.x + ii, posMin.y ),
-                               ImVec2( posMin.x + ii, posMax.y ),
-                               IM_COL32( 255.0f * buff[idx],
-                                         255.0f * buff[idx + 1],
-                                         255.0f * buff[idx + 2],
-                                         255.0f * alpha * buff[idx + 3] ) );
+//            if ( ! continuous )
+//            {
+//                const float L = static_cast<float>(quantizationLevels);
+
+//                float idx_cont = float(idx) / float( 4 * ( numColors - 1 ) );
+//                idx_cont = std::min( std::max( std::floor( L * idx_cont ) / (L - 1.0f), 0.0f ), 1.0f );
+
+//                idx = static_cast<int>( idx_cont * 4*(numColors-1) );
+//            }
+
+            drawList->AddLine(
+                ImVec2( posMin.x + static_cast<float>(i), posMin.y ),
+                ImVec2( posMin.x + static_cast<float>(i), posMax.y ),
+                IM_COL32( 255.0f * colors[idx].r,
+                          255.0f * colors[idx].g,
+                          255.0f * colors[idx].b,
+                          255.0f * alpha * colors[idx].a ) );
         }
     };
+*/
 
     auto renderFilledRects = [&] ( const float alpha )
     {
-        const float step = static_cast<float>( width ) / static_cast<float>( numCol );
+        const float step = static_cast<float>( width ) / static_cast<float>( colors.size() );
 
-        for ( int i = 0; i < numCol; ++i )
+        for ( std::size_t i = 0; i < colors.size(); ++i )
         {
-            const float ii = static_cast<float>( i );
-            const int idx = N + m * 4 * i;
+            const float minX = posMin.x + static_cast<float>(i) * step;
+
+            std::size_t index = i;
+
+            if ( ! continuous )
+            {
+                // Index normalized from 0 to 1:
+                const float normIndex = static_cast<float>(i) / static_cast<float>( colors.size() - 1 );
+
+                // Index quantized from 0 to size - 1:
+                index = static_cast<std::size_t>(
+                    std::min( std::max( std::floor( quantizationLevels * normIndex ) / ( quantizationLevels - 1 ), 0.0f ), 1.0f ) *
+                    ( colors.size() - 1 ) );
+            }
+
+            if ( inverted )
+            {
+                index = colors.size() - 1 - index;
+            }
 
             drawList->AddRectFilled(
-                        ImVec2( posMin.x + ii * step, posMin.y ),
-                        ImVec2( posMin.x + ( ii + 1.0f ) * step, posMax.y ),
-                        IM_COL32( 255.0f * buff[idx + 0],
-                                  255.0f * buff[idx + 1],
-                                  255.0f * buff[idx + 2],
-                                  255.0f * alpha * buff[idx + 3] ) );
+                ImVec2( minX, posMin.y ),
+                ImVec2( minX + step, posMax.y ),
+
+                IM_COL32( 255.0f * colors[index].r,
+                          255.0f * colors[index].g,
+                          255.0f * colors[index].b,
+                          255.0f * alpha * colors[index].a ) );
         }
     };
 
-    if ( numCol / 2 >= width )
-    {
-        renderLines( ImGui::GetStyle().Alpha );
-    }
-    else
-    {
-        renderFilledRects( ImGui::GetStyle().Alpha );
-    }
+    renderFilledRects( ImGui::GetStyle().Alpha );
+    drawList->AddRect( posMin, posMax, IM_COL32( 128.0f, 128.0f, 128.0f, 255.0f ), 0.0f, 0, 0.5f );
 
-    return false;
+    return true;
 }
 
 
 std::optional< std::string > renderFileButtonDialogAndWindow(
-        const char* buttonText,
-        const char* dialogTitle,
-        const std::vector< std::string > dialogFilters )
+    const char* buttonText,
+    const char* dialogTitle,
+    const std::vector< std::string > dialogFilters )
 {
     static ImGui::FileBrowser saveDialog(
-                ImGuiFileBrowserFlags_EnterNewFilename |
-                ImGuiFileBrowserFlags_CloseOnEsc |
-                ImGuiFileBrowserFlags_CreateNewDir );
+        ImGuiFileBrowserFlags_EnterNewFilename |
+        ImGuiFileBrowserFlags_CloseOnEsc |
+        ImGuiFileBrowserFlags_CreateNewDir );
 
     saveDialog.SetTitle( dialogTitle );
     saveDialog.SetTypeFilters( dialogFilters );

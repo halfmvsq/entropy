@@ -28,13 +28,13 @@
 
 
 void renderActiveImageSelectionCombo(
-        size_t numImages,
-        const std::function< std::pair<const char*, const char* >( size_t index ) >& getImageDisplayAndFileName,
-        const std::function< size_t (void) >& getActiveImageIndex,
-        const std::function< void (size_t) >& setActiveImageIndex,
-        bool showText )
+    size_t numImages,
+    const std::function< std::pair<const char*, const char* >( std::size_t index ) >& getImageDisplayAndFileName,
+    const std::function< std::size_t (void) >& getActiveImageIndex,
+    const std::function< void ( std::size_t ) >& setActiveImageIndex,
+    bool showText )
 {
-    const size_t activeIndex = getActiveImageIndex();
+    const std::size_t activeIndex = getActiveImageIndex();
 
     if ( activeIndex >= numImages )
     {
@@ -51,7 +51,7 @@ void renderActiveImageSelectionCombo(
 //    ImGui::PushItemWidth( -1 );
     if ( ImGui::BeginCombo( nameString.c_str(), getImageDisplayAndFileName( activeIndex ).first ) )
     {
-        for ( size_t i = 0; i < numImages; ++i )
+        for ( std::size_t i = 0; i < numImages; ++i )
         {
             const auto displayAndFileName = getImageDisplayAndFileName( i );
             const bool isSelected = ( i == activeIndex );
@@ -78,23 +78,23 @@ void renderActiveImageSelectionCombo(
 
 
 void renderSegLabelsChildWindow(
-        size_t tableIndex,
-        ParcellationLabelTable* labelTable,
-        const std::function< void ( size_t tableIndex ) >& updateLabelColorTableTexture,
-        const std::function< void ( size_t labelIndex ) >& moveCrosshairsToSegLabelCentroid )
+    std::size_t tableIndex,
+    ParcellationLabelTable* labelTable,
+    const std::function< void ( std::size_t tableIndex ) >& updateLabelColorTableTexture,
+    const std::function< void ( std::size_t labelIndex ) >& moveCrosshairsToSegLabelCentroid )
 {
     static const std::string sk_showAll = std::string( ICON_FK_EYE ) + " Show all";
     static const std::string sk_hideAll = std::string( ICON_FK_EYE_SLASH ) + " Hide all";
     static const std::string sk_addNew = std::string( ICON_FK_PLUS ) + " Add new";
 
     static const ImGuiColorEditFlags sk_colorEditFlags =
-            ImGuiColorEditFlags_NoInputs |
-            ImGuiColorEditFlags_AlphaPreviewHalf |
-            ImGuiColorEditFlags_AlphaBar |
-            ImGuiColorEditFlags_Uint8 |
-            ImGuiColorEditFlags_DisplayRGB |
-            ImGuiColorEditFlags_DisplayHSV |
-            ImGuiColorEditFlags_DisplayHex;
+        ImGuiColorEditFlags_NoInputs |
+        ImGuiColorEditFlags_AlphaPreviewHalf |
+        ImGuiColorEditFlags_AlphaBar |
+        ImGuiColorEditFlags_Uint8 |
+        ImGuiColorEditFlags_DisplayRGB |
+        ImGuiColorEditFlags_DisplayHSV |
+        ImGuiColorEditFlags_DisplayHex;
 
     if ( ! labelTable )
     {
@@ -102,9 +102,9 @@ void renderSegLabelsChildWindow(
     }
 
     const bool childVisible = ImGui::BeginChild(
-                "##labelChild", ImVec2( 0.0f, 250.0f ), true,
-                ImGuiWindowFlags_MenuBar |
-                ImGuiWindowFlags_HorizontalScrollbar );
+        "##labelChild", ImVec2( 0.0f, 250.0f ), true,
+        ImGuiWindowFlags_MenuBar |
+            ImGuiWindowFlags_HorizontalScrollbar );
 
     if ( ! childVisible )
     {
@@ -127,7 +127,7 @@ void renderSegLabelsChildWindow(
 
         if ( ImGui::MenuItem( sk_showAll.c_str() ) )
         {
-            for ( size_t i = 0; i < labelTable->numLabels(); ++i )
+            for ( std::size_t i = 0; i < labelTable->numLabels(); ++i )
             {
                 labelTable->setVisible( i, true );
             }
@@ -136,7 +136,7 @@ void renderSegLabelsChildWindow(
 
         if ( ImGui::MenuItem( sk_hideAll.c_str() ) )
         {
-            for ( size_t i = 0; i < labelTable->numLabels(); ++i )
+            for ( std::size_t i = 0; i < labelTable->numLabels(); ++i )
             {
                 labelTable->setVisible( i, false );
             }
@@ -147,7 +147,7 @@ void renderSegLabelsChildWindow(
     }
 
 
-    for ( size_t i = 0; i < labelTable->numLabels(); ++i )
+    for ( std::size_t i = 0; i < labelTable->numLabels(); ++i )
     {
         char labelIndexBuffer[32];
         snprintf( labelIndexBuffer, 32, "%03zu", i );
@@ -220,13 +220,16 @@ void renderSegLabelsChildWindow(
 
 
 void renderPaletteWindow(
-        const char* name,
-        bool* showPaletteWindow,
-        const std::function< size_t (void) >& getNumImageColorMaps,
-        const std::function< const ImageColorMap* ( size_t cmapIndex ) >& getImageColorMap,
-        const std::function< size_t (void) >& getCurrentImageColormapIndex,
-        const std::function< void ( size_t cmapIndex ) >& setCurrentImageColormapIndex,
-        const std::function< void ( void ) >& updateImageUniforms )
+    const char* name,
+    bool* showPaletteWindow,
+    const std::function< std::size_t (void) >& getNumImageColorMaps,
+    const std::function< const ImageColorMap* ( std::size_t cmapIndex ) >& getImageColorMap,
+    const std::function< std::size_t (void) >& getCurrentImageColorMapIndex,
+    const std::function< void ( std::size_t cmapIndex ) >& setCurrentImageColormapIndex,
+    const std::function< bool (void) >& getImageColorMapInverted,
+    const std::function< bool (void) >& getImageColorMapContinuous,
+    const std::function< int (void) >& getImageColorMapLevels,
+    const std::function< void ( void ) >& updateImageUniforms )
 {
     /// @todo model this after the Example: Property editor in ImGui
 
@@ -248,6 +251,28 @@ void renderPaletteWindow(
         return;
     }
 
+    std::string infoText( "Color maps are " );
+
+    if ( getImageColorMapInverted() && ! getImageColorMapContinuous() )
+    {
+        infoText += "inverted and quantized into " + std::to_string( getImageColorMapLevels() ) + " discrete levels for this image.";
+    }
+    else if ( getImageColorMapInverted() )
+    {
+        infoText += "inverted for this image.";
+    }
+    else if ( ! getImageColorMapContinuous() )
+    {
+        infoText += "quantized into " + std::to_string( getImageColorMapLevels() ) + " discrete levels for this image.";
+    }
+    else
+    {
+        infoText += "continuous for this image.";
+    }
+
+    ImGui::Text( "%s", infoText.c_str() );
+    ImGui::Spacing();
+
     const auto& io = ImGui::GetIO();
     const auto& style = ImGui::GetStyle();
 
@@ -259,7 +284,7 @@ void renderPaletteWindow(
     ImGui::Columns( 2, "Colormaps", false );
     ImGui::SetColumnWidth( 0, sk_labelWidth * contentWidth );
 
-    for ( size_t i = 0; i < getNumImageColorMaps(); ++i )
+    for ( std::size_t i = 0; i < getNumImageColorMaps(); ++i )
     {
         ImGui::PushID( static_cast<int>( i ) );
         {
@@ -270,7 +295,7 @@ void renderPaletteWindow(
             //                    ImGui::AlignTextToFramePadding();
 
             if ( ImGui::Selectable( cmap->name().c_str(),
-                                    ( getCurrentImageColormapIndex() == i ),
+                                    ( getCurrentImageColorMapIndex() == i ),
                                     ImGuiSelectableFlags_SpanAllColumns ) )
             {
                 setCurrentImageColormapIndex( i );
@@ -278,8 +303,12 @@ void renderPaletteWindow(
             }
 
             ImGui::NextColumn();
-            ImGui::paletteButton( cmap->name().c_str(), static_cast<int>( cmap->numColors() ),
-                                  cmap->data_RGBA_F32(), false, buttonSize );
+
+            ImGui::paletteButton(
+                cmap->name().c_str(),
+                cmap->data_RGBA_asVector(),
+                getImageColorMapInverted(), getImageColorMapContinuous(), getImageColorMapLevels(),
+                buttonSize );
 
             if ( ImGui::IsItemHovered() )
             {

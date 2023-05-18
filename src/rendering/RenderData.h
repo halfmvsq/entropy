@@ -250,6 +250,12 @@ struct RenderData
         // Is the color map inverted?
         bool m_invertCmap = false;
 
+        // Is the color map continuous?
+        bool m_cmapContinuous = true;
+
+        // Number of color map quantization levels
+        int m_cmapQuantizationLevels = 8;
+
         // Should the metric only be computed inside the masked region?
         bool m_doMasking = false;
 
