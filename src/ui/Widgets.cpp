@@ -253,21 +253,27 @@ void renderPaletteWindow(
 
     std::string infoText( "Color maps are " );
 
-    if ( getImageColorMapInverted() && ! getImageColorMapContinuous() )
+    if ( getImageColorMapInverted() )
     {
-        infoText += "inverted and quantized into " + std::to_string( getImageColorMapLevels() ) + " discrete levels for this image.";
-    }
-    else if ( getImageColorMapInverted() )
-    {
-        infoText += "inverted for this image.";
-    }
-    else if ( ! getImageColorMapContinuous() )
-    {
-        infoText += "quantized into " + std::to_string( getImageColorMapLevels() ) + " discrete levels for this image.";
+        if ( ! getImageColorMapContinuous() )
+        {
+            infoText += "inverted and quantized into " + std::to_string( getImageColorMapLevels() ) + " discrete levels for this image component.";
+        }
+        else
+        {
+            infoText += "inverted and continnuous for this image component.";
+        }
     }
     else
     {
-        infoText += "continuous for this image.";
+        if ( ! getImageColorMapContinuous() )
+        {
+            infoText += "quantized into " + std::to_string( getImageColorMapLevels() ) + " discrete levels for this image component.";
+        }
+        else
+        {
+            infoText += "continuous for this image component.";
+        }
     }
 
     ImGui::Text( "%s", infoText.c_str() );
