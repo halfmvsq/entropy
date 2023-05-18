@@ -130,9 +130,8 @@ const float* ImageColorMap::data_RGBA_F32() const
 
 glm::vec2 ImageColorMap::slopeIntercept( bool inverted ) const
 {
-    const float N = static_cast<float>( numColors() );
-    const float slope = ( inverted ? -( N - 1.0f ) / N : ( N - 1.0f ) / N );
-    const float intercept = ( inverted ? ( N - 0.5f ) / N : 0.5f / N );
+    const float slope = inverted ? -1.0f : 1.0f;
+    const float intercept = inverted ? 1.0f : 0.0f;
     return glm::vec2{ slope, intercept };
 }
 

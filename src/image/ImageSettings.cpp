@@ -10,10 +10,10 @@
 
 
 ImageSettings::ImageSettings(
-        std::string displayName,
-        uint32_t numComponents,
-        ComponentType componentType,
-        std::vector< ComponentStats<double> > componentStats )
+    std::string displayName,
+    uint32_t numComponents,
+    ComponentType componentType,
+    std::vector< ComponentStats<double> > componentStats )
     :
     m_displayName( std::move( displayName ) ),
     m_globalVisibility( true ),
@@ -353,8 +353,8 @@ void ImageSettings::setEdgeOpacity( double opacity ) { setEdgeOpacity( m_activeC
 double ImageSettings::edgeOpacity( uint32_t i ) const { return m_componentSettings[i].m_edgeOpacity; }
 double ImageSettings::edgeOpacity() const { return edgeOpacity( m_activeComponent ); }
 
-void ImageSettings::setColorMapIndex( uint32_t i, size_t index ) { m_componentSettings[i].m_colorMapIndex = index; }
-void ImageSettings::setColorMapIndex( size_t index ) { setColorMapIndex( m_activeComponent, index ); }
+void ImageSettings::setColorMapIndex( uint32_t i, std::size_t index ) { m_componentSettings[i].m_colorMapIndex = index; }
+void ImageSettings::setColorMapIndex( std::size_t index ) { setColorMapIndex( m_activeComponent, index ); }
 
 size_t ImageSettings::colorMapIndex( uint32_t i ) const { return m_componentSettings[i].m_colorMapIndex; }
 size_t ImageSettings::colorMapIndex() const { return colorMapIndex( m_activeComponent ); }
@@ -365,8 +365,20 @@ void ImageSettings::setColorMapInverted( bool inverted ) { setColorMapInverted( 
 bool ImageSettings::isColorMapInverted( uint32_t i ) const { return m_componentSettings[i].m_colorMapInverted; }
 bool ImageSettings::isColorMapInverted() const { return isColorMapInverted( m_activeComponent ); }
 
-void ImageSettings::setLabelTableIndex( uint32_t i, size_t index ) { m_componentSettings[i].m_labelTableIndex = index; }
-void ImageSettings::setLabelTableIndex( size_t index ) { setLabelTableIndex( m_activeComponent, index ); }
+void ImageSettings::setColorMapQuantization( uint32_t i, uint32_t levels ) { m_componentSettings[i].m_numColorMapLevels = levels; }
+void ImageSettings::setColorMapQuantizationLevels( uint32_t levels ) { setColorMapQuantization( m_activeComponent, levels ); }
+
+size_t ImageSettings::colorMapQuantizationLevels( uint32_t i ) const { return m_componentSettings[i].m_numColorMapLevels; }
+size_t ImageSettings::colorMapQuantizationLevels() const { return colorMapQuantizationLevels( m_activeComponent ); }
+
+void ImageSettings::setColorMapContinuous( uint32_t i, bool continuous ) { m_componentSettings[i].m_colorMapContinuous = continuous; }
+void ImageSettings::setColorMapContinuous( bool continuous ) { setColorMapContinuous( m_activeComponent, continuous ); }
+
+bool ImageSettings::colorMapContinuous( uint32_t i ) const { return m_componentSettings[i].m_colorMapContinuous; }
+bool ImageSettings::colorMapContinuous() const { return colorMapContinuous( m_activeComponent ); }
+
+void ImageSettings::setLabelTableIndex( uint32_t i, std::size_t index ) { m_componentSettings[i].m_labelTableIndex = index; }
+void ImageSettings::setLabelTableIndex( std::size_t index ) { setLabelTableIndex( m_activeComponent, index ); }
 
 size_t ImageSettings::labelTableIndex( uint32_t i ) const { return m_componentSettings[i].m_labelTableIndex; }
 size_t ImageSettings::labelTableIndex() const { return labelTableIndex( m_activeComponent ); }

@@ -291,13 +291,13 @@ public:
     double edgeOpacity() const;
 
 
-    /// Get the color map index
-    void setColorMapIndex( uint32_t component, size_t index );
-    void setColorMapIndex( size_t index );
+    /// Set the color map index
+    void setColorMapIndex( uint32_t component, std::size_t index );
+    void setColorMapIndex( std::size_t index );
 
     /// Get the color map index
-    size_t colorMapIndex( uint32_t component ) const;
-    size_t colorMapIndex() const;
+    std::size_t colorMapIndex( uint32_t component ) const;
+    std::size_t colorMapIndex() const;
 
 
     // Set whether the color map is inverted
@@ -309,13 +309,31 @@ public:
     bool isColorMapInverted() const;
 
 
-    /// Get the label table index
-    void setLabelTableIndex( uint32_t component, size_t index );
-    void setLabelTableIndex( size_t index );
+    /// Set the number of color map quantization levels
+    void setColorMapQuantization( uint32_t component, uint32_t levels );
+    void setColorMapQuantizationLevels( uint32_t levels );
+
+    /// Get the number of color map quantization levels
+    std::size_t colorMapQuantizationLevels( uint32_t component ) const;
+    std::size_t colorMapQuantizationLevels() const;
+
+
+    /// Set whether the color map is discrete or continuous
+    void setColorMapContinuous( uint32_t component, bool continuous );
+    void setColorMapContinuous( bool continuous );
+
+    /// Get whether the color map is discrete or continuous
+    bool colorMapContinuous( uint32_t component ) const;
+    bool colorMapContinuous() const;
+
 
     /// Get the label table index
-    size_t labelTableIndex( uint32_t component ) const;
-    size_t labelTableIndex() const;
+    void setLabelTableIndex( uint32_t component, std::size_t index );
+    void setLabelTableIndex( std::size_t index );
+
+    /// Get the label table index
+    std::size_t labelTableIndex( uint32_t component ) const;
+    std::size_t labelTableIndex() const;
 
 
     /// Set the interpolation mode for a given component
@@ -459,10 +477,14 @@ private:
         glm::vec3 m_edgeColor = glm::vec3{0.0f}; //!< Edge color (used if not rendering edges using colormap)
         double m_edgeOpacity = 0.0; //!< Edge opacity: only applies when shown as an overlay atop the image
 
-        size_t m_colorMapIndex = 0; //!< Color map index
+        std::size_t m_colorMapIndex = 0; //!< Color map index
         bool m_colorMapInverted = false; //!< Whether the color map is inverted
 
-        size_t m_labelTableIndex = 0; //!< Label table index (for segmentation images only)
+
+        bool m_colorMapContinuous = true; //!< Whether the color map is continuous or discrete
+        uint32_t m_numColorMapLevels = 8; //!< Number of quantization levels
+
+        std::size_t m_labelTableIndex = 0; //!< Label table index (for segmentation images only)
 
         /// Interpolation mode
         InterpolationMode m_interpolationMode = InterpolationMode::NearestNeighbor;

@@ -40,6 +40,7 @@ uniform samplerBuffer segLabelCmapTex; // Texutre unit 3: label color map (pre-m
 uniform vec2 imgSlopeIntercept;
 
 uniform vec2 imgCmapSlopeIntercept; // Slopes and intercepts for the image color maps
+uniform int imgCmapQuantLevels; // Number of quantization levels
 
 uniform vec2 imgMinMax; // Min and max image values
 uniform vec2 imgThresholds; // Image lower and upper thresholds, mapped to OpenGL texture intensity
@@ -436,13 +437,13 @@ void main()
     float segAlpha = segOpacity * segInterpOpacity * getSegInteriorAlpha( seg ) * float(segMask);
 
     // Look up image color and apply alpha:
-//    float cmapSize = textureSize(imgCmapTex, 0);
+    // Quantize the color map.
+    float cmapCoord = mix( floor( float(imgCmapQuantLevels) * imgNorm) / float(imgCmapQuantLevels - 1), imgNorm,
+        float( 0 == imgCmapQuantLevels ) );
 
-    float imgNormWindowed = imgCmapSlopeIntercept[0] * imgNorm + imgCmapSlopeIntercept[1];
-//    imgNormWindowed = floor(4.0 * imgNormWindowed) / 4.0;
-//    imgNormWindowed = 0.5 / cmapSize + (cmapSize - 1.0) * imgNormWindowed / cmapSize; // convert to [0.5 / N, (N - 0.5) / N] range
+    cmapCoord = imgCmapSlopeIntercept[0] * cmapCoord + imgCmapSlopeIntercept[1];
 
-    vec4 imgLayer = texture( imgCmapTex, imgNormWindowed ) * imgAlpha;
+    vec4 imgLayer = texture( imgCmapTex, cmapCoord ) * imgAlpha;
 
     // Look up segmentation color and apply:
     vec4 segLayer = computeLabelColor( int(seg) ) * segAlpha;

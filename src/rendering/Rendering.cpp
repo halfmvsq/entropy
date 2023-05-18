@@ -879,6 +879,8 @@ void Rendering::updateImageUniforms( const uuids::uuid& imageUid )
 
     const auto& imgSettings = img->settings();
 
+    uniforms.cmapQuantLevels = imgSettings.colorMapContinuous() ? 0 : imgSettings.colorMapQuantizationLevels();
+
     if ( const auto cmapUid = m_appData.imageColorMapUid( imgSettings.colorMapIndex() ) )
     {
         if ( const ImageColorMap* map = m_appData.imageColorMap( *cmapUid ) )
@@ -1632,6 +1634,7 @@ void Rendering::renderAllImages(
                 }
 
                 P->setUniform( "imgCmapSlopeIntercept", U.cmapSlopeIntercept );
+                P->setUniform( "imgCmapQuantLevels", U.cmapQuantLevels );
                 P->setUniform( "imgThresholds", U.thresholds );
                 P->setUniform( "imgMinMax", U.minMax );
 
@@ -2285,6 +2288,7 @@ bool Rendering::createImageProgram( GLShaderProgram& program )
 
         fsUniforms.insertUniform( "imgSlopeIntercept", UniformType::Vec2, sk_zeroVec2 );
         fsUniforms.insertUniform( "imgCmapSlopeIntercept", UniformType::Vec2, sk_zeroVec2 );
+        fsUniforms.insertUniform( "imgCmapQuantLevels", UniformType::Int, 0 );
         fsUniforms.insertUniform( "imgMinMax", UniformType::Vec2, sk_zeroVec2 );
         fsUniforms.insertUniform( "imgThresholds", UniformType::Vec2, sk_zeroVec2 );
         fsUniforms.insertUniform( "imgOpacity", UniformType::Float, 0.0f );
@@ -2483,6 +2487,7 @@ bool Rendering::createXrayProgram( GLShaderProgram& program )
 
         fsUniforms.insertUniform( "imgSlope_native_T_texture", UniformType::Float, 1.0f );
         fsUniforms.insertUniform( "imgCmapSlopeIntercept", UniformType::Vec2, sk_zeroVec2 );
+//        fsUniforms.insertUniform( "imgCmapQuantLevels", UniformType::Int, 0 );
         fsUniforms.insertUniform( "imgMinMax", UniformType::Vec2, sk_zeroVec2 );
         fsUniforms.insertUniform( "imgThresholds", UniformType::Vec2, sk_zeroVec2 );
         fsUniforms.insertUniform( "slopeInterceptWindowLevel", UniformType::Vec2, sk_zeroVec2 );
@@ -2676,6 +2681,7 @@ bool Rendering::createEdgeProgram( GLShaderProgram& program )
         fsUniforms.insertUniform( "imgSlopeIntercept", UniformType::Vec2, sk_zeroVec2 );
         fsUniforms.insertUniform( "imgSlopeInterceptLargest", UniformType::Vec2, sk_zeroVec2 );
         fsUniforms.insertUniform( "imgCmapSlopeIntercept", UniformType::Vec2, sk_zeroVec2 );
+        fsUniforms.insertUniform( "imgCmapQuantLevels", UniformType::Int, 0 );
         fsUniforms.insertUniform( "imgMinMax", UniformType::Vec2, sk_zeroVec2 );
         fsUniforms.insertUniform( "imgThresholds", UniformType::Vec2, sk_zeroVec2 );
         fsUniforms.insertUniform( "imgOpacity", UniformType::Float, 0.0f );

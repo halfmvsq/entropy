@@ -120,12 +120,6 @@ serialize::EntropyProject& AppData::project()
 void AppData::loadImageColorMaps()
 {
     // First load the default linears colormaps
-
-    // This colormap has two colors (black, white)
-//    const auto defaultGreyMap1Uid = generateRandomUuid();
-//    m_imageColorMaps.emplace( defaultGreyMap1Uid, ImageColorMap::createDefaultGreyscaleImageColorMap( 2 ) );
-//    m_imageColorMapUidsOrdered.push_back( defaultGreyMap1Uid );
-
     static constexpr std::size_t sk_numSteps = 256;
 
     const glm::vec3 black( 0.0f, 0.0f, 0.0f );
@@ -145,41 +139,50 @@ void AppData::loadImageColorMaps()
     const auto cyanMapUid = generateRandomUuid();
     const auto magentaMapUid = generateRandomUuid();
 
-    m_imageColorMaps.emplace(
-                greyMapUid, ImageColorMap::createLinearImageColorMap(
-                    black, white, sk_numSteps, "Linear grey",
-                    "Linear grey", "linear_grey_0-100_c0_n256" ) );
+//    const auto discreteMapUid = generateRandomUuid();
+//    m_imageColorMaps.emplace(
+//        discreteMapUid, ImageColorMap(
+//                            "discrete", "discrete", "discrete",
+//            {red, green, blue, yellow} ) );
+//                                      //{black, red, green, blue, yellow, cyan, magenta, white} ) );
+
 
     m_imageColorMaps.emplace(
-                redMapUid, ImageColorMap::createLinearImageColorMap(
-                    black, red, sk_numSteps, "Linear red",
-                    "Linear red", "linear_red_0-100_c0_n256" ) );
+        greyMapUid, ImageColorMap::createLinearImageColorMap(
+            black, white, sk_numSteps, "Linear grey",
+            "Linear grey", "linear_grey_0-100_c0_n256" ) );
 
     m_imageColorMaps.emplace(
-                greenMapUid, ImageColorMap::createLinearImageColorMap(
-                    black, green, sk_numSteps, "Linear green",
-                    "Linear green", "linear_green_0-100_c0_n256" ) );
+        redMapUid, ImageColorMap::createLinearImageColorMap(
+            black, red, sk_numSteps, "Linear red",
+            "Linear red", "linear_red_0-100_c0_n256" ) );
 
     m_imageColorMaps.emplace(
-                blueMapUid, ImageColorMap::createLinearImageColorMap(
-                    black, blue, sk_numSteps, "Linear blue",
-                    "Linear blue", "linear_blue_0-100_c0_n256" ) );
+        greenMapUid, ImageColorMap::createLinearImageColorMap(
+            black, green, sk_numSteps, "Linear green",
+            "Linear green", "linear_green_0-100_c0_n256" ) );
 
     m_imageColorMaps.emplace(
-                yellowMapUid, ImageColorMap::createLinearImageColorMap(
-                    black, yellow, sk_numSteps, "Linear yellow",
-                    "Linear yellow", "linear_yellow_0-100_c0_n256" ) );
+        blueMapUid, ImageColorMap::createLinearImageColorMap(
+            black, blue, sk_numSteps, "Linear blue",
+            "Linear blue", "linear_blue_0-100_c0_n256" ) );
 
     m_imageColorMaps.emplace(
-                cyanMapUid, ImageColorMap::createLinearImageColorMap(
-                    black, cyan, sk_numSteps, "Linear cyan",
-                    "Linear cyan", "linear_cyan_0-100_c0_n256" ) );
+        yellowMapUid, ImageColorMap::createLinearImageColorMap(
+            black, yellow, sk_numSteps, "Linear yellow",
+            "Linear yellow", "linear_yellow_0-100_c0_n256" ) );
 
     m_imageColorMaps.emplace(
-                magentaMapUid, ImageColorMap::createLinearImageColorMap(
-                    black, magenta, sk_numSteps, "Linear magenta",
-                    "Linear magenta", "linear_magenta_0-100_c0_n256" ) );
+        cyanMapUid, ImageColorMap::createLinearImageColorMap(
+            black, cyan, sk_numSteps, "Linear cyan",
+            "Linear cyan", "linear_cyan_0-100_c0_n256" ) );
 
+    m_imageColorMaps.emplace(
+        magentaMapUid, ImageColorMap::createLinearImageColorMap(
+            black, magenta, sk_numSteps, "Linear magenta",
+            "Linear magenta", "linear_magenta_0-100_c0_n256" ) );
+
+//    m_imageColorMapUidsOrdered.push_back( discreteMapUid );
     m_imageColorMapUidsOrdered.push_back( greyMapUid );
     m_imageColorMapUidsOrdered.push_back( redMapUid );
     m_imageColorMapUidsOrdered.push_back( greenMapUid );

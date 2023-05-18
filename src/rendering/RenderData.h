@@ -32,6 +32,7 @@ struct RenderData
     struct ImageUniforms
     {
         glm::vec2 cmapSlopeIntercept{ 1.0f, 0.0f }; // Slope and intercept for image colormap
+        int cmapQuantLevels = 0; // Number of image colormap quantization levels
 
         glm::mat4 imgTexture_T_world{ 1.0f }; // Mapping from World space to image Texture space
         glm::mat4 world_T_imgTexture{ 1.0f }; // Mapping from image Texture space to World space

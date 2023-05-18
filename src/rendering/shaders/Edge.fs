@@ -24,6 +24,7 @@ uniform samplerBuffer segLabelCmapTex; // Texutre unit 3: label color map (pre-m
 uniform vec2 imgSlopeIntercept; // Slopes and intercepts for image normalization and window-leveling
 uniform vec2 imgSlopeInterceptLargest; // Slopes and intercepts for image normalization
 uniform vec2 imgCmapSlopeIntercept; // Slopes and intercepts for the image color maps
+uniform int imgCmapQuantLevels; // Number of quantization levels
 
 uniform vec2 imgMinMax; // Min and max image values
 uniform vec2 imgThresholds; // Image lower and upper thresholds, mapped to OpenGL texture intensity
@@ -314,7 +315,12 @@ void main()
 
     // Apply color map to the image intensity:
     // Disable the image color if overlayEdges is false.
-    vec4 imageLayer = alpha * float(overlayEdges) * texture( imgCmapTex, imgCmapSlopeIntercept[0] * imgNorm + imgCmapSlopeIntercept[1] );
+
+    // Quantize the color map.
+    float cmapCoord = mix( floor( float(imgCmapQuantLevels) * imgNorm) / float(imgCmapQuantLevels - 1), imgNorm, float( 0 == imgCmapQuantLevels ) );
+    cmapCoord = imgCmapSlopeIntercept[0] * cmapCoord + imgCmapSlopeIntercept[1];
+
+    vec4 imageLayer = alpha * float(overlayEdges) * texture( imgCmapTex, cmapCoord );
 
     // Apply color map to gradient magnitude:
     vec4 gradColormap = texture( imgCmapTex, imgCmapSlopeIntercept[0] * gradMag + imgCmapSlopeIntercept[1] );

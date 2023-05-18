@@ -352,7 +352,7 @@ void renderImageHeader(
     const std::function< void(void) >& updateAllImageUniforms,
     const std::function< void(void) >& updateImageUniforms,
     const std::function< void(void) >& updateImageInterpolationMode,
-    const std::function< void ( std::size_t cmapIndex ) >& updateImageColorMapInterpolationMode,
+    const std::function< void ( std::size_t cmapIndex ) >& /*updateImageColorMapInterpolationMode*/,
     const std::function< size_t(void) >& getNumImageColorMaps,
     const std::function< ImageColorMap* ( size_t cmapIndex ) >& getImageColorMap,
     const std::function< bool ( const uuids::uuid& imageUid ) >& moveImageBackward,
@@ -977,6 +977,53 @@ void renderImageHeader(
         ImGui::Spacing();
 
 
+
+        ImGui::Text( "Auto window: " ); ImGui::SameLine();
+
+        const auto& stats = imgSettings.componentStatistics( imgSettings.activeComponent() );
+
+        if ( ImGui::Button( "Max" ) )
+        {
+            imgSettings.setWindowLow( stats.m_minimum );
+            imgSettings.setWindowHigh( stats.m_maximum );
+            updateImageUniforms();
+        }
+        ImGui::SameLine();
+
+        if ( ImGui::Button( "99\%" ) )
+        {
+            imgSettings.setWindowLow( stats.m_quantiles[10] );
+            imgSettings.setWindowHigh( stats.m_quantiles[990] );
+            updateImageUniforms();
+        }
+        ImGui::SameLine();
+
+        if ( ImGui::Button( "98\%" ) )
+        {
+            imgSettings.setWindowLow( stats.m_quantiles[20] );
+            imgSettings.setWindowHigh( stats.m_quantiles[980] );
+            updateImageUniforms();
+        }
+        ImGui::SameLine();
+
+        if ( ImGui::Button( "95\%" ) )
+        {
+            imgSettings.setWindowLow( stats.m_quantiles[50] );
+            imgSettings.setWindowHigh( stats.m_quantiles[950] );
+            updateImageUniforms();
+        }
+        ImGui::SameLine();
+
+        if ( ImGui::Button( "90\%" ) )
+        {
+            imgSettings.setWindowLow( stats.m_quantiles[100] );
+            imgSettings.setWindowHigh( stats.m_quantiles[900] );
+            updateImageUniforms();
+        }
+        ImGui::SameLine(); helpMarker( "Set window based on percentiles of the image histogram" );
+
+
+
         auto getImageInterpMode = [&imgSettings] ()
         {
             return ( imgSettings.displayImageAsColor() )
@@ -992,7 +1039,7 @@ void renderImageHeader(
         };
 
 
-        if ( ImGui::BeginCombo( "Interpolation", typeString( getImageInterpMode() ).c_str() ) )
+        if ( ImGui::BeginCombo( "Sampling", typeString( getImageInterpMode() ).c_str() ) )
         {
             for ( const auto& mode : AllInterpolationModes )
             {
@@ -1011,6 +1058,8 @@ void renderImageHeader(
         }
         ImGui::SameLine(); helpMarker( "Select the image interpolation type" );
 
+
+        ImGui::Dummy( ImVec2( 0.0f, 1.0f ) );
 
         if ( ! imgSettings.displayImageAsColor() )
         {
@@ -1062,67 +1111,68 @@ void renderImageHeader(
                 }
 
 
-                ImageColorMap::InterpolationMode interpMode = cmap->interpolationMode();
-                bool discreteCmap = ( ImageColorMap::InterpolationMode::Nearest == interpMode );
+                bool colorMapContinuous = imgSettings.colorMapContinuous();
 
-                if ( ImGui::Checkbox( "Discrete##DiscreteColorMap", &discreteCmap ) )
+                if ( ImGui::RadioButton( "Continuous", colorMapContinuous ) )
                 {
-                    cmap->setInterpolationMode(
-                        discreteCmap
-                        ? ImageColorMap::InterpolationMode::Nearest
-                        : ImageColorMap::InterpolationMode::Linear );
-
-                    updateImageColorMapInterpolationMode( cmapIndex );
+                    colorMapContinuous = true;
+                    imgSettings.setColorMapContinuous( colorMapContinuous );
+                    updateImageUniforms();
                 }
-                ImGui::SameLine(); helpMarker( "Discrete" );
+
+                ImGui::SameLine();
+                if ( ImGui::RadioButton( "Discrete", ! colorMapContinuous ) )
+                {
+                    colorMapContinuous = false;
+                    imgSettings.setColorMapContinuous( colorMapContinuous );
+                    updateImageUniforms();
+                }
+
+                if ( ! colorMapContinuous )
+                {
+                    int numColorMapLevels = static_cast<int>( imgSettings.colorMapQuantizationLevels() );
+
+                    if ( mySliderS32( "Levels", &numColorMapLevels, 2, 256 ) )
+                    {
+                        imgSettings.setColorMapQuantizationLevels( static_cast<uint32_t>( numColorMapLevels ) );
+                        updateImageUniforms();
+                    }
+                    ImGui::SameLine(); helpMarker( "Number of image color map quantization levels" );
+
+//                    if ( ImGui::BeginCombo( "Levels", std::to_string( numColorMapLevels ).c_str() ) )
+//                    {
+//                        for ( uint32_t i = 1; i <= 256; ++i )
+//                        {
+//                            const bool isSelected = ( numColorMapLevels == i );
+//                            if ( ImGui::Selectable( std::to_string(i).c_str(), isSelected) )
+//                            {
+//                                numColorMapLevels = i;
+//                                imgSettings.setColorMapQuantizationLevels( numColorMapLevels );
+//                            }
+
+//                            if ( isSelected ) ImGui::SetItemDefaultFocus();
+//                        }
+
+//                        ImGui::EndCombo();
+//                    }
+                }
+
+//                ImageColorMap::InterpolationMode interpMode = cmap->interpolationMode();
+//                bool discreteCmap = ( ImageColorMap::InterpolationMode::Nearest == interpMode );
+
+//                if ( ImGui::Checkbox( "Discrete##DiscreteColorMap", &discreteCmap ) )
+//                {
+//                    cmap->setInterpolationMode(
+//                        discreteCmap
+//                        ? ImageColorMap::InterpolationMode::Nearest
+//                        : ImageColorMap::InterpolationMode::Linear );
+
+//                    updateImageColorMapInterpolationMode( cmapIndex );
+//                }
+//                ImGui::SameLine(); helpMarker( "Discrete" );
             }
 
-            ImGui::Dummy( ImVec2( 0.0f, 1.0f ) );
-
-
-            ImGui::Text( "Auto window: " ); ImGui::SameLine();
-
-            const auto& stats = imgSettings.componentStatistics( imgSettings.activeComponent() );
-
-            if ( ImGui::Button( "Max" ) )
-            {
-                imgSettings.setWindowLow( stats.m_minimum );
-                imgSettings.setWindowHigh( stats.m_maximum );
-                updateImageUniforms();
-            }
-            ImGui::SameLine();
-
-            if ( ImGui::Button( "99\%" ) )
-            {
-                imgSettings.setWindowLow( stats.m_quantiles[10] );
-                imgSettings.setWindowHigh( stats.m_quantiles[990] );
-                updateImageUniforms();
-            }
-            ImGui::SameLine();
-
-            if ( ImGui::Button( "98\%" ) )
-            {
-                imgSettings.setWindowLow( stats.m_quantiles[20] );
-                imgSettings.setWindowHigh( stats.m_quantiles[980] );
-                updateImageUniforms();
-            }
-            ImGui::SameLine();
-
-            if ( ImGui::Button( "95\%" ) )
-            {
-                imgSettings.setWindowLow( stats.m_quantiles[50] );
-                imgSettings.setWindowHigh( stats.m_quantiles[950] );
-                updateImageUniforms();
-            }
-            ImGui::SameLine();
-
-            if ( ImGui::Button( "90\%" ) )
-            {
-                imgSettings.setWindowLow( stats.m_quantiles[100] );
-                imgSettings.setWindowHigh( stats.m_quantiles[900] );
-                updateImageUniforms();
-            }
-            ImGui::SameLine(); helpMarker( "Set window based on percentiles of the image histogram" );
+//            ImGui::Dummy( ImVec2( 0.0f, 1.0f ) );
 
 
             // Edge settings
