@@ -875,14 +875,14 @@ bool EntropyApp::loadSerializedImage(
     }
     else
     {
-        // Create an ITK image with float components from which distance maps and noise estimates are computed
-        using ImageCompType = float;
+        // Create ITK images with float components from which distance maps and noise estimates are computed
+        using ItkImageCompType = float;
 
         // To save GPU memory, use uint8_t components for the distance map image
         using DistanceMapCompType = uint8_t;
 
-        using ImageType = itk::Image<ImageCompType, 3>;
-        using NoiseImageType = itk::Image<ImageCompType, 3>;
+        using ImageType = itk::Image<ItkImageCompType, 3>;
+        using NoiseImageType = itk::Image<ItkImageCompType, 3>;
         using DistanceMapImageType = itk::Image<DistanceMapCompType, 3>;
 
         for ( uint32_t comp = 0; comp < image->header().numComponentsPerPixel(); ++comp )
@@ -891,28 +891,26 @@ bool EntropyApp::loadSerializedImage(
             /// especially since the image was originally loaded using ITK. But the utility
             /// functions that we use require an ITK image as input.
 
-            const ImageType::Pointer compImage = createItkImageFromImageComponent<ImageCompType>( *image, comp );
+            const ImageType::Pointer compImage = createItkImageFromImageComponent<ItkImageCompType>( *image, comp );
 
 
             // Compute noise estimate for image component:
             const uint32_t radius = 1;
-            const NoiseImageType::Pointer noiseEstimateItkImage = computeNoiseEstimate<ImageCompType>( compImage, 1 );
+            const NoiseImageType::Pointer noiseEstimateItkImage = computeNoiseEstimate<ItkImageCompType>( compImage, radius );
 
             if ( noiseEstimateItkImage )
             {
                 std::string displayName = std::string( "Noise estimate for component ") +
                     std::to_string(comp) + " of '" + image->settings().displayName() + "'";
 
-                Image noiseEstimateImage = createImageFromItkImage<ImageCompType>(
-                    noiseEstimateItkImage, std::move(displayName) );
-
-                const glm::uvec3& noiseSize = noiseEstimateImage.header().pixelDimensions();
+                Image noiseEstimateImage = createImageFromItkImage<ItkImageCompType>( noiseEstimateItkImage, displayName );
+                const glm::uvec3& noiseImgSize = noiseEstimateImage.header().pixelDimensions();
 
                 spdlog::debug( "Created noise estimate map (with dimensions {}x{}x{} voxels) with radius {} for "
-                               "component {} of image {}", noiseSize.x, noiseSize.y, noiseSize.z,
+                               "component {} of image {}", noiseImgSize.x, noiseImgSize.y, noiseImgSize.z,
                                radius, comp, *imageUid );
 
-                // m_data.addImage( noiseEstimateImage ); // Add noise estimate as an image for debug purposes
+                m_data.addImage( noiseEstimateImage ); // Add noise estimate as an image for debug purposes
                 m_data.addNoiseEstimate( *imageUid, comp, std::move(noiseEstimateImage), radius );
             }
 
@@ -923,7 +921,7 @@ bool EntropyApp::loadSerializedImage(
             const float maxThreshold = static_cast<float>( stats.m_maximum );
 
             const DistanceMapImageType::Pointer distMapItkImage =
-                computeEuclideanDistanceMap<ImageCompType, DistanceMapCompType>(
+                computeEuclideanDistanceMap<ItkImageCompType, DistanceMapCompType>(
                     compImage, comp, minThreshold, maxThreshold, sk_downsamplingFactor );
 
             if ( distMapItkImage )
@@ -931,8 +929,7 @@ bool EntropyApp::loadSerializedImage(
                 std::string displayName = std::string( "Distance map for component ") +
                     std::to_string(comp) + " of '" + image->settings().displayName() + "'";
 
-                Image distMapImage = createImageFromItkImage<DistanceMapCompType>(
-                    distMapItkImage, std::move(displayName) );
+                Image distMapImage = createImageFromItkImage<DistanceMapCompType>( distMapItkImage, displayName );
 
                 // m_data.addImage( distMapImage ); // Add distance map as an image for debug purposes
                 m_data.addDistanceMap( *imageUid, comp, std::move(distMapImage), static_cast<double>( minThreshold ) );

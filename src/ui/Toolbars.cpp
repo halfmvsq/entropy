@@ -1189,7 +1189,6 @@ void renderSegToolbar(
                 }
                 ImGui::SameLine(); helpMarker( "Amplitude" );
 
-                /// @todo Sigma should be based on noise in image or intensity of edges...
 //                if ( ImGui::InputScalar( "Sigma", ImGuiDataType_Double, &sigma ) )
 //                {
 //                    appData.settings().setGraphCutsWeightsSigma( sigma );
@@ -1301,7 +1300,7 @@ void renderSegToolbar(
             }
 
             if ( isHoriz ) ImGui::SameLine();
-            if ( ImGui::Button( ICON_FK_CONNECTDEVELOP, buttonSize) )
+            if ( ImGui::Button( ICON_FK_PLUG, buttonSize) )
             {
                 if ( const auto imageUid = appData.activeImageUid() )
                 {

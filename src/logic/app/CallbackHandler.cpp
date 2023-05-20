@@ -402,14 +402,6 @@ bool CallbackHandler::executeGraphCutsSegmentation(
         return false;
     }
 
-    if ( image->header().pixelDimensions() != resultSeg->header().pixelDimensions() )
-    {
-        spdlog::error( "Dimensions of image {} ({}) and result segmentation {} ({}) do not match",
-                       imageUid, glm::to_string( image->header().pixelDimensions() ),
-                       *resultSegUid, glm::to_string( resultSeg->header().pixelDimensions() ) );
-        return false;
-    }
-
     spdlog::info( "Executing graph cuts segmentation on image {} with seeds {}; "
                   "resulting segmentation: {}", imageUid, seedSegUid, *resultSegUid );
 
@@ -448,14 +440,14 @@ bool CallbackHandler::executeGraphCutsSegmentation(
         else { return 0.0; } // weight for very different image values
     };
 
-    auto getSeedValue = [&seedSeg, &imComp] (int x, int y, int z) -> LabelType
+    auto getSeedValue = [&seedSeg] (int x, int y, int z) -> LabelType
     {
-        return seedSeg->value<int64_t>(imComp, x, y, z).value_or(0);
+        return seedSeg->value<int64_t>(0, x, y, z).value_or(0);
     };
 
-    auto setResultSegValue = [&resultSeg, &imComp] (int x, int y, int z, const LabelType& value)
+    auto setResultSegValue = [&resultSeg] (int x, int y, int z, LabelType value)
     {
-        resultSeg->setValue(imComp, x, y, z, value);
+        resultSeg->setValue(0, x, y, z, value);
     };
 
     bool success = false;
@@ -500,7 +492,7 @@ bool CallbackHandler::executeGraphCutsSegmentation(
         resultSeg->header().memoryComponentType(),
         glm::uvec3{0},
         resultSeg->header().pixelDimensions(),
-        resultSeg->bufferAsVoid(imComp) );
+        resultSeg->bufferAsVoid(0) );
 
     spdlog::debug( "Done updating segmentation texture" );
 
@@ -726,7 +718,7 @@ bool CallbackHandler::executePoissonSegmentation(
         *resultSegUid,
         resultSeg->header().memoryComponentType(),
         glm::uvec3{0}, resultSeg->header().pixelDimensions(),
-        resultSeg->bufferAsVoid(imComp) );
+        resultSeg->bufferAsVoid(0) );
     spdlog::debug( "Done updating segmentation texture" );
 
     return true;

@@ -29,7 +29,7 @@ bool graphCutsBinarySegmentation(
     const VoxelDistances& voxelDistances,
     std::function< double (int x, int y, int z, int dx, int dy, int dz) > getImageWeight,
     std::function< LabelType (int x, int y, int z) > getSeedValue,
-    std::function< void (int x, int y, int z, const LabelType& value) > setResultSegValue )
+    std::function< void (int x, int y, int z, LabelType value) > setResultSegValue )
 {
     using namespace std::chrono;
 
@@ -41,7 +41,7 @@ bool graphCutsBinarySegmentation(
 
     static constexpr bool multithread = false;
 
-    spdlog::debug( "Start creating grid" );
+    spdlog::trace( "Start creating grid" );
     auto start = high_resolution_clock::now();
 
     std::unique_ptr< GridGraph_3D_Base_Wrapper<T, T, T> > grid = nullptr;
@@ -69,11 +69,11 @@ bool graphCutsBinarySegmentation(
     }
     }
 
-    spdlog::debug( "Done creating grid" );
+    spdlog::trace( "Done creating grid" );
     auto stop = high_resolution_clock::now();
 
     auto duration = duration_cast<milliseconds>( stop - start );
-    spdlog::debug( "Grid creation time: {} msec", duration.count() );
+    spdlog::trace( "Grid creation time: {} msec", duration.count() );
 
     if ( ! grid )
     {
@@ -82,7 +82,7 @@ bool graphCutsBinarySegmentation(
     }
 
 
-    spdlog::debug( "Start filling grid" );
+    spdlog::trace( "Start filling grid" );
     start = high_resolution_clock::now();
 
     if ( multithread && GraphNeighborhoodType::Neighbors6 == hoodType )
@@ -138,7 +138,7 @@ bool graphCutsBinarySegmentation(
             cap_ele.get(), cap_ege.get(),
             cap_eel.get(), cap_eeg.get() );
     }
-    else
+    else if ( GraphNeighborhoodType::Neighbors26 == hoodType )
     {
         // Set symmetric capacities for edges from X to X + dX and from X + dX to X
         auto setNeighCaps = [&grid, &getImageWeight]
@@ -197,13 +197,13 @@ bool graphCutsBinarySegmentation(
         }
     }
 
-    spdlog::debug( "Done filling grid" );
+    spdlog::trace( "Done filling grid" );
     stop = high_resolution_clock::now();
 
     duration = duration_cast<milliseconds>( stop - start );
-    spdlog::debug( "Grid fill time: {} msec", duration.count() );
+    spdlog::trace( "Grid fill time: {} msec", duration.count() );
 
-    spdlog::debug( "Start computing max flow" );
+    spdlog::trace( "Start computing max flow" );
     start = high_resolution_clock::now();
     {
         grid->compute_maxflow();
@@ -211,22 +211,22 @@ bool graphCutsBinarySegmentation(
     stop = high_resolution_clock::now();
     duration = duration_cast<milliseconds>( stop - start );
 
-    spdlog::debug( "Done computing max flow" );
-    spdlog::debug( "Graph cuts execution time: {} msec", duration.count() );
+    spdlog::trace( "Done computing max flow" );
+    spdlog::trace( "Graph cuts execution time: {} msec", duration.count() );
 
-    spdlog::debug( "Start reading back segmentation results" );
+    spdlog::trace( "Start reading back segmentation results" );
     for ( int z = 0; z < dims.z; ++z ) {
         for ( int y = 0; y < dims.y; ++y ) {
             for ( int x = 0; x < dims.x; ++x )
             {
-                const LabelType seg = static_cast<LabelType>(
+                const LabelType label = static_cast<LabelType>(
                     grid->get_segment( grid->node_id(x, y, z) ) ? fgSeedValue : 0 );
 
-                setResultSegValue(x, y, z, seg);
+                setResultSegValue(x, y, z, label);
             }
         }
     }
-    spdlog::debug( "Done reading back segmentation results" );
+    spdlog::trace( "Done reading back segmentation results" );
 
     return true;
 }
@@ -240,7 +240,7 @@ bool graphCutsMultiLabelSegmentation(
     std::function< double (int x, int y, int z, int dx, int dy, int dz) > /*getImageWeight*/,
     std::function< double (int index1, int index2) > getImageWeight1D,
     std::function< LabelType (int x, int y, int z) > getSeedValue,
-    std::function< void (int x, int y, int z, const LabelType& value) > setResultSegValue )
+    std::function< void (int x, int y, int z, LabelType value) > setResultSegValue )
 {
     using namespace std::chrono;
 
