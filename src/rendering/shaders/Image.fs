@@ -22,17 +22,17 @@
 // Redeclared vertex shader outputs, which are now the fragment shader inputs
 in VS_OUT
 {
-    vec3 ImgTexCoords;
-    vec3 SegTexCoords;
-    vec3 SegVoxCoords;
-    vec2 CheckerCoord;
-    vec2 ClipPos;
+    vec3 v_imgTexCoords;
+    vec3 v_segTexCoords;
+    vec3 v_segVoxCoords;
+    vec2 v_checkerCoord;
+    vec2 v_clipPos;
 } fs_in;
 
-layout (location = 0) out vec4 Outcolor; // Output RGBA color (pre-multiplied alpha)
+layout (location = 0) out vec4 o_color; // Output RGBA color (pre-multiplied alpha)
 
-uniform sampler3D imgTex; // Texture unit 0: image
-uniform usampler3D segTex; // Texture unit 1: segmentation
+uniform sampler3D u_imgTex; // Texture unit 0: image
+uniform usampler3D u_segTex; // Texture unit 1: segmentation
 uniform sampler1D imgCmapTex; // Texture unit 2: image color map (pre-mult RGBA)
 uniform samplerBuffer segLabelCmapTex; // Texutre unit 3: label color map (pre-mult RGBA)
 
@@ -62,7 +62,7 @@ uniform bool showFix;
 // Render mode (0: normal, 1: checkerboard, 2: quadrants, 3: flashlight)
 uniform int renderMode;
 
-uniform float aspectRatio;
+uniform float u_aspectRatio;
 
 uniform float flashlightRadius;
 
@@ -132,21 +132,21 @@ bool isInsideTexture( vec3 a )
 bool doRender()
 {
     // Indicator of the quadrant of the crosshairs that the fragment is in:
-    bvec2 Q = bvec2( fs_in.ClipPos.x <= clipCrosshairs.x,
-                     fs_in.ClipPos.y > clipCrosshairs.y );
+    bvec2 Q = bvec2( fs_in.v_clipPos.x <= clipCrosshairs.x,
+                     fs_in.v_clipPos.y > clipCrosshairs.y );
 
     // Distance of the fragment from the crosshairs, accounting for aspect ratio:
     float flashlighdist = sqrt(
-        pow( aspectRatio * ( fs_in.ClipPos.x - clipCrosshairs.x ), 2.0 ) +
-        pow( fs_in.ClipPos.y - clipCrosshairs.y, 2.0 ) );
+        pow( u_aspectRatio * ( fs_in.v_clipPos.x - clipCrosshairs.x ), 2.0 ) +
+        pow( fs_in.v_clipPos.y - clipCrosshairs.y, 2.0 ) );
 
     // Flag indicating whether the fragment will be rendered:
     bool render = ( IMAGE_RENDER_MODE == renderMode );
 
     // If in Checkerboard mode, then render the fragment?
     render = render || ( ( CHECKER_RENDER_MODE == renderMode ) &&
-        ( showFix == bool( mod( floor( fs_in.CheckerCoord.x ) +
-                                floor( fs_in.CheckerCoord.y ), 2.0 ) > 0.5 ) ) );
+        ( showFix == bool( mod( floor( fs_in.v_checkerCoord.x ) +
+                                floor( fs_in.v_checkerCoord.y ), 2.0 ) > 0.5 ) ) );
 
     // If in Quadrants mode, then render the fragment?
     render = render || ( ( QUADRANTS_RENDER_MODE == renderMode ) &&
@@ -244,11 +244,11 @@ float computeProjection( float img )
     {
         for ( int i = 1; i <= halfNumMipSamples; ++i )
         {
-            vec3 c = fs_in.ImgTexCoords + dir * i * texSamplingDirZ;
+            vec3 c = fs_in.v_imgTexCoords + dir * i * texSamplingDirZ;
 
             if ( ! isInsideTexture( c ) ) break;
 
-            float a = getImageValue( imgTex, c, imgMinMax[0], imgMinMax[1] );
+            float a = getImageValue( u_imgTex, c, imgMinMax[0], imgMinMax[1] );
 
             img = float( MAX_IP_MODE == mipMode ) * max( img, a ) +
                   float( MEAN_IP_MODE == mipMode ) * ( img + a ) +
@@ -283,7 +283,7 @@ vec4 computeLabelColor( int label )
 uint getSegValue_N( vec3 texCoords, vec3 texOffset, float cutoff, out float opacity )
 {
     opacity = 1.0;
-    return texture( segTex, texCoords + texOffset )[0];
+    return texture( u_segTex, texCoords + texOffset )[0];
 }
 
 
@@ -296,17 +296,17 @@ uint getSegValue( vec3 texCoords, vec3 texOffset, float cutoff, out float opacit
     uint seg = 0u;
     opacity = 0.0;
 
-    vec3 c = floor( fs_in.SegVoxCoords );
-    vec3 d = pow( vec3( textureSize(segTex, 0) ), vec3(-1) );
+    vec3 c = floor( fs_in.v_segVoxCoords );
+    vec3 d = pow( vec3( textureSize(u_segTex, 0) ), vec3(-1) );
     vec3 t = vec3(c.x * d.x, c.y * d.y, c.z * d.z) + 0.5 * d;
 
     uint s[8];
     for ( int i = 0; i < 8; ++i )
     {
-        s[i] = texture( segTex, t + neigh[i] * d + texOffset )[0];
+        s[i] = texture( u_segTex, t + neigh[i] * d + texOffset )[0];
     }
 
-    vec3 b = fs_in.SegVoxCoords + texOffset * vec3( textureSize(segTex, 0) ) - c;
+    vec3 b = fs_in.v_segVoxCoords + texOffset * vec3( textureSize(u_segTex, 0) ) - c;
 
     vec3 g[2] = vec3[2]( vec3(1) - b, b );
 
@@ -329,7 +329,7 @@ uint getSegValue( vec3 texCoords, vec3 texOffset, float cutoff, out float opacit
 
         // Segmentation value of neighbor at (row, col) offset
         float ignore;
-        neighSegs[i] = getSegValue_N( fs_in.SegTexCoords, texPos, ignore, ignore );
+        neighSegs[i] = getSegValue_N( fs_in.v_segTexCoords, texPos, ignore, ignore );
     }
 
 
@@ -397,7 +397,7 @@ float getSegInteriorAlpha( uint seg )
 
         // Segmentation value of neighbor at (row, col) offset:
         float ignore;
-        if ( seg != getSegValue( fs_in.SegTexCoords, texPosOffset, segInterpCutoff, ignore ) )
+        if ( seg != getSegValue( fs_in.v_segTexCoords, texPosOffset, segInterpCutoff, ignore ) )
         {
             // Fragment (with segmentation 'seg') is on the segmentation boundary,
             // since its value is not equal to one of its neighbors. Therefore, it gets full alpha.
@@ -413,18 +413,18 @@ void main()
 {
     if ( ! doRender() ) discard;
 
-    float img = getImageValue( imgTex, fs_in.ImgTexCoords, imgMinMax[0], imgMinMax[1] );
+    float img = getImageValue( u_imgTex, fs_in.v_imgTexCoords, imgMinMax[0], imgMinMax[1] );
     img = computeProjection( img );
 
     float segInterpOpacity = 1.0;
-    uint seg = getSegValue( fs_in.SegTexCoords, vec3(0, 0, 0), segInterpCutoff, segInterpOpacity );
+    uint seg = getSegValue( fs_in.v_segTexCoords, vec3(0, 0, 0), segInterpCutoff, segInterpOpacity );
 
     // Apply window/level to normalize image values in [0.0, 1.0] range:
     float imgNorm = clamp( imgSlopeIntercept[0] * img + imgSlopeIntercept[1], 0.0, 1.0 );
 
     // Image and segmentation masks based on texture coordinates:
-    bool imgMask = isInsideTexture( fs_in.ImgTexCoords );
-    bool segMask = isInsideTexture( fs_in.SegTexCoords );
+    bool imgMask = isInsideTexture( fs_in.v_imgTexCoords );
+    bool segMask = isInsideTexture( fs_in.v_segTexCoords );
 
     // Compute the image mask:
     float mask = float( imgMask && ( masking && ( seg > 0u ) || ! masking ) );
@@ -458,10 +458,10 @@ void main()
     }
 
     // Blend layers:
-    Outcolor = vec4(0.0, 0.0, 0.0, 0.0);
-    Outcolor = imgLayer + (1.0 - imgLayer.a) * Outcolor;
-    Outcolor = isoLayer + (1.0 - isoLayer.a) * Outcolor;
-    Outcolor = segLayer + (1.0 - segLayer.a) * Outcolor;
+    o_color = vec4(0.0, 0.0, 0.0, 0.0);
+    o_color = imgLayer + (1.0 - imgLayer.a) * o_color;
+    o_color = isoLayer + (1.0 - isoLayer.a) * o_color;
+    o_color = segLayer + (1.0 - segLayer.a) * o_color;
 
-    //Outcolor.rgb = pow( Outcolor.rgb, vec3(1.8) );
+    //o_color.rgb = pow( o_color.rgb, vec3(1.8) );
 }

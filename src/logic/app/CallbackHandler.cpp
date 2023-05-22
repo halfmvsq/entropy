@@ -385,8 +385,7 @@ bool CallbackHandler::executeGraphCutsSegmentation(
         std::to_string( numSegsForImage + 1 ) +
         " for image '" + image->settings().displayName() + "'";
 
-    const auto resultSegUid = createBlankSegWithColorTableAndTextures(
-        imageUid, resultSegDisplayName );
+    const auto resultSegUid = createBlankSegWithColorTableAndTextures( imageUid, resultSegDisplayName );
 
     if ( ! resultSegUid )
     {

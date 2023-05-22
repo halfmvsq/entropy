@@ -17,14 +17,14 @@
 
 in VS_OUT // Redeclared vertex shader outputs: now the fragment shader inputs
 {
-    vec3 ImgTexCoords[2];
-    vec3 SegTexCoords[2];
+    vec3 v_imgTexCoords[2];
+    vec3 v_segTexCoords[2];
 } fs_in;
 
-layout (location = 0) out vec4 OutColor; // Output RGBA color (pre-multiplied alpha)
+layout (location = 0) out vec4 o_color; // Output RGBA color (pre-multiplied alpha)
 
-uniform sampler3D imgTex[2]; // Texture units 0/1: images
-uniform usampler3D segTex[2]; // Texture units 2/3: segmentations
+uniform sampler3D u_imgTex[2]; // Texture units 0/1: images
+uniform usampler3D u_segTex[2]; // Texture units 2/3: segmentations
 uniform samplerBuffer segLabelCmapTex[2]; // Texutre unit 6/7: label color tables (pre-mult RGBA)
 
 // uniform bool useTricubicInterpolation; // Whether to use tricubic interpolation
@@ -143,7 +143,7 @@ float getSegInteriorAlpha( int texNum, uint seg )
             col * texSamplingDirsForSegOutline[1];
 
         // Segmentation value of neighbor at (row, col) offset
-        uint nseg = texture( segTex[texNum], fs_in.SegTexCoords[texNum] + texSamplingPos )[0];
+        uint nseg = texture( u_segTex[texNum], fs_in.v_segTexCoords[texNum] + texSamplingPos )[0];
 
         // Fragment (with segmentation 'seg') is on the boundary (and hence gets
         // full alpha) if its value is not equal to one of its neighbors.
@@ -186,12 +186,12 @@ vec4 computeLabelColor( int label, int i )
 vec4 getSegColor( int i )
 {
     // Look up label value and color:
-    uint label = texture( segTex[i], fs_in.SegTexCoords[i] ).r;
+    uint label = texture( u_segTex[i], fs_in.v_segTexCoords[i] ).r;
     vec4 labelColor = computeLabelColor( int(label), i );
     //vec4 labelColor = texelFetch( segLabelCmapTex[i], int(label), 0 );
 
     // Modulate color with the segmentation opacity and mask:
-    bool segMask = isInsideTexture( fs_in.SegTexCoords[i] );
+    bool segMask = isInsideTexture( fs_in.v_segTexCoords[i] );
     return labelColor * getSegInteriorAlpha( i, label ) * segOpacity[i] * float(segMask);
 }
 
@@ -206,7 +206,7 @@ vec2 computeMetricAndMask( in int sampleOffset, out bool hitBoundary )
 
     vec3 texOffset = float(sampleOffset) * texSamplingDirZ;
 
-    img_tc[0] = fs_in.ImgTexCoords[0] + texOffset;
+    img_tc[0] = fs_in.v_imgTexCoords[0] + texOffset;
     img_tc[1] = vec3( img1Tex_T_img0Tex * vec4( img_tc[0], 1.0 ) );
 
     if ( ! isInsideTexture( img_tc[0] ) || ! isInsideTexture( img_tc[1] ) )
@@ -215,7 +215,7 @@ vec2 computeMetricAndMask( in int sampleOffset, out bool hitBoundary )
         return vec2( 0.0, 0.0 );
     }
 
-    seg_tc[0] = fs_in.SegTexCoords[0] + texOffset;
+    seg_tc[0] = fs_in.v_segTexCoords[0] + texOffset;
     seg_tc[1] = vec3( img1Tex_T_img0Tex * vec4( seg_tc[0], 1.0 ) );
 
     float imgNorm[2];
@@ -225,10 +225,10 @@ vec2 computeMetricAndMask( in int sampleOffset, out bool hitBoundary )
     for ( int i = 0; i < 2; ++i )
     {
         // Look up image and label values:
-        // float img = texture( imgTex[i], img_tc[i] ).r;
-        float img = getImageValue( imgTex[i], img_tc[i] );
+        // float img = texture( u_imgTex[i], img_tc[i] ).r;
+        float img = getImageValue( u_imgTex[i], img_tc[i] );
 
-        uint label = texture( segTex[i], seg_tc[i] ).r;
+        uint label = texture( u_segTex[i], seg_tc[i] ).r;
 
         // Normalize images to [0.0, 1.0] range:
         imgNorm[i] = clamp( imgSlopeIntercept[i][0] * img + imgSlopeIntercept[i][1], 0.0, 1.0 );
@@ -309,7 +309,7 @@ void main()
                                 getSegColor(1) * float( ! metricMasking ) );
 
     // Blend layers:
-    OutColor = vec4(0.0, 0.0, 0.0, 0.0);
-    OutColor = segColor[0] + ( 1.0 - segColor[0].a ) * metricLayer;
-    OutColor = segColor[1] + ( 1.0 - segColor[1].a ) * OutColor;
+    o_color = vec4(0.0, 0.0, 0.0, 0.0);
+    o_color = segColor[0] + ( 1.0 - segColor[0].a ) * metricLayer;
+    o_color = segColor[1] + ( 1.0 - segColor[1].a ) * o_color;
 }

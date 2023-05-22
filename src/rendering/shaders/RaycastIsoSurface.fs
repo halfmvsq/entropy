@@ -11,13 +11,13 @@
 
 out vec4 FragColor;
 
-uniform sampler3D imgTex; // Texture unit 0: image
-uniform usampler3D segTex; // Texture unit 1: segmentation
-uniform usampler3D jumpTex; // Texture unit 5: distance texture
+uniform sampler3D u_imgTex; // Texture unit 0: image
+uniform usampler3D u_segTex; // Texture unit 1: segmentation
+uniform usampler3D u_jumpTex; // Texture unit 5: distance texture
 
 // uniform bool useTricubicInterpolation; // Whether to use tricubic interpolation
 
-uniform mat4 imgTexture_T_world;
+uniform mat4 u_imgTexture_T_world;
 uniform mat4 world_T_imgTexture;
 
 uniform mat4 clip_T_world;
@@ -139,9 +139,9 @@ vec2 slabs( vec3 texRayPos, vec3 texRayDir )
 vec3 gradient( vec3 texPos )
 {
     return normalize( vec3(
-        getImageValue( imgTex, texPos + texGrads[0] ) - getImageValue( imgTex, texPos - texGrads[0] ),
-        getImageValue( imgTex, texPos + texGrads[1] ) - getImageValue( imgTex, texPos - texGrads[1] ),
-        getImageValue( imgTex, texPos + texGrads[2] ) - getImageValue( imgTex, texPos - texGrads[2] ) ) );
+        getImageValue( u_imgTex, texPos + texGrads[0] ) - getImageValue( u_imgTex, texPos - texGrads[0] ),
+        getImageValue( u_imgTex, texPos + texGrads[1] ) - getImageValue( u_imgTex, texPos - texGrads[1] ),
+        getImageValue( u_imgTex, texPos + texGrads[2] ) - getImageValue( u_imgTex, texPos - texGrads[2] ) ) );
 }
 
 vec3 bisect( vec3 pos, vec3 dir, float t0, float t1, float sgn, float iso )
@@ -151,7 +151,7 @@ vec3 bisect( vec3 pos, vec3 dir, float t0, float t1, float sgn, float iso )
 
     for ( int i = 0; i < NUM_BISECTIONS; ++i )
     {
-        float test = sgn * ( getImageValue(imgTex, c) - iso );
+        float test = sgn * ( getImageValue(u_imgTex, c) - iso );
         t1 += (t - t1) * when_ge(test, 0.0); // if (test >= 0.0) { t1 = t; }
         t0 += (t - t0) * when_lt(test, 0.0); // else { t0 = t; }
         t = 0.5 * (t0 + t1);
@@ -182,18 +182,18 @@ void main()
     vec4 color = vec4(0.0);
 
     // The ray direction must be re-normalized after interpolation from Vertex to Fragment stage:
-    vec3 texRayDir = mat3(imgTexture_T_world) * normalize(fs_in.worldRayDir);
+    vec3 texRayDir = mat3(u_imgTexture_T_world) * normalize(fs_in.worldRayDir);
 
     // Convert physical (mm) to texel units along the ray direction
     float texel_T_mm = length( texRayDir );
     texRayDir /= texel_T_mm; // normalize the direction!
 
     // Step size computed as a samplingFactor fraction of the voxel spacing along the ray:
-    vec3 dims = vec3( textureSize(imgTex, 0) );
+    vec3 dims = vec3( textureSize(u_imgTex, 0) );
     float texStep = samplingFactor * dot( vec3(1.0 / dims.x, 1.0 / dims.y, 1.0 / dims.z) , abs(texRayDir) );
 
     // Randomly purturb the ray starting positions along the ray direction:
-    vec4 texEyePos = imgTexture_T_world * vec4(worldEyePos, 1.0);
+    vec4 texEyePos = u_imgTexture_T_world * vec4(worldEyePos, 1.0);
     vec3 texStartPos = vec3(texEyePos) + 0.5 * texStep * rand( gl_FragCoord.xy ) * texRayDir;
 
     vec2 interx = slabs( texStartPos, texRayDir );
@@ -222,7 +222,7 @@ void main()
     int firstHit = 1;
 
     // Save old value and position
-    float oldValue = getImageValue(imgTex, texPos);
+    float oldValue = getImageValue(u_imgTex, texPos);
     vec3 oldTexPos = texPos;
     float oldT = tMin;
 
@@ -239,7 +239,7 @@ void main()
             texPos = texStartPos + t * texRayDir;
 
             // Use a 2% safety factor:
-            jump = 0.98 * texel_T_mm * float( texture(jumpTex, texPos).r ); // = min( j1, j2 );
+            jump = 0.98 * texel_T_mm * float( texture(u_jumpTex, texPos).r ); // = min( j1, j2 );
             ++numJumps;
         } while ( jump > texStep && t <= tMax && numJumps <= MAX_JUMPS );
 
@@ -250,7 +250,7 @@ void main()
 //            FIRST = false;
 //        }
 
-        float value = getImageValue(imgTex, texPos);
+        float value = getImageValue(u_imgTex, texPos);
 
         for ( int i = 0; i < NISO; ++i )
         {
@@ -265,8 +265,8 @@ void main()
 
                 float segMask = float(
                     ( ! segMasksIn && ! segMasksOut ) ||
-                    ( segMasksIn && texture(segTex, texPos).r > 0u ) ||
-                    ( segMasksOut && texture(segTex, texPos).r == 0u ) );
+                    ( segMasksIn && texture(u_segTex, texPos).r > 0u ) ||
+                    ( segMasksOut && texture(u_segTex, texPos).r == 0u ) );
 
                 // Blend new color UNDER the old color:
                 color += segMask * (1.0 - color.a) * shade(texLightDir, -texRayDir, texNormal, i);

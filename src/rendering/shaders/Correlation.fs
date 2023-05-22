@@ -7,14 +7,14 @@
 
 in VS_OUT // Redeclared vertex shader outputs: now the fragment shader inputs
 {
-    vec3 ImgTexCoords[N];
-    vec3 SegTexCoords[N];
+    vec3 v_imgTexCoords[N];
+    vec3 v_segTexCoords[N];
 } fs_in;
 
-layout (location = 0) out vec4 OutColor; // Output RGBA color (pre-multiplied alpha)
+layout (location = 0) out vec4 o_color; // Output RGBA color (pre-multiplied alpha)
 
-uniform sampler3D imgTex[N]; // Texture units 0/1: images
-uniform usampler3D segTex[N]; // Texture units 2/3: segmentations
+uniform sampler3D u_imgTex[N]; // Texture units 0/1: images
+uniform usampler3D u_segTex[N]; // Texture units 2/3: segmentations
 uniform samplerBuffer segLabelCmapTex[N]; // Texutre unit 6/7: label color tables (pre-mult RGBA)
 
 uniform float segOpacity[N]; // Segmentation opacities
@@ -114,7 +114,7 @@ float getSegInteriorAlpha( int texNum, uint seg )
             col * texSamplingDirsForSegOutline[1];
 
         // Segmentation value of neighbor at (row, col) offset
-        uint nseg = texture( segTex[texNum], fs_in.SegTexCoords[texNum] + texSamplingPos )[0];
+        uint nseg = texture( u_segTex[texNum], fs_in.v_segTexCoords[texNum] + texSamplingPos )[0];
 
         // Fragment (with segmentation 'seg') is on the boundary (and hence gets
         // full alpha) if its value is not equal to one of its neighbors.
@@ -162,13 +162,13 @@ void main()
     for ( int i = 0; i < N; ++i )
     {
         // Foreground masks, based on whether texture coordinates are in range [0.0, 1.0]^3:
-        bool imgMask = ! ( any(    lessThan( fs_in.ImgTexCoords[i], MIN_IMAGE_TEXCOORD + texSampleSize[i] ) ) ||
-                           any( greaterThan( fs_in.ImgTexCoords[i], MAX_IMAGE_TEXCOORD - texSampleSize[i] ) ) );
+        bool imgMask = ! ( any(    lessThan( fs_in.v_imgTexCoords[i], MIN_IMAGE_TEXCOORD + texSampleSize[i] ) ) ||
+                           any( greaterThan( fs_in.v_imgTexCoords[i], MAX_IMAGE_TEXCOORD - texSampleSize[i] ) ) );
 
-        bool segMask = ! ( any(    lessThan( fs_in.SegTexCoords[i], MIN_IMAGE_TEXCOORD + texSampleSize[i] ) ) ||
-                           any( greaterThan( fs_in.SegTexCoords[i], MAX_IMAGE_TEXCOORD - texSampleSize[i] ) ) );
+        bool segMask = ! ( any(    lessThan( fs_in.v_segTexCoords[i], MIN_IMAGE_TEXCOORD + texSampleSize[i] ) ) ||
+                           any( greaterThan( fs_in.v_segTexCoords[i], MAX_IMAGE_TEXCOORD - texSampleSize[i] ) ) );
 
-        uint label = texture( segTex[i], fs_in.SegTexCoords[i] ).r; // Label value
+        uint label = texture( u_segTex[i], fs_in.v_segTexCoords[i] ).r; // Label value
 
         // Apply foreground mask and masking based on segmentation label:
         mask[i] = float( imgMask && ( metricMasking && ( label > 0u ) || ! metricMasking ) );
@@ -185,14 +185,14 @@ void main()
     {
         for ( int i = -1; i <= 1; ++i )
         {
-            vec3 tex0Pos = fs_in.ImgTexCoords[0] + float(i) * tex0SamplingDirX + float(j) * tex0SamplingDirY;
+            vec3 tex0Pos = fs_in.v_imgTexCoords[0] + float(i) * tex0SamplingDirX + float(j) * tex0SamplingDirY;
             vec3 tex1Pos = vec3( texture1_T_texture0 * vec4( tex0Pos, 1.0 ) );
 
-            // val0[count] = texture( imgTex[0], tex0Pos ).r;
-            // val1[count] = texture( imgTex[1], tex1Pos ).r;
+            // val0[count] = texture( u_imgTex[0], tex0Pos ).r;
+            // val1[count] = texture( u_imgTex[1], tex1Pos ).r;
 
-            val0[count] = getImageValue( imgTex[0], tex0Pos );
-            val1[count] = getImageValue( imgTex[1], tex1Pos );
+            val0[count] = getImageValue( u_imgTex[0], tex0Pos );
+            val1[count] = getImageValue( u_imgTex[1], tex1Pos );
 
             ++count;
         }
@@ -243,7 +243,7 @@ void main()
     segColor[1] = overlaySegs * segColor[1];
 
     // Blend colors:
-    OutColor = vec4( 0.0, 0.0, 0.0, 0.0 );
-    OutColor = segColor[0] + ( 1.0 - segColor[0].a ) * metricColor;
-    OutColor = segColor[1] + ( 1.0 - segColor[1].a ) * OutColor;
+    o_color = vec4( 0.0, 0.0, 0.0, 0.0 );
+    o_color = segColor[0] + ( 1.0 - segColor[0].a ) * metricColor;
+    o_color = segColor[1] + ( 1.0 - segColor[1].a ) * o_color;
 }

@@ -14,17 +14,17 @@
 // Redeclared vertex shader outputs, which are now the fragment shader inputs
 in VS_OUT
 {
-    vec3 ImgTexCoords;
-    vec3 SegTexCoords;
-    vec3 SegVoxCoords;
-    vec2 CheckerCoord;
-    vec2 ClipPos;
+    vec3 v_imgTexCoords;
+    vec3 v_segTexCoords;
+    vec3 v_segVoxCoords;
+    vec2 v_checkerCoord;
+    vec2 v_clipPos;
 } fs_in;
 
-layout (location = 0) out vec4 OutColor; // Output RGBA color (pre-multiplied alpha)
+layout (location = 0) out vec4 o_color; // Output RGBA color (pre-multiplied alpha)
 
-uniform sampler3D imgTex; // Texture unit 0: image
-uniform usampler3D segTex; // Texture unit 1: segmentation
+uniform sampler3D u_imgTex; // Texture unit 0: image
+uniform usampler3D u_segTex; // Texture unit 1: segmentation
 uniform sampler1D imgCmapTex; // Texture unit 2: image color map (pre-mult RGBA)
 uniform samplerBuffer segLabelCmapTex; // Texutre unit 3: label color map (pre-mult RGBA)
 
@@ -67,7 +67,7 @@ uniform bool showFix;
 // Render mode (0: normal, 1: checkerboard, 2: quadrants, 3: flashlight)
 uniform int renderMode;
 
-uniform float aspectRatio;
+uniform float u_aspectRatio;
 
 uniform float flashlightRadius;
 
@@ -156,8 +156,8 @@ float interpolateTricubicFast( sampler3D tex, vec3 coord )
 
 float getImageValue( vec3 texCoord )
 {
-    return clamp( texture( imgTex, texCoord )[0], imgMinMax[0], imgMinMax[1] );
-    //        interpolateTricubicFast( imgTex, texCoord ),
+    return clamp( texture( u_imgTex, texCoord )[0], imgMinMax[0], imgMinMax[1] );
+    //        interpolateTricubicFast( u_imgTex, texCoord ),
 }
 
 
@@ -193,21 +193,21 @@ float convertTexToAtten( float texValue )
 bool doRender()
 {
     // Indicator of the quadrant of the crosshairs that the fragment is in:
-    bvec2 Q = bvec2( fs_in.ClipPos.x <= clipCrosshairs.x,
-                     fs_in.ClipPos.y > clipCrosshairs.y );
+    bvec2 Q = bvec2( fs_in.v_clipPos.x <= clipCrosshairs.x,
+                     fs_in.v_clipPos.y > clipCrosshairs.y );
 
     // Distance of the fragment from the crosshairs, accounting for aspect ratio:
     float flashlightDist = sqrt(
-        pow( aspectRatio * ( fs_in.ClipPos.x - clipCrosshairs.x ), 2.0 ) +
-        pow( fs_in.ClipPos.y - clipCrosshairs.y, 2.0 ) );
+        pow( u_aspectRatio * ( fs_in.v_clipPos.x - clipCrosshairs.x ), 2.0 ) +
+        pow( fs_in.v_clipPos.y - clipCrosshairs.y, 2.0 ) );
 
     // Flag indicating whether the fragment will be rendered:
     bool render = ( IMAGE_RENDER_MODE == renderMode );
 
     // If in Checkerboard mode, then render the fragment?
     render = render || ( ( CHECKER_RENDER_MODE == renderMode ) &&
-        ( showFix == bool( mod( floor( fs_in.CheckerCoord.x ) +
-                                floor( fs_in.CheckerCoord.y ), 2.0 ) > 0.5 ) ) );
+        ( showFix == bool( mod( floor( fs_in.v_checkerCoord.x ) +
+                                floor( fs_in.v_checkerCoord.y ), 2.0 ) > 0.5 ) ) );
 
     // If in Quadrants mode, then render the fragment?
     render = render || ( ( QUADRANTS_RENDER_MODE == renderMode ) &&
@@ -247,7 +247,7 @@ float getSegInteriorAlpha( uint seg )
             col * texSamplingDirsForSegOutline[1];
 
         // Segmentation value of neighbor at (row, col) offset
-        uint nseg = texture( segTex, fs_in.SegTexCoords + texSamplingPos )[0];
+        uint nseg = texture( u_segTex, fs_in.v_segTexCoords + texSamplingPos )[0];
 
         // Fragment (with segmentation 'seg') is on the boundary (and hence gets
         // full alpha) if its value is not equal to one of its neighbors.
@@ -267,12 +267,12 @@ void main()
     if ( ! doRender() ) discard;
 
     // Image and segmentation masks based on texture coordinates:
-    bool imgMask = isInsideTexture( fs_in.ImgTexCoords );
-    bool segMask = isInsideTexture( fs_in.SegTexCoords );
+    bool imgMask = isInsideTexture( fs_in.v_imgTexCoords );
+    bool segMask = isInsideTexture( fs_in.v_segTexCoords );
 
     // Look up the texture values and convert to mass attenuation coefficient.
     // Keep a running sum of attenuation for all samples.
-    float texValue = getImageValue( fs_in.ImgTexCoords );
+    float texValue = getImageValue( fs_in.v_imgTexCoords );
     float thresh = hardThreshold( texValue, imgThresholds );
     float totalAtten = thresh * convertTexToAtten( texValue );
 
@@ -282,7 +282,7 @@ void main()
     // Accumulate intensity projection in forwards (+Z) direction:
     for ( int i = 1; i <= halfNumMipSamples; ++i )
     {
-        vec3 tc = fs_in.ImgTexCoords + i * texSamplingDirZ;
+        vec3 tc = fs_in.v_imgTexCoords + i * texSamplingDirZ;
         if ( ! isInsideTexture( tc ) ) break;
 
         texValue = getImageValue( tc );
@@ -294,7 +294,7 @@ void main()
     // Accumulate intensity projection in backwards (-Z) direction:
     for ( int i = 1; i <= halfNumMipSamples; ++i )
     {
-        vec3 tc = fs_in.ImgTexCoords - i * texSamplingDirZ;
+        vec3 tc = fs_in.v_imgTexCoords - i * texSamplingDirZ;
         if ( ! isInsideTexture( tc ) ) break;
 
         texValue = getImageValue( tc );
@@ -310,7 +310,7 @@ void main()
     float invAttenWL = slopeInterceptWindowLevel[0] * invAtten + slopeInterceptWindowLevel[1];
 
     // Look up segmentation texture label value:
-    uint seg = texture( segTex, fs_in.SegTexCoords ).r;
+    uint seg = texture( u_segTex, fs_in.v_segTexCoords ).r;
 
     // Compute the image mask:
     float mask = float( imgMask && ( masking && ( seg > 0u ) || ! masking ) );
@@ -328,7 +328,7 @@ void main()
     vec4 segColor = computeLabelColor( int(seg) ) * segAlpha;
 
     // Blend colors:
-    OutColor = vec4( 0.0, 0.0, 0.0, fs_in.SegVoxCoords.x * 0.000000001 );
-    OutColor = imgColor + ( 1.0 - imgColor.a ) * OutColor;
-    OutColor = segColor + ( 1.0 - segColor.a ) * OutColor;
+    o_color = vec4( 0.0, 0.0, 0.0, fs_in.v_segVoxCoords.x * 0.000000001 );
+    o_color = imgColor + ( 1.0 - imgColor.a ) * o_color;
+    o_color = segColor + ( 1.0 - segColor.a ) * o_color;
 }

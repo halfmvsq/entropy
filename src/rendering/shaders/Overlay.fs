@@ -7,14 +7,14 @@
 
 in VS_OUT // Redeclared vertex shader outputs: now the fragment shader inputs
 {
-    vec3 ImgTexCoords[N];
-    vec3 SegTexCoords[N];
+    vec3 v_imgTexCoords[N];
+    vec3 v_segTexCoords[N];
 } fs_in;
 
-layout (location = 0) out vec4 OutColor; // Output RGBA color (pre-multiplied alpha)
+layout (location = 0) out vec4 o_color; // Output RGBA color (pre-multiplied alpha)
 
-uniform sampler3D imgTex[N]; // Texture units 0/1: images
-uniform usampler3D segTex[N]; // Texture units 2/3: segmentations
+uniform sampler3D u_imgTex[N]; // Texture units 0/1: images
+uniform usampler3D u_segTex[N]; // Texture units 2/3: segmentations
 uniform samplerBuffer segLabelCmapTex[N]; // Texutre unit 4/5: label color maps (pre-mult RGBA)
 
 uniform bool useTricubicInterpolation; // Whether to use tricubic interpolation
@@ -142,7 +142,7 @@ float getSegInteriorAlpha( int texNum, uint seg )
             col * texSamplingDirsForSegOutline[1];
 
         // Segmentation value of neighbor at (row, col) offset
-        uint nseg = texture( segTex[texNum], fs_in.SegTexCoords[texNum] + texSamplingPos )[0];
+        uint nseg = texture( u_segTex[texNum], fs_in.v_segTexCoords[texNum] + texSamplingPos )[0];
 
         // Fragment (with segmentation 'seg') is on the boundary (and hence gets
         // full alpha) if its value is not equal to one of its neighbors.
@@ -174,16 +174,16 @@ void main()
     for ( int i = 0; i < N; ++i )
     {
         // Foreground masks, based on whether texture coordinates are in range [0.0, 1.0]^3:
-        bool imgMask = ! ( any(    lessThan( fs_in.ImgTexCoords[i], MIN_IMAGE_TEXCOORD ) ) ||
-                           any( greaterThan( fs_in.ImgTexCoords[i], MAX_IMAGE_TEXCOORD ) ) );
+        bool imgMask = ! ( any(    lessThan( fs_in.v_imgTexCoords[i], MIN_IMAGE_TEXCOORD ) ) ||
+                           any( greaterThan( fs_in.v_imgTexCoords[i], MAX_IMAGE_TEXCOORD ) ) );
 
-        bool segMask = ! ( any(    lessThan( fs_in.SegTexCoords[i], MIN_IMAGE_TEXCOORD ) ) ||
-                           any( greaterThan( fs_in.SegTexCoords[i], MAX_IMAGE_TEXCOORD ) ) );
+        bool segMask = ! ( any(    lessThan( fs_in.v_segTexCoords[i], MIN_IMAGE_TEXCOORD ) ) ||
+                           any( greaterThan( fs_in.v_segTexCoords[i], MAX_IMAGE_TEXCOORD ) ) );
 
-        // float val = texture( imgTex[i], fs_in.ImgTexCoords[i] ).r; // Image value
-        float val = getImageValue( imgTex[i], fs_in.ImgTexCoords[i], imgMinMax[i] );
+        // float val = texture( u_imgTex[i], fs_in.v_imgTexCoords[i] ).r; // Image value
+        float val = getImageValue( u_imgTex[i], fs_in.v_imgTexCoords[i], imgMinMax[i] );
 
-        uint label = texture( segTex[i], fs_in.SegTexCoords[i] ).r; // Label value
+        uint label = texture( u_segTex[i], fs_in.v_segTexCoords[i] ).r; // Label value
         float norm = clamp( imgSlopeIntercept[i][0] * val + imgSlopeIntercept[i][1], 0.0, 1.0 ); // Apply W/L
 
         // Apply opacity, foreground mask, and thresholds for images:
@@ -203,6 +203,6 @@ void main()
     overlapColor.a = float( ( overlapColor.r > 0.0 ) || ( overlapColor.g > 0.0 ) );
     overlapColor.rgb = overlapColor.a * overlapColor.rgb;
 
-    OutColor = segColor[0] + ( 1.0 - segColor[0].a ) * overlapColor;
-    OutColor = segColor[1] + ( 1.0 - segColor[1].a ) * OutColor;
+    o_color = segColor[0] + ( 1.0 - segColor[0].a ) * overlapColor;
+    o_color = segColor[1] + ( 1.0 - segColor[1].a ) * o_color;
 }

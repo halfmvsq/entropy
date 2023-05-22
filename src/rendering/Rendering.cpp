@@ -1598,18 +1598,18 @@ void Rendering::renderAllImages(
             {
                 // Greyscale image:
 
-                P->setSamplerUniform( "imgTex", msk_imgTexSampler.index );
-                P->setSamplerUniform( "segTex", msk_segTexSampler.index );
+                P->setSamplerUniform( "u_imgTex", msk_imgTexSampler.index );
+                P->setSamplerUniform( "u_segTex", msk_segTexSampler.index );
                 P->setSamplerUniform( "imgCmapTex", msk_imgCmapTexSampler.index );
                 P->setSamplerUniform( "segLabelCmapTex", msk_labelTableTexSampler.index );
 
                 // P->setUniform( "useTricubicInterpolation",
                 //     ( InterpolationMode::Tricubic == img->settings().interpolationMode() ) );
 
-                P->setUniform( "numSquares", static_cast<float>( renderData.m_numCheckerboardSquares ) );
-                P->setUniform( "imgTexture_T_world", U.imgTexture_T_world );
-                P->setUniform( "segTexture_T_world", U.segTexture_T_world );
-                P->setUniform( "segVoxel_T_world", U.segVoxel_T_world );
+                P->setUniform( "u_numSquares", static_cast<float>( renderData.m_numCheckerboardSquares ) );
+                P->setUniform( "u_imgTexture_T_world", U.imgTexture_T_world );
+                P->setUniform( "u_segTexture_T_world", U.segTexture_T_world );
+                P->setUniform( "u_segVoxel_T_world", U.segVoxel_T_world );
 
                 if ( ! doXray )
                 {
@@ -1663,17 +1663,17 @@ void Rendering::renderAllImages(
             {
                 // Color image:
 
-                P->setSamplerUniform( "imgTex", msk_imgRgbaTexSamplers );
-                P->setSamplerUniform( "segTex", msk_segTexSampler.index );
+                P->setSamplerUniform( "u_imgTex", msk_imgRgbaTexSamplers );
+                P->setSamplerUniform( "u_segTex", msk_segTexSampler.index );
                 P->setSamplerUniform( "imgCmapTex", msk_imgCmapTexSampler.index );
                 P->setSamplerUniform( "segLabelCmapTex", msk_labelTableTexSampler.index );
 
                 // P->setUniform( "useTricubicInterpolation", ( InterpolationMode::Tricubic == img->settings().colorInterpolationMode() ) );
 
-                P->setUniform( "numSquares", static_cast<float>( renderData.m_numCheckerboardSquares ) );
-                P->setUniform( "imgTexture_T_world", U.imgTexture_T_world );
-                P->setUniform( "segTexture_T_world", U.segTexture_T_world );
-                P->setUniform( "segVoxel_T_world", U.segVoxel_T_world );
+                P->setUniform( "u_numSquares", static_cast<float>( renderData.m_numCheckerboardSquares ) );
+                P->setUniform( "u_imgTexture_T_world", U.imgTexture_T_world );
+                P->setUniform( "u_segTexture_T_world", U.segTexture_T_world );
+                P->setUniform( "u_segVoxel_T_world", U.segVoxel_T_world );
 
                 P->setUniform( "imgSlopeIntercept", U.slopeInterceptRgba_normalized_T_texture );
                 P->setUniform( "imgThresholds", U.thresholdsRgba );
@@ -1724,13 +1724,13 @@ void Rendering::renderAllImages(
 
             P.use();
             {
-                P.setSamplerUniform( "imgTex", msk_imgTexSamplers );
-                P.setSamplerUniform( "segTex", msk_segTexSamplers );
+                P.setSamplerUniform( "u_imgTex", msk_imgTexSamplers );
+                P.setSamplerUniform( "u_segTex", msk_segTexSamplers );
                 P.setSamplerUniform( "segLabelCmapTex", msk_labelTableTexSamplers );
                 P.setSamplerUniform( "metricCmapTex", msk_metricCmapTexSampler.index );
 
-                P.setUniform( "imgTexture_T_world", std::vector<glm::mat4>{ U0.imgTexture_T_world, U1.imgTexture_T_world } );
-                P.setUniform( "segTexture_T_world", std::vector<glm::mat4>{ U0.segTexture_T_world, U1.segTexture_T_world } );
+                P.setUniform( "u_imgTexture_T_world", std::vector<glm::mat4>{ U0.imgTexture_T_world, U1.imgTexture_T_world } );
+                P.setUniform( "u_segTexture_T_world", std::vector<glm::mat4>{ U0.segTexture_T_world, U1.segTexture_T_world } );
                 P.setUniform( "img1Tex_T_img0Tex", U1.imgTexture_T_world * glm::inverse( U0.imgTexture_T_world ) );
 
                 P.setUniform( "imgSlopeIntercept", std::vector<glm::vec2>{ U0.largestSlopeIntercept, U1.largestSlopeIntercept } );
@@ -1753,13 +1753,13 @@ void Rendering::renderAllImages(
 
             P.use();
             {
-                P.setSamplerUniform( "imgTex", msk_imgTexSamplers );
-                P.setSamplerUniform( "segTex", msk_segTexSamplers );
+                P.setSamplerUniform( "u_imgTex", msk_imgTexSamplers );
+                P.setSamplerUniform( "u_segTex", msk_segTexSamplers );
                 P.setSamplerUniform( "segLabelCmapTex", msk_labelTableTexSamplers );
                 P.setSamplerUniform( "metricCmapTex", msk_metricCmapTexSampler.index );
 
-                P.setUniform( "imgTexture_T_world", std::vector<glm::mat4>{ U0.imgTexture_T_world, U1.imgTexture_T_world } );
-                P.setUniform( "segTexture_T_world", std::vector<glm::mat4>{ U0.segTexture_T_world, U1.segTexture_T_world } );
+                P.setUniform( "u_imgTexture_T_world", std::vector<glm::mat4>{ U0.imgTexture_T_world, U1.imgTexture_T_world } );
+                P.setUniform( "u_segTexture_T_world", std::vector<glm::mat4>{ U0.segTexture_T_world, U1.segTexture_T_world } );
                 P.setUniform( "segOpacity", std::vector<float>{ U0.segOpacity, U1.segOpacity } );
 
                 P.setUniform( "metricCmapSlopeIntercept", metricParams.m_cmapSlopeIntercept );
@@ -1778,12 +1778,12 @@ void Rendering::renderAllImages(
 
             P.use();
             {
-                P.setSamplerUniform( "imgTex", msk_imgTexSamplers );
-                P.setSamplerUniform( "segTex", msk_segTexSamplers );
+                P.setSamplerUniform( "u_imgTex", msk_imgTexSamplers );
+                P.setSamplerUniform( "u_segTex", msk_segTexSamplers );
                 P.setSamplerUniform( "segLabelCmapTex", msk_labelTableTexSamplers );
 
-                P.setUniform( "imgTexture_T_world", std::vector<glm::mat4>{ U0.imgTexture_T_world, U1.imgTexture_T_world } );
-                P.setUniform( "segTexture_T_world", std::vector<glm::mat4>{ U0.segTexture_T_world, U1.segTexture_T_world } );
+                P.setUniform( "u_imgTexture_T_world", std::vector<glm::mat4>{ U0.imgTexture_T_world, U1.imgTexture_T_world } );
+                P.setUniform( "u_segTexture_T_world", std::vector<glm::mat4>{ U0.segTexture_T_world, U1.segTexture_T_world } );
                 P.setUniform( "imgSlopeIntercept", std::vector<glm::vec2>{ U0.slopeIntercept_normalized_T_texture, U1.slopeIntercept_normalized_T_texture } );
                 P.setUniform( "imgThresholds", std::vector<glm::vec2>{ U0.thresholds, U1.thresholds } );
                 P.setUniform( "imgMinMax", std::vector<glm::vec2>{ U0.minMax, U1.minMax } );
@@ -1856,13 +1856,13 @@ void Rendering::renderAllImages(
 
         P.use();
         {
-            P.setSamplerUniform( "imgTex", msk_imgTexSampler.index );
-            P.setSamplerUniform( "segTex", msk_segTexSampler.index );
-            P.setSamplerUniform( "jumpTex", msk_jumpTexSampler.index );
+            P.setSamplerUniform( "u_imgTex", msk_imgTexSampler.index );
+            P.setSamplerUniform( "u_segTex", msk_segTexSampler.index );
+            P.setSamplerUniform( "u_jumpTex", msk_jumpTexSampler.index );
 
             /// @todo Put a lot of these into the uniform settings...
 
-            P.setUniform( "imgTexture_T_world", U.imgTexture_T_world );
+            P.setUniform( "u_imgTexture_T_world", U.imgTexture_T_world );
             P.setUniform( "world_T_imgTexture", U.world_T_imgTexture );
 
             // The camera is positioned at the crosshairs:
@@ -2259,17 +2259,17 @@ bool Rendering::createImageProgram( GLShaderProgram& program )
 
     {
         Uniforms vsUniforms;
-        vsUniforms.insertUniform( "view_T_clip", UniformType::Mat4, sk_identMat4 );
-        vsUniforms.insertUniform( "world_T_clip", UniformType::Mat4, sk_identMat4 );
-        vsUniforms.insertUniform( "clipDepth", UniformType::Float, 0.0f );
+        vsUniforms.insertUniform( "u_view_T_clip", UniformType::Mat4, sk_identMat4 );
+        vsUniforms.insertUniform( "u_world_T_clip", UniformType::Mat4, sk_identMat4 );
+        vsUniforms.insertUniform( "u_clipDepth", UniformType::Float, 0.0f );
 
         // For checkerboarding:
-        vsUniforms.insertUniform( "aspectRatio", UniformType::Float, 1.0f );
-        vsUniforms.insertUniform( "numSquares", UniformType::Int, 1 );
+        vsUniforms.insertUniform( "u_aspectRatio", UniformType::Float, 1.0f );
+        vsUniforms.insertUniform( "u_numSquares", UniformType::Int, 1 );
 
-        vsUniforms.insertUniform( "imgTexture_T_world", UniformType::Mat4, sk_identMat4 );
-        vsUniforms.insertUniform( "segTexture_T_world", UniformType::Mat4, sk_identMat4 );
-        vsUniforms.insertUniform( "segVoxel_T_world", UniformType::Mat4, sk_identMat4 );
+        vsUniforms.insertUniform( "u_imgTexture_T_world", UniformType::Mat4, sk_identMat4 );
+        vsUniforms.insertUniform( "u_segTexture_T_world", UniformType::Mat4, sk_identMat4 );
+        vsUniforms.insertUniform( "u_segVoxel_T_world", UniformType::Mat4, sk_identMat4 );
 
         auto vs = std::make_shared<GLShader>( "vsImage", ShaderType::Vertex, vsSource.c_str() );
         vs->setRegisteredUniforms( std::move( vsUniforms ) );
@@ -2281,8 +2281,8 @@ bool Rendering::createImageProgram( GLShaderProgram& program )
     {   
         Uniforms fsUniforms;
 
-        fsUniforms.insertUniform( "imgTex", UniformType::Sampler, msk_imgTexSampler );
-        fsUniforms.insertUniform( "segTex", UniformType::Sampler, msk_segTexSampler );
+        fsUniforms.insertUniform( "u_imgTex", UniformType::Sampler, msk_imgTexSampler );
+        fsUniforms.insertUniform( "u_segTex", UniformType::Sampler, msk_segTexSampler );
         fsUniforms.insertUniform( "imgCmapTex", UniformType::Sampler, msk_imgCmapTexSampler );
         fsUniforms.insertUniform( "segLabelCmapTex", UniformType::Sampler, msk_labelTableTexSampler );
 
@@ -2363,17 +2363,17 @@ bool Rendering::createImageRgbaProgram( GLShaderProgram& program )
 
     {
         Uniforms vsUniforms;
-        vsUniforms.insertUniform( "view_T_clip", UniformType::Mat4, sk_identMat4 );
-        vsUniforms.insertUniform( "world_T_clip", UniformType::Mat4, sk_identMat4 );
-        vsUniforms.insertUniform( "clipDepth", UniformType::Float, 0.0f );
+        vsUniforms.insertUniform( "u_view_T_clip", UniformType::Mat4, sk_identMat4 );
+        vsUniforms.insertUniform( "u_world_T_clip", UniformType::Mat4, sk_identMat4 );
+        vsUniforms.insertUniform( "u_clipDepth", UniformType::Float, 0.0f );
 
         // For checkerboarding:
-        vsUniforms.insertUniform( "aspectRatio", UniformType::Float, 1.0f );
-        vsUniforms.insertUniform( "numSquares", UniformType::Int, 1 );
+        vsUniforms.insertUniform( "u_aspectRatio", UniformType::Float, 1.0f );
+        vsUniforms.insertUniform( "u_numSquares", UniformType::Int, 1 );
 
-        vsUniforms.insertUniform( "imgTexture_T_world", UniformType::Mat4, sk_identMat4 );
-        vsUniforms.insertUniform( "segTexture_T_world", UniformType::Mat4, sk_identMat4 );
-        vsUniforms.insertUniform( "segVoxel_T_world", UniformType::Mat4, sk_identMat4 );
+        vsUniforms.insertUniform( "u_imgTexture_T_world", UniformType::Mat4, sk_identMat4 );
+        vsUniforms.insertUniform( "u_segTexture_T_world", UniformType::Mat4, sk_identMat4 );
+        vsUniforms.insertUniform( "u_segVoxel_T_world", UniformType::Mat4, sk_identMat4 );
 
         auto vs = std::make_shared<GLShader>( "vsImage", ShaderType::Vertex, vsSource.c_str() );
         vs->setRegisteredUniforms( std::move( vsUniforms ) );
@@ -2385,8 +2385,8 @@ bool Rendering::createImageRgbaProgram( GLShaderProgram& program )
     {
         Uniforms fsUniforms;
 
-        fsUniforms.insertUniform( "imgTex", UniformType::SamplerVector, msk_imgRgbaTexSamplers );
-        fsUniforms.insertUniform( "segTex", UniformType::Sampler, msk_segTexSampler );
+        fsUniforms.insertUniform( "u_imgTex", UniformType::SamplerVector, msk_imgRgbaTexSamplers );
+        fsUniforms.insertUniform( "u_segTex", UniformType::Sampler, msk_segTexSampler );
         fsUniforms.insertUniform( "segLabelCmapTex", UniformType::Sampler, msk_labelTableTexSampler );
 
         // fsUniforms.insertUniform( "useTricubicInterpolation", UniformType::Bool, false );
@@ -2456,17 +2456,17 @@ bool Rendering::createXrayProgram( GLShaderProgram& program )
 
     {
         Uniforms vsUniforms;
-        vsUniforms.insertUniform( "view_T_clip", UniformType::Mat4, sk_identMat4 );
-        vsUniforms.insertUniform( "world_T_clip", UniformType::Mat4, sk_identMat4 );
-        vsUniforms.insertUniform( "clipDepth", UniformType::Float, 0.0f );
+        vsUniforms.insertUniform( "u_view_T_clip", UniformType::Mat4, sk_identMat4 );
+        vsUniforms.insertUniform( "u_world_T_clip", UniformType::Mat4, sk_identMat4 );
+        vsUniforms.insertUniform( "u_clipDepth", UniformType::Float, 0.0f );
 
         // For checkerboarding:
-        vsUniforms.insertUniform( "aspectRatio", UniformType::Float, 1.0f );
-        vsUniforms.insertUniform( "numSquares", UniformType::Int, 1 );
+        vsUniforms.insertUniform( "u_aspectRatio", UniformType::Float, 1.0f );
+        vsUniforms.insertUniform( "u_numSquares", UniformType::Int, 1 );
 
-        vsUniforms.insertUniform( "imgTexture_T_world", UniformType::Mat4, sk_identMat4 );
-        vsUniforms.insertUniform( "segTexture_T_world", UniformType::Mat4, sk_identMat4 );
-        vsUniforms.insertUniform( "segVoxel_T_world", UniformType::Mat4, sk_identMat4 );
+        vsUniforms.insertUniform( "u_imgTexture_T_world", UniformType::Mat4, sk_identMat4 );
+        vsUniforms.insertUniform( "u_segTexture_T_world", UniformType::Mat4, sk_identMat4 );
+        vsUniforms.insertUniform( "u_segVoxel_T_world", UniformType::Mat4, sk_identMat4 );
 
         auto vs = std::make_shared<GLShader>( "vsImage", ShaderType::Vertex, vsSource.c_str() );
         vs->setRegisteredUniforms( std::move( vsUniforms ) );
@@ -2478,8 +2478,8 @@ bool Rendering::createXrayProgram( GLShaderProgram& program )
     {
         Uniforms fsUniforms;
 
-        fsUniforms.insertUniform( "imgTex", UniformType::Sampler, msk_imgTexSampler );
-        fsUniforms.insertUniform( "segTex", UniformType::Sampler, msk_segTexSampler );
+        fsUniforms.insertUniform( "u_imgTex", UniformType::Sampler, msk_imgTexSampler );
+        fsUniforms.insertUniform( "u_segTex", UniformType::Sampler, msk_segTexSampler );
         fsUniforms.insertUniform( "imgCmapTex", UniformType::Sampler, msk_imgCmapTexSampler );
         fsUniforms.insertUniform( "segLabelCmapTex", UniformType::Sampler, msk_labelTableTexSampler );
 
@@ -2559,10 +2559,10 @@ bool Rendering::createRaycastIsoSurfaceProgram( GLShaderProgram& program )
 
     {
         Uniforms vsUniforms;
-        vsUniforms.insertUniform( "view_T_clip", UniformType::Mat4, sk_identMat4 );
-        vsUniforms.insertUniform( "world_T_clip", UniformType::Mat4, sk_identMat4 );
+        vsUniforms.insertUniform( "u_view_T_clip", UniformType::Mat4, sk_identMat4 );
+        vsUniforms.insertUniform( "u_world_T_clip", UniformType::Mat4, sk_identMat4 );
         vsUniforms.insertUniform( "clip_T_world", UniformType::Mat4, sk_identMat4 );
-        vsUniforms.insertUniform( "clipDepth", UniformType::Float, 0.0f );
+        vsUniforms.insertUniform( "u_clipDepth", UniformType::Float, 0.0f );
 
         auto vs = std::make_shared<GLShader>( "vsRaycast", ShaderType::Vertex, vsSource.c_str() );
         vs->setRegisteredUniforms( std::move( vsUniforms ) );
@@ -2574,13 +2574,13 @@ bool Rendering::createRaycastIsoSurfaceProgram( GLShaderProgram& program )
     {
         Uniforms fsUniforms;
 
-        fsUniforms.insertUniform( "imgTex", UniformType::Sampler, msk_imgTexSampler );
-        fsUniforms.insertUniform( "segTex", UniformType::Sampler, msk_segTexSampler );
-        fsUniforms.insertUniform( "jumpTex", UniformType::Sampler, msk_jumpTexSampler );
+        fsUniforms.insertUniform( "u_imgTex", UniformType::Sampler, msk_imgTexSampler );
+        fsUniforms.insertUniform( "u_segTex", UniformType::Sampler, msk_segTexSampler );
+        fsUniforms.insertUniform( "u_jumpTex", UniformType::Sampler, msk_jumpTexSampler );
 
         // fsUniforms.insertUniform( "useTricubicInterpolation", UniformType::Bool, false );
 
-        fsUniforms.insertUniform( "imgTexture_T_world", UniformType::Mat4, sk_identMat4 );
+        fsUniforms.insertUniform( "u_imgTexture_T_world", UniformType::Mat4, sk_identMat4 );
         fsUniforms.insertUniform( "world_T_imgTexture", UniformType::Mat4, sk_identMat4 );
 
         fsUniforms.insertUniform( "worldEyePos", UniformType::Vec3, sk_zeroVec3 );
@@ -2649,17 +2649,17 @@ bool Rendering::createEdgeProgram( GLShaderProgram& program )
 
     {
         Uniforms vsUniforms;
-        vsUniforms.insertUniform( "view_T_clip", UniformType::Mat4, sk_identMat4 );
-        vsUniforms.insertUniform( "world_T_clip", UniformType::Mat4, sk_identMat4 );
-        vsUniforms.insertUniform( "clipDepth", UniformType::Float, 0.0f );
+        vsUniforms.insertUniform( "u_view_T_clip", UniformType::Mat4, sk_identMat4 );
+        vsUniforms.insertUniform( "u_world_T_clip", UniformType::Mat4, sk_identMat4 );
+        vsUniforms.insertUniform( "u_clipDepth", UniformType::Float, 0.0f );
 
         // For checkerboarding:
-        vsUniforms.insertUniform( "aspectRatio", UniformType::Float, 1.0f );
-        vsUniforms.insertUniform( "numSquares", UniformType::Int, 1 );
+        vsUniforms.insertUniform( "u_aspectRatio", UniformType::Float, 1.0f );
+        vsUniforms.insertUniform( "u_numSquares", UniformType::Int, 1 );
 
-        vsUniforms.insertUniform( "imgTexture_T_world", UniformType::Mat4, sk_identMat4 );
-        vsUniforms.insertUniform( "segTexture_T_world", UniformType::Mat4, sk_identMat4 );
-        vsUniforms.insertUniform( "segVoxel_T_world", UniformType::Mat4, sk_identMat4 );
+        vsUniforms.insertUniform( "u_imgTexture_T_world", UniformType::Mat4, sk_identMat4 );
+        vsUniforms.insertUniform( "u_segTexture_T_world", UniformType::Mat4, sk_identMat4 );
+        vsUniforms.insertUniform( "u_segVoxel_T_world", UniformType::Mat4, sk_identMat4 );
 
         auto vs = std::make_shared<GLShader>( "vsEdge", ShaderType::Vertex, vsSource.c_str() );
         vs->setRegisteredUniforms( std::move( vsUniforms ) );
@@ -2671,8 +2671,8 @@ bool Rendering::createEdgeProgram( GLShaderProgram& program )
     {
         Uniforms fsUniforms;
 
-        fsUniforms.insertUniform( "imgTex", UniformType::Sampler, msk_imgTexSampler );
-        fsUniforms.insertUniform( "segTex", UniformType::Sampler, msk_segTexSampler );
+        fsUniforms.insertUniform( "u_imgTex", UniformType::Sampler, msk_imgTexSampler );
+        fsUniforms.insertUniform( "u_segTex", UniformType::Sampler, msk_segTexSampler );
         fsUniforms.insertUniform( "imgCmapTex", UniformType::Sampler, msk_imgCmapTexSampler );
         fsUniforms.insertUniform( "segLabelCmapTex", UniformType::Sampler, msk_labelTableTexSampler );
 
@@ -2753,12 +2753,12 @@ bool Rendering::createOverlayProgram( GLShaderProgram& program )
 
     {
         Uniforms vsUniforms;
-        vsUniforms.insertUniform( "view_T_clip", UniformType::Mat4, sk_identMat4 );
-        vsUniforms.insertUniform( "world_T_clip", UniformType::Mat4, sk_identMat4 );
-        vsUniforms.insertUniform( "clipDepth", UniformType::Float, 0.0f );
+        vsUniforms.insertUniform( "u_view_T_clip", UniformType::Mat4, sk_identMat4 );
+        vsUniforms.insertUniform( "u_world_T_clip", UniformType::Mat4, sk_identMat4 );
+        vsUniforms.insertUniform( "u_clipDepth", UniformType::Float, 0.0f );
 
-        vsUniforms.insertUniform( "imgTexture_T_world", UniformType::Mat4Vector, Mat4Vector{ sk_identMat4, sk_identMat4 } );
-        vsUniforms.insertUniform( "segTexture_T_world", UniformType::Mat4Vector, Mat4Vector{ sk_identMat4, sk_identMat4 } );
+        vsUniforms.insertUniform( "u_imgTexture_T_world", UniformType::Mat4Vector, Mat4Vector{ sk_identMat4, sk_identMat4 } );
+        vsUniforms.insertUniform( "u_segTexture_T_world", UniformType::Mat4Vector, Mat4Vector{ sk_identMat4, sk_identMat4 } );
 
         auto vs = std::make_shared<GLShader>( "vsOverlay", ShaderType::Vertex, vsSource.c_str() );
         vs->setRegisteredUniforms( std::move( vsUniforms ) );
@@ -2770,8 +2770,8 @@ bool Rendering::createOverlayProgram( GLShaderProgram& program )
     {
         Uniforms fsUniforms;
 
-        fsUniforms.insertUniform( "imgTex", UniformType::SamplerVector, msk_imgTexSamplers );
-        fsUniforms.insertUniform( "segTex", UniformType::SamplerVector, msk_segTexSamplers );
+        fsUniforms.insertUniform( "u_imgTex", UniformType::SamplerVector, msk_imgTexSamplers );
+        fsUniforms.insertUniform( "u_segTex", UniformType::SamplerVector, msk_segTexSamplers );
 
         fsUniforms.insertUniform( "segLabelCmapTex", UniformType::SamplerVector, msk_labelTableTexSamplers );
 
@@ -2832,12 +2832,12 @@ bool Rendering::createDifferenceProgram( GLShaderProgram& program )
 
     {
         Uniforms vsUniforms;
-        vsUniforms.insertUniform( "view_T_clip", UniformType::Mat4, sk_identMat4 );
-        vsUniforms.insertUniform( "world_T_clip", UniformType::Mat4, sk_identMat4 );
-        vsUniforms.insertUniform( "clipDepth", UniformType::Float, 0.0f );
+        vsUniforms.insertUniform( "u_view_T_clip", UniformType::Mat4, sk_identMat4 );
+        vsUniforms.insertUniform( "u_world_T_clip", UniformType::Mat4, sk_identMat4 );
+        vsUniforms.insertUniform( "u_clipDepth", UniformType::Float, 0.0f );
 
-        vsUniforms.insertUniform( "imgTexture_T_world", UniformType::Mat4Vector, Mat4Vector{ sk_identMat4, sk_identMat4 } );
-        vsUniforms.insertUniform( "segTexture_T_world", UniformType::Mat4Vector, Mat4Vector{ sk_identMat4, sk_identMat4 } );
+        vsUniforms.insertUniform( "u_imgTexture_T_world", UniformType::Mat4Vector, Mat4Vector{ sk_identMat4, sk_identMat4 } );
+        vsUniforms.insertUniform( "u_segTexture_T_world", UniformType::Mat4Vector, Mat4Vector{ sk_identMat4, sk_identMat4 } );
 
         auto vs = std::make_shared<GLShader>( "vsDiff", ShaderType::Vertex, vsSource.c_str() );
         vs->setRegisteredUniforms( std::move( vsUniforms ) );
@@ -2849,8 +2849,8 @@ bool Rendering::createDifferenceProgram( GLShaderProgram& program )
     {
         Uniforms fsUniforms;
 
-        fsUniforms.insertUniform( "imgTex", UniformType::SamplerVector, msk_imgTexSamplers );
-        fsUniforms.insertUniform( "segTex", UniformType::SamplerVector, msk_segTexSamplers );
+        fsUniforms.insertUniform( "u_imgTex", UniformType::SamplerVector, msk_imgTexSamplers );
+        fsUniforms.insertUniform( "u_segTex", UniformType::SamplerVector, msk_segTexSamplers );
         fsUniforms.insertUniform( "metricCmapTex", UniformType::Sampler, msk_metricCmapTexSampler );
         fsUniforms.insertUniform( "segLabelCmapTex", UniformType::SamplerVector, msk_labelTableTexSamplers );
 
@@ -2918,12 +2918,12 @@ bool Rendering::createCrossCorrelationProgram( GLShaderProgram& program )
 
     {
         Uniforms vsUniforms;
-        vsUniforms.insertUniform( "view_T_clip", UniformType::Mat4, sk_identMat4 );
-        vsUniforms.insertUniform( "world_T_clip", UniformType::Mat4, sk_identMat4 );
-        vsUniforms.insertUniform( "clipDepth", UniformType::Float, 0.0f );
+        vsUniforms.insertUniform( "u_view_T_clip", UniformType::Mat4, sk_identMat4 );
+        vsUniforms.insertUniform( "u_world_T_clip", UniformType::Mat4, sk_identMat4 );
+        vsUniforms.insertUniform( "u_clipDepth", UniformType::Float, 0.0f );
 
-        vsUniforms.insertUniform( "imgTexture_T_world", UniformType::Mat4Vector, Mat4Vector{ sk_identMat4, sk_identMat4 } );
-        vsUniforms.insertUniform( "segTexture_T_world", UniformType::Mat4Vector, Mat4Vector{ sk_identMat4, sk_identMat4 } );
+        vsUniforms.insertUniform( "u_imgTexture_T_world", UniformType::Mat4Vector, Mat4Vector{ sk_identMat4, sk_identMat4 } );
+        vsUniforms.insertUniform( "u_segTexture_T_world", UniformType::Mat4Vector, Mat4Vector{ sk_identMat4, sk_identMat4 } );
 
         auto vs = std::make_shared<GLShader>( "vsCorr", ShaderType::Vertex, vsSource.c_str() );
         vs->setRegisteredUniforms( std::move( vsUniforms ) );
@@ -2935,8 +2935,8 @@ bool Rendering::createCrossCorrelationProgram( GLShaderProgram& program )
     {
         Uniforms fsUniforms;
 
-        fsUniforms.insertUniform( "imgTex", UniformType::SamplerVector, msk_imgTexSamplers );
-        fsUniforms.insertUniform( "segTex", UniformType::SamplerVector, msk_segTexSamplers );
+        fsUniforms.insertUniform( "u_imgTex", UniformType::SamplerVector, msk_imgTexSamplers );
+        fsUniforms.insertUniform( "u_segTex", UniformType::SamplerVector, msk_segTexSamplers );
         fsUniforms.insertUniform( "metricCmapTex", UniformType::Sampler, msk_metricCmapTexSampler );
         fsUniforms.insertUniform( "segLabelCmapTex", UniformType::SamplerVector, msk_labelTableTexSamplers );
 
@@ -2995,10 +2995,10 @@ bool Rendering::createSimpleProgram( GLShaderProgram& program )
 
     {
         Uniforms vsUniforms;
-        vsUniforms.insertUniform( "view_T_clip", UniformType::Mat4, sk_identMat4 );
-        vsUniforms.insertUniform( "clipDepth", UniformType::Float, 0.0f );
-        vsUniforms.insertUniform( "clipMin", UniformType::Float, 0.0f );
-        vsUniforms.insertUniform( "clipMax", UniformType::Float, 0.0f );
+        vsUniforms.insertUniform( "u_view_T_clip", UniformType::Mat4, sk_identMat4 );
+        vsUniforms.insertUniform( "u_clipDepth", UniformType::Float, 0.0f );
+        vsUniforms.insertUniform( "u_clipMin", UniformType::Float, 0.0f );
+        vsUniforms.insertUniform( "u_clipMax", UniformType::Float, 0.0f );
 
         auto vs = std::make_shared<GLShader>( "vsSimple", ShaderType::Vertex, vsSource.c_str() );
         vs->setRegisteredUniforms( std::move( vsUniforms ) );

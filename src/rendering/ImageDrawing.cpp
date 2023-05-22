@@ -250,9 +250,9 @@ void drawImageQuad(
 
 
     // Set the view transformation uniforms that are common to all image plane rendering programs:
-    program.setUniform( "view_T_clip", view.windowClip_T_viewClip() );
-    program.setUniform( "world_T_clip", world_T_viewClip );
-    program.setUniform( "clipDepth", view.clipPlaneDepth() );
+    program.setUniform( "u_view_T_clip", view.windowClip_T_viewClip() );
+    program.setUniform( "u_world_T_clip", world_T_viewClip );
+    program.setUniform( "u_clipDepth", view.clipPlaneDepth() );
 
     program.setUniform( "texSamplingDirsForSegOutline", texSamplingDirsForSegOutline );
 
@@ -266,7 +266,7 @@ void drawImageQuad(
          camera::ViewRenderMode::Quadrants == renderMode ||
          camera::ViewRenderMode::Flashlight == renderMode )
     {
-        program.setUniform( "aspectRatio", view.camera().aspectRatio() );
+        program.setUniform( "u_aspectRatio", view.camera().aspectRatio() );
         program.setUniform( "flashlightRadius", flashlightRadius );
         program.setUniform( "flashlightOverlays", flashlightOverlays );
 
@@ -374,12 +374,12 @@ void drawRaycastQuad(
     }
 
     // Set the view transformation uniforms that are common to all raycast rendering programs:
-    program.setUniform( "view_T_clip", view.windowClip_T_viewClip() );
-    program.setUniform( "world_T_clip", camera::world_T_clip( view.camera() ) );
+    program.setUniform( "u_view_T_clip", view.windowClip_T_viewClip() );
+    program.setUniform( "u_world_T_clip", camera::world_T_clip( view.camera() ) );
     program.setUniform( "clip_T_world", camera::clip_T_world( view.camera() ) );
 
     /// @todo This must match the camera eye position
-    program.setUniform( "clipDepth", view.clipPlaneDepth() );
+    program.setUniform( "u_clipDepth", view.clipPlaneDepth() );
 
     /// @todo the near distance must equal 0.5 voxel spacing and far distance must be beyond volume...
     /// look at how ED does it
