@@ -1,6 +1,5 @@
 #include "logic/app/Data.h"
 
-#include "common/Exception.hpp"
 #include "common/UuidUtility.h"
 
 #include <glm/glm.hpp>
@@ -793,16 +792,7 @@ bool AppData::updateIsosurfaceMeshCpuRecord(
 
             if ( std::end(isosurfaces) != surfaceIt )
             {
-                if ( surfaceIt->second.mesh )
-                {
-                    surfaceIt->second.mesh->setCpuData( std::move(cpuRecord) );
-                }
-                else
-                {
-                    surfaceIt->second.mesh = std::make_unique<MeshRecord>(
-                        std::move(cpuRecord), nullptr );
-                }
-
+                surfaceIt->second.mesh.setCpuData( std::move(cpuRecord) );
                 return true;
             }
         }
@@ -830,16 +820,7 @@ bool AppData::updateIsosurfaceMeshGpuRecord(
 
             if ( std::end(isosurfaces) != surfaceIt )
             {
-                if ( surfaceIt->second.mesh )
-                {
-                    surfaceIt->second.mesh->setGpuData( std::move(gpuRecord) );
-                }
-                else
-                {
-                    surfaceIt->second.mesh = std::make_unique<MeshRecord>(
-                        nullptr, std::move(gpuRecord) );
-                }
-
+                surfaceIt->second.mesh.setGpuData( std::move(gpuRecord) );
                 return true;
             }
         }

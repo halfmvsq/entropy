@@ -261,19 +261,19 @@ void ImGuiWrapper::generateIsosurfaceMeshGpuRecords()
         const Isosurface* surface = m_appData.isosurface(
             *value.imageUid, *value.imageComponent, *value.objectUid );
 
-        if ( ! surface || ! surface->mesh )
+        if ( ! surface )
         {
-            spdlog::error( "Null surface mesh for isosurface {} of image {}",
-                          *value.objectUid, *value.imageUid );
+            spdlog::error( "Null isosurface for isosurface {} of image {}",
+                           *value.objectUid, *value.imageUid );
             continue;
         }
 
-        const MeshCpuRecord* cpuMeshRecord = surface->mesh->cpuData();
+        const MeshCpuRecord* cpuMeshRecord = surface->mesh.cpuData();
 
         if ( ! cpuMeshRecord )
         {
             spdlog::error( "Null CPU mesh record for isosurface {} of image {}",
-                          *value.objectUid, *value.imageUid );
+                           *value.objectUid, *value.imageUid );
             continue;
         }
 

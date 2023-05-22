@@ -14,6 +14,13 @@ class RenderableRecord
 {
 public:
 
+    RenderableRecord()
+        :
+        m_uid(),
+        m_cpuData( nullptr ),
+        m_gpuData( nullptr )
+    {}
+
     RenderableRecord( std::unique_ptr<CpuData> cpuData, std::unique_ptr<GpuData> gpuData )
         :
         m_uid(),

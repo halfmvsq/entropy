@@ -192,7 +192,6 @@ std::optional<uuids::uuid> addNewSurface(
     surface.value = stats.m_quantiles[sk_defaultIsovalueQuantile];
     surface.color = glm::vec3{ 0.5f, 0.75f, 1.0f };
     surface.opacity = 1.0f;
-    surface.mesh = nullptr;
     surface.meshInSync = false;
 
     if ( const auto isosurfaceUid = appData.addIsosurface( imageUid, component, std::move(surface) ) )
