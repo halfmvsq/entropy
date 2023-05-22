@@ -1603,7 +1603,7 @@ void Rendering::renderAllImages(
                 P->setSamplerUniform( "u_imgCmapTex", msk_imgCmapTexSampler.index );
                 P->setSamplerUniform( "u_segLabelCmapTex", msk_labelTableTexSampler.index );
 
-                // P->setUniform( "useTricubicInterpolation",
+                // P->setUniform( "u_useTricubicInterpolation",
                 //     ( InterpolationMode::Tricubic == img->settings().interpolationMode() ) );
 
                 P->setUniform( "u_numSquares", static_cast<float>( renderData.m_numCheckerboardSquares ) );
@@ -1619,10 +1619,10 @@ void Rendering::renderAllImages(
                     {
                         updateIsosurfaceDataFor2d( m_appData, *imgSegPair.first );
 
-                        P->setUniform( "isoValues", renderData.m_isosurfaceData.values );
-                        P->setUniform( "isoOpacities", renderData.m_isosurfaceData.opacities );
-                        P->setUniform( "isoColors", renderData.m_isosurfaceData.colors );
-                        P->setUniform( "isoWidth", renderData.m_isosurfaceData.widthIn2d );
+                        P->setUniform( "u_isoValues", renderData.m_isosurfaceData.values );
+                        P->setUniform( "u_isoOpacities", renderData.m_isosurfaceData.opacities );
+                        P->setUniform( "u_isoColors", renderData.m_isosurfaceData.colors );
+                        P->setUniform( "u_isoWidth", renderData.m_isosurfaceData.widthIn2d );
                     }
                 }
                 else
@@ -1647,13 +1647,13 @@ void Rendering::renderAllImages(
 
                 if ( U.showEdges )
                 {
-                    P->setUniform( "imgSlopeInterceptLargest", U.largestSlopeIntercept );
-                    P->setUniform( "thresholdEdges", U.thresholdEdges );
-                    P->setUniform( "edgeMagnitude", U.edgeMagnitude );
+                    P->setUniform( "u_imgSlopeInterceptLargest", U.largestSlopeIntercept );
+                    P->setUniform( "u_thresholdEdges", U.thresholdEdges );
+                    P->setUniform( "u_edgeMagnitude", U.edgeMagnitude );
                     //                     P.setUniform( "useFreiChen", U.useFreiChen );
-                    P->setUniform( "overlayEdges", U.overlayEdges );
-                    P->setUniform( "colormapEdges", U.colormapEdges );
-                    P->setUniform( "edgeColor", U.edgeColor );
+                    P->setUniform( "u_overlayEdges", U.overlayEdges );
+                    P->setUniform( "u_colormapEdges", U.colormapEdges );
+                    P->setUniform( "u_edgeColor", U.edgeColor );
                 }
 
                 renderOneImage( view, miewportViewBounds, worldOffsetXhairs,
@@ -1668,7 +1668,7 @@ void Rendering::renderAllImages(
                 P->setSamplerUniform( "u_imgCmapTex", msk_imgCmapTexSampler.index );
                 P->setSamplerUniform( "u_segLabelCmapTex", msk_labelTableTexSampler.index );
 
-                // P->setUniform( "useTricubicInterpolation", ( InterpolationMode::Tricubic == img->settings().colorInterpolationMode() ) );
+                // P->setUniform( "u_useTricubicInterpolation", ( InterpolationMode::Tricubic == img->settings().colorInterpolationMode() ) );
 
                 P->setUniform( "u_numSquares", static_cast<float>( renderData.m_numCheckerboardSquares ) );
                 P->setUniform( "u_imgTexture_T_world", U.imgTexture_T_world );
@@ -1682,7 +1682,7 @@ void Rendering::renderAllImages(
                 const bool forceAlphaToOne = ( img->settings().ignoreAlpha() ||
                                                3 == img->header().numComponentsPerPixel() );
 
-                P->setUniform( "alphaIsOne", forceAlphaToOne );
+                P->setUniform( "u_alphaIsOne", forceAlphaToOne );
 
                 P->setUniform( "u_imgOpacity", U.imgOpacityRgba );
                 P->setUniform( "u_segOpacity", U.segOpacity * ( modSegOpacity ? U.imgOpacityRgba[3] : 1.0f ) );
@@ -1727,7 +1727,7 @@ void Rendering::renderAllImages(
                 P.setSamplerUniform( "u_imgTex", msk_imgTexSamplers );
                 P.setSamplerUniform( "u_segTex", msk_segTexSamplers );
                 P.setSamplerUniform( "u_segLabelCmapTex", msk_labelTableTexSamplers );
-                P.setSamplerUniform( "metricCmapTex", msk_metricCmapTexSampler.index );
+                P.setSamplerUniform( "u_metricCmapTex", msk_metricCmapTexSampler.index );
 
                 P.setUniform( "u_imgTexture_T_world", std::vector<glm::mat4>{ U0.imgTexture_T_world, U1.imgTexture_T_world } );
                 P.setUniform( "u_segTexture_T_world", std::vector<glm::mat4>{ U0.segTexture_T_world, U1.segTexture_T_world } );
@@ -1736,11 +1736,11 @@ void Rendering::renderAllImages(
                 P.setUniform( "u_imgSlopeIntercept", std::vector<glm::vec2>{ U0.largestSlopeIntercept, U1.largestSlopeIntercept } );
                 P.setUniform( "u_segOpacity", std::vector<float>{ U0.segOpacity, U1.segOpacity } );
 
-                P.setUniform( "metricCmapSlopeIntercept", metricParams.m_cmapSlopeIntercept );
-                P.setUniform( "metricSlopeIntercept", metricParams.m_slopeIntercept );
-                P.setUniform( "metricMasking", metricParams.m_doMasking );
+                P.setUniform( "u_metricCmapSlopeIntercept", metricParams.m_cmapSlopeIntercept );
+                P.setUniform( "u_metricSlopeIntercept", metricParams.m_slopeIntercept );
+                P.setUniform( "u_metricMasking", metricParams.m_doMasking );
 
-                P.setUniform( "useSquare", renderData.m_useSquare );
+                P.setUniform( "u_useSquare", renderData.m_useSquare );
 
                 renderOneImage( view, miewportViewBounds, worldOffsetXhairs, P, I, false );
             }
@@ -1756,17 +1756,17 @@ void Rendering::renderAllImages(
                 P.setSamplerUniform( "u_imgTex", msk_imgTexSamplers );
                 P.setSamplerUniform( "u_segTex", msk_segTexSamplers );
                 P.setSamplerUniform( "u_segLabelCmapTex", msk_labelTableTexSamplers );
-                P.setSamplerUniform( "metricCmapTex", msk_metricCmapTexSampler.index );
+                P.setSamplerUniform( "u_metricCmapTex", msk_metricCmapTexSampler.index );
 
                 P.setUniform( "u_imgTexture_T_world", std::vector<glm::mat4>{ U0.imgTexture_T_world, U1.imgTexture_T_world } );
                 P.setUniform( "u_segTexture_T_world", std::vector<glm::mat4>{ U0.segTexture_T_world, U1.segTexture_T_world } );
                 P.setUniform( "u_segOpacity", std::vector<float>{ U0.segOpacity, U1.segOpacity } );
 
-                P.setUniform( "metricCmapSlopeIntercept", metricParams.m_cmapSlopeIntercept );
-                P.setUniform( "metricSlopeIntercept", metricParams.m_slopeIntercept );
-                P.setUniform( "metricMasking", metricParams.m_doMasking );
+                P.setUniform( "u_metricCmapSlopeIntercept", metricParams.m_cmapSlopeIntercept );
+                P.setUniform( "u_metricSlopeIntercept", metricParams.m_slopeIntercept );
+                P.setUniform( "u_metricMasking", metricParams.m_doMasking );
 
-                P.setUniform( "texture1_T_texture0", U1.imgTexture_T_world * glm::inverse( U0.imgTexture_T_world ) );
+                P.setUniform( "u_texture1_T_texture0", U1.imgTexture_T_world * glm::inverse( U0.imgTexture_T_world ) );
 
                 renderOneImage( view, miewportViewBounds, worldOffsetXhairs, P, I, false );
             }
@@ -1871,8 +1871,8 @@ void Rendering::renderAllImages(
 //            P.setUniform( "voxelSpacing", U.voxelSpacing );
             P.setUniform( "texGrads", U.textureGradientStep );
 
-            P.setUniform( "isoValues", renderData.m_isosurfaceData.values );
-            P.setUniform( "isoOpacities", renderData.m_isosurfaceData.opacities );
+            P.setUniform( "u_isoValues", renderData.m_isosurfaceData.values );
+            P.setUniform( "u_isoOpacities", renderData.m_isosurfaceData.opacities );
             P.setUniform( "isoEdges", renderData.m_isosurfaceData.edgeStrengths );
 
             P.setUniform( "lightAmbient", renderData.m_isosurfaceData.ambientLights );
@@ -2308,17 +2308,17 @@ bool Rendering::createImageProgram( GLShaderProgram& program )
         // 0: none, 1: max, 2: mean, 3: min, 4: x-ray (not used in image shader)
         fsUniforms.insertUniform( "u_mipMode", UniformType::Int, 0 );
         fsUniforms.insertUniform( "u_halfNumMipSamples", UniformType::Int, 0 );
-        fsUniforms.insertUniform( "texSamplingDirZ", UniformType::Vec3, sk_zeroVec3 );
+        fsUniforms.insertUniform( "u_texSamplingDirZ", UniformType::Vec3, sk_zeroVec3 );
 
         fsUniforms.insertUniform( "u_segInteriorOpacity", UniformType::Float, 1.0f );
         fsUniforms.insertUniform( "u_segInterpCutoff", UniformType::Float, 0.5f );
         fsUniforms.insertUniform( "u_texSamplingDirsForSegOutline", UniformType::Vec3Vector, Vec3Vector{ sk_zeroVec3 } );
         fsUniforms.insertUniform( "u_texSamplingDirsForSmoothSeg", UniformType::Vec3Vector, Vec3Vector{ sk_zeroVec3 } );
 
-        fsUniforms.insertUniform( "isoValues", UniformType::FloatVector, FloatVector{ 0.0f } );
-        fsUniforms.insertUniform( "isoOpacities", UniformType::FloatVector, FloatVector{ 1.0f } );
-        fsUniforms.insertUniform( "isoColors", UniformType::Vec3Vector, Vec3Vector{ sk_zeroVec3 } );
-        fsUniforms.insertUniform( "isoWidth", UniformType::Float, 0.0f );
+        fsUniforms.insertUniform( "u_isoValues", UniformType::FloatVector, FloatVector{ 0.0f } );
+        fsUniforms.insertUniform( "u_isoOpacities", UniformType::FloatVector, FloatVector{ 1.0f } );
+        fsUniforms.insertUniform( "u_isoColors", UniformType::Vec3Vector, Vec3Vector{ sk_zeroVec3 } );
+        fsUniforms.insertUniform( "u_isoWidth", UniformType::Float, 0.0f );
 
         auto fs = std::make_shared<GLShader>( "fsImage", ShaderType::Fragment, fsSource.c_str() );
         fs->setRegisteredUniforms( std::move( fsUniforms ) );
@@ -2389,10 +2389,10 @@ bool Rendering::createImageRgbaProgram( GLShaderProgram& program )
         fsUniforms.insertUniform( "u_segTex", UniformType::Sampler, msk_segTexSampler );
         fsUniforms.insertUniform( "u_segLabelCmapTex", UniformType::Sampler, msk_labelTableTexSampler );
 
-        // fsUniforms.insertUniform( "useTricubicInterpolation", UniformType::Bool, false );
+        // fsUniforms.insertUniform( "u_useTricubicInterpolation", UniformType::Bool, false );
 
         fsUniforms.insertUniform( "u_imgSlopeIntercept", UniformType::Vec2Vector, Vec2Vector{ sk_zeroVec2 } );
-        fsUniforms.insertUniform( "alphaIsOne", UniformType::Bool, true );
+        fsUniforms.insertUniform( "u_alphaIsOne", UniformType::Bool, true );
 
         fsUniforms.insertUniform( "u_imgOpacity", UniformType::FloatVector, FloatVector{ 0.0f } );
         fsUniforms.insertUniform( "u_segOpacity", UniformType::Float, 0.0f );
@@ -2483,7 +2483,7 @@ bool Rendering::createXrayProgram( GLShaderProgram& program )
         fsUniforms.insertUniform( "u_imgCmapTex", UniformType::Sampler, msk_imgCmapTexSampler );
         fsUniforms.insertUniform( "u_segLabelCmapTex", UniformType::Sampler, msk_labelTableTexSampler );
 
-        // fsUniforms.insertUniform( "useTricubicInterpolation", UniformType::Bool, false );
+        // fsUniforms.insertUniform( "u_useTricubicInterpolation", UniformType::Bool, false );
 
         fsUniforms.insertUniform( "imgSlope_native_T_texture", UniformType::Float, 1.0f );
         fsUniforms.insertUniform( "u_imgCmapSlopeIntercept", UniformType::Vec2, sk_zeroVec2 );
@@ -2511,7 +2511,7 @@ bool Rendering::createXrayProgram( GLShaderProgram& program )
         // For X-ray projection mode:
         fsUniforms.insertUniform( "u_halfNumMipSamples", UniformType::Int, 0 );
         fsUniforms.insertUniform( "mipSamplingDistance_cm", UniformType::Float, 0.0f );
-        fsUniforms.insertUniform( "texSamplingDirZ", UniformType::Vec3, sk_zeroVec3 );
+        fsUniforms.insertUniform( "u_texSamplingDirZ", UniformType::Vec3, sk_zeroVec3 );
         fsUniforms.insertUniform( "waterAttenCoeff", UniformType::Float, 0.0f );
         fsUniforms.insertUniform( "airAttenCoeff", UniformType::Float, 0.0f );
 
@@ -2578,7 +2578,7 @@ bool Rendering::createRaycastIsoSurfaceProgram( GLShaderProgram& program )
         fsUniforms.insertUniform( "u_segTex", UniformType::Sampler, msk_segTexSampler );
         fsUniforms.insertUniform( "u_jumpTex", UniformType::Sampler, msk_jumpTexSampler );
 
-        // fsUniforms.insertUniform( "useTricubicInterpolation", UniformType::Bool, false );
+        // fsUniforms.insertUniform( "u_useTricubicInterpolation", UniformType::Bool, false );
 
         fsUniforms.insertUniform( "u_imgTexture_T_world", UniformType::Mat4, sk_identMat4 );
         fsUniforms.insertUniform( "world_T_imgTexture", UniformType::Mat4, sk_identMat4 );
@@ -2586,8 +2586,8 @@ bool Rendering::createRaycastIsoSurfaceProgram( GLShaderProgram& program )
         fsUniforms.insertUniform( "worldEyePos", UniformType::Vec3, sk_zeroVec3 );
         fsUniforms.insertUniform( "texGrads", UniformType::Mat3, sk_identMat3 );
 
-        fsUniforms.insertUniform( "isoValues", UniformType::FloatVector, FloatVector{ 0.0f } );
-        fsUniforms.insertUniform( "isoOpacities", UniformType::FloatVector, FloatVector{ 1.0f } );
+        fsUniforms.insertUniform( "u_isoValues", UniformType::FloatVector, FloatVector{ 0.0f } );
+        fsUniforms.insertUniform( "u_isoOpacities", UniformType::FloatVector, FloatVector{ 1.0f } );
         fsUniforms.insertUniform( "isoEdges", UniformType::FloatVector, FloatVector{ 0.0f } );
 
         fsUniforms.insertUniform( "lightAmbient", UniformType::Vec3Vector, Vec3Vector{ sk_zeroVec3 } );
@@ -2676,7 +2676,7 @@ bool Rendering::createEdgeProgram( GLShaderProgram& program )
         fsUniforms.insertUniform( "u_imgCmapTex", UniformType::Sampler, msk_imgCmapTexSampler );
         fsUniforms.insertUniform( "u_segLabelCmapTex", UniformType::Sampler, msk_labelTableTexSampler );
 
-        // fsUniforms.insertUniform( "useTricubicInterpolation", UniformType::Bool, false );
+        // fsUniforms.insertUniform( "u_useTricubicInterpolation", UniformType::Bool, false );
         
         fsUniforms.insertUniform( "u_imgSlopeIntercept", UniformType::Vec2, sk_zeroVec2 );
         fsUniforms.insertUniform( "u_imgSlopeInterceptLargest", UniformType::Vec2, sk_zeroVec2 );
@@ -2697,15 +2697,15 @@ bool Rendering::createEdgeProgram( GLShaderProgram& program )
         fsUniforms.insertUniform( "u_flashlightRadius", UniformType::Float, 0.5f );
         fsUniforms.insertUniform( "u_flashlightOverlays", UniformType::Bool, true );
 
-        fsUniforms.insertUniform( "thresholdEdges", UniformType::Bool, true );
-        fsUniforms.insertUniform( "edgeMagnitude", UniformType::Float, 0.0f );
+        fsUniforms.insertUniform( "u_thresholdEdges", UniformType::Bool, true );
+        fsUniforms.insertUniform( "u_edgeMagnitude", UniformType::Float, 0.0f );
 //        fsUniforms.insertUniform( "useFreiChen", UniformType::Bool, false );
 //        fsUniforms.insertUniform( "windowedEdges", UniformType::Bool, false );
-        fsUniforms.insertUniform( "overlayEdges", UniformType::Bool, false );
-        fsUniforms.insertUniform( "colormapEdges", UniformType::Bool, false );
-        fsUniforms.insertUniform( "edgeColor", UniformType::Vec4, sk_zeroVec4 );
+        fsUniforms.insertUniform( "u_overlayEdges", UniformType::Bool, false );
+        fsUniforms.insertUniform( "u_colormapEdges", UniformType::Bool, false );
+        fsUniforms.insertUniform( "u_edgeColor", UniformType::Vec4, sk_zeroVec4 );
 
-        fsUniforms.insertUniform( "texSamplingDirsForEdges", UniformType::Vec3Vector, Vec3Vector{ sk_zeroVec3 } );
+        fsUniforms.insertUniform( "u_texSamplingDirsForEdges", UniformType::Vec3Vector, Vec3Vector{ sk_zeroVec3 } );
 
         fsUniforms.insertUniform( "u_texSamplingDirsForSegOutline", UniformType::Vec3Vector, Vec3Vector{ sk_zeroVec3 } );
         fsUniforms.insertUniform( "u_segInteriorOpacity", UniformType::Float, 1.0f );
@@ -2775,7 +2775,7 @@ bool Rendering::createOverlayProgram( GLShaderProgram& program )
 
         fsUniforms.insertUniform( "u_segLabelCmapTex", UniformType::SamplerVector, msk_labelTableTexSamplers );
 
-        // fsUniforms.insertUniform( "useTricubicInterpolation", UniformType::Bool, false );
+        // fsUniforms.insertUniform( "u_useTricubicInterpolation", UniformType::Bool, false );
 
         fsUniforms.insertUniform( "u_imgSlopeIntercept", UniformType::Vec2Vector, Vec2Vector{ sk_zeroVec2, sk_zeroVec2 } );
 
@@ -2851,10 +2851,10 @@ bool Rendering::createDifferenceProgram( GLShaderProgram& program )
 
         fsUniforms.insertUniform( "u_imgTex", UniformType::SamplerVector, msk_imgTexSamplers );
         fsUniforms.insertUniform( "u_segTex", UniformType::SamplerVector, msk_segTexSamplers );
-        fsUniforms.insertUniform( "metricCmapTex", UniformType::Sampler, msk_metricCmapTexSampler );
+        fsUniforms.insertUniform( "u_metricCmapTex", UniformType::Sampler, msk_metricCmapTexSampler );
         fsUniforms.insertUniform( "u_segLabelCmapTex", UniformType::SamplerVector, msk_labelTableTexSamplers );
 
-        // fsUniforms.insertUniform( "useTricubicInterpolation", UniformType::Bool, false );
+        // fsUniforms.insertUniform( "u_useTricubicInterpolation", UniformType::Bool, false );
 
         fsUniforms.insertUniform( "u_imgSlopeIntercept", UniformType::Vec2Vector, Vec2Vector{ sk_zeroVec2, sk_zeroVec2 } );
         fsUniforms.insertUniform( "u_segOpacity", UniformType::FloatVector, FloatVector{ 0.0f, 0.0f } );
@@ -2862,17 +2862,17 @@ bool Rendering::createDifferenceProgram( GLShaderProgram& program )
         fsUniforms.insertUniform( "u_segInteriorOpacity", UniformType::Float, 1.0f );
         fsUniforms.insertUniform( "u_texSamplingDirsForSegOutline", UniformType::Vec3Vector, Vec3Vector{ sk_zeroVec3 } );
 
-        fsUniforms.insertUniform( "metricCmapSlopeIntercept", UniformType::Vec2, sk_zeroVec2 );
-        fsUniforms.insertUniform( "metricSlopeIntercept", UniformType::Vec2, sk_zeroVec2 );
-        fsUniforms.insertUniform( "metricMasking", UniformType::Bool, false );
+        fsUniforms.insertUniform( "u_metricCmapSlopeIntercept", UniformType::Vec2, sk_zeroVec2 );
+        fsUniforms.insertUniform( "u_metricSlopeIntercept", UniformType::Vec2, sk_zeroVec2 );
+        fsUniforms.insertUniform( "u_metricMasking", UniformType::Bool, false );
 
-        fsUniforms.insertUniform( "useSquare", UniformType::Bool, true );
+        fsUniforms.insertUniform( "u_useSquare", UniformType::Bool, true );
 
         // For intensity projection:
         // 0: none, 1: max, 2: mean, 3: min, 4: xray
         fsUniforms.insertUniform( "u_mipMode", UniformType::Int, 0 );
         fsUniforms.insertUniform( "u_halfNumMipSamples", UniformType::Int, 0 );
-        fsUniforms.insertUniform( "texSamplingDirZ", UniformType::Vec3, sk_zeroVec3 );
+        fsUniforms.insertUniform( "u_texSamplingDirZ", UniformType::Vec3, sk_zeroVec3 );
         fsUniforms.insertUniform( "img1Tex_T_img0Tex", UniformType::Mat4, sk_identMat4 );
 
         auto fs = std::make_shared<GLShader>( "fsDiff", ShaderType::Fragment, fsSource.c_str() );
@@ -2937,23 +2937,23 @@ bool Rendering::createCrossCorrelationProgram( GLShaderProgram& program )
 
         fsUniforms.insertUniform( "u_imgTex", UniformType::SamplerVector, msk_imgTexSamplers );
         fsUniforms.insertUniform( "u_segTex", UniformType::SamplerVector, msk_segTexSamplers );
-        fsUniforms.insertUniform( "metricCmapTex", UniformType::Sampler, msk_metricCmapTexSampler );
+        fsUniforms.insertUniform( "u_metricCmapTex", UniformType::Sampler, msk_metricCmapTexSampler );
         fsUniforms.insertUniform( "u_segLabelCmapTex", UniformType::SamplerVector, msk_labelTableTexSamplers );
 
-        // fsUniforms.insertUniform( "useTricubicInterpolation", UniformType::Bool, false );
+        // fsUniforms.insertUniform( "u_useTricubicInterpolation", UniformType::Bool, false );
 
         fsUniforms.insertUniform( "u_segOpacity", UniformType::FloatVector, FloatVector{ 0.0f, 0.0f } );
 
         fsUniforms.insertUniform( "u_segInteriorOpacity", UniformType::Float, 1.0f );
         fsUniforms.insertUniform( "u_texSamplingDirsForSegOutline", UniformType::Vec3Vector, Vec3Vector{ sk_zeroVec3 } );
         
-        fsUniforms.insertUniform( "metricCmapSlopeIntercept", UniformType::Vec2, sk_zeroVec2 );
-        fsUniforms.insertUniform( "metricSlopeIntercept", UniformType::Vec2, sk_zeroVec2 );
-        fsUniforms.insertUniform( "metricMasking", UniformType::Bool, false );
+        fsUniforms.insertUniform( "u_metricCmapSlopeIntercept", UniformType::Vec2, sk_zeroVec2 );
+        fsUniforms.insertUniform( "u_metricSlopeIntercept", UniformType::Vec2, sk_zeroVec2 );
+        fsUniforms.insertUniform( "u_metricMasking", UniformType::Bool, false );
 
-        fsUniforms.insertUniform( "texture1_T_texture0", UniformType::Mat4, sk_identMat4 );
-        fsUniforms.insertUniform( "tex0SamplingDirX", UniformType::Vec3, sk_zeroVec3 );
-        fsUniforms.insertUniform( "tex0SamplingDirY", UniformType::Vec3, sk_zeroVec3 );
+        fsUniforms.insertUniform( "u_texture1_T_texture0", UniformType::Mat4, sk_identMat4 );
+        fsUniforms.insertUniform( "u_tex0SamplingDirX", UniformType::Vec3, sk_zeroVec3 );
+        fsUniforms.insertUniform( "u_tex0SamplingDirY", UniformType::Vec3, sk_zeroVec3 );
 
         auto fs = std::make_shared<GLShader>( "fsCorr", ShaderType::Fragment, fsSource.c_str() );
         fs->setRegisteredUniforms( std::move( fsUniforms ) );

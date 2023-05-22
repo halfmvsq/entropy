@@ -15,7 +15,7 @@ uniform sampler3D u_imgTex; // Texture unit 0: image
 uniform usampler3D u_segTex; // Texture unit 1: segmentation
 uniform usampler3D u_jumpTex; // Texture unit 5: distance texture
 
-// uniform bool useTricubicInterpolation; // Whether to use tricubic interpolation
+// uniform bool u_useTricubicInterpolation; // Whether to use tricubic interpolation
 
 uniform mat4 u_imgTexture_T_world;
 uniform mat4 world_T_imgTexture;
@@ -27,8 +27,8 @@ uniform mat3 texGrads;
 
 uniform float samplingFactor;
 
-uniform float isoValues[NISO];
-uniform float isoOpacities[NISO];
+uniform float u_isoValues[NISO];
+uniform float u_isoOpacities[NISO];
 uniform float isoEdges[NISO];
 
 uniform vec3 lightAmbient[NISO];
@@ -50,7 +50,7 @@ uniform bool segMasksOut;
 // Redeclared vertex shader outputs: now the fragment shader inputs
 in VS_OUT
 {
-    vec3 worldRayDir; // Ray direction in World space (NOT normalized)
+    vec3 v_worldRayDir; // Ray direction in World space (NOT normalized)
 } fs_in;
 
 
@@ -170,7 +170,7 @@ vec4 shade( vec3 lightDir, vec3 viewDir, vec3 normal, int i )
     float s = pow( abs( dot(normal, h) ), lightShininess[i] );
     float e = pow( 1.0 - abs( dot(normal, viewDir) ), isoEdges[i] );
 
-    return isoOpacities[i] * e * vec4(a * lightAmbient[i] + d * lightDiffuse[i] + s * lightSpecular[i], 1.0);
+    return u_isoOpacities[i] * e * vec4(a * lightAmbient[i] + d * lightDiffuse[i] + s * lightSpecular[i], 1.0);
 }
 
 
@@ -182,7 +182,7 @@ void main()
     vec4 color = vec4(0.0);
 
     // The ray direction must be re-normalized after interpolation from Vertex to Fragment stage:
-    vec3 texRayDir = mat3(u_imgTexture_T_world) * normalize(fs_in.worldRayDir);
+    vec3 texRayDir = mat3(u_imgTexture_T_world) * normalize(fs_in.v_worldRayDir);
 
     // Convert physical (mm) to texel units along the ray direction
     float texel_T_mm = length( texRayDir );
@@ -254,12 +254,12 @@ void main()
 
         for ( int i = 0; i < NISO; ++i )
         {
-            if ( isoOpacities[i] > 0.0 &&
-                 renderFrontFaces && value >= isoValues[i] && oldValue < isoValues[i] ||
-                 renderBackFaces  && value < isoValues[i] && oldValue >= isoValues[i] )
+            if ( u_isoOpacities[i] > 0.0 &&
+                 renderFrontFaces && value >= u_isoValues[i] && oldValue < u_isoValues[i] ||
+                 renderBackFaces  && value < u_isoValues[i] && oldValue >= u_isoValues[i] )
             {
                 ++hitCount;
-                vec3 texHitPos = bisect( texStartPos, texRayDir, oldT, t, value - isoValues[i], isoValues[i] );
+                vec3 texHitPos = bisect( texStartPos, texRayDir, oldT, t, value - u_isoValues[i], u_isoValues[i] );
                 vec3 texLightDir = normalize(texStartPos - texHitPos);
                 vec3 texNormal = gradient(texHitPos);
 

@@ -26,13 +26,13 @@ uniform sampler3D u_imgTex[4]; // Texture units 0, 5, 6, 7: Red, green, blue, al
 uniform usampler3D u_segTex; // Texture unit 1: segmentation
 uniform samplerBuffer u_segLabelCmapTex; // Texutre unit 3: label color map (pre-mult RGBA)
 
-// uniform bool useTricubicInterpolation; // Whether to use tricubic interpolation
+// uniform bool u_useTricubicInterpolation; // Whether to use tricubic interpolation
 
 // Slope and intercept for mapping texture intensity to normalized intensity, accounting for window-leveling
 uniform vec2 u_imgSlopeIntercept[4];
 
 // Should alpha be forced to 1? Set to true for 3-component images, where no alpha is provided.
-uniform bool alphaIsOne;
+uniform bool u_alphaIsOne;
 
 uniform float u_imgOpacity[4]; // Image opacities
 uniform float u_segOpacity; // Segmentation opacities
@@ -268,7 +268,7 @@ void main()
     // Compute image alpha based on opacity, mask, and thresholds:
     float imgAlpha[4];
 
-    float forcedOpaque = float( true == alphaIsOne );
+    float forcedOpaque = float( true == u_alphaIsOne );
 
     float thresh[4];
 

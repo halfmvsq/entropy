@@ -28,7 +28,7 @@ uniform usampler3D u_segTex; // Texture unit 1: segmentation
 uniform sampler1D u_imgCmapTex; // Texture unit 2: image color map (pre-mult RGBA)
 uniform samplerBuffer u_segLabelCmapTex; // Texutre unit 3: label color map (pre-mult RGBA)
 
-// uniform bool useTricubicInterpolation; // Whether to use tricubic interpolation
+// uniform bool u_useTricubicInterpolation; // Whether to use tricubic interpolation
 
 // Slope for mapping texture intensity to native image intensity, NOT accounting for window-leveling
 uniform float imgSlope_native_T_texture;
@@ -82,7 +82,7 @@ uniform int u_halfNumMipSamples;
 uniform float mipSamplingDistance_cm;
 
 // Z view camera direction, represented in texture sampling space
-uniform vec3 texSamplingDirZ;
+uniform vec3 u_texSamplingDirZ;
 
 // Photon mass attenuation coefficients [1/cm] of liquid water and dry air (at sea level):
 uniform float waterAttenCoeff;
@@ -282,7 +282,7 @@ void main()
     // Accumulate intensity projection in forwards (+Z) direction:
     for ( int i = 1; i <= u_halfNumMipSamples; ++i )
     {
-        vec3 tc = fs_in.v_imgTexCoords + i * texSamplingDirZ;
+        vec3 tc = fs_in.v_imgTexCoords + i * u_texSamplingDirZ;
         if ( ! isInsideTexture( tc ) ) break;
 
         texValue = getImageValue( tc );
@@ -294,7 +294,7 @@ void main()
     // Accumulate intensity projection in backwards (-Z) direction:
     for ( int i = 1; i <= u_halfNumMipSamples; ++i )
     {
-        vec3 tc = fs_in.v_imgTexCoords - i * texSamplingDirZ;
+        vec3 tc = fs_in.v_imgTexCoords - i * u_texSamplingDirZ;
         if ( ! isInsideTexture( tc ) ) break;
 
         texValue = getImageValue( tc );

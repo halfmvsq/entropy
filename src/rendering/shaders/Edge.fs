@@ -19,7 +19,7 @@ uniform usampler3D u_segTex; // Texture unit 1: segmentation
 uniform sampler1D u_imgCmapTex; // Texture unit 2: image color map (pre-mult RGBA)
 uniform samplerBuffer u_segLabelCmapTex; // Texutre unit 3: label color map (pre-mult RGBA)
 
-// uniform bool useTricubicInterpolation; // Whether to use tricubic interpolation
+// uniform bool u_useTricubicInterpolation; // Whether to use tricubic interpolation
 
 uniform vec2 u_imgSlopeIntercept; // Slopes and intercepts for image normalization and window-leveling
 uniform vec2 u_imgSlopeInterceptLargest; // Slopes and intercepts for image normalization
@@ -55,14 +55,14 @@ uniform float u_flashlightRadius;
 uniform bool u_flashlightOverlays;
 
 // Edge properties:
-uniform bool thresholdEdges; // Threshold the edges
-uniform float edgeMagnitude; // Magnitude of edges to compute
-uniform bool overlayEdges; // Overlay edges on image
-uniform bool colormapEdges; // Apply colormap to edges
-uniform vec4 edgeColor; // RGBA, pre-multiplied by alpha
+uniform bool u_thresholdEdges; // Threshold the edges
+uniform float u_edgeMagnitude; // Magnitude of edges to compute
+uniform bool u_overlayEdges; // Overlay edges on image
+uniform bool u_colormapEdges; // Apply colormap to edges
+uniform vec4 u_edgeColor; // RGBA, pre-multiplied by alpha
 //uniform bool useFreiChen;
 
-uniform vec3 texSamplingDirsForEdges[2];
+uniform vec3 u_texSamplingDirsForEdges[2];
 
 // Texture sampling directions (horizontal and vertical) for calculating the segmentation outline
 uniform vec3 u_texSamplingDirsForSegOutline[2];
@@ -256,8 +256,8 @@ void main()
     {
         for ( int i = 0; i <= 2; ++i )
         {
-            vec3 texSamplingPos = float(i - 1) * texSamplingDirsForEdges[0] +
-                float(j - 1) * texSamplingDirsForEdges[1];
+            vec3 texSamplingPos = float(i - 1) * u_texSamplingDirsForEdges[0] +
+                float(j - 1) * u_texSamplingDirsForEdges[1];
 
             //float v = texture( u_imgTex, fs_in.v_imgTexCoords + texSamplingPos ).r;
             float v = getImageValue( fs_in.v_imgTexCoords + texSamplingPos );
@@ -276,7 +276,7 @@ void main()
     }
 
     // Gradient magnitude:
-    float gradMag_Sobel = SobelFactor * sqrt( C_Sobel[0] + C_Sobel[1] ) / max( edgeMagnitude, 0.01 );
+    float gradMag_Sobel = SobelFactor * sqrt( C_Sobel[0] + C_Sobel[1] ) / max( u_edgeMagnitude, 0.01 );
 
 //    float C_FC[9];
 //    for ( int i = 0; i <= 8; ++i )
@@ -287,14 +287,14 @@ void main()
 
 //    float M_FC = ( C_FC[0] + C_FC[1] ) + ( C_FC[2] + C_FC[3] );
 //    float S_FC = ( C_FC[4] + C_FC[5] ) + ( C_FC[6] + C_FC[7] ) + ( C_FC[8] + M_FC );
-//    float gradMag_FC = sqrt( M_FC / S_FC ) / max( edgeMagnitude, 0.01 );
+//    float gradMag_FC = sqrt( M_FC / S_FC ) / max( u_edgeMagnitude, 0.01 );
 
     // Choose Sobel or Frei-Chen:
 //    float gradMag = mix( gradMag_Sobel, gradMag_FC, float(useFreiChen) );
     float gradMag = gradMag_Sobel;
 
-    // If thresholdEdges is true, then threshold gradMag against edgeMagnitude:
-    gradMag = mix( gradMag, float( gradMag > edgeMagnitude ), float(thresholdEdges) );
+    // If u_thresholdEdges is true, then threshold gradMag against u_edgeMagnitude:
+    gradMag = mix( gradMag, float( gradMag > u_edgeMagnitude ), float(u_thresholdEdges) );
 
     // Get the image and segmentation label values:
     // float img = texture( u_imgTex, fs_in.v_imgTexCoords ).r;
@@ -314,19 +314,19 @@ void main()
     float alpha = u_imgOpacity * mask * hardThreshold( img, u_imgThresholds );
 
     // Apply color map to the image intensity:
-    // Disable the image color if overlayEdges is false.
+    // Disable the image color if u_overlayEdges is false.
 
     // Quantize the color map.
     float cmapCoord = mix( floor( float(u_imgCmapQuantLevels) * imgNorm) / float(u_imgCmapQuantLevels - 1), imgNorm, float( 0 == u_imgCmapQuantLevels ) );
     cmapCoord = u_imgCmapSlopeIntercept[0] * cmapCoord + u_imgCmapSlopeIntercept[1];
 
-    vec4 imageLayer = alpha * float(overlayEdges) * texture( u_imgCmapTex, cmapCoord );
+    vec4 imageLayer = alpha * float(u_overlayEdges) * texture( u_imgCmapTex, cmapCoord );
 
     // Apply color map to gradient magnitude:
     vec4 gradColormap = texture( u_imgCmapTex, u_imgCmapSlopeIntercept[0] * gradMag + u_imgCmapSlopeIntercept[1] );
 
     // For the edge layer, use either the solid edge color or the colormapped gradient magnitude:
-    vec4 edgeLayer = alpha * mix( gradMag * edgeColor, gradColormap, float(colormapEdges) );
+    vec4 edgeLayer = alpha * mix( gradMag * u_edgeColor, gradColormap, float(u_colormapEdges) );
 
     // Look up label colors:
     vec4 segColor = computeLabelColor( int(seg) ) * getSegInteriorAlpha( seg ) * u_segOpacity * float(segMask);

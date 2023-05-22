@@ -87,12 +87,12 @@ uniform float u_segInteriorOpacity;
 uniform float u_segInterpCutoff;
 
 // Z view camera direction, represented in texture sampling space
-uniform vec3 texSamplingDirZ;
+uniform vec3 u_texSamplingDirZ;
 
-uniform float isoValues[NISO]; // Isosurface values
-uniform float isoOpacities[NISO]; // Isosurface opacities
-uniform vec3 isoColors[NISO]; // Isosurface colors
-uniform float isoWidth; // Width of isosurface
+uniform float u_isoValues[NISO]; // Isosurface values
+uniform float u_isoOpacities[NISO]; // Isosurface opacities
+uniform vec3 u_isoColors[NISO]; // Isosurface colors
+uniform float u_isoWidth; // Width of isosurface
 
 
 float hardThreshold( float value, vec2 thresholds )
@@ -136,7 +136,7 @@ bool doRender()
                      fs_in.v_clipPos.y > u_clipCrosshairs.y );
 
     // Distance of the fragment from the crosshairs, accounting for aspect ratio:
-    float flashlighdist = sqrt(
+    float flashlightDist = sqrt(
         pow( u_aspectRatio * ( fs_in.v_clipPos.x - u_clipCrosshairs.x ), 2.0 ) +
         pow( fs_in.v_clipPos.y - u_clipCrosshairs.y, 2.0 ) );
 
@@ -154,7 +154,7 @@ bool doRender()
 
     // If in Flashlight mode, then render the fragment?
     render = render || ( ( FLASHLIGHT_RENDER_MODE == u_renderMode ) &&
-        ( ( u_showFix == ( flashlighdist > u_flashlightRadius ) ) ||
+        ( ( u_showFix == ( flashlightDist > u_flashlightRadius ) ) ||
                        ( u_flashlightOverlays && u_showFix ) ) );
 
     return render;
@@ -244,7 +244,7 @@ float computeProjection( float img )
     {
         for ( int i = 1; i <= u_halfNumMipSamples; ++i )
         {
-            vec3 c = fs_in.v_imgTexCoords + dir * i * texSamplingDirZ;
+            vec3 c = fs_in.v_imgTexCoords + dir * i * u_texSamplingDirZ;
 
             if ( ! isInsideTexture( c ) ) break;
 
@@ -453,7 +453,7 @@ void main()
 
     for ( int i = 0; i < NISO; ++i )
     {
-        vec4 color = float(imgMask) * isoOpacities[i] * cubicPulse( isoValues[i], isoWidth, img ) * vec4( isoColors[i], 1.0 );
+        vec4 color = float(imgMask) * u_isoOpacities[i] * cubicPulse( u_isoValues[i], u_isoWidth, img ) * vec4( u_isoColors[i], 1.0 );
         isoLayer = color + (1.0 - color.a) * isoLayer;
     }
 

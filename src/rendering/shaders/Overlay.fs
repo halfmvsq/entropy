@@ -17,7 +17,7 @@ uniform sampler3D u_imgTex[N]; // Texture units 0/1: images
 uniform usampler3D u_segTex[N]; // Texture units 2/3: segmentations
 uniform samplerBuffer u_segLabelCmapTex[N]; // Texutre unit 4/5: label color maps (pre-mult RGBA)
 
-uniform bool useTricubicInterpolation; // Whether to use tricubic interpolation
+uniform bool u_useTricubicInterpolation; // Whether to use tricubic interpolation
 
 uniform vec2 u_imgSlopeIntercept[N]; // Slopes and intercepts for image window-leveling
 
@@ -162,7 +162,7 @@ float getImageValue( sampler3D tex, vec3 texCoord, vec2 minMax )
     return clamp( mix(
         texture( tex, texCoord )[0],
         interpolateTricubicFast( tex, texCoord ),
-        float(useTricubicInterpolation) ), minMax[0], minMax[1] );
+        float(u_useTricubicInterpolation) ), minMax[0], minMax[1] );
 }
 
 

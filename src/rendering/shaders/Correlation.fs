@@ -22,20 +22,20 @@ uniform float u_segOpacity[N]; // Segmentation opacities
 // Texture sampling directions (horizontal and vertical) for calculating the segmentation outline
 uniform vec3 u_texSamplingDirsForSegOutline[2];
 
-// uniform bool useTricubicInterpolation; // Whether to use tricubic interpolation
+// uniform bool u_useTricubicInterpolation; // Whether to use tricubic interpolation
 
 // Opacity of the interior of the segmentation
 uniform float u_segInteriorOpacity;
 
-uniform sampler1D metricCmapTex; // Texture unit 4: metric colormap (pre-mult RGBA)
-uniform vec2 metricCmapSlopeIntercept; // Slope and intercept for the metric colormap
-uniform vec2 metricSlopeIntercept; // Slope and intercept for the final metric
-uniform bool metricMasking; // Whether to mask based on segmentation
+uniform sampler1D u_metricCmapTex; // Texture unit 4: metric colormap (pre-mult RGBA)
+uniform vec2 u_metricCmapSlopeIntercept; // Slope and intercept for the metric colormap
+uniform vec2 u_metricSlopeIntercept; // Slope and intercept for the final metric
+uniform bool u_metricMasking; // Whether to mask based on segmentation
 
-uniform mat4 texture1_T_texture0;
-uniform vec3 texSampleSize[N];
-uniform vec3 tex0SamplingDirX;
-uniform vec3 tex0SamplingDirY;
+uniform mat4 u_texture1_T_texture0;
+uniform vec3 u_texSampleSize[N];
+uniform vec3 u_tex0SamplingDirX;
+uniform vec3 u_tex0SamplingDirY;
 
 
 
@@ -162,16 +162,16 @@ void main()
     for ( int i = 0; i < N; ++i )
     {
         // Foreground masks, based on whether texture coordinates are in range [0.0, 1.0]^3:
-        bool imgMask = ! ( any(    lessThan( fs_in.v_imgTexCoords[i], MIN_IMAGE_TEXCOORD + texSampleSize[i] ) ) ||
-                           any( greaterThan( fs_in.v_imgTexCoords[i], MAX_IMAGE_TEXCOORD - texSampleSize[i] ) ) );
+        bool imgMask = ! ( any(    lessThan( fs_in.v_imgTexCoords[i], MIN_IMAGE_TEXCOORD + u_texSampleSize[i] ) ) ||
+                           any( greaterThan( fs_in.v_imgTexCoords[i], MAX_IMAGE_TEXCOORD - u_texSampleSize[i] ) ) );
 
-        bool segMask = ! ( any(    lessThan( fs_in.v_segTexCoords[i], MIN_IMAGE_TEXCOORD + texSampleSize[i] ) ) ||
-                           any( greaterThan( fs_in.v_segTexCoords[i], MAX_IMAGE_TEXCOORD - texSampleSize[i] ) ) );
+        bool segMask = ! ( any(    lessThan( fs_in.v_segTexCoords[i], MIN_IMAGE_TEXCOORD + u_texSampleSize[i] ) ) ||
+                           any( greaterThan( fs_in.v_segTexCoords[i], MAX_IMAGE_TEXCOORD - u_texSampleSize[i] ) ) );
 
         uint label = texture( u_segTex[i], fs_in.v_segTexCoords[i] ).r; // Label value
 
         // Apply foreground mask and masking based on segmentation label:
-        mask[i] = float( imgMask && ( metricMasking && ( label > 0u ) || ! metricMasking ) );
+        mask[i] = float( imgMask && ( u_metricMasking && ( label > 0u ) || ! u_metricMasking ) );
 
         // Look up label colors:
         segColor[i] = computeLabelColor( int(label), i ) * getSegInteriorAlpha( i, label ) * u_segOpacity[i] * float(segMask);
@@ -185,8 +185,8 @@ void main()
     {
         for ( int i = -1; i <= 1; ++i )
         {
-            vec3 tex0Pos = fs_in.v_imgTexCoords[0] + float(i) * tex0SamplingDirX + float(j) * tex0SamplingDirY;
-            vec3 tex1Pos = vec3( texture1_T_texture0 * vec4( tex0Pos, 1.0 ) );
+            vec3 tex0Pos = fs_in.v_imgTexCoords[0] + float(i) * u_tex0SamplingDirX + float(j) * u_tex0SamplingDirY;
+            vec3 tex1Pos = vec3( u_texture1_T_texture0 * vec4( tex0Pos, 1.0 ) );
 
             // val0[count] = texture( u_imgTex[0], tex0Pos ).r;
             // val1[count] = texture( u_imgTex[1], tex1Pos ).r;
@@ -228,17 +228,17 @@ void main()
     float metric = numer / sqrt( denom0 * denom1 );
     metric = 0.5 * ( metric + 1.0 );
 
-    //metric = clamp( metricSlopeIntercept[0] * metric + metricSlopeIntercept[1], 0.0, 1.0 );
-    metric = metricSlopeIntercept[0] * metric + metricSlopeIntercept[1];
+    //metric = clamp( u_metricSlopeIntercept[0] * metric + u_metricSlopeIntercept[1], 0.0, 1.0 );
+    metric = u_metricSlopeIntercept[0] * metric + u_metricSlopeIntercept[1];
 
     // Index into colormap:
-    float cmapValue = metricCmapSlopeIntercept[0] * metric + metricCmapSlopeIntercept[1];
+    float cmapValue = u_metricCmapSlopeIntercept[0] * metric + u_metricCmapSlopeIntercept[1];
 
     // Apply colormap and masking (by pre-multiplying RGBA with alpha mask):
-    vec4 metricColor = texture( metricCmapTex, cmapValue ) * metricMask;
+    vec4 metricColor = texture( u_metricCmapTex, cmapValue ) * metricMask;
 
     // Ignore the segmentation layers if metric masking is enabled:
-    float overlaySegs = float( ! metricMasking );
+    float overlaySegs = float( ! u_metricMasking );
     segColor[0] = overlaySegs * segColor[0];
     segColor[1] = overlaySegs * segColor[1];
 

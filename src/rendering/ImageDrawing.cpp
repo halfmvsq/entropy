@@ -241,10 +241,10 @@ void drawImageQuad(
         {
             texSamplingDirsForSegOutline[i] =
                 computeTextureSamplingDirectionForViewPixelOffset(
-                        texture_T_viewClip,
-                        windowViewport,
-                        view.viewClip_T_windowClip(),
-                        posInfo[i].viewClipDir );
+                texture_T_viewClip,
+                windowViewport,
+                view.viewClip_T_windowClip(),
+                posInfo[i].viewClipDir );
         }
     }
 
@@ -256,8 +256,7 @@ void drawImageQuad(
 
     program.setUniform( "u_texSamplingDirsForSegOutline", texSamplingDirsForSegOutline );
 
-    program.setUniform( "u_segInteriorOpacity",
-        ( SegmentationOutlineStyle::Disabled == setOutlineStyle ) ? 1.0f : segInteriorOpacity );
+    program.setUniform( "u_segInteriorOpacity", ( SegmentationOutlineStyle::Disabled == setOutlineStyle ) ? 1.0f : segInteriorOpacity );
     program.setUniform( "u_segInterpCutoff", segInterpCutoff );
 
 
@@ -276,7 +275,7 @@ void drawImageQuad(
 
         if ( showEdges )
         {
-            program.setUniform( "texSamplingDirsForEdges", texSamplingDirsForEdges );
+            program.setUniform( "u_texSamplingDirsForEdges", texSamplingDirsForEdges );
         }
         else
         {
@@ -284,7 +283,7 @@ void drawImageQuad(
 
             // Only render with intensity projection when edges are not visible:
             program.setUniform( "u_halfNumMipSamples", halfNumMipSamples );
-            program.setUniform( "texSamplingDirZ", texSamplingDirZ );
+            program.setUniform( "u_texSamplingDirZ", texSamplingDirZ );
 
             if ( camera::IntensityProjectionMode::Xray != view.intensityProjectionMode() )
             {
@@ -307,7 +306,7 @@ void drawImageQuad(
     {
         program.setUniform( "u_mipMode", underlyingType_asInt32( view.intensityProjectionMode() ) );
         program.setUniform( "u_halfNumMipSamples", halfNumMipSamples );
-        program.setUniform( "texSamplingDirZ", texSamplingDirZ );
+        program.setUniform( "u_texSamplingDirZ", texSamplingDirZ );
     }
     else if ( camera::ViewRenderMode::CrossCorrelation == renderMode )
     {
@@ -340,8 +339,8 @@ void drawImageQuad(
         const glm::vec3 tex0SamplingDirX = glm::dot( glm::abs( pixelDirX ), img0_invDims ) * pixelDirX;
         const glm::vec3 tex0SamplingDirY = glm::dot( glm::abs( pixelDirY ), img0_invDims ) * pixelDirY;
 
-        program.setUniform( "tex0SamplingDirX", tex0SamplingDirX );
-        program.setUniform( "tex0SamplingDirY", tex0SamplingDirY );
+        program.setUniform( "u_tex0SamplingDirX", tex0SamplingDirX );
+        program.setUniform( "u_tex0SamplingDirY", tex0SamplingDirY );
     }
 
     quad.m_vao.bind();

@@ -27,18 +27,18 @@ uniform sampler3D u_imgTex[2]; // Texture units 0/1: images
 uniform usampler3D u_segTex[2]; // Texture units 2/3: segmentations
 uniform samplerBuffer u_segLabelCmapTex[2]; // Texutre unit 6/7: label color tables (pre-mult RGBA)
 
-// uniform bool useTricubicInterpolation; // Whether to use tricubic interpolation
+// uniform bool u_useTricubicInterpolation; // Whether to use tricubic interpolation
 
 uniform vec2 u_imgSlopeIntercept[2]; // Slopes and intercepts for image window-leveling
 uniform float u_segOpacity[2]; // Segmentation opacities
 
-uniform sampler1D metricCmapTex; // Texture unit 4: metric colormap (pre-mult RGBA)
-uniform vec2 metricCmapSlopeIntercept; // Slope and intercept for the metric colormap
-uniform vec2 metricSlopeIntercept; // Slope and intercept for the final metric
-uniform bool metricMasking; // Whether to mask based on segmentation
+uniform sampler1D u_metricCmapTex; // Texture unit 4: metric colormap (pre-mult RGBA)
+uniform vec2 u_metricCmapSlopeIntercept; // Slope and intercept for the metric colormap
+uniform vec2 u_metricSlopeIntercept; // Slope and intercept for the final metric
+uniform bool u_metricMasking; // Whether to mask based on segmentation
 
 // Whether to use squared difference (true) or absolute difference (false)
-uniform bool useSquare;
+uniform bool u_useSquare;
 
 // MIP mode (0: none, 1: max, 2: mean, 3: min, 4: xray)
 uniform int u_mipMode;
@@ -47,7 +47,7 @@ uniform int u_mipMode;
 uniform int u_halfNumMipSamples;
 
 // Z view camera direction, represented in image 0 texture sampling space.
-uniform vec3 texSamplingDirZ;
+uniform vec3 u_texSamplingDirZ;
 
 // Transformation from image 0 to image 1 Texture space.
 uniform mat4 img1Tex_T_img0Tex;
@@ -204,7 +204,7 @@ vec2 computeMetricAndMask( in int sampleOffset, out bool hitBoundary )
     vec3 img_tc[2] = vec3[2]( vec3(0.0), vec3(0.0) );
     vec3 seg_tc[2] = vec3[2]( vec3(0.0), vec3(0.0) );
 
-    vec3 texOffset = float(sampleOffset) * texSamplingDirZ;
+    vec3 texOffset = float(sampleOffset) * u_texSamplingDirZ;
 
     img_tc[0] = fs_in.v_imgTexCoords[0] + texOffset;
     img_tc[1] = vec3( img1Tex_T_img0Tex * vec4( img_tc[0], 1.0 ) );
@@ -233,13 +233,13 @@ vec2 computeMetricAndMask( in int sampleOffset, out bool hitBoundary )
         // Normalize images to [0.0, 1.0] range:
         imgNorm[i] = clamp( u_imgSlopeIntercept[i][0] * img + u_imgSlopeIntercept[i][1], 0.0, 1.0 );
 
-        // When metricMasking is true, the mask is based on the segmentation label.
+        // When u_metricMasking is true, the mask is based on the segmentation label.
         // It is the AND of the mask for both images.
-        metricMask *= float( ( metricMasking && ( label > 0u ) || ! metricMasking ) );
+        metricMask *= float( ( u_metricMasking && ( label > 0u ) || ! u_metricMasking ) );
     }
 
     float metric = abs( imgNorm[0] - imgNorm[1] ) * metricMask;
-    metric *= mix( 1.0, metric, float(useSquare) );
+    metric *= mix( 1.0, metric, float(u_useSquare) );
 
     return vec2( metric, metricMask );
 }
@@ -295,18 +295,18 @@ void main()
     metric /= mix( 1.0, float( numSamples ), float( 2 == u_mipMode ) );
 
     // Apply slope and intercept to metric:
-    metric = clamp( metricSlopeIntercept[0] * metric + metricSlopeIntercept[1], 0.0, 1.0 );
+    metric = clamp( u_metricSlopeIntercept[0] * metric + u_metricSlopeIntercept[1], 0.0, 1.0 );
 
     // Index into colormap:
-    float cmapValue = metricCmapSlopeIntercept[0] * metric + metricCmapSlopeIntercept[1];
+    float cmapValue = u_metricCmapSlopeIntercept[0] * metric + u_metricCmapSlopeIntercept[1];
 
     // Apply colormap and masking (by pre-multiplying RGBA with alpha mask):
-    vec4 metricLayer = texture( metricCmapTex, cmapValue ) * metricMask;
+    vec4 metricLayer = texture( u_metricCmapTex, cmapValue ) * metricMask;
 
     // Get segmentation colors at the slice with zero offset.
     // Ignore the segmentation color if metric masking is enabled.
-    vec4 segColor[2] = vec4[2]( getSegColor(0) * float( ! metricMasking ),
-                                getSegColor(1) * float( ! metricMasking ) );
+    vec4 segColor[2] = vec4[2]( getSegColor(0) * float( ! u_metricMasking ),
+                                getSegColor(1) * float( ! u_metricMasking ) );
 
     // Blend layers:
     o_color = vec4(0.0, 0.0, 0.0, 0.0);
