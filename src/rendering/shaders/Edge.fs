@@ -16,43 +16,43 @@ layout (location = 0) out vec4 o_color; // Output RGBA color (pre-multiplied alp
 
 uniform sampler3D u_imgTex; // Texture unit 0: image
 uniform usampler3D u_segTex; // Texture unit 1: segmentation
-uniform sampler1D imgCmapTex; // Texture unit 2: image color map (pre-mult RGBA)
-uniform samplerBuffer segLabelCmapTex; // Texutre unit 3: label color map (pre-mult RGBA)
+uniform sampler1D u_imgCmapTex; // Texture unit 2: image color map (pre-mult RGBA)
+uniform samplerBuffer u_segLabelCmapTex; // Texutre unit 3: label color map (pre-mult RGBA)
 
 // uniform bool useTricubicInterpolation; // Whether to use tricubic interpolation
 
-uniform vec2 imgSlopeIntercept; // Slopes and intercepts for image normalization and window-leveling
-uniform vec2 imgSlopeInterceptLargest; // Slopes and intercepts for image normalization
-uniform vec2 imgCmapSlopeIntercept; // Slopes and intercepts for the image color maps
-uniform int imgCmapQuantLevels; // Number of quantization levels
+uniform vec2 u_imgSlopeIntercept; // Slopes and intercepts for image normalization and window-leveling
+uniform vec2 u_imgSlopeInterceptLargest; // Slopes and intercepts for image normalization
+uniform vec2 u_imgCmapSlopeIntercept; // Slopes and intercepts for the image color maps
+uniform int u_imgCmapQuantLevels; // Number of quantization levels
 
-uniform vec2 imgMinMax; // Min and max image values
-uniform vec2 imgThresholds; // Image lower and upper thresholds, mapped to OpenGL texture intensity
-uniform float imgOpacity; // Image opacities
-uniform float segOpacity; // Segmentation opacities
+uniform vec2 u_imgMinMax; // Min and max image values
+uniform vec2 u_imgThresholds; // Image lower and upper thresholds, mapped to OpenGL texture intensity
+uniform float u_imgOpacity; // Image opacities
+uniform float u_segOpacity; // Segmentation opacities
 
-uniform bool masking; // Whether to mask image based on segmentation
+uniform bool u_masking; // Whether to mask image based on segmentation
 
-uniform vec2 clipCrosshairs; // Crosshairs in Clip space
+uniform vec2 u_clipCrosshairs; // Crosshairs in Clip space
 
 // Should comparison be done in x,y directions?
 // If x is true, then compare along x; if y is true, then compare along y;
 // if both are true, then compare along both.
-uniform bvec2 quadrants;
+uniform bvec2 u_quadrants;
 
 // Should the fixed image be rendered (true) or the moving image (false):
-uniform bool showFix;
+uniform bool u_showFix;
 
-// Render mode: 0 - normal, 1 - checkerboard, 2 - quadrants, 3 - flashlight
-uniform int renderMode;
+// Render mode: 0 - normal, 1 - checkerboard, 2 - u_quadrants, 3 - flashlight
+uniform int u_renderMode;
 
 uniform float u_aspectRatio;
 
-uniform float flashlightRadius;
+uniform float u_flashlightRadius;
 
 // When true, the flashlight overlays the moving image on top of fixed image.
 // When false, the flashlight replaces the fixed image with the moving image.
-uniform bool flashlightOverlays;
+uniform bool u_flashlightOverlays;
 
 // Edge properties:
 uniform bool thresholdEdges; // Threshold the edges
@@ -65,10 +65,10 @@ uniform vec4 edgeColor; // RGBA, pre-multiplied by alpha
 uniform vec3 texSamplingDirsForEdges[2];
 
 // Texture sampling directions (horizontal and vertical) for calculating the segmentation outline
-uniform vec3 texSamplingDirsForSegOutline[2];
+uniform vec3 u_texSamplingDirsForSegOutline[2];
 
 // Opacity of the interior of the segmentation
-uniform float segInteriorOpacity;
+uniform float u_segInteriorOpacity;
 
 
 // Sobel edge detection convolution filters:
@@ -174,7 +174,7 @@ float interpolateTricubicFast( sampler3D tex, vec3 coord )
 
 // Compute alpha of fragments based on whether or not they are inside the
 // segmentation boundary. Fragments on the boundary are assigned alpha of 1,
-// whereas fragments inside are assigned alpha of 'segInteriorOpacity'.
+// whereas fragments inside are assigned alpha of 'u_segInteriorOpacity'.
 float getSegInteriorAlpha( uint seg )
 {
     // Look up texture values in 8 neighbors surrounding the center fragment.
@@ -185,8 +185,8 @@ float getSegInteriorAlpha( uint seg )
         float row = float( mod( i, 3 ) - 1 ); // runs -1 to 1
         float col = float( floor( float(i / 3) ) - 1 ); // runs -1 to 1
 
-        vec3 texSamplingPos = row * texSamplingDirsForSegOutline[0] +
-                              col * texSamplingDirsForSegOutline[1];
+        vec3 texSamplingPos = row * u_texSamplingDirsForSegOutline[0] +
+                              col * u_texSamplingDirsForSegOutline[1];
 
         // Segmentation value of neighbor at (row, col) offset
         uint nseg = texture( u_segTex, fs_in.v_segTexCoords + texSamplingPos )[0];
@@ -199,12 +199,12 @@ float getSegInteriorAlpha( uint seg )
         }
     }
 
-    return segInteriorOpacity;
+    return u_segInteriorOpacity;
 }
 
 float getImageValue( vec3 texCoord )
 {
-    return clamp( texture( u_imgTex, texCoord )[0], imgMinMax[0], imgMinMax[1] );
+    return clamp( texture( u_imgTex, texCoord )[0], u_imgMinMax[0], u_imgMinMax[1] );
     // interpolateTricubicFast( u_imgTex, texCoord )
 }
 
@@ -220,28 +220,28 @@ int when_ge( int x, int y )
 
 vec4 computeLabelColor( int label )
 {
-    label -= label * when_ge( label, textureSize(segLabelCmapTex) );
-    vec4 color = texelFetch( segLabelCmapTex, label );
+    label -= label * when_ge( label, textureSize(u_segLabelCmapTex) );
+    vec4 color = texelFetch( u_segLabelCmapTex, label );
     return color.a * color;
 }
 
 void main()
 {
-    bvec2 Q = bvec2( fs_in.v_clipPos.x <= clipCrosshairs.x, fs_in.v_clipPos.y > clipCrosshairs.y );
+    bvec2 Q = bvec2( fs_in.v_clipPos.x <= u_clipCrosshairs.x, fs_in.v_clipPos.y > u_clipCrosshairs.y );
 
-    float flashlightDist = sqrt( pow( u_aspectRatio * ( fs_in.v_clipPos.x - clipCrosshairs.x ), 2.0 ) +
-                                 pow( fs_in.v_clipPos.y - clipCrosshairs.y, 2.0 ) );
+    float flashlightDist = sqrt( pow( u_aspectRatio * ( fs_in.v_clipPos.x - u_clipCrosshairs.x ), 2.0 ) +
+                                 pow( fs_in.v_clipPos.y - u_clipCrosshairs.y, 2.0 ) );
 
-    bool doRender = ( 0 == renderMode );
+    bool doRender = ( 0 == u_renderMode );
 
-    doRender = doRender || ( ( 1 == renderMode ) &&
-        ( showFix == bool( mod( floor( fs_in.v_checkerCoord.x ) + floor( fs_in.v_checkerCoord.y ), 2.0 ) > 0.5 ) ) );
+    doRender = doRender || ( ( 1 == u_renderMode ) &&
+        ( u_showFix == bool( mod( floor( fs_in.v_checkerCoord.x ) + floor( fs_in.v_checkerCoord.y ), 2.0 ) > 0.5 ) ) );
 
-    doRender = doRender || ( ( 2 == renderMode ) &&
-        ( showFix == ( ( ! quadrants.x || Q.x ) == ( ! quadrants.y || Q.y ) ) ) );
+    doRender = doRender || ( ( 2 == u_renderMode ) &&
+        ( u_showFix == ( ( ! u_quadrants.x || Q.x ) == ( ! u_quadrants.y || Q.y ) ) ) );
 
-    doRender = doRender || ( ( 3 == renderMode ) &&
-        ( ( showFix == ( flashlightDist > flashlightRadius ) ) || ( flashlightOverlays && showFix ) ) );
+    doRender = doRender || ( ( 3 == u_renderMode ) &&
+        ( ( u_showFix == ( flashlightDist > u_flashlightRadius ) ) || ( u_flashlightOverlays && u_showFix ) ) );
 
     if ( ! doRender ) discard;
 
@@ -263,7 +263,7 @@ void main()
             float v = getImageValue( fs_in.v_imgTexCoords + texSamplingPos );
 
             // Apply maximum window/level to normalize value in [0.0, 1.0]:
-            V[i][j] = imgSlopeInterceptLargest[0] * v + imgSlopeInterceptLargest[1];
+            V[i][j] = u_imgSlopeInterceptLargest[0] * v + u_imgSlopeInterceptLargest[1];
         }
     }
 
@@ -304,32 +304,32 @@ void main()
     uint seg = texture( u_segTex, fs_in.v_segTexCoords ).r;
 
     // Apply window/level and normalize value in [0.0, 1.0]:
-    float imgNorm = clamp( imgSlopeIntercept[0] * img + imgSlopeIntercept[1], 0.0, 1.0 );
+    float imgNorm = clamp( u_imgSlopeIntercept[0] * img + u_imgSlopeIntercept[1], 0.0, 1.0 );
 
     // Mask that accounts for the image boundaries and (if masking is true) the segmentation mask:
-    float mask = float( imgMask && ( masking && ( seg > 0u ) || ! masking ) );
+    float mask = float( imgMask && ( u_masking && ( seg > 0u ) || ! u_masking ) );
 
     // Alpha accounts for opacity, masking, and thresholding:
     // Alpha will be applied to the image and edge layers.
-    float alpha = imgOpacity * mask * hardThreshold( img, imgThresholds );
+    float alpha = u_imgOpacity * mask * hardThreshold( img, u_imgThresholds );
 
     // Apply color map to the image intensity:
     // Disable the image color if overlayEdges is false.
 
     // Quantize the color map.
-    float cmapCoord = mix( floor( float(imgCmapQuantLevels) * imgNorm) / float(imgCmapQuantLevels - 1), imgNorm, float( 0 == imgCmapQuantLevels ) );
-    cmapCoord = imgCmapSlopeIntercept[0] * cmapCoord + imgCmapSlopeIntercept[1];
+    float cmapCoord = mix( floor( float(u_imgCmapQuantLevels) * imgNorm) / float(u_imgCmapQuantLevels - 1), imgNorm, float( 0 == u_imgCmapQuantLevels ) );
+    cmapCoord = u_imgCmapSlopeIntercept[0] * cmapCoord + u_imgCmapSlopeIntercept[1];
 
-    vec4 imageLayer = alpha * float(overlayEdges) * texture( imgCmapTex, cmapCoord );
+    vec4 imageLayer = alpha * float(overlayEdges) * texture( u_imgCmapTex, cmapCoord );
 
     // Apply color map to gradient magnitude:
-    vec4 gradColormap = texture( imgCmapTex, imgCmapSlopeIntercept[0] * gradMag + imgCmapSlopeIntercept[1] );
+    vec4 gradColormap = texture( u_imgCmapTex, u_imgCmapSlopeIntercept[0] * gradMag + u_imgCmapSlopeIntercept[1] );
 
     // For the edge layer, use either the solid edge color or the colormapped gradient magnitude:
     vec4 edgeLayer = alpha * mix( gradMag * edgeColor, gradColormap, float(colormapEdges) );
 
     // Look up label colors:
-    vec4 segColor = computeLabelColor( int(seg) ) * getSegInteriorAlpha( seg ) * segOpacity * float(segMask);
+    vec4 segColor = computeLabelColor( int(seg) ) * getSegInteriorAlpha( seg ) * u_segOpacity * float(segMask);
 
 
     // Blend colors:

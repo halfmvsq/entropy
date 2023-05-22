@@ -254,11 +254,11 @@ void drawImageQuad(
     program.setUniform( "u_world_T_clip", world_T_viewClip );
     program.setUniform( "u_clipDepth", view.clipPlaneDepth() );
 
-    program.setUniform( "texSamplingDirsForSegOutline", texSamplingDirsForSegOutline );
+    program.setUniform( "u_texSamplingDirsForSegOutline", texSamplingDirsForSegOutline );
 
-    program.setUniform( "segInteriorOpacity",
+    program.setUniform( "u_segInteriorOpacity",
         ( SegmentationOutlineStyle::Disabled == setOutlineStyle ) ? 1.0f : segInteriorOpacity );
-    program.setUniform( "segInterpCutoff", segInterpCutoff );
+    program.setUniform( "u_segInterpCutoff", segInterpCutoff );
 
 
     if ( camera::ViewRenderMode::Image == renderMode ||
@@ -267,12 +267,12 @@ void drawImageQuad(
          camera::ViewRenderMode::Flashlight == renderMode )
     {
         program.setUniform( "u_aspectRatio", view.camera().aspectRatio() );
-        program.setUniform( "flashlightRadius", flashlightRadius );
-        program.setUniform( "flashlightOverlays", flashlightOverlays );
+        program.setUniform( "u_flashlightRadius", flashlightRadius );
+        program.setUniform( "u_flashlightOverlays", flashlightOverlays );
 
         const glm::vec4 clipXhairs = camera::clip_T_world( view.camera() ) * glm::vec4{ worldCrosshairs, 1.0f };
 
-        program.setUniform( "clipCrosshairs", glm::vec2{ clipXhairs / clipXhairs.w } );
+        program.setUniform( "u_clipCrosshairs", glm::vec2{ clipXhairs / clipXhairs.w } );
 
         if ( showEdges )
         {
@@ -280,15 +280,15 @@ void drawImageQuad(
         }
         else
         {
-            program.setUniform( "texSamplingDirsForSmoothSeg", texSamplingDirsForSmoothSeg );
+            program.setUniform( "u_texSamplingDirsForSmoothSeg", texSamplingDirsForSmoothSeg );
 
             // Only render with intensity projection when edges are not visible:
-            program.setUniform( "halfNumMipSamples", halfNumMipSamples );
+            program.setUniform( "u_halfNumMipSamples", halfNumMipSamples );
             program.setUniform( "texSamplingDirZ", texSamplingDirZ );
 
             if ( camera::IntensityProjectionMode::Xray != view.intensityProjectionMode() )
             {
-                program.setUniform( "mipMode", underlyingType_asInt32( view.intensityProjectionMode() ) );
+                program.setUniform( "u_mipMode", underlyingType_asInt32( view.intensityProjectionMode() ) );
             }
             else
             {
@@ -305,8 +305,8 @@ void drawImageQuad(
     }
     else if ( camera::ViewRenderMode::Difference == renderMode )
     {
-        program.setUniform( "mipMode", underlyingType_asInt32( view.intensityProjectionMode() ) );
-        program.setUniform( "halfNumMipSamples", halfNumMipSamples );
+        program.setUniform( "u_mipMode", underlyingType_asInt32( view.intensityProjectionMode() ) );
+        program.setUniform( "u_halfNumMipSamples", halfNumMipSamples );
         program.setUniform( "texSamplingDirZ", texSamplingDirZ );
     }
     else if ( camera::ViewRenderMode::CrossCorrelation == renderMode )

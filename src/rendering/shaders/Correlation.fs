@@ -15,17 +15,17 @@ layout (location = 0) out vec4 o_color; // Output RGBA color (pre-multiplied alp
 
 uniform sampler3D u_imgTex[N]; // Texture units 0/1: images
 uniform usampler3D u_segTex[N]; // Texture units 2/3: segmentations
-uniform samplerBuffer segLabelCmapTex[N]; // Texutre unit 6/7: label color tables (pre-mult RGBA)
+uniform samplerBuffer u_segLabelCmapTex[N]; // Texutre unit 6/7: label color tables (pre-mult RGBA)
 
-uniform float segOpacity[N]; // Segmentation opacities
+uniform float u_segOpacity[N]; // Segmentation opacities
 
 // Texture sampling directions (horizontal and vertical) for calculating the segmentation outline
-uniform vec3 texSamplingDirsForSegOutline[2];
+uniform vec3 u_texSamplingDirsForSegOutline[2];
 
 // uniform bool useTricubicInterpolation; // Whether to use tricubic interpolation
 
 // Opacity of the interior of the segmentation
-uniform float segInteriorOpacity;
+uniform float u_segInteriorOpacity;
 
 uniform sampler1D metricCmapTex; // Texture unit 4: metric colormap (pre-mult RGBA)
 uniform vec2 metricCmapSlopeIntercept; // Slope and intercept for the metric colormap
@@ -97,10 +97,10 @@ float interpolateTricubicFast( sampler3D tex, vec3 coord )
 
 // Compute alpha of fragments based on whether or not they are inside the
 // segmentation boundary. Fragments on the boundary are assigned alpha of 1,
-// whereas fragments inside are assigned alpha of 'segInteriorOpacity'.
+// whereas fragments inside are assigned alpha of 'u_segInteriorOpacity'.
 float getSegInteriorAlpha( int texNum, uint seg )
 {
-    float segInteriorAlpha = segInteriorOpacity;
+    float segInteriorAlpha = u_segInteriorOpacity;
 
     // Look up texture values in 8 neighbors surrounding the center fragment.
     // These may be either neighboring image voxels or neighboring view pixels.
@@ -110,8 +110,8 @@ float getSegInteriorAlpha( int texNum, uint seg )
         float row = float( mod( i, 3 ) - 1 ); // runs -1 to 1
         float col = float( floor( float(i / 3) ) - 1 ); // runs -1 to 1
 
-        vec3 texSamplingPos = row * texSamplingDirsForSegOutline[0] +
-            col * texSamplingDirsForSegOutline[1];
+        vec3 texSamplingPos = row * u_texSamplingDirsForSegOutline[0] +
+            col * u_texSamplingDirsForSegOutline[1];
 
         // Segmentation value of neighbor at (row, col) offset
         uint nseg = texture( u_segTex[texNum], fs_in.v_segTexCoords[texNum] + texSamplingPos )[0];
@@ -147,8 +147,8 @@ int when_ge( int x, int y )
 
 vec4 computeLabelColor( int label, int i )
 {
-    label -= label * when_ge( label, textureSize(segLabelCmapTex[i]) );
-    vec4 color = texelFetch( segLabelCmapTex[i], label );
+    label -= label * when_ge( label, textureSize(u_segLabelCmapTex[i]) );
+    vec4 color = texelFetch( u_segLabelCmapTex[i], label );
     return color.a * color;
 }
 
@@ -174,7 +174,7 @@ void main()
         mask[i] = float( imgMask && ( metricMasking && ( label > 0u ) || ! metricMasking ) );
 
         // Look up label colors:
-        segColor[i] = computeLabelColor( int(label), i ) * getSegInteriorAlpha( i, label ) * segOpacity[i] * float(segMask);
+        segColor[i] = computeLabelColor( int(label), i ) * getSegInteriorAlpha( i, label ) * u_segOpacity[i] * float(segMask);
     }
 
     float val0[9];

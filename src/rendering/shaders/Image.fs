@@ -33,58 +33,58 @@ layout (location = 0) out vec4 o_color; // Output RGBA color (pre-multiplied alp
 
 uniform sampler3D u_imgTex; // Texture unit 0: image
 uniform usampler3D u_segTex; // Texture unit 1: segmentation
-uniform sampler1D imgCmapTex; // Texture unit 2: image color map (pre-mult RGBA)
-uniform samplerBuffer segLabelCmapTex; // Texutre unit 3: label color map (pre-mult RGBA)
+uniform sampler1D u_imgCmapTex; // Texture unit 2: image color map (pre-mult RGBA)
+uniform samplerBuffer u_segLabelCmapTex; // Texutre unit 3: label color map (pre-mult RGBA)
 
 // Slope and intercept for mapping texture intensity to normalized intensity, accounting for window-leveling
-uniform vec2 imgSlopeIntercept;
+uniform vec2 u_imgSlopeIntercept;
 
-uniform vec2 imgCmapSlopeIntercept; // Slopes and intercepts for the image color maps
-uniform int imgCmapQuantLevels; // Number of quantization levels
+uniform vec2 u_imgCmapSlopeIntercept; // Slopes and intercepts for the image color maps
+uniform int u_imgCmapQuantLevels; // Number of quantization levels
 
-uniform vec2 imgMinMax; // Min and max image values
-uniform vec2 imgThresholds; // Image lower and upper thresholds, mapped to OpenGL texture intensity
-uniform float imgOpacity; // Image opacities
-uniform float segOpacity; // Segmentation opacities
+uniform vec2 u_imgMinMax; // Min and max image values
+uniform vec2 u_imgThresholds; // Image lower and upper thresholds, mapped to OpenGL texture intensity
+uniform float u_imgOpacity; // Image opacities
+uniform float u_segOpacity; // Segmentation opacities
 
-uniform bool masking; // Whether to mask image based on segmentation
+uniform bool u_masking; // Whether to mask image based on segmentation
 
-uniform vec2 clipCrosshairs; // Crosshairs in Clip space
+uniform vec2 u_clipCrosshairs; // Crosshairs in Clip space
 
 // Should comparison be done in x,y directions?
 // If x is true, then compare along x; if y is true, then compare along y;
 // if both are true, then compare along both.
-uniform bvec2 quadrants;
+uniform bvec2 u_quadrants;
 
 // Should the fixed image be rendered (true) or the moving image (false):
-uniform bool showFix;
+uniform bool u_showFix;
 
-// Render mode (0: normal, 1: checkerboard, 2: quadrants, 3: flashlight)
-uniform int renderMode;
+// Render mode (0: normal, 1: checkerboard, 2: u_quadrants, 3: flashlight)
+uniform int u_renderMode;
 
 uniform float u_aspectRatio;
 
-uniform float flashlightRadius;
+uniform float u_flashlightRadius;
 
 // When true, the flashlight overlays the moving image on top of fixed image.
 // When false, the flashlight replaces the fixed image with the moving image.
-uniform bool flashlightOverlays;
+uniform bool u_flashlightOverlays;
 
 // MIP mode (0: none, 1: max, 2: mean, 3: min, 4: x-ray)
-uniform int mipMode;
+uniform int u_mipMode;
 
 // Half the number of samples for MIP. Set to 0 when no projection is used.
-uniform int halfNumMipSamples;
+uniform int u_halfNumMipSamples;
 
 // Texture sampling directions (horizontal and vertical) for calculating the segmentation outline
-uniform vec3 texSamplingDirsForSegOutline[2];
-uniform vec3 texSamplingDirsForSmoothSeg[2];
+uniform vec3 u_texSamplingDirsForSegOutline[2];
+uniform vec3 u_texSamplingDirsForSmoothSeg[2];
 
 // Opacity of the interior of the segmentation
-uniform float segInteriorOpacity;
+uniform float u_segInteriorOpacity;
 
 // Interpolation cut-off for segmentation (in [0, 1])
-uniform float segInterpCutoff;
+uniform float u_segInterpCutoff;
 
 // Z view camera direction, represented in texture sampling space
 uniform vec3 texSamplingDirZ;
@@ -132,30 +132,30 @@ bool isInsideTexture( vec3 a )
 bool doRender()
 {
     // Indicator of the quadrant of the crosshairs that the fragment is in:
-    bvec2 Q = bvec2( fs_in.v_clipPos.x <= clipCrosshairs.x,
-                     fs_in.v_clipPos.y > clipCrosshairs.y );
+    bvec2 Q = bvec2( fs_in.v_clipPos.x <= u_clipCrosshairs.x,
+                     fs_in.v_clipPos.y > u_clipCrosshairs.y );
 
     // Distance of the fragment from the crosshairs, accounting for aspect ratio:
     float flashlighdist = sqrt(
-        pow( u_aspectRatio * ( fs_in.v_clipPos.x - clipCrosshairs.x ), 2.0 ) +
-        pow( fs_in.v_clipPos.y - clipCrosshairs.y, 2.0 ) );
+        pow( u_aspectRatio * ( fs_in.v_clipPos.x - u_clipCrosshairs.x ), 2.0 ) +
+        pow( fs_in.v_clipPos.y - u_clipCrosshairs.y, 2.0 ) );
 
     // Flag indicating whether the fragment will be rendered:
-    bool render = ( IMAGE_RENDER_MODE == renderMode );
+    bool render = ( IMAGE_RENDER_MODE == u_renderMode );
 
     // If in Checkerboard mode, then render the fragment?
-    render = render || ( ( CHECKER_RENDER_MODE == renderMode ) &&
-        ( showFix == bool( mod( floor( fs_in.v_checkerCoord.x ) +
+    render = render || ( ( CHECKER_RENDER_MODE == u_renderMode ) &&
+        ( u_showFix == bool( mod( floor( fs_in.v_checkerCoord.x ) +
                                 floor( fs_in.v_checkerCoord.y ), 2.0 ) > 0.5 ) ) );
 
     // If in Quadrants mode, then render the fragment?
-    render = render || ( ( QUADRANTS_RENDER_MODE == renderMode ) &&
-        ( showFix == ( ( ! quadrants.x || Q.x ) == ( ! quadrants.y || Q.y ) ) ) );
+    render = render || ( ( QUADRANTS_RENDER_MODE == u_renderMode ) &&
+        ( u_showFix == ( ( ! u_quadrants.x || Q.x ) == ( ! u_quadrants.y || Q.y ) ) ) );
 
     // If in Flashlight mode, then render the fragment?
-    render = render || ( ( FLASHLIGHT_RENDER_MODE == renderMode ) &&
-        ( ( showFix == ( flashlighdist > flashlightRadius ) ) ||
-                       ( flashlightOverlays && showFix ) ) );
+    render = render || ( ( FLASHLIGHT_RENDER_MODE == u_renderMode ) &&
+        ( ( u_showFix == ( flashlighdist > u_flashlightRadius ) ) ||
+                       ( u_flashlightOverlays && u_showFix ) ) );
 
     return render;
 }
@@ -242,24 +242,24 @@ float computeProjection( float img )
     // Accumulate intensity projection in forwards (+Z) and backwards (-Z) directions:
     for ( int dir = -1; dir <= 1; dir += 2 )
     {
-        for ( int i = 1; i <= halfNumMipSamples; ++i )
+        for ( int i = 1; i <= u_halfNumMipSamples; ++i )
         {
             vec3 c = fs_in.v_imgTexCoords + dir * i * texSamplingDirZ;
 
             if ( ! isInsideTexture( c ) ) break;
 
-            float a = getImageValue( u_imgTex, c, imgMinMax[0], imgMinMax[1] );
+            float a = getImageValue( u_imgTex, c, u_imgMinMax[0], u_imgMinMax[1] );
 
-            img = float( MAX_IP_MODE == mipMode ) * max( img, a ) +
-                  float( MEAN_IP_MODE == mipMode ) * ( img + a ) +
-                  float( MIN_IP_MODE == mipMode ) * min( img, a );
+            img = float( MAX_IP_MODE == u_mipMode ) * max( img, a ) +
+                  float( MEAN_IP_MODE == u_mipMode ) * ( img + a ) +
+                  float( MIN_IP_MODE == u_mipMode ) * min( img, a );
 
             ++numSamples;
         }
     }
 
     // If using Mean Intensity Projection mode, then normalize by the number of samples:
-    return img / mix( 1.0, float( numSamples ), float( MEAN_IP_MODE == mipMode ) );
+    return img / mix( 1.0, float( numSamples ), float( MEAN_IP_MODE == u_mipMode ) );
 }
 
 int when_lt( int x, int y )
@@ -274,8 +274,8 @@ int when_ge( int x, int y )
 
 vec4 computeLabelColor( int label )
 {
-    label -= label * when_ge( label, textureSize(segLabelCmapTex) );
-    vec4 color = texelFetch( segLabelCmapTex, label );
+    label -= label * when_ge( label, textureSize(u_segLabelCmapTex) );
+    vec4 color = texelFetch( u_segLabelCmapTex, label );
     return color.a * color; // pre-multiply by alpha
 }
 
@@ -324,8 +324,8 @@ uint getSegValue( vec3 texCoords, vec3 texOffset, float cutoff, out float opacit
         float row = float( mod( j, 3 ) - 1 ); // [-1,0,1]
         float col = float( floor( float(j / 3) ) - 1 ); // [-1,0,1]
 
-        vec3 texPos = row * texSamplingDirsForSmoothSeg[0] +
-                      col * texSamplingDirsForSmoothSeg[1];
+        vec3 texPos = row * u_texSamplingDirsForSmoothSeg[0] +
+                      col * u_texSamplingDirsForSmoothSeg[1];
 
         // Segmentation value of neighbor at (row, col) offset
         float ignore;
@@ -375,7 +375,7 @@ uint getSegValue( vec3 texCoords, vec3 texOffset, float cutoff, out float opacit
 
 // Compute alpha of fragments based on whether or not they are inside the
 // segmentation boundary. Fragments on the boundary are assigned alpha of 1,
-// whereas fragments inside are assigned alpha of 'segInteriorOpacity'.
+// whereas fragments inside are assigned alpha of 'u_segInteriorOpacity'.
 // float getSegInteriorAlpha( uint seg )
 // {
 //     return 1.0;
@@ -392,12 +392,12 @@ float getSegInteriorAlpha( uint seg )
         float col = float( floor( float(i / 3) ) - 1 ); // [-1,0,1]
 
         vec3 texPosOffset =
-            row * texSamplingDirsForSegOutline[0] +
-            col * texSamplingDirsForSegOutline[1];
+            row * u_texSamplingDirsForSegOutline[0] +
+            col * u_texSamplingDirsForSegOutline[1];
 
         // Segmentation value of neighbor at (row, col) offset:
         float ignore;
-        if ( seg != getSegValue( fs_in.v_segTexCoords, texPosOffset, segInterpCutoff, ignore ) )
+        if ( seg != getSegValue( fs_in.v_segTexCoords, texPosOffset, u_segInterpCutoff, ignore ) )
         {
             // Fragment (with segmentation 'seg') is on the segmentation boundary,
             // since its value is not equal to one of its neighbors. Therefore, it gets full alpha.
@@ -405,7 +405,7 @@ float getSegInteriorAlpha( uint seg )
         }
     }
 
-    return segInteriorOpacity;
+    return u_segInteriorOpacity;
 }
 
 
@@ -413,37 +413,37 @@ void main()
 {
     if ( ! doRender() ) discard;
 
-    float img = getImageValue( u_imgTex, fs_in.v_imgTexCoords, imgMinMax[0], imgMinMax[1] );
+    float img = getImageValue( u_imgTex, fs_in.v_imgTexCoords, u_imgMinMax[0], u_imgMinMax[1] );
     img = computeProjection( img );
 
     float segInterpOpacity = 1.0;
-    uint seg = getSegValue( fs_in.v_segTexCoords, vec3(0, 0, 0), segInterpCutoff, segInterpOpacity );
+    uint seg = getSegValue( fs_in.v_segTexCoords, vec3(0, 0, 0), u_segInterpCutoff, segInterpOpacity );
 
     // Apply window/level to normalize image values in [0.0, 1.0] range:
-    float imgNorm = clamp( imgSlopeIntercept[0] * img + imgSlopeIntercept[1], 0.0, 1.0 );
+    float imgNorm = clamp( u_imgSlopeIntercept[0] * img + u_imgSlopeIntercept[1], 0.0, 1.0 );
 
     // Image and segmentation masks based on texture coordinates:
     bool imgMask = isInsideTexture( fs_in.v_imgTexCoords );
     bool segMask = isInsideTexture( fs_in.v_segTexCoords );
 
     // Compute the image mask:
-    float mask = float( imgMask && ( masking && ( seg > 0u ) || ! masking ) );
+    float mask = float( imgMask && ( u_masking && ( seg > 0u ) || ! u_masking ) );
 
 
     // Compute image alpha based on opacity, mask, and thresholds:
-    float imgAlpha = imgOpacity * mask * hardThreshold( img, imgThresholds );
+    float imgAlpha = u_imgOpacity * mask * hardThreshold( img, u_imgThresholds );
 
     // Compute segmentation alpha based on opacity and mask:
-    float segAlpha = segOpacity * segInterpOpacity * getSegInteriorAlpha( seg ) * float(segMask);
+    float segAlpha = u_segOpacity * segInterpOpacity * getSegInteriorAlpha( seg ) * float(segMask);
 
     // Look up image color and apply alpha:
     // Quantize the color map.
-    float cmapCoord = mix( floor( float(imgCmapQuantLevels) * imgNorm) / float(imgCmapQuantLevels - 1), imgNorm,
-        float( 0 == imgCmapQuantLevels ) );
+    float cmapCoord = mix( floor( float(u_imgCmapQuantLevels) * imgNorm) / float(u_imgCmapQuantLevels - 1), imgNorm,
+        float( 0 == u_imgCmapQuantLevels ) );
 
-    cmapCoord = imgCmapSlopeIntercept[0] * cmapCoord + imgCmapSlopeIntercept[1];
+    cmapCoord = u_imgCmapSlopeIntercept[0] * cmapCoord + u_imgCmapSlopeIntercept[1];
 
-    vec4 imgLayer = texture( imgCmapTex, cmapCoord ) * imgAlpha;
+    vec4 imgLayer = texture( u_imgCmapTex, cmapCoord ) * imgAlpha;
 
     // Look up segmentation color and apply:
     vec4 segLayer = computeLabelColor( int(seg) ) * segAlpha;
