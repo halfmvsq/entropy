@@ -1,7 +1,7 @@
 #ifndef I_DRAWABLE_ASSEMBLY_H
 #define I_DRAWABLE_ASSEMBLY_H
 
-#include "rendering_old/drawables/DrawableBase.h"
+#include "rendering/drawables/DrawableBase.h"
 #include "rendering_old/common/SceneType.h"
 
 #include <memory>

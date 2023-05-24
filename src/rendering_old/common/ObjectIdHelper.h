@@ -1,7 +1,7 @@
 #ifndef OBJECT_ID_HELPER_H
 #define OBJECT_ID_HELPER_H
 
-#include "rendering_old/common/ShaderStageTypes.h"
+#include "rendering/common/ShaderStageTypes.h"
 
 bool isDrawableType( uint16_t objectId, const DrawableType& type );
 

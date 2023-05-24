@@ -1,7 +1,7 @@
 #ifndef CAMERA_LABEL_H
 #define CAMERA_LABEL_H
 
-#include "rendering_old/drawables/DrawableBase.h"
+#include "rendering/drawables/DrawableBase.h"
 #include "rendering/common/ShaderProviderType.h"
 #include "rendering/utility/gl/GLBufferObject.h"
 #include "rendering/utility/gl/GLVertexArrayObject.h"

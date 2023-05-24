@@ -1,7 +1,7 @@
 #ifndef DRAWABLE_LANDMARK_GROUP_H
 #define DRAWABLE_LANDMARK_GROUP_H
 
-#include "rendering_old/drawables/DrawableBase.h"
+#include "rendering/drawables/DrawableBase.h"
 #include "rendering_old/common/DrawableScaling.h"
 #include "rendering/common/ShaderProviderType.h"
 

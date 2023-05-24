@@ -5,8 +5,8 @@
 #include "common/Viewport.h"
 #include "logic/camera/Camera.h"
 
-#include "rendering_old/common/AccumulatedRenderingData.h"
-#include "rendering_old/common/ShaderStageTypes.h"
+#include "rendering/common/AccumulatedRenderingData.h"
+#include "rendering/common/ShaderStageTypes.h"
 
 #include <glm/fwd.hpp>
 
@@ -49,7 +49,10 @@ public:
         const CoordinateFrame& crosshairs,
         const AccumulatedRenderingData& parentData ) = 0;
 
-
+    /**
+     * @brief printTree
+     * @param depth
+     */
     virtual void printTree( int depth ) const = 0;
 };
 

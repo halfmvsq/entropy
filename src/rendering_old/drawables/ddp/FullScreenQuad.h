@@ -1,7 +1,7 @@
 #ifndef FULL_SCREEN_QUAD_H
 #define FULL_SCREEN_QUAD_H
 
-#include "rendering_old/drawables/DrawableBase.h"
+#include "rendering/drawables/DrawableBase.h"
 #include "rendering/utility/gl/GLBufferObject.h"
 #include "rendering/utility/gl/GLVertexArrayObject.h"
 

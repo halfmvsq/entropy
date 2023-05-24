@@ -1,7 +1,7 @@
 #ifndef ANNOTATION_EXTRUSION_H
 #define ANNOTATION_EXTRUSION_H
 
-#include "rendering_old/drawables/DrawableBase.h"
+#include "rendering/drawables/DrawableBase.h"
 #include "rendering/common/ShaderProviderType.h"
 #include "rendering_old/records/MeshGpuRecord.h"
 

@@ -1,7 +1,7 @@
 #ifndef SLIDE_H
 #define SLIDE_H
 
-#include "rendering_old/drawables/DrawableBase.h"
+#include "rendering/drawables/DrawableBase.h"
 #include "rendering_old/interfaces/ITexturable3D.h"
 #include "rendering_old/common/MeshColorLayer.h"
 #include "rendering/common/ShaderProviderType.h"

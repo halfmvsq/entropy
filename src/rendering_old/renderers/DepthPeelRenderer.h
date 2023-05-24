@@ -4,7 +4,7 @@
 #include "rendering/interfaces/IRenderer.h"
 #include "rendering/common/ShaderProviderType.h"
 
-#include <glm/vec2.hpp>
+#include <glm/fwd.hpp>
 
 #include <memory>
 #include <string>
@@ -15,12 +15,6 @@ class IDrawable;
 
 class DepthPeelRenderer : public IRenderer
 {
-private:
-
-    /// Functional returning a raw pointer to an IDrawable
-    using DrawableProviderType = GetterType<IDrawable*>;
-
-
 public:
 
     /**
@@ -40,8 +34,8 @@ public:
         std::string name,
         ShaderProgramActivatorType shaderProgramActivator,
         UniformsProviderType uniformsProvider,
-        DrawableProviderType sceneRootProvider,
-        DrawableProviderType overlayRootProvider );
+        GetterType<IDrawable*> sceneRootProvider,
+        GetterType<IDrawable*> overlayRootProvider );
 
     DepthPeelRenderer( const DepthPeelRenderer& ) = delete;
     DepthPeelRenderer& operator=( const DepthPeelRenderer& ) = delete;

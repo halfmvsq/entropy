@@ -1,8 +1,8 @@
 #ifndef DRAWABLE_BASE_H
 #define DRAWABLE_BASE_H
 
-#include "rendering_old/interfaces/IDrawable.h"
-#include "rendering_old/common/DrawableOpacity.h"
+#include "rendering/interfaces/IDrawable.h"
+#include "rendering/common/DrawableOpacity.h"
 #include "rendering/utility/containers/Uniforms.h"
 #include "rendering/utility/gl/GLErrorChecker.h"
 
@@ -33,14 +33,16 @@ public:
     ~DrawableBase() override = default;
 
 
-    void render( const RenderStage& stage,
-                 const ObjectsToRender& objects ) override;
+    void render(
+        const RenderStage& stage,
+        const ObjectsToRender& objects ) override;
 
-    void update( double time,
-                 const Viewport& viewport,
-                 const camera::Camera& camera,
-                 const CoordinateFrame& crosshairs,
-                 const AccumulatedRenderingData& parentData ) override;
+    void update(
+        double time,
+        const Viewport& viewport,
+        const camera::Camera& camera,
+        const CoordinateFrame& crosshairs,
+        const AccumulatedRenderingData& parentData ) override;
 
     void printTree( int depth ) const override;
 
@@ -124,9 +126,9 @@ protected:
     virtual void doTeardownState() {}
 
     virtual void doUpdate( double /*time*/,
-                           const Viewport& /*viewport*/,
-                           const camera::Camera& /*camera*/,
-                           const CoordinateFrame& /*crosshairs*/ ) {}
+                          const Viewport& /*viewport*/,
+                          const camera::Camera& /*camera*/,
+                          const CoordinateFrame& /*crosshairs*/ ) {}
 
     void setRenderId( uint32_t id );
 
@@ -151,17 +153,14 @@ private:
     /// Update this object's rendering data by accumulating its data with its parent's data
     void updateRenderingData();
 
-
     /// List of weak pointers to this object's child drawables
     std::list< std::weak_ptr<DrawableBase> > m_children;
-
 
     /// Accumulated data saved off from this object's parent
     AccumulatedRenderingData m_parentRenderingData;
 
     /// Accumulated data for this object, which will be propagated to its children
     AccumulatedRenderingData m_myRenderingData;
-
 
     /// Affine transformation from this object to its parent
     glm::mat4 m_parent_O_this;

@@ -1,7 +1,7 @@
 #ifndef SLIDE_STACK_ARROW_H
 #define SLIDE_STACK_ARROW_H
 
-#include "rendering_old/drawables/DrawableBase.h"
+#include "rendering/drawables/DrawableBase.h"
 #include "rendering/common/ShaderProviderType.h"
 
 #include "common/ObjectCounter.hpp"

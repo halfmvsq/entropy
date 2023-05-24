@@ -1,7 +1,7 @@
 #ifndef TEXTURED_MESH_H
 #define TEXTURED_MESH_H
 
-#include "rendering_old/drawables/DrawableBase.h"
+#include "rendering/drawables/DrawableBase.h"
 #include "rendering_old/common/MeshColorLayer.h"
 #include "rendering/common/ShaderProviderType.h"
 #include "rendering_old/interfaces/ITexturable3D.h"

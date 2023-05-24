@@ -504,7 +504,7 @@ set( ENTROPY_SOURCES
     ${SRC_DIR}/rendering_old/computers/Polygonizer.cpp
     ${SRC_DIR}/rendering_old/drawables/BasicMesh.cpp
     ${SRC_DIR}/rendering_old/drawables/Crosshairs.cpp
-    ${SRC_DIR}/rendering_old/drawables/DrawableBase.cpp
+    ${SRC_DIR}/rendering/drawables/DrawableBase.cpp
     ${SRC_DIR}/rendering_old/drawables/DynamicTransformation.cpp
     ${SRC_DIR}/rendering_old/drawables/ImageSlice.cpp
     ${SRC_DIR}/rendering_old/drawables/Line.cpp

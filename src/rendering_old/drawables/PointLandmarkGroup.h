@@ -1,7 +1,7 @@
 #ifndef DRAWABLE_POINT_LANDMARK_GROUP_H
 #define DRAWABLE_POINT_LANDMARK_GROUP_H
 
-#include "rendering_old/drawables/DrawableBase.h"
+#include "rendering/drawables/DrawableBase.h"
 #include "rendering/common/ShaderProviderType.h"
 
 #include "logic/records/MeshRecord.h"

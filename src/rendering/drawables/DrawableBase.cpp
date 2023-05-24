@@ -1,6 +1,4 @@
-#include "rendering_old/drawables/DrawableBase.h"
-
-#include "common/Exception.hpp"
+#include "rendering/drawables/DrawableBase.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
@@ -8,8 +6,9 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/string_cast.hpp>
 
+#include <spdlog/spdlog.h>
+
 #include <algorithm>
-#include <iostream>
 
 
 const Uniforms::SamplerIndexType DrawableBase::OpaqueDepthTexSamplerIndex{ 0 };
@@ -20,21 +19,21 @@ const Uniforms::SamplerIndexType DrawableBase::FrontBlenderTexSamplerIndex{ 1 };
 
 DrawableBase::DrawableBase( std::string name, const DrawableType& type )
     :
-      m_uid(),
-      m_name( std::move( name ) ),
-      m_type( type ),
-      m_renderId( 0 ),
+    m_uid(),
+    m_name( std::move( name ) ),
+    m_type( type ),
+    m_renderId( 0 ),
 
-      m_children(),
+    m_children(),
 
-      m_parentRenderingData(),
-      m_myRenderingData(),
+    m_parentRenderingData(),
+    m_myRenderingData(),
 
-      m_parent_O_this( 1.0f ),
-      m_masterOpacityMultiplier( 1.0f ),
-      m_pickable( false ),
-      m_enabled( true ),
-      m_visible( true )
+    m_parent_O_this( 1.0f ),
+    m_masterOpacityMultiplier( 1.0f ),
+    m_pickable( false ),
+    m_enabled( true ),
+    m_visible( true )
 
 {
     updateRenderingData();
@@ -101,7 +100,8 @@ bool DrawableBase::removeChild( const DrawableBase& child )
 }
 
 
-void DrawableBase::render( const RenderStage& stage, const ObjectsToRender& objectsToRender )
+void DrawableBase::render(
+    const RenderStage& stage, const ObjectsToRender& objectsToRender )
 {
     if ( ! isEnabled() || ! isVisible() )
     {
@@ -160,11 +160,11 @@ void DrawableBase::render( const RenderStage& stage, const ObjectsToRender& obje
 
 
 void DrawableBase::update(
-        double time,
-        const Viewport& viewport,
-        const camera::Camera& camera,
-        const CoordinateFrame& crosshairs,
-        const AccumulatedRenderingData& parentData )
+    double time,
+    const Viewport& viewport,
+    const camera::Camera& camera,
+    const CoordinateFrame& crosshairs,
+    const AccumulatedRenderingData& parentData )
 {
     if ( ! isEnabled() )
     {
@@ -283,11 +283,13 @@ const glm::mat4& DrawableBase::parent_O_this() const
 
 void DrawableBase::printTree( int depth ) const
 {
+    std::string tabs;
     for ( int i = 0; i < depth; ++i )
     {
-        std::cout << "\t";
+        tabs += "\t";
     }
-    std::cout << m_name << std::endl;
+
+    spdlog::info( "{}{}", tabs, m_name );
 
     for ( auto& child : m_children )
     {
@@ -321,11 +323,11 @@ void DrawableBase::updateRenderingData()
 {
     // Chain the transformations from this object to its parent to the World:
     m_myRenderingData.m_world_O_object =
-            m_parentRenderingData.m_world_O_object * m_parent_O_this;
+        m_parentRenderingData.m_world_O_object * m_parent_O_this;
 
     // Multiply the opacity factor of this object with its parent's opacity factor:
     m_myRenderingData.m_masterOpacityMultiplier =
-            m_parentRenderingData.m_masterOpacityMultiplier * m_masterOpacityMultiplier;
+        m_parentRenderingData.m_masterOpacityMultiplier * m_masterOpacityMultiplier;
 
     // AND together the pickable flags of this object and its parent:
     m_myRenderingData.m_pickable = ( m_parentRenderingData.m_pickable & m_pickable );

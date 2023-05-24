@@ -1,6 +1,7 @@
 #include "rendering_old/renderers/DepthPeelRenderer.h"
-#include "rendering_old/common/ShaderStageTypes.h"
-#include "rendering_old/drawables/DrawableBase.h"
+
+#include "rendering/common/ShaderStageTypes.h"
+#include "rendering/drawables/DrawableBase.h"
 #include "rendering_old/drawables/ddp/DdpBlendPassQuad.h"
 #include "rendering_old/drawables/ddp/DdpFinalPassQuad.h"
 #include "rendering_old/drawables/ddp/FullScreenDebugQuad.h"
@@ -15,6 +16,8 @@
 
 #include <spdlog/spdlog.h>
 
+#include <glm/glm.hpp>
+
 #include <glad/glad.h>
 
 #define GLFW_INCLUDE_NONE
@@ -22,6 +25,9 @@
 
 #include <array>
 
+
+/// Functional returning a raw pointer to an IDrawable
+using DrawableProviderType = GetterType<IDrawable*>;
 
 namespace
 {

@@ -1,7 +1,7 @@
 #ifndef CROSSHAIRS_3D_DRAWABLE_H
 #define CROSSHAIRS_3D_DRAWABLE_H
 
-#include "rendering_old/drawables/DrawableBase.h"
+#include "rendering/drawables/DrawableBase.h"
 #include "rendering/common/ShaderProviderType.h"
 #include "common/ObjectCounter.hpp"
 
