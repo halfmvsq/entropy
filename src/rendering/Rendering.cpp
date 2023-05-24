@@ -2310,10 +2310,10 @@ bool Rendering::createImageProgram( GLShaderProgram& program )
         fsUniforms.insertUniform( "u_halfNumMipSamples", UniformType::Int, 0 );
         fsUniforms.insertUniform( "u_texSamplingDirZ", UniformType::Vec3, sk_zeroVec3 );
 
-//        fsUniforms.insertUniform( "u_segInteriorOpacity", UniformType::Float, 1.0f );
-        fsUniforms.insertUniform( "u_segInterpCutoff", UniformType::Float, 0.5f );
-//        fsUniforms.insertUniform( "u_texSamplingDirsForSegOutline", UniformType::Vec3Vector, Vec3Vector{ sk_zeroVec3 } );
-        fsUniforms.insertUniform( "u_texSamplingDirsForSmoothSeg", UniformType::Vec3Vector, Vec3Vector{ sk_zeroVec3 } );
+        fsUniforms.insertUniform( "u_segInteriorOpacity", UniformType::Float, 1.0f );
+//        fsUniforms.insertUniform( "u_segInterpCutoff", UniformType::Float, 0.5f );
+        fsUniforms.insertUniform( "u_texSamplingDirsForSegOutline", UniformType::Vec3Vector, Vec3Vector{ sk_zeroVec3 } );
+//        fsUniforms.insertUniform( "u_texSamplingDirsForSmoothSeg", UniformType::Vec3Vector, Vec3Vector{ sk_zeroVec3 } );
 
         fsUniforms.insertUniform( "u_isoValues", UniformType::FloatVector, FloatVector{ 0.0f } );
         fsUniforms.insertUniform( "u_isoOpacities", UniformType::FloatVector, FloatVector{ 1.0f } );

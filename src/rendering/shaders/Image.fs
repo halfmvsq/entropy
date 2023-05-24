@@ -79,10 +79,25 @@ uniform vec3 u_isoColors[NISO]; // Isosurface colors
 uniform float u_isoWidth; // Width of isosurface
 
 
+// OPTIONS:
+// Image interpolation: linear, cubic
+// Segmentation interpolation: nn, linear
+// Outlining: solid, outline
+
 const uvec3 neigh[8] = uvec3[8](
     uvec3(0, 0, 0), uvec3(0, 0, 1), uvec3(0, 1, 0), uvec3(0, 1, 1),
     uvec3(1, 0, 0), uvec3(1, 0, 1), uvec3(1, 1, 0), uvec3(1, 1, 1) );
 
+
+int when_lt( int x, int y )
+{
+    return max( sign(y - x), 0 );
+}
+
+int when_ge( int x, int y )
+{
+    return ( 1 - when_lt(x, y) );
+}
 
 float hardThreshold( float value, vec2 thresholds )
 {
@@ -144,7 +159,7 @@ bool doRender()
     // If in Flashlight mode, then render the fragment?
     render = render || ( ( FLASHLIGHT_RENDER_MODE == u_renderMode ) &&
         ( ( u_showFix == ( flashlightDist > u_flashlightRadius ) ) ||
-                       ( u_flashlightOverlays && u_showFix ) ) );
+            ( u_flashlightOverlays && u_showFix ) ) );
 
     return render;
 }
@@ -263,16 +278,6 @@ float computeProjection( float img )
     return img / mix( 1.0, float( numSamples ), float( MEAN_IP_MODE == u_mipMode ) );
 }
 
-int when_lt( int x, int y )
-{
-    return max( sign(y - x), 0 );
-}
-
-int when_ge( int x, int y )
-{
-    return ( 1 - when_lt(x, y) );
-}
-
 vec4 computeLabelColor( int label )
 {
     label -= label * when_ge( label, textureSize(u_segLabelCmapTex) );
@@ -283,96 +288,96 @@ vec4 computeLabelColor( int label )
 /// Look up segmentation texture label value
 
 /// Default nearest-neighbor lookup:
-//uint getSegValue( vec3 texOffset, out float opacity )
-//{
-//    opacity = 1.0;
-//    return texture( u_segTex, fs_in.v_segVoxCoords + texOffset )[0];
-//}
-
-/// Linear lookup:
-uniform vec3 u_texSamplingDirsForSmoothSeg[2];
-
-// Interpolation cut-off for segmentation (in [0, 1])
-uniform float u_segInterpCutoff;
-
 uint getSegValue( vec3 texOffset, out float opacity )
 {
-    uint seg = 0u;
-    opacity = 0.0;
-
-    vec3 c = floor( fs_in.v_segVoxCoords );
-    vec3 d = pow( vec3( textureSize(u_segTex, 0) ), vec3(-1) );
-    vec3 t = vec3(c.x * d.x, c.y * d.y, c.z * d.z) + 0.5 * d;
-
-    uint s[8];
-    for ( int i = 0; i < 8; ++i )
-    {
-        s[i] = texture( u_segTex, t + neigh[i] * d + texOffset )[0];
-    }
-
-    vec3 b = fs_in.v_segVoxCoords + texOffset * vec3( textureSize(u_segTex, 0) ) - c;
-
-    vec3 g[2] = vec3[2]( vec3(1) - b, b );
-
-    // float segEdgeWidth = 0.02;
-
-
-    uint neighSegs[9];
-
-    // Look up texture values in the fragment and its 8 neighbors.
-    // The center fragment (row = 0, col = 0) has index i = 4.
-    for ( int i = 0; i <= 8; ++i )
-    {
-        int j = int( mod( i + 4, 9 ) ); // j = [4,5,6,7,8,0,1,2,3]
-
-        float row = float( mod( j, 3 ) - 1 ); // [-1,0,1]
-        float col = float( floor( float(j / 3) ) - 1 ); // [-1,0,1]
-
-        vec3 texPos = row * u_texSamplingDirsForSmoothSeg[0] +
-                      col * u_texSamplingDirsForSmoothSeg[1];
-
-        // Segmentation value of neighbor at (row, col) offset
-        neighSegs[i] = texture( u_segTex, fs_in.v_segTexCoords + texPos )[0];
-    }
-
-
-    float maxInterp = 0.0;
-
-    for ( int i = 0; i <= 8; ++i )
-    {
-        uint label = neighSegs[i];
-
-        float interp = 0.0;
-        for ( int j = 0; j <= 7; ++j )
-        {
-            interp += float(s[j] == label) *
-                g[neigh[j].x].x * g[neigh[j].y].y * g[neigh[j].z].z;
-        }
-
-        // This feathers the edges:
-        // opacity = smoothstep(
-        //     clamp( u_segInterpCutoff - segEdgeWidth/2.0, 0.0, 1.0 ),
-        //     clamp( u_segInterpCutoff + segEdgeWidth/2.0, 0.0, 1.0 ), interp );
-
-        opacity = 1.0;
-        // opacity = cubicPulse( u_segInterpCutoff, segEdgeWidth, interp );
-
-        if ( interp > maxInterp &&
-             interp >= u_segInterpCutoff &&
-             computeLabelColor( int(label) ).a > 0.0 )
-        {
-            seg = label;
-            maxInterp = interp;
-
-            if ( u_segInterpCutoff >= 0.5 )
-            {
-                break;
-            }
-        }
-    }
-
-    return seg;
+    opacity = 1.0;
+    return texture( u_segTex, fs_in.v_segTexCoords + texOffset )[0];
 }
+
+/// Linear lookup:
+//uniform vec3 u_texSamplingDirsForSmoothSeg[2];
+
+//// Interpolation cut-off for segmentation (in [0, 1])
+//uniform float u_segInterpCutoff;
+
+//uint getSegValue( vec3 texOffset, out float opacity )
+//{
+//    uint seg = 0u;
+//    opacity = 0.0;
+
+//    vec3 c = floor( fs_in.v_segVoxCoords );
+//    vec3 d = pow( vec3( textureSize(u_segTex, 0) ), vec3(-1) );
+//    vec3 t = vec3(c.x * d.x, c.y * d.y, c.z * d.z) + 0.5 * d;
+
+//    uint s[8];
+//    for ( int i = 0; i < 8; ++i )
+//    {
+//        s[i] = texture( u_segTex, t + neigh[i] * d + texOffset )[0];
+//    }
+
+//    vec3 b = fs_in.v_segVoxCoords + texOffset * vec3( textureSize(u_segTex, 0) ) - c;
+
+//    vec3 g[2] = vec3[2]( vec3(1) - b, b );
+
+//    // float segEdgeWidth = 0.02;
+
+
+//    uint neighSegs[9];
+
+//    // Look up texture values in the fragment and its 8 neighbors.
+//    // The center fragment (row = 0, col = 0) has index i = 4.
+//    for ( int i = 0; i <= 8; ++i )
+//    {
+//        int j = int( mod( i + 4, 9 ) ); // j = [4,5,6,7,8,0,1,2,3]
+
+//        float row = float( mod( j, 3 ) - 1 ); // [-1,0,1]
+//        float col = float( floor( float(j / 3) ) - 1 ); // [-1,0,1]
+
+//        vec3 texPos = row * u_texSamplingDirsForSmoothSeg[0] +
+//                      col * u_texSamplingDirsForSmoothSeg[1];
+
+//        // Segmentation value of neighbor at (row, col) offset
+//        neighSegs[i] = texture( u_segTex, fs_in.v_segTexCoords + texPos )[0];
+//    }
+
+
+//    float maxInterp = 0.0;
+
+//    for ( int i = 0; i <= 8; ++i )
+//    {
+//        uint label = neighSegs[i];
+
+//        float interp = 0.0;
+//        for ( int j = 0; j <= 7; ++j )
+//        {
+//            interp += float(s[j] == label) *
+//                g[neigh[j].x].x * g[neigh[j].y].y * g[neigh[j].z].z;
+//        }
+
+//        // This feathers the edges:
+//        // opacity = smoothstep(
+//        //     clamp( u_segInterpCutoff - segEdgeWidth/2.0, 0.0, 1.0 ),
+//        //     clamp( u_segInterpCutoff + segEdgeWidth/2.0, 0.0, 1.0 ), interp );
+
+//        opacity = 1.0;
+//        // opacity = cubicPulse( u_segInterpCutoff, segEdgeWidth, interp );
+
+//        if ( interp > maxInterp &&
+//             interp >= u_segInterpCutoff &&
+//             computeLabelColor( int(label) ).a > 0.0 )
+//        {
+//            seg = label;
+//            maxInterp = interp;
+
+//            if ( u_segInterpCutoff >= 0.5 )
+//            {
+//                break;
+//            }
+//        }
+//    }
+
+//    return seg;
+//}
 
 
 /// Compute alpha of fragments based on whether or not they are inside the
@@ -380,45 +385,45 @@ uint getSegValue( vec3 texOffset, out float opacity )
 /// whereas fragments inside are assigned alpha of 'u_segInteriorOpacity'.
 
 /// Nearest neighbor sampling:
-float getSegInteriorAlpha( uint seg )
-{
-    return 1.0;
-}
+//float getSegInteriorAlpha( uint seg )
+//{
+//    return 1.0;
+//}
 
 /// Linear sampling:
 
 // Texture sampling directions (horizontal and vertical) for calculating the segmentation outline
-//uniform vec3 u_texSamplingDirsForSegOutline[2];
+uniform vec3 u_texSamplingDirsForSegOutline[2];
 
 // Opacity of the interior of the segmentation
-//uniform float u_segInteriorOpacity;
+uniform float u_segInteriorOpacity;
 
-//float getSegInteriorAlpha( uint seg )
-//{
-//    // Look up texture values in 8 neighbors surrounding the center fragment.
-//    // These may be either neighboring image voxels or neighboring view pixels.
-//    // The center fragment (row = 0, col = 0) has index i = 4.
-//    for ( int i = 0; i <= 8; ++i )
-//    {
-//        float row = float( mod( i, 3 ) - 1 ); // [-1,0,1]
-//        float col = float( floor( float(i / 3) ) - 1 ); // [-1,0,1]
+float getSegInteriorAlpha( uint seg )
+{
+    // Look up texture values in 8 neighbors surrounding the center fragment.
+    // These may be either neighboring image voxels or neighboring view pixels.
+    // The center fragment (row = 0, col = 0) has index i = 4.
+    for ( int i = 0; i <= 8; ++i )
+    {
+        float row = float( mod( i, 3 ) - 1 ); // [-1,0,1]
+        float col = float( floor( float(i / 3) ) - 1 ); // [-1,0,1]
 
-//        vec3 texPosOffset =
-//            row * u_texSamplingDirsForSegOutline[0] +
-//            col * u_texSamplingDirsForSegOutline[1];
+        vec3 texPosOffset =
+            row * u_texSamplingDirsForSegOutline[0] +
+            col * u_texSamplingDirsForSegOutline[1];
 
-//        // Segmentation value of neighbor at (row, col) offset:
-//        float ignore;
-//        if ( seg != getSegValue( texPosOffset, ignore ) )
-//        {
-//            // Fragment (with segmentation 'seg') is on the segmentation boundary,
-//            // since its value is not equal to one of its neighbors. Therefore, it gets full alpha.
-//            return 1.0;
-//        }
-//    }
+        // Segmentation value of neighbor at (row, col) offset:
+        float ignore;
+        if ( seg != getSegValue( texPosOffset, ignore ) )
+        {
+            // Fragment (with segmentation 'seg') is on the segmentation boundary,
+            // since its value is not equal to one of its neighbors. Therefore, it gets full alpha.
+            return 1.0;
+        }
+    }
 
-//    return u_segInteriorOpacity;
-//}
+    return u_segInteriorOpacity;
+}
 
 
 void main()

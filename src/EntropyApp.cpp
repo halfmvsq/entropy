@@ -910,7 +910,7 @@ bool EntropyApp::loadSerializedImage(
                                "component {} of image {}", noiseImgSize.x, noiseImgSize.y, noiseImgSize.z,
                                radius, comp, *imageUid );
 
-                m_data.addImage( noiseEstimateImage ); // Add noise estimate as an image for debug purposes
+//                m_data.addImage( noiseEstimateImage ); // Add noise estimate as an image for debug purposes
                 m_data.addNoiseEstimate( *imageUid, comp, std::move(noiseEstimateImage), radius );
             }
 
