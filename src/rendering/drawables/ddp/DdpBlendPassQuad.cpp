@@ -1,8 +1,11 @@
-#include "rendering_old/drawables/ddp/DdpBlendPassQuad.h"
+#include "rendering/drawables/ddp/DdpBlendPassQuad.h"
 #include "rendering_old/ShaderNames.h"
 #include "rendering/utility/gl/GLShaderProgram.h"
 
 #include "common/Exception.hpp"
+
+#include <spdlog/spdlog.h>
+#include <spdlog/fmt/ostr.h>
 
 
 namespace
@@ -14,19 +17,19 @@ static const Uniforms::SamplerIndexType s_tempTexSamplerIndex{ 0 };
 
 
 DdpBlendPassQuad::DdpBlendPassQuad(
-        const std::string& name,
-        ShaderProgramActivatorType shaderProgramActivator,
-        UniformsProviderType uniformsProvider,
-        std::array<GLTexture, 2>& backTempTextures )
+    const std::string& name,
+    ShaderProgramActivatorType shaderProgramActivator,
+    UniformsProviderType uniformsProvider,
+    std::array<GLTexture, 2>& backTempTextures )
     :
-      FullScreenQuad( name ),
+    FullScreenQuad( name ),
 
-      m_shaderProgramActivator( shaderProgramActivator ),
-      m_uniformsProvider( uniformsProvider ),
-      m_uniforms(),
+    m_shaderProgramActivator( shaderProgramActivator ),
+    m_uniformsProvider( uniformsProvider ),
+    m_uniforms(),
 
-      m_backTempTextures( backTempTextures ),
-      m_currentTextureID( 0 )
+    m_backTempTextures( backTempTextures ),
+    m_currentTextureId( 0 )
 {
     if ( m_uniformsProvider )
     {
@@ -40,7 +43,7 @@ DdpBlendPassQuad::DdpBlendPassQuad(
 
 void DdpBlendPassQuad::setCurrentTextureID( uint32_t i )
 {
-    m_currentTextureID = i;
+    m_currentTextureId = i;
 }
 
 void DdpBlendPassQuad::doRender( const RenderStage& /*stage*/ )
@@ -52,7 +55,7 @@ void DdpBlendPassQuad::doRender( const RenderStage& /*stage*/ )
 
     if ( auto program = m_shaderProgramActivator( DDPBlendProgram::name ) )
     {
-        m_backTempTextures[m_currentTextureID].bind( s_tempTexSamplerIndex.index );
+        m_backTempTextures[m_currentTextureId].bind( s_tempTexSamplerIndex.index );
         m_uniforms.setValue( DDPBlendProgram::frag::tempTexture, s_tempTexSamplerIndex );
 
         program->applyUniforms( m_uniforms );

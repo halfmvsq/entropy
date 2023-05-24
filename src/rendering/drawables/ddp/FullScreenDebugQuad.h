@@ -1,22 +1,25 @@
 #ifndef FULLSCREENDEBUGQUAD_H
 #define FULLSCREENDEBUGQUAD_H
 
-#include "rendering_old/drawables/ddp/FullScreenQuad.h"
+#include "rendering/drawables/ddp/FullScreenQuad.h"
 #include "rendering/common/ShaderProviderType.h"
+
 #include "common/ObjectCounter.hpp"
+
 
 class GLTexture;
 
+
 class FullScreenDebugQuad :
-        public FullScreenQuad,
-        public ObjectCounter<FullScreenDebugQuad>
+    public FullScreenQuad,
+    public ObjectCounter<FullScreenDebugQuad>
 {
 public:
 
     FullScreenDebugQuad(
-            const std::string& name,
-            ShaderProgramActivatorType shaderProgramActivator,
-            UniformsProviderType uniformsProvider );
+        const std::string& name,
+        ShaderProgramActivatorType shaderProgramActivator,
+        UniformsProviderType uniformsProvider );
 
     FullScreenDebugQuad( const FullScreenDebugQuad& ) = delete;
     FullScreenDebugQuad& operator=( const FullScreenDebugQuad& ) = delete;

@@ -7,6 +7,7 @@
 #include "rendering/utility/gl/GLErrorChecker.h"
 
 #include <glm/fwd.hpp>
+#include <glm/mat4x4.hpp>
 
 #include <uuid.h>
 
@@ -22,7 +23,7 @@ class DrawableBase : public IDrawable
 {
 public:
 
-    DrawableBase( std::string name, const DrawableType& type );
+    DrawableBase( const std::string& name, const DrawableType& type );
 
     DrawableBase( const DrawableBase& ) = default;
     DrawableBase& operator=( const DrawableBase& ) = default;
@@ -69,7 +70,7 @@ public:
 
 
     /// Get the unique identifier of this drawable.
-    uuids::uuid uid() const;
+    const uuids::uuid& uid() const;
 
     /// Set the master opacity multiplier of this drawable.
     void setMasterOpacityMultiplier( float multiplier );
@@ -102,9 +103,9 @@ public:
     /// function from within doUpdate().
     /// @note This calls does NOT recursively update transformations of all of the Drawable's
     /// children and descendants. To do so, it is necessary to call update() at the top level.
-    void set_parent_O_this( glm::mat4 parent_O_this );
+    void set_parent_T_this( glm::mat4 parent_T_this );
 
-    const glm::mat4& parent_O_this() const;
+    const glm::mat4& parent_T_this() const;
 
     uint32_t getRenderId() const;
 
@@ -125,10 +126,11 @@ protected:
     virtual void doSetupState() {}
     virtual void doTeardownState() {}
 
-    virtual void doUpdate( double /*time*/,
-                          const Viewport& /*viewport*/,
-                          const camera::Camera& /*camera*/,
-                          const CoordinateFrame& /*crosshairs*/ ) {}
+    virtual void doUpdate(
+        double /*time*/,
+        const Viewport& /*viewport*/,
+        const camera::Camera& /*camera*/,
+        const CoordinateFrame& /*crosshairs*/ ) {}
 
     void setRenderId( uint32_t id );
 
@@ -163,7 +165,7 @@ private:
     AccumulatedRenderingData m_myRenderingData;
 
     /// Affine transformation from this object to its parent
-    glm::mat4 m_parent_O_this;
+    glm::mat4 m_parent_T_this;
 
     /// Master multiplier across all color layers for this drawable
     float m_masterOpacityMultiplier;

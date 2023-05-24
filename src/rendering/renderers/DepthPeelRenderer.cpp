@@ -1,10 +1,11 @@
-#include "rendering_old/renderers/DepthPeelRenderer.h"
+#include "rendering/renderers/DepthPeelRenderer.h"
 
 #include "rendering/common/ShaderStageTypes.h"
+
 #include "rendering/drawables/DrawableBase.h"
-#include "rendering_old/drawables/ddp/DdpBlendPassQuad.h"
-#include "rendering_old/drawables/ddp/DdpFinalPassQuad.h"
-#include "rendering_old/drawables/ddp/FullScreenDebugQuad.h"
+#include "rendering/drawables/ddp/DdpBlendPassQuad.h"
+#include "rendering/drawables/ddp/DdpFinalPassQuad.h"
+#include "rendering/drawables/ddp/FullScreenDebugQuad.h"
 
 #include "rendering/utility/gl/GLErrorChecker.h"
 #include "rendering/utility/gl/GLFrameBufferObject.h"
@@ -49,60 +50,59 @@ static const std::array< GLenum, 7 > sk_buffers =
 
 struct DepthPeelRenderer::Impl
 {    
-    Impl( std::string name,
+    Impl( const std::string& name,
           ShaderProgramActivatorType shaderProgramActivator,
           UniformsProviderType uniformsProvider,
           DrawableProviderType sceneRootProvider,
           DrawableProviderType overlayRootProvider )
         :
-          m_name( std::move( name ) ),
-          m_sceneRootProvider( sceneRootProvider ),
-          m_overlayRootProvider( overlayRootProvider ),
-          m_time( 0.0 ),
+        m_name( std::move( name ) ),
+        m_sceneRootProvider( sceneRootProvider ),
+        m_overlayRootProvider( overlayRootProvider ),
+        m_time( 0.0 ),
 
-          m_maxNumPeels( 4 ),
-          m_useOccQueries( false ),
-          m_occlusionRatio( 1.0f ),
-          m_occlusionThreshold( 0.0f ),
-          m_occQueryId( 0u ),
+        m_maxNumPeels( 4 ),
+        m_useOccQueries( false ),
+        m_occlusionRatio( 1.0f ),
+        m_occlusionThreshold( 0.0f ),
+        m_occQueryId( 0u ),
 
-          m_defaultFboId( 0u ),
-          m_objectIdFbo( "ObjectIdFbo" ),
-          m_opaqueRenderFbo( "OpaqueRenderFbo" ),
-          m_opaqueResolveFbo( "OpaqueResolveFbo" ),
-          m_depthPeelFbo( "DualDepthPeelFbo" ),
-          m_backBlendFbo( "BackBlendFbo" ),
+        m_defaultFboId( 0u ),
+        m_objectIdFbo( "ObjectIdFbo" ),
+        m_opaqueRenderFbo( "OpaqueRenderFbo" ),
+        m_opaqueResolveFbo( "OpaqueResolveFbo" ),
+        m_depthPeelFbo( "DualDepthPeelFbo" ),
+        m_backBlendFbo( "BackBlendFbo" ),
 
-          m_enableObjectBuffer( false ),
-          m_objectIdBuffer( nullptr ),
-          m_objectDepthBuffer( nullptr ),
-          m_objectBuffersDirty( true ),
+        m_enableObjectBuffer( false ),
+        m_objectIdBuffer( nullptr ),
+        m_objectDepthBuffer( nullptr ),
+        m_objectBuffersDirty( true ),
 
-          m_objectIdTexture( tex::Target::Texture2D, GLTexture::MultisampleSettings(),
-                             GLTexture::PixelStoreSettings( 2, 0, 0, 0, 0, 0, false, false ),
-                             GLTexture::PixelStoreSettings( 2, 0, 0, 0, 0, 0, false, false ) ),
+        m_objectIdTexture( tex::Target::Texture2D, GLTexture::MultisampleSettings(),
+                          GLTexture::PixelStoreSettings( 2, 0, 0, 0, 0, 0, false, false ),
+                          GLTexture::PixelStoreSettings( 2, 0, 0, 0, 0, 0, false, false ) ),
 
-          m_objectDepthTexture( tex::Target::Texture2D ),
+        m_objectDepthTexture( tex::Target::Texture2D ),
 
-          m_opaqueColorTexture( tex::Target::Texture2DMultisample, GLTexture::MultisampleSettings( 4, true ) ),
-          m_opaqueDepthTexture( tex::Target::Texture2DMultisample, GLTexture::MultisampleSettings( 4, true ) ),
+        m_opaqueColorTexture( tex::Target::Texture2DMultisample, GLTexture::MultisampleSettings( 4, true ) ),
+        m_opaqueDepthTexture( tex::Target::Texture2DMultisample, GLTexture::MultisampleSettings( 4, true ) ),
 
-          m_resolvedDepthTexture( tex::Target::Texture2D ),
+        m_resolvedDepthTexture( tex::Target::Texture2D ),
 
-          m_depthTextures{ {tex::Target::Texture2D, tex::Target::Texture2D} },
-          m_frontBlenderTextures{ {tex::Target::Texture2D, tex::Target::Texture2D} },
-          m_backTempTextures{ {tex::Target::Texture2D, tex::Target::Texture2D} },
-          m_backBlenderTexture( tex::Target::Texture2D ),
+        m_depthTextures{ {tex::Target::Texture2D, tex::Target::Texture2D} },
+        m_frontBlenderTextures{ {tex::Target::Texture2D, tex::Target::Texture2D} },
+        m_backTempTextures{ {tex::Target::Texture2D, tex::Target::Texture2D} },
+        m_backBlenderTexture( tex::Target::Texture2D ),
 
-          m_debugQuad( "debugQuad", shaderProgramActivator, uniformsProvider ),
+        m_debugQuad( "debugQuad", shaderProgramActivator, uniformsProvider ),
 
-          m_blendQuad( "blendQuad", shaderProgramActivator, uniformsProvider,
-                       m_backTempTextures ),
+        m_blendQuad( "blendQuad", shaderProgramActivator, uniformsProvider,
+                    m_backTempTextures ),
 
-          m_finalQuad( "finalQuad", shaderProgramActivator, uniformsProvider,
-                       m_frontBlenderTextures, m_backBlenderTexture )
-    {
-    }
+        m_finalQuad( "finalQuad", shaderProgramActivator, uniformsProvider,
+                    m_frontBlenderTextures, m_backBlenderTexture )
+    {}
 
     void initialize();
     void render();
@@ -191,15 +191,15 @@ struct DepthPeelRenderer::Impl
 
 
 DepthPeelRenderer::DepthPeelRenderer(
-        std::string name,
-        ShaderProgramActivatorType programActivator,
-        UniformsProviderType uniformsProvider,
-        DrawableProviderType rootProvider,
-        DrawableProviderType overlayProvider )
+    const std::string& name,
+    ShaderProgramActivatorType programActivator,
+    UniformsProviderType uniformsProvider,
+    DrawableProviderType rootProvider,
+    DrawableProviderType overlayProvider )
     :
-      m_impl( std::make_unique<Impl>(
-                  std::move( name ), programActivator, uniformsProvider,
-                  rootProvider, overlayProvider ) )
+    m_impl( std::make_unique<Impl>(
+        std::move( name ), programActivator, uniformsProvider,
+        rootProvider, overlayProvider ) )
 {}
 
 DepthPeelRenderer::~DepthPeelRenderer() = default;
@@ -578,14 +578,14 @@ DepthPeelRenderer::Impl::pickObjectIdAndNdcDepth( const glm::vec2& ndcPos )
     {
         // Object IDs are stored as 16-bit integers
         m_objectIdTexture.readData(
-                    0, tex::BufferPixelFormat::Red_Integer,
-                    tex::BufferPixelDataType::UInt16,
-                    m_objectIdBuffer.get() );
+            0, tex::BufferPixelFormat::Red_Integer,
+            tex::BufferPixelDataType::UInt16,
+            m_objectIdBuffer.get() );
 
         m_objectDepthTexture.readData(
-                    0, tex::BufferPixelFormat::DepthComponent,
-                    tex::BufferPixelDataType::Float32,
-                    m_objectDepthBuffer.get() );
+            0, tex::BufferPixelFormat::DepthComponent,
+            tex::BufferPixelDataType::Float32,
+            m_objectDepthBuffer.get() );
 
         m_objectBuffersDirty = false;
     }
@@ -693,21 +693,21 @@ void DepthPeelRenderer::Impl::resizeTextures()
 
         // F32: 2 * 2 * 32 bits; U8: 2 * 2 * 32 bits
         m_depthTextures[i].setData(
-                    k_level, SizedInternalFormat::RG32F,
-                    BufferPixelFormat::RG,
-                    BufferPixelDataType::Float32, sk_emptyDepthData.data() );
+            k_level, SizedInternalFormat::RG32F,
+            BufferPixelFormat::RG,
+            BufferPixelDataType::Float32, sk_emptyDepthData.data() );
 
         // F32: 2 * 4 * 32 bits; U8: 2 * 4 * 8 bits
         m_frontBlenderTextures[i].setData(
-                    k_level, k_rgbaInternalFormat,
-                    BufferPixelFormat::RGBA,
-                    k_pixelDataType, sk_emptyColorData.data() );
+            k_level, k_rgbaInternalFormat,
+            BufferPixelFormat::RGBA,
+            k_pixelDataType, sk_emptyColorData.data() );
 
         // F32: 2 * 4 * 32 bits; U8: 2 * 4 * 8 bits
         m_backTempTextures[i].setData(
-                    k_level, k_rgbaInternalFormat,
-                    BufferPixelFormat::RGBA,
-                    k_pixelDataType, sk_emptyColorData.data() );
+            k_level, k_rgbaInternalFormat,
+            BufferPixelFormat::RGBA,
+            k_pixelDataType, sk_emptyColorData.data() );
     }
 
     m_backBlenderTexture.setSize( k_textureSize );
@@ -728,33 +728,33 @@ void DepthPeelRenderer::Impl::resizeTextures()
 
     // 16 bits
     m_objectIdTexture.setData(
-                k_level, SizedInternalFormat::R16U,
-                BufferPixelFormat::Red_Integer,
-                BufferPixelDataType::UInt16, sk_emptyObjectIDData.data() );
+        k_level, SizedInternalFormat::R16U,
+        BufferPixelFormat::Red_Integer,
+        BufferPixelDataType::UInt16, sk_emptyObjectIDData.data() );
 
     // 32 bits
     m_objectDepthTexture.setData(
-                k_level, SizedInternalFormat::Depth32F,
-                BufferPixelFormat::DepthComponent,
-                BufferPixelDataType::Float32, sk_emptyObjectDepthData.data() );
+        k_level, SizedInternalFormat::Depth32F,
+        BufferPixelFormat::DepthComponent,
+        BufferPixelDataType::Float32, sk_emptyObjectDepthData.data() );
 
     // 4 * 32 bits; U8: 4 * 8
     m_opaqueColorTexture.setData(
-                k_level, k_rgbaInternalFormat,
-                BufferPixelFormat::RGBA,
-                k_pixelDataType, sk_emptyObjectDepthData.data() );
+        k_level, k_rgbaInternalFormat,
+        BufferPixelFormat::RGBA,
+        k_pixelDataType, sk_emptyObjectDepthData.data() );
 
     // 32 bits
     m_opaqueDepthTexture.setData(
-                k_level, SizedInternalFormat::Depth32F,
-                BufferPixelFormat::DepthComponent,
-                BufferPixelDataType::Float32, sk_emptyObjectDepthData.data() );
+        k_level, SizedInternalFormat::Depth32F,
+        BufferPixelFormat::DepthComponent,
+        BufferPixelDataType::Float32, sk_emptyObjectDepthData.data() );
 
     // 32 bits
     m_resolvedDepthTexture.setData(
-                k_level, SizedInternalFormat::Depth32F,
-                BufferPixelFormat::DepthComponent,
-                BufferPixelDataType::Float32, nullptr );
+        k_level, SizedInternalFormat::Depth32F,
+        BufferPixelFormat::DepthComponent,
+        BufferPixelDataType::Float32, nullptr );
 
 
     m_objectIdBuffer = std::make_unique< uint16_t[] >( k_textureSize.x * k_textureSize.y );

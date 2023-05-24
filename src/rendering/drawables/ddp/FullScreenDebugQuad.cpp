@@ -1,18 +1,21 @@
-#include "rendering_old/drawables/ddp/FullScreenDebugQuad.h"
+#include "rendering/drawables/ddp/FullScreenDebugQuad.h"
 #include "rendering_old/ShaderNames.h"
 #include "rendering/utility/gl/GLShaderProgram.h"
 #include "rendering/utility/gl/GLTexture.h"
 
 #include "common/Exception.hpp"
 
+#include <spdlog/spdlog.h>
+#include <spdlog/fmt/ostr.h>
+
 
 const Uniforms::SamplerIndexType FullScreenDebugQuad::DebugTexSamplerIndex{ 0 };
 
 
 FullScreenDebugQuad::FullScreenDebugQuad(
-        const std::string& name,
-        ShaderProgramActivatorType shaderProgramActivator,
-        UniformsProviderType uniformsProvider )
+    const std::string& name,
+    ShaderProgramActivatorType shaderProgramActivator,
+    UniformsProviderType uniformsProvider )
     :
       FullScreenQuad( name ),
 
@@ -27,6 +30,7 @@ FullScreenDebugQuad::FullScreenDebugQuad(
     }
     else
     {
+        spdlog::error( "Unable to access UniformsProvider in '{}'", m_name );
         throw_debug( "Unable to access UniformsProvider" );
     }
 }
@@ -40,6 +44,7 @@ void FullScreenDebugQuad::doRender( const RenderStage& /*stage*/ )
 {   
     if ( ! m_shaderProgramActivator )
     {
+        spdlog::error( "Unable to access ShaderProgramActivator in '{}'", m_name );
         throw_debug( "Unable to access ShaderProgramActivator" );
     }
 
@@ -54,6 +59,7 @@ void FullScreenDebugQuad::doRender( const RenderStage& /*stage*/ )
         }
         else
         {
+            spdlog::error( "Null DebugProgram shader program in '{}'", m_name );
             throw_debug( "Null DebugProgram shader program" );
         }
     }

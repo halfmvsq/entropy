@@ -2,20 +2,18 @@
 #define FULL_SCREEN_QUAD_H
 
 #include "rendering/drawables/DrawableBase.h"
-#include "rendering/utility/gl/GLBufferObject.h"
 #include "rendering/utility/gl/GLVertexArrayObject.h"
 
 #include "common/ObjectCounter.hpp"
 
 #include <memory>
 
-
 class MeshGpuRecord;
 
 
 class FullScreenQuad :
-        public DrawableBase,
-        public ObjectCounter<FullScreenQuad>
+    public DrawableBase,
+    public ObjectCounter<FullScreenQuad>
 {
 public:
 
@@ -32,17 +30,16 @@ public:
 
 protected:
 
-    void drawVao();
+    bool drawVao();
 
 
 private:
 
-    void initBuffer();
-    void initVao();
+    bool initBuffer();
+    bool initVao();
 
     GLVertexArrayObject m_vao;
     std::unique_ptr<GLVertexArrayObject::IndexedDrawParams> m_vaoParams;
-
     std::unique_ptr<MeshGpuRecord> m_meshGpuRecord;
 };
 

@@ -3,6 +3,7 @@
 
 #include "common/CoordinateFrame.h"
 #include "common/Viewport.h"
+
 #include "logic/camera/Camera.h"
 
 #include "rendering/common/AccumulatedRenderingData.h"

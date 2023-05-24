@@ -31,7 +31,7 @@ public:
      * The overlay must be managed externally to this class.
      */
     DepthPeelRenderer(
-        std::string name,
+        const std::string& name,
         ShaderProgramActivatorType shaderProgramActivator,
         UniformsProviderType uniformsProvider,
         GetterType<IDrawable*> sceneRootProvider,

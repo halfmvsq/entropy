@@ -482,8 +482,8 @@ void BasicMesh::doRender( const RenderStage& stage )
     if ( RenderStage::Initialize == stage )
     {
         using namespace DDPInitProgram;
-
-        m_initUniforms.setValue( vert::world_O_model, getAccumulatedRenderingData().m_world_O_object );
+        
+        m_initUniforms.setValue( vert::world_O_model, getAccumulatedRenderingData().m_world_T_object );
         m_initUniforms.setValue( vert::camera_O_world, m_camera_O_world );
         m_initUniforms.setValue( vert::clip_O_camera, m_clip_O_camera );
 
@@ -499,8 +499,8 @@ void BasicMesh::doRender( const RenderStage& stage )
     else
     {
         using namespace BasicMeshDualDepthPeelProgram;
-
-        const glm::mat4 world_O_this = getAccumulatedRenderingData().m_world_O_object;
+        
+        const glm::mat4 world_O_this = getAccumulatedRenderingData().m_world_T_object;
 
         uniforms->setValue( vert::world_O_model, world_O_this );
         uniforms->setValue( vert::world_O_model_inv_trans, glm::inverseTranspose( world_O_this ) );

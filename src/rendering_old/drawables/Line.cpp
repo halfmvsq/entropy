@@ -141,8 +141,8 @@ void Line::doRender( const RenderStage& stage )
         {
             throw_debug( "Unable to access shader program" );
         }
-
-        const glm::mat4 world_O_this = getAccumulatedRenderingData().m_world_O_object;
+        
+        const glm::mat4 world_O_this = getAccumulatedRenderingData().m_world_T_object;
 
         m_stdUniforms.setValue( vert::world_O_model, world_O_this );
         m_stdUniforms.setValue( vert::camera_O_world, m_camera_O_world );
@@ -167,8 +167,8 @@ void Line::doRender( const RenderStage& stage )
         {
             throw_debug( "Unable to access shader program" );
         }
-
-        const glm::mat4 world_O_this = getAccumulatedRenderingData().m_world_O_object;
+        
+        const glm::mat4 world_O_this = getAccumulatedRenderingData().m_world_T_object;
 
         m_peelUniforms.setValue( vert::world_O_model, world_O_this );
         m_peelUniforms.setValue( vert::camera_O_world, m_camera_O_world );
@@ -194,8 +194,8 @@ void Line::doRender( const RenderStage& stage )
         {
             throw_debug( "Unable to access shader program" );
         }
-
-        m_initUniforms.setValue( vert::world_O_model, getAccumulatedRenderingData().m_world_O_object );
+        
+        m_initUniforms.setValue( vert::world_O_model, getAccumulatedRenderingData().m_world_T_object );
         m_initUniforms.setValue( vert::camera_O_world, m_camera_O_world );
         m_initUniforms.setValue( vert::clip_O_camera, m_clip_O_camera );
 

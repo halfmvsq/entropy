@@ -1,9 +1,9 @@
 #ifndef DDP_FINAL_PASS_QUAD_H
 #define DDP_FINAL_PASS_QUAD_H
 
-#include "rendering_old/drawables/ddp/FullScreenQuad.h"
-#include "rendering/utility/gl/GLTexture.h"
+#include "rendering/drawables/ddp/FullScreenQuad.h"
 #include "rendering/common/ShaderProviderType.h"
+#include "rendering/utility/gl/GLTexture.h"
 
 #include <array>
 
@@ -13,11 +13,11 @@ class DdpFinalPassQuad : public FullScreenQuad
 public:
 
     DdpFinalPassQuad(
-            const std::string& name,
-            ShaderProgramActivatorType shaderProgramActivator,
-            UniformsProviderType uniformsProvider,
-            std::array<GLTexture, 2>& frontBlenderTextures,
-            GLTexture& backBlenderTexture );
+        const std::string& name,
+        ShaderProgramActivatorType shaderProgramActivator,
+        UniformsProviderType uniformsProvider,
+        std::array<GLTexture, 2>& frontBlenderTextures,
+        GLTexture& backBlenderTexture );
 
     DdpFinalPassQuad( const DdpFinalPassQuad& ) = delete;
     DdpFinalPassQuad& operator=( const DdpFinalPassQuad& ) = delete;
@@ -42,7 +42,7 @@ private:
     std::array<GLTexture, 2>& m_frontBlenderTextures;
     GLTexture& m_backBlenderTexture;
 
-    uint32_t m_currentTextureID;
+    uint32_t m_currentTextureId;
 };
 
 #endif // DDPFINALPASSQUAD_H

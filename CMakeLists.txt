@@ -474,6 +474,15 @@ set( ENTROPY_SOURCES
     ${SRC_DIR}/rendering/TextureSetup.cpp
     ${SRC_DIR}/rendering/VectorDrawing.cpp
     ${SRC_DIR}/rendering/records/MeshGpuRecord.cpp
+
+    ${SRC_DIR}/rendering/drawables/DrawableBase.cpp
+    ${SRC_DIR}/rendering/drawables/ddp/DdpBlendPassQuad.cpp
+    ${SRC_DIR}/rendering/drawables/ddp/DdpFinalPassQuad.cpp
+    ${SRC_DIR}/rendering/drawables/ddp/FullScreenDebugQuad.cpp
+    ${SRC_DIR}/rendering/drawables/ddp/FullScreenQuad.cpp
+
+    ${SRC_DIR}/rendering/renderers/DepthPeelRenderer.cpp
+
     ${SRC_DIR}/rendering/utility/CreateGLObjects.cpp
     ${SRC_DIR}/rendering/utility/containers/VertexAttributeInfo.cpp
     ${SRC_DIR}/rendering/utility/containers/VertexIndicesInfo.cpp
@@ -504,7 +513,6 @@ set( ENTROPY_SOURCES
     ${SRC_DIR}/rendering_old/computers/Polygonizer.cpp
     ${SRC_DIR}/rendering_old/drawables/BasicMesh.cpp
     ${SRC_DIR}/rendering_old/drawables/Crosshairs.cpp
-    ${SRC_DIR}/rendering/drawables/DrawableBase.cpp
     ${SRC_DIR}/rendering_old/drawables/DynamicTransformation.cpp
     ${SRC_DIR}/rendering_old/drawables/ImageSlice.cpp
     ${SRC_DIR}/rendering_old/drawables/Line.cpp
@@ -514,15 +522,10 @@ set( ENTROPY_SOURCES
     ${SRC_DIR}/rendering_old/drawables/annotation/AnnotationSlice.cpp
     ${SRC_DIR}/rendering_old/drawables/annotation/LandmarkGroup3d.cpp
 ###    ${SRC_DIR}/rendering_old/drawables/annotation/LandmarkGroupSlice.cpp
-    ${SRC_DIR}/rendering_old/drawables/ddp/DdpBlendPassQuad.cpp
-    ${SRC_DIR}/rendering_old/drawables/ddp/DdpFinalPassQuad.cpp
-    ${SRC_DIR}/rendering_old/drawables/ddp/FullScreenDebugQuad.cpp
-    ${SRC_DIR}/rendering_old/drawables/ddp/FullScreenQuad.cpp
     ${SRC_DIR}/rendering_old/drawables/overlays/CameraLabel.cpp
     ${SRC_DIR}/rendering_old/drawables/slides/SlideBox.cpp
     ${SRC_DIR}/rendering_old/drawables/slides/SlideSlice.cpp
     ${SRC_DIR}/rendering_old/drawables/slides/SlideStackArrow.cpp
-    ${SRC_DIR}/rendering_old/renderers/DepthPeelRenderer.cpp
     ${SRC_DIR}/rendering_old/records/ImageGpuRecord.cpp
     # ${SRC_DIR}/rendering_old/records/MeshGpuRecord.cpp
     ${SRC_DIR}/rendering_old/records/SlideAnnotationGpuRecord.cpp

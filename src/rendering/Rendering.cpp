@@ -20,7 +20,7 @@
 #include "rendering/utility/gl/GLShader.h"
 
 /**************************/
-#include "rendering_old/renderers/DepthPeelRenderer.h"
+#include "rendering/renderers/DepthPeelRenderer.h"
 #include "rendering_old/utility/containers/BlankTextures.h"
 /**************************/
 

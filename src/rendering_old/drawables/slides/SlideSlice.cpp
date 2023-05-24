@@ -312,7 +312,7 @@ void SlideSlice::doUpdate(
 
     // Compute the intersections in slide space by transforming the camera and crosshairs from
     // world to slide space ("model" space is stack space for this Drawable)
-    const glm::mat4 world_O_stack = getAccumulatedRenderingData().m_world_O_object;
+    const glm::mat4 world_O_stack = getAccumulatedRenderingData().m_world_T_object;
 
     const glm::mat4 slide_O_world = glm::inverse( world_O_stack * stack_O_slide );
     const glm::mat4 slide_O_camera = slide_O_world * camera.world_T_camera();

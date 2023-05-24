@@ -17,7 +17,9 @@ const Uniforms::SamplerIndexType DrawableBase::DepthBlenderTexSamplerIndex{ 0 };
 const Uniforms::SamplerIndexType DrawableBase::FrontBlenderTexSamplerIndex{ 1 };
 
 
-DrawableBase::DrawableBase( std::string name, const DrawableType& type )
+DrawableBase::DrawableBase(
+    const std::string& name,
+    const DrawableType& type )
     :
     m_uid(),
     m_name( std::move( name ) ),
@@ -29,7 +31,7 @@ DrawableBase::DrawableBase( std::string name, const DrawableType& type )
     m_parentRenderingData(),
     m_myRenderingData(),
 
-    m_parent_O_this( 1.0f ),
+    m_parent_T_this( 1.0f ),
     m_masterOpacityMultiplier( 1.0f ),
     m_pickable( false ),
     m_enabled( true ),
@@ -101,7 +103,8 @@ bool DrawableBase::removeChild( const DrawableBase& child )
 
 
 void DrawableBase::render(
-    const RenderStage& stage, const ObjectsToRender& objectsToRender )
+    const RenderStage& stage,
+    const ObjectsToRender& objectsToRender )
 {
     if ( ! isEnabled() || ! isVisible() )
     {
@@ -268,16 +271,16 @@ DrawableOpacity DrawableBase::opacityFlag() const
 }
 
 
-void DrawableBase::set_parent_O_this( glm::mat4 parent_O_this )
+void DrawableBase::set_parent_T_this( glm::mat4 parent_T_this )
 {
-    m_parent_O_this = std::move( parent_O_this );
+    m_parent_T_this = std::move( parent_T_this );
     updateRenderingData();
 }
 
 
-const glm::mat4& DrawableBase::parent_O_this() const
+const glm::mat4& DrawableBase::parent_T_this() const
 {
-    return m_parent_O_this;
+    return m_parent_T_this;
 }
 
 
@@ -301,7 +304,7 @@ void DrawableBase::printTree( int depth ) const
 }
 
 
-uuids::uuid DrawableBase::uid() const
+const uuids::uuid& DrawableBase::uid() const
 {
     return m_uid;
 }
@@ -322,8 +325,8 @@ uint32_t DrawableBase::getRenderId() const
 void DrawableBase::updateRenderingData()
 {
     // Chain the transformations from this object to its parent to the World:
-    m_myRenderingData.m_world_O_object =
-        m_parentRenderingData.m_world_O_object * m_parent_O_this;
+    m_myRenderingData.m_world_T_object =
+        m_parentRenderingData.m_world_T_object * m_parent_T_this;
 
     // Multiply the opacity factor of this object with its parent's opacity factor:
     m_myRenderingData.m_masterOpacityMultiplier =

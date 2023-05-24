@@ -41,5 +41,5 @@ void DynamicTransformation::doUpdate(
     }
 
     setVisible( true );
-    set_parent_O_this( *parent_O_this );
+    set_parent_T_this( *parent_O_this );
 }
