@@ -1,12 +1,12 @@
 #include "rendering/utility/gl/GLShader.h"
 #include "rendering/utility/UnderlyingEnumType.h"
 
-#include "common/Exception.hpp"
+#include <spdlog/spdlog.h>
+#include <spdlog/fmt/ostr.h>
 
 #include <glm/glm.hpp>
 
 #include <fstream>
-#include <iostream>
 #include <sstream>
 #include <unordered_map>
 
@@ -43,22 +43,22 @@ static const std::unordered_map< ShaderType, std::string > sk_shaderTypeStrings 
 
 GLShader::GLShader( std::string name, const ShaderType& type )
     :
-      m_name( std::move( name ) ),
-      m_type( type ),
-      m_handle( 0u )
-{
-}
+    m_name( std::move( name ) ),
+    m_type( type ),
+    m_handle( 0u ),
+    m_isCompiled( false )
+{}
 
 GLShader::GLShader( std::string name, const ShaderType& type, const char* source )
     :
-      GLShader( std::move( name ), type )
+    GLShader( std::move( name ), type )
 {
     compileFromString( source );
 }
 
 GLShader::GLShader( std::string name, const ShaderType& type, std::istream& source )
     :
-      GLShader( std::move( name ), type )
+    GLShader( std::move( name ), type )
 {
     const std::string sourceString( std::istreambuf_iterator<char>( source ), {} );
     compileFromString( sourceString.c_str() );
@@ -105,6 +105,11 @@ bool GLShader::isValid()
     return ( m_handle && glIsShader( m_handle ) );
 }
 
+bool GLShader::isCompiled() const
+{
+    return m_isCompiled;
+}
+
 void GLShader::compileFromString( const char* source )
 {
     const GLuint handle = glCreateShader( underlyingType(m_type) );
@@ -114,12 +119,14 @@ void GLShader::compileFromString( const char* source )
 
     if ( ! checkShaderStatus( handle ) )
     {
-        throw_debug( "Cannot compile shader due to failed status check" );
+        spdlog::error( "Cannot compile shader '{}' due to failed status check", m_name );
+        m_isCompiled = false;
     }
 
+    m_isCompiled = true;
     m_handle = handle;
 
-    CHECK_GL_ERROR( m_errorChecker );
+    CHECK_GL_ERROR( m_errorChecker )
 }
 
 //void GLShader::compileFromStrings( const std::vector< const char* >& sources )
@@ -177,10 +184,7 @@ bool GLShader::checkShaderStatus( GLuint handle )
             logString = &cLog[0];
         }
 
-        std::ostringstream msg;
-        msg << "Shader compilation from source failed. OpenGL log:\n" << logString << std::ends;
-        std::cerr << msg.str() << std::endl;
-
+        spdlog::error( "Compilation of shader '{}' failed:\n{}", m_name, logString );
         return false;
     }
 

@@ -147,7 +147,7 @@ void drawImageQuad(
         const std::function< const Image* ( const std::optional<uuids::uuid>& imageUid ) > getImage,
         bool showEdges,
         const SegmentationOutlineStyle& setOutlineStyle,
-        float segInteriorOpacity,
+        float /*segInteriorOpacity*/,
         float segInterpCutoff )
 {
     static const glm::vec4 sk_clipO{ 0.0f, 0.0f, -1.0f, 1.0 };
@@ -254,9 +254,8 @@ void drawImageQuad(
     program.setUniform( "u_world_T_clip", world_T_viewClip );
     program.setUniform( "u_clipDepth", view.clipPlaneDepth() );
 
-    program.setUniform( "u_texSamplingDirsForSegOutline", texSamplingDirsForSegOutline );
-
-    program.setUniform( "u_segInteriorOpacity", ( SegmentationOutlineStyle::Disabled == setOutlineStyle ) ? 1.0f : segInteriorOpacity );
+//    program.setUniform( "u_texSamplingDirsForSegOutline", texSamplingDirsForSegOutline );
+//    program.setUniform( "u_segInteriorOpacity", ( SegmentationOutlineStyle::Disabled == setOutlineStyle ) ? 1.0f : segInteriorOpacity );
     program.setUniform( "u_segInterpCutoff", segInterpCutoff );
 
 
@@ -279,6 +278,8 @@ void drawImageQuad(
         }
         else
         {
+            // Set this variable only if using smooth segmentation
+            /// @todo This needs to be an option
             program.setUniform( "u_texSamplingDirsForSmoothSeg", texSamplingDirsForSmoothSeg );
 
             // Only render with intensity projection when edges are not visible:

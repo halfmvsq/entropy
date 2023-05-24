@@ -4,7 +4,6 @@
 #include "rendering/utility/containers/Uniforms.h"
 #include "rendering/utility/gl/GLShaderType.h"
 #include "rendering/utility/gl/GLErrorChecker.h"
-#include "rendering/utility/gl/GLUniformTypes.h"
 
 #include <glm/fwd.hpp>
 
@@ -36,6 +35,7 @@ public:
     ShaderType type() const;
     GLuint handle() const;
     bool isValid();
+    bool isCompiled() const;
 
     void setRegisteredUniforms( Uniforms uniforms );
     const Uniforms& getRegisteredUniforms() const;
@@ -45,9 +45,10 @@ public:
 
 private:
 
-    const std::string m_name;
+    std::string m_name;
     ShaderType m_type;
     GLuint m_handle;
+    bool m_isCompiled;
 
     GLErrorChecker m_errorChecker;
 

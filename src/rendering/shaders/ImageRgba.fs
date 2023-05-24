@@ -187,7 +187,7 @@ bool doRender()
     // If in Checkerboard mode, then render the fragment?
     render = render || ( ( CHECKER_RENDER_MODE == u_renderMode ) &&
         ( u_showFix == bool( mod( floor( fs_in.v_checkerCoord.x ) +
-                                floor( fs_in.v_checkerCoord.y ), 2.0 ) > 0.5 ) ) );
+                                  floor( fs_in.v_checkerCoord.y ), 2.0 ) > 0.5 ) ) );
 
     // If in Quadrants mode, then render the fragment?
     render = render || ( ( QUADRANTS_RENDER_MODE == u_renderMode ) &&
@@ -250,11 +250,11 @@ void main()
     //                  texture( u_imgTex[2], fs_in.v_imgTexCoords )[0],
     //                  texture( u_imgTex[3], fs_in.v_imgTexCoords )[0] );
 
-    vec4 img =
-        vec4( getImageValue( u_imgTex[0], fs_in.v_imgTexCoords, u_imgMinMax[0] ),
-              getImageValue( u_imgTex[1], fs_in.v_imgTexCoords, u_imgMinMax[1] ),
-              getImageValue( u_imgTex[2], fs_in.v_imgTexCoords, u_imgMinMax[2] ),
-              getImageValue( u_imgTex[3], fs_in.v_imgTexCoords, u_imgMinMax[3] ) );
+    vec4 img = vec4(
+        getImageValue( u_imgTex[0], fs_in.v_imgTexCoords, u_imgMinMax[0] ),
+        getImageValue( u_imgTex[1], fs_in.v_imgTexCoords, u_imgMinMax[1] ),
+        getImageValue( u_imgTex[2], fs_in.v_imgTexCoords, u_imgMinMax[2] ),
+        getImageValue( u_imgTex[3], fs_in.v_imgTexCoords, u_imgMinMax[3] ) );
 
     // Look up segmentation texture label value:
     uint seg = texture( u_segTex, fs_in.v_segTexCoords )[0];

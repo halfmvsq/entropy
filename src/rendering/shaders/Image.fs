@@ -73,26 +73,15 @@ uniform bool u_flashlightOverlays;
 // MIP mode (0: none, 1: max, 2: mean, 3: min, 4: x-ray)
 uniform int u_mipMode;
 
-// Half the number of samples for MIP. Set to 0 when no projection is used.
-uniform int u_halfNumMipSamples;
-
-// Texture sampling directions (horizontal and vertical) for calculating the segmentation outline
-uniform vec3 u_texSamplingDirsForSegOutline[2];
-uniform vec3 u_texSamplingDirsForSmoothSeg[2];
-
-// Opacity of the interior of the segmentation
-uniform float u_segInteriorOpacity;
-
-// Interpolation cut-off for segmentation (in [0, 1])
-uniform float u_segInterpCutoff;
-
-// Z view camera direction, represented in texture sampling space
-uniform vec3 u_texSamplingDirZ;
-
 uniform float u_isoValues[NISO]; // Isosurface values
 uniform float u_isoOpacities[NISO]; // Isosurface opacities
 uniform vec3 u_isoColors[NISO]; // Isosurface colors
 uniform float u_isoWidth; // Width of isosurface
+
+
+const uvec3 neigh[8] = uvec3[8](
+    uvec3(0, 0, 0), uvec3(0, 0, 1), uvec3(0, 1, 0), uvec3(0, 1, 1),
+    uvec3(1, 0, 0), uvec3(1, 0, 1), uvec3(1, 1, 0), uvec3(1, 1, 1) );
 
 
 float hardThreshold( float value, vec2 thresholds )
@@ -107,11 +96,11 @@ float hardThreshold( float value, vec2 thresholds )
 // k<1 produces the classic gain() shape, and k>1 produces "s" shaped curces.
 // The curves are symmetric (and inverse) for k=a and k=1/a.
 
-float gain(float x, float k) 
-{
-    float a = 0.5*pow(2.0*((x<0.5)?x:1.0-x), k);
-    return (x<0.5)?a:1.0-a;
-}
+//float gain(float x, float k)
+//{
+//    float a = 0.5*pow(2.0*((x<0.5)?x:1.0-x), k);
+//    return (x<0.5)?a:1.0-a;
+//}
 
 float cubicPulse( float center, float width, float x )
 {
@@ -168,7 +157,7 @@ bool doRender()
 //! @see https://github.com/DannyRuijters/CubicInterpolationCUDA/blob/master/examples/glCubicRayCast/tricubic.shader
 float interpolateTricubicFast( sampler3D tex, vec3 coord )
 {
-	// Shift the coordinate from [0,1] to [-0.5, nrOfVoxels-0.5]
+    // Shift the coordinate from [0,1] to [-0.5, nrOfVoxels - 0.5]
     vec3 nrOfVoxels = vec3(textureSize(tex, 0));
     vec3 coord_grid = coord * nrOfVoxels - 0.5;
     vec3 index = floor(coord_grid);
@@ -190,8 +179,8 @@ float interpolateTricubicFast( sampler3D tex, vec3 coord )
     // h1 = w3/g1 + 1, move from [-0.5, nrOfVoxels-0.5] to [0,1]
     vec3 h1 = mult * ((w3 / g1) + 1.5 + index);
 
-	// Fetch the eight linear interpolations.
-	// Weighting and feching is interleaved for performance and stability reasons.
+    // Fetch the eight linear interpolations.
+    // Weighting and feching is interleaved for performance and stability reasons.
     float tex000 = texture(tex, h0)[0];
     float tex100 = texture(tex, vec3(h1.x, h0.y, h0.z))[0];
 
@@ -218,21 +207,33 @@ float interpolateTricubicFast( sampler3D tex, vec3 coord )
 
 
 /// Look up the image value (after mapping to GL texture units)
+
+/// Nearest-neighbor or linear interpolation:
 float getImageValue( sampler3D tex, vec3 texCoords, float minVal, float maxVal )
 {
    return clamp( texture( tex, texCoords )[0], minVal, maxVal );
 }
 
+/// Cubic interpolation:
+//float getImageValue( sampler3D tex, vec3 texCoords, float minVal, float maxVal )
+//{
+//    return clamp( interpolateTricubicFast(tex, texCoords), minVal, maxVal );
+//}
 
-//  float getImageValue( sampler3D tex, vec3 texCoords, float minVal, float maxVal )
-//  {
-//      return clamp( interpolateTricubicFast(tex, texCoords), minVal, maxVal );
-//  }
 
+/// No projection:
 // float computeProjection( float img )
 // {
 //     return img;
 // }
+
+/// MIP projection:
+
+// Half the number of samples for MIP. Set to 0 when no projection is used.
+uniform int u_halfNumMipSamples;
+
+// Z view camera direction, represented in texture sampling space
+uniform vec3 u_texSamplingDirZ;
 
 float computeProjection( float img )
 {
@@ -279,20 +280,23 @@ vec4 computeLabelColor( int label )
     return color.a * color; // pre-multiply by alpha
 }
 
-/// Look up segmentation texture label value:
-uint getSegValue_N( vec3 texCoords, vec3 texOffset, float cutoff, out float opacity )
+/// Look up segmentation texture label value
+
+/// Default nearest-neighbor lookup:
+//uint getSegValue( vec3 texOffset, out float opacity )
+//{
+//    opacity = 1.0;
+//    return texture( u_segTex, fs_in.v_segVoxCoords + texOffset )[0];
+//}
+
+/// Linear lookup:
+uniform vec3 u_texSamplingDirsForSmoothSeg[2];
+
+// Interpolation cut-off for segmentation (in [0, 1])
+uniform float u_segInterpCutoff;
+
+uint getSegValue( vec3 texOffset, out float opacity )
 {
-    opacity = 1.0;
-    return texture( u_segTex, texCoords + texOffset )[0];
-}
-
-
-uint getSegValue( vec3 texCoords, vec3 texOffset, float cutoff, out float opacity )
-{
-    const uvec3 neigh[8] = uvec3[8](
-        uvec3(0, 0, 0), uvec3(0, 0, 1), uvec3(0, 1, 0), uvec3(0, 1, 1),
-        uvec3(1, 0, 0), uvec3(1, 0, 1), uvec3(1, 1, 0), uvec3(1, 1, 1) );
-
     uint seg = 0u;
     opacity = 0.0;
 
@@ -328,8 +332,7 @@ uint getSegValue( vec3 texCoords, vec3 texOffset, float cutoff, out float opacit
                       col * u_texSamplingDirsForSmoothSeg[1];
 
         // Segmentation value of neighbor at (row, col) offset
-        float ignore;
-        neighSegs[i] = getSegValue_N( fs_in.v_segTexCoords, texPos, ignore, ignore );
+        neighSegs[i] = texture( u_segTex, fs_in.v_segTexCoords + texPos )[0];
     }
 
 
@@ -348,20 +351,20 @@ uint getSegValue( vec3 texCoords, vec3 texOffset, float cutoff, out float opacit
 
         // This feathers the edges:
         // opacity = smoothstep(
-        //     clamp( cutoff - segEdgeWidth/2.0, 0.0, 1.0 ),
-        //     clamp( cutoff + segEdgeWidth/2.0, 0.0, 1.0 ), interp );
+        //     clamp( u_segInterpCutoff - segEdgeWidth/2.0, 0.0, 1.0 ),
+        //     clamp( u_segInterpCutoff + segEdgeWidth/2.0, 0.0, 1.0 ), interp );
 
         opacity = 1.0;
-        // opacity = cubicPulse( cutoff, segEdgeWidth, interp );
+        // opacity = cubicPulse( u_segInterpCutoff, segEdgeWidth, interp );
 
         if ( interp > maxInterp &&
-             interp >= cutoff &&
+             interp >= u_segInterpCutoff &&
              computeLabelColor( int(label) ).a > 0.0 )
         {
             seg = label;
             maxInterp = interp;
 
-            if ( cutoff >= 0.5 )
+            if ( u_segInterpCutoff >= 0.5 )
             {
                 break;
             }
@@ -372,41 +375,50 @@ uint getSegValue( vec3 texCoords, vec3 texOffset, float cutoff, out float opacit
 }
 
 
+/// Compute alpha of fragments based on whether or not they are inside the
+/// segmentation boundary. Fragments on the boundary are assigned alpha of 1,
+/// whereas fragments inside are assigned alpha of 'u_segInteriorOpacity'.
 
-// Compute alpha of fragments based on whether or not they are inside the
-// segmentation boundary. Fragments on the boundary are assigned alpha of 1,
-// whereas fragments inside are assigned alpha of 'u_segInteriorOpacity'.
-// float getSegInteriorAlpha( uint seg )
-// {
-//     return 1.0;
-// }
-
+/// Nearest neighbor sampling:
 float getSegInteriorAlpha( uint seg )
 {
-    // Look up texture values in 8 neighbors surrounding the center fragment.
-    // These may be either neighboring image voxels or neighboring view pixels.
-    // The center fragment (row = 0, col = 0) has index i = 4.
-    for ( int i = 0; i <= 8; ++i )
-    {
-        float row = float( mod( i, 3 ) - 1 ); // [-1,0,1]
-        float col = float( floor( float(i / 3) ) - 1 ); // [-1,0,1]
-
-        vec3 texPosOffset =
-            row * u_texSamplingDirsForSegOutline[0] +
-            col * u_texSamplingDirsForSegOutline[1];
-
-        // Segmentation value of neighbor at (row, col) offset:
-        float ignore;
-        if ( seg != getSegValue( fs_in.v_segTexCoords, texPosOffset, u_segInterpCutoff, ignore ) )
-        {
-            // Fragment (with segmentation 'seg') is on the segmentation boundary,
-            // since its value is not equal to one of its neighbors. Therefore, it gets full alpha.
-            return 1.0;
-        }
-    }
-
-    return u_segInteriorOpacity;
+    return 1.0;
 }
+
+/// Linear sampling:
+
+// Texture sampling directions (horizontal and vertical) for calculating the segmentation outline
+//uniform vec3 u_texSamplingDirsForSegOutline[2];
+
+// Opacity of the interior of the segmentation
+//uniform float u_segInteriorOpacity;
+
+//float getSegInteriorAlpha( uint seg )
+//{
+//    // Look up texture values in 8 neighbors surrounding the center fragment.
+//    // These may be either neighboring image voxels or neighboring view pixels.
+//    // The center fragment (row = 0, col = 0) has index i = 4.
+//    for ( int i = 0; i <= 8; ++i )
+//    {
+//        float row = float( mod( i, 3 ) - 1 ); // [-1,0,1]
+//        float col = float( floor( float(i / 3) ) - 1 ); // [-1,0,1]
+
+//        vec3 texPosOffset =
+//            row * u_texSamplingDirsForSegOutline[0] +
+//            col * u_texSamplingDirsForSegOutline[1];
+
+//        // Segmentation value of neighbor at (row, col) offset:
+//        float ignore;
+//        if ( seg != getSegValue( texPosOffset, ignore ) )
+//        {
+//            // Fragment (with segmentation 'seg') is on the segmentation boundary,
+//            // since its value is not equal to one of its neighbors. Therefore, it gets full alpha.
+//            return 1.0;
+//        }
+//    }
+
+//    return u_segInteriorOpacity;
+//}
 
 
 void main()
@@ -417,7 +429,7 @@ void main()
     img = computeProjection( img );
 
     float segInterpOpacity = 1.0;
-    uint seg = getSegValue( fs_in.v_segTexCoords, vec3(0, 0, 0), u_segInterpCutoff, segInterpOpacity );
+    uint seg = getSegValue( vec3(0, 0, 0), segInterpOpacity );
 
     // Apply window/level to normalize image values in [0.0, 1.0] range:
     float imgNorm = clamp( u_imgSlopeIntercept[0] * img + u_imgSlopeIntercept[1], 0.0, 1.0 );

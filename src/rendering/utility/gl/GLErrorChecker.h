@@ -6,7 +6,7 @@
 #ifdef NDEBUG
 #define CHECK_GL_ERROR( checker ) checker();
 #else
-#define CHECK_GL_ERROR( checker ) checker( __FILE__, __FUNCTION__, __LINE__ );
+#define CHECK_GL_ERROR( checker ) checker( (__FILE__), (__FUNCTION__), (__LINE__) );
 #endif
 
 

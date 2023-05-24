@@ -19,6 +19,7 @@ void GLErrorChecker::operator()( const char* file, const char* function, int lin
     static const char* UNKNOWN_MSG = "Unknown error.";
 
     GLenum error;
+
     while ( GL_NO_ERROR != ( error = glGetError() ) )
     {
         const char* msg;
