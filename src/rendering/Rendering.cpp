@@ -1,9 +1,6 @@
 #include "rendering/Rendering.h"
 
-#include "common/DataHelper.h"
-#include "common/DirectionMaps.h"
 #include "common/Exception.hpp"
-#include "common/MathFuncs.h"
 #include "common/Types.h"
 
 #include "image/ImageColorMap.h"
@@ -1433,24 +1430,26 @@ void Rendering::renderOneImage(
 
     auto& renderData = m_appData.renderData();
 
-    drawImageQuad( program,
-                   view.renderMode(),
-                   renderData.m_quad,
-                   view,
-                   m_appData.windowData().viewport(),
-                   worldOffsetXhairs,
-                   renderData.m_flashlightRadius,
-                   renderData.m_flashlightOverlays,
-                   renderData.m_intensityProjectionSlabThickness,
-                   renderData.m_doMaxExtentIntensityProjection,
-                   renderData.m_xrayIntensityWindow,
-                   renderData.m_xrayIntensityLevel,
-                   I,
-                   getImage,
-                   showEdges,
-                   renderData.m_segOutlineStyle,
-                   renderData.m_segInteriorOpacity,
-                   renderData.m_segInterpCutoff );
+    drawImageQuad(
+        program,
+        view.renderMode(),
+        renderData.m_quad,
+        view,
+        m_appData.windowData().viewport(),
+        worldOffsetXhairs,
+        renderData.m_flashlightRadius,
+        renderData.m_flashlightOverlays,
+        renderData.m_intensityProjectionSlabThickness,
+        renderData.m_doMaxExtentIntensityProjection,
+        renderData.m_xrayIntensityWindow,
+        renderData.m_xrayIntensityLevel,
+        I,
+        getImage,
+        showEdges,
+        renderData.m_segOutlineStyle,
+        renderData.m_segInteriorOpacity,
+        renderData.m_segInterpolation,
+        renderData.m_segInterpCutoff );
 
     if ( ! renderData.m_globalLandmarkParams.renderOnTopOfAllImagePlanes )
     {

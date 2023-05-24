@@ -3,7 +3,6 @@
 #include "ui/GuiData.h"
 #include "ui/Helpers.h"
 #include "ui/ImGuiCustomControls.h"
-#include "ui/Popups.h"
 #include "ui/Widgets.h"
 
 // data::roundPointToNearestImageVoxelCenter
@@ -61,13 +60,13 @@ static const std::string sk_activeImageMessage( "This is the active image" );
 static const std::string sk_nonActiveImageMessage( "This is not the active image" );
 
 static const ImGuiColorEditFlags sk_colorEditFlags =
-        ImGuiColorEditFlags_NoInputs |
-        ImGuiColorEditFlags_PickerHueBar |
-        ImGuiColorEditFlags_DisplayRGB |
-        ImGuiColorEditFlags_DisplayHSV |
-        ImGuiColorEditFlags_DisplayHex |
-        ImGuiColorEditFlags_Uint8 |
-        ImGuiColorEditFlags_InputRGB;
+    ImGuiColorEditFlags_NoInputs |
+    ImGuiColorEditFlags_PickerHueBar |
+    ImGuiColorEditFlags_DisplayRGB |
+    ImGuiColorEditFlags_DisplayHSV |
+    ImGuiColorEditFlags_DisplayHex |
+    ImGuiColorEditFlags_Uint8 |
+    ImGuiColorEditFlags_InputRGB;
 
 std::pair< ImVec4, ImVec4 > computeHeaderBgAndTextColors( const glm::vec3& color )
 {

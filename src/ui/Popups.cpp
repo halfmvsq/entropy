@@ -8,9 +8,9 @@
 
 
 void renderAddLayoutModalPopup(
-        AppData& appData,
-        bool openAddLayoutPopup,
-        const std::function< void (void) >& recenterViews )
+    AppData& appData,
+    bool openAddLayoutPopup,
+    const std::function< void (void) >& recenterViews )
 {
     bool addLayout = false;
 
@@ -23,8 +23,7 @@ void renderAddLayoutModalPopup(
         ImGui::OpenPopup( "Add Layout", ImGuiWindowFlags_AlwaysAutoResize );
     }
 
-    const ImVec2 center( ImGui::GetIO().DisplaySize.x * 0.5f,
-                         ImGui::GetIO().DisplaySize.y * 0.5f );
+    const ImVec2 center( ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.5f );
 
     ImGui::SetNextWindowPos( center, ImGuiCond_Appearing, ImVec2( 0.5f, 0.5f ) );
 
@@ -80,7 +79,7 @@ void renderAddLayoutModalPopup(
 
             auto& wd = appData.windowData();
             wd.addGridLayout( static_cast<size_t>(width), static_cast<size_t>(height),
-                              offsetViews, isLightbox, 0, *refUid );
+                             offsetViews, isLightbox, 0, *refUid );
             wd.setCurrentLayoutIndex( wd.numLayouts() - 1 );
             wd.setDefaultRenderedImagesForLayout( wd.currentLayout(), appData.imageUidsOrdered() );
 
@@ -93,20 +92,19 @@ void renderAddLayoutModalPopup(
 void renderAboutDialogModalPopup( bool open )
 {
     static const std::string sk_gitInfo =
-            std::string( "Git commit hash: " ) + ENTROPY_GIT_COMMIT_SHA1 + "\n" +
-            std::string( "Git commit timestamp: " ) + ENTROPY_GIT_COMMIT_TIMESTAMP + "\n" +
-            std::string( "Git branch: " ) + ENTROPY_GIT_BRANCH + "\n\n" +
-            std::string( "Build timestamp: ") + ENTROPY_BUILD_TIMESTAMP + " (UTC)" + "\n" +
-            std::string( "Build OS: ") + SYSTEM_NAME + " (" + SYSTEM_VERSION + ")\n" +
-            std::string( "Build processor: ") + SYSTEM_PROCESSOR;
+        std::string( "Git commit hash: " ) + ENTROPY_GIT_COMMIT_SHA1 + "\n" +
+        std::string( "Git commit timestamp: " ) + ENTROPY_GIT_COMMIT_TIMESTAMP + "\n" +
+        std::string( "Git branch: " ) + ENTROPY_GIT_BRANCH + "\n\n" +
+        std::string( "Build timestamp: ") + ENTROPY_BUILD_TIMESTAMP + " (UTC)" + "\n" +
+        std::string( "Build OS: ") + SYSTEM_NAME + " (" + SYSTEM_VERSION + ")\n" +
+        std::string( "Build processor: ") + SYSTEM_PROCESSOR;
 
     if ( open && ! ImGui::IsPopupOpen( "About Entropy" ) )
     {
         ImGui::OpenPopup( "About Entropy", ImGuiWindowFlags_AlwaysAutoResize );
     }
 
-    const ImVec2 center( ImGui::GetIO().DisplaySize.x * 0.5f,
-                         ImGui::GetIO().DisplaySize.y * 0.5f );
+    const ImVec2 center( ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.5f );
 
     ImGui::SetNextWindowPos( center, ImGuiCond_Appearing, ImVec2( 0.5f, 0.5f ) );
 
@@ -127,11 +125,11 @@ void renderAboutDialogModalPopup( bool open )
         ImGui::Text( "Build information:" );
 
         ImGui::InputTextMultiline(
-                    "##gitInfo",
-                    const_cast<char*>( sk_gitInfo.c_str() ),
-                    sk_gitInfo.length(),
-                    ImVec2( -FLT_MIN, ImGui::GetTextLineHeight() * 8 ),
-                    ImGuiInputTextFlags_ReadOnly );
+            "##gitInfo",
+            const_cast<char*>( sk_gitInfo.c_str() ),
+            sk_gitInfo.length(),
+            ImVec2( -FLT_MIN, ImGui::GetTextLineHeight() * 8 ),
+            ImGuiInputTextFlags_ReadOnly );
 
         if ( ImGui::Button( "OK", ImVec2( 80, 0 ) ) )
         {
@@ -147,20 +145,15 @@ void renderConfirmCloseAppPopup( AppData& appData )
 {
     if ( appData.guiData().m_showConfirmCloseAppPopup && ! ImGui::IsPopupOpen( "Quit?" ) )
     {
-        ImGui::OpenPopup( "Quit?",
-                          ImGuiWindowFlags_Modal |
-                          ImGuiWindowFlags_NoDecoration );
+        ImGui::OpenPopup( "Quit?", ImGuiWindowFlags_Modal | ImGuiWindowFlags_NoDecoration );
     }
 
-    const ImVec2 center( ImGui::GetIO().DisplaySize.x * 0.5f,
-                         ImGui::GetIO().DisplaySize.y * 0.5f );
+    const ImVec2 center( ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.5f );
 
     ImGui::SetNextWindowPos( center, ImGuiCond_Appearing, ImVec2( 0.5f, 0.5f ) );
 
     ImGui::SetNextItemWidth( -1.0f );
-    if ( ImGui::BeginPopupModal( "Quit?", nullptr,
-                                 ImGuiWindowFlags_Modal |
-                                 ImGuiWindowFlags_NoDecoration ) )
+    if ( ImGui::BeginPopupModal( "Quit?", nullptr, ImGuiWindowFlags_Modal | ImGuiWindowFlags_NoDecoration ) )
     {
         ImGui::Text( "Do you want to quit?" );
         ImGui::Separator();

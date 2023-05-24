@@ -18,11 +18,11 @@ class ParcellationLabelTable;
 
 
 void renderActiveImageSelectionCombo(
-        size_t numImages,
-        const std::function< std::pair<const char*, const char* >( size_t index ) >& getImageDisplayAndFileName,
-        const std::function< size_t (void) >& getActiveImageIndex,
-        const std::function< void (size_t) >& setActiveImageIndex,
-        bool showText = true );
+    size_t numImages,
+    const std::function< std::pair<const char*, const char* >( size_t index ) >& getImageDisplayAndFileName,
+    const std::function< size_t (void) >& getActiveImageIndex,
+    const std::function< void (size_t) >& setActiveImageIndex,
+    bool showText = true );
 
 /**
  * @brief Render child window that shows the labels for a given segmentation label table
@@ -31,10 +31,10 @@ void renderActiveImageSelectionCombo(
  * @param[in] updateLabelColorTableTexture Function to update the label table texture
  */
 void renderSegLabelsChildWindow(
-        size_t tableIndex,
-        ParcellationLabelTable* labelTable,
-        const std::function< void ( size_t tableIndex ) >& updateLabelColorTableTexture,
-        const std::function< void ( size_t labelIndex ) >& moveCrosshairsToSegLabelCentroid );
+    size_t tableIndex,
+    ParcellationLabelTable* labelTable,
+    const std::function< void ( size_t tableIndex ) >& updateLabelColorTableTexture,
+    const std::function< void ( size_t labelIndex ) >& moveCrosshairsToSegLabelCentroid );
 
 
 /**
@@ -46,12 +46,12 @@ void renderSegLabelsChildWindow(
  * @param recenterAllViews
  */
 void renderLandmarkChildWindow(
-        const AppData& appData,
-        const ImageTransformations& imageTransformations,
-        LandmarkGroup* activeLmGroup,
-        const glm::vec3& worldCrosshairsPos,
-        const std::function< void ( const glm::vec3& worldCrosshairsPos ) >& setWorldCrosshairsPos,
-        const AllViewsRecenterType& recenterAllViews );
+    const AppData& appData,
+    const ImageTransformations& imageTransformations,
+    LandmarkGroup* activeLmGroup,
+    const glm::vec3& worldCrosshairsPos,
+    const std::function< void ( const glm::vec3& worldCrosshairsPos ) >& setWorldCrosshairsPos,
+    const AllViewsRecenterType& recenterAllViews );
 
 
 /**

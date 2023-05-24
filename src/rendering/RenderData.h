@@ -222,14 +222,15 @@ struct RenderData
 
     SegMaskingForRaycasting m_segMasking;
 
-
     // Segmentation outline style
     SegmentationOutlineStyle m_segOutlineStyle;
+
+    SegmentationInterpolation m_segInterpolation;
 
     // Opacity of interior of segmentation, when outlining is applied
     float m_segInteriorOpacity;
 
-    // Cutoff for segmentation with interpolation used
+    // Cutoff for segmentation with linear interpolation used
     float m_segInterpCutoff;
 
 

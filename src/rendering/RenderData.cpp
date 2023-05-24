@@ -1,7 +1,5 @@
 #include "rendering/RenderData.h"
-
 #include "common/MathFuncs.h"
-#include "common/ParcellationLabelTable.h"
 
 #include <spdlog/spdlog.h>
 
@@ -169,70 +167,70 @@ const std::map<float, float> RenderData::msk_airMassAttenCoeffs{
 
 RenderData::RenderData()
     :
-      m_quad(),
-      m_circle(),
+    m_quad(),
+    m_circle(),
 
-      m_imageTextures(),
-      m_distanceMapTextures(),
-      m_segTextures(),
-      m_labelBufferTextures(),
-      m_colormapTextures(),
+    m_imageTextures(),
+    m_distanceMapTextures(),
+    m_segTextures(),
+    m_labelBufferTextures(),
+    m_colormapTextures(),
 
-      m_blankImageBlackTransparentTexture( createBlankRgbaTexture( 0 ) ),
-      m_blankImageWhiteOpaqueTexture( createBlankRgbaTexture( 255 ) ),
+    m_blankImageBlackTransparentTexture( createBlankRgbaTexture( 0 ) ),
+    m_blankImageWhiteOpaqueTexture( createBlankRgbaTexture( 255 ) ),
 
-      m_blankSegTexture( createBlankRgbaTexture( 0 ) ),
-      m_blankDistMapTexture( createBlankRgbaTexture( 0 ) ),
+    m_blankSegTexture( createBlankRgbaTexture( 0 ) ),
+    m_blankDistMapTexture( createBlankRgbaTexture( 0 ) ),
 
-      m_uniforms(),
+    m_uniforms(),
 
-      m_snapCrosshairs( CrosshairsSnapping::Disabled ),
-      m_maskedImages( false ),
-      m_modulateSegOpacityWithImageOpacity( true ),
-      m_opacityMixMode( false ),
-      m_intensityProjectionSlabThickness( 10.0f ), /// @todo Initialize based on ref image
-      m_doMaxExtentIntensityProjection( false ),
+    m_snapCrosshairs( CrosshairsSnapping::Disabled ),
+    m_maskedImages( false ),
+    m_modulateSegOpacityWithImageOpacity( true ),
+    m_opacityMixMode( false ),
+    m_intensityProjectionSlabThickness( 10.0f ), /// @todo Initialize based on ref image
+    m_doMaxExtentIntensityProjection( false ),
 
-      m_xrayIntensityWindow( 1.0f ),
-      m_xrayIntensityLevel( 0.5f ),
+    m_xrayIntensityWindow( 1.0f ),
+    m_xrayIntensityLevel( 0.5f ),
 
-      m_xrayEnergyKeV( DEFAULT_XRAY_ENERGY ),
-      m_waterMassAttenCoeff( DEFAULT_MAC_WATER ),
-      m_airMassAttenCoeff( DEFAULT_MAC_AIR ),
+    m_xrayEnergyKeV( DEFAULT_XRAY_ENERGY ),
+    m_waterMassAttenCoeff( DEFAULT_MAC_WATER ),
+    m_airMassAttenCoeff( DEFAULT_MAC_AIR ),
 
-      m_2dBackgroundColor( 0.1f, 0.1f, 0.1f ),
-      m_3dBackgroundColor( 0.0f, 0.0f, 0.0f, 0.5f ),
-      m_3dTransparentIfNoHit( true ),
-      m_crosshairsColor( 0.05f, 0.6f, 1.0f, 1.0f ),
-      m_anatomicalLabelColor( 0.695f, 0.870f, 0.090f, 1.0f ),
+    m_2dBackgroundColor( 0.1f, 0.1f, 0.1f ),
+    m_3dBackgroundColor( 0.0f, 0.0f, 0.0f, 0.5f ),
+    m_3dTransparentIfNoHit( true ),
+    m_crosshairsColor( 0.05f, 0.6f, 1.0f, 1.0f ),
+    m_anatomicalLabelColor( 0.695f, 0.870f, 0.090f, 1.0f ),
 
-      m_anatomicalLabelType( AnatomicalLabelType::Human ),
+    m_anatomicalLabelType( AnatomicalLabelType::Human ),
 
-      m_renderFrontFaces( true ),
-      m_renderBackFaces( true ),
+    m_renderFrontFaces( true ),
+    m_renderBackFaces( true ),
 
-      m_raycastSamplingFactor( 0.5f ),
+    m_raycastSamplingFactor( 0.5f ),
 
-      m_segMasking( SegMaskingForRaycasting::Disabled ),
+    m_segMasking( SegMaskingForRaycasting::Disabled ),
 
-      m_segOutlineStyle( SegmentationOutlineStyle::Disabled ),
-      m_segInteriorOpacity( 0.10f ),
-      m_segInterpCutoff( 0.50f ),
+    m_segOutlineStyle( SegmentationOutlineStyle::Disabled ),
+    m_segInterpolation( SegmentationInterpolation::NearestNeighbor ),
+    m_segInteriorOpacity( 0.10f ),
+    m_segInterpCutoff( 0.50f ),
 
-      m_squaredDifferenceParams(),
-      m_crossCorrelationParams(),
-      m_jointHistogramParams(),
+    m_squaredDifferenceParams(),
+    m_crossCorrelationParams(),
+    m_jointHistogramParams(),
 
-      m_edgeMagnitudeSmoothing( 1.0f, 1.0f ),
-      m_numCheckerboardSquares( 10 ),
-      m_overlayMagentaCyan( true ),
-      m_quadrants( true, true ),
-      m_useSquare( true ),
+    m_edgeMagnitudeSmoothing( 1.0f, 1.0f ),
+    m_numCheckerboardSquares( 10 ),
+    m_overlayMagentaCyan( true ),
+    m_quadrants( true, true ),
+    m_useSquare( true ),
 
-      m_flashlightRadius( 0.15f ),
-      m_flashlightOverlays( true )
-{
-}
+    m_flashlightRadius( 0.15f ),
+    m_flashlightOverlays( true )
+{}
 
 
 void RenderData::setXrayEnergy( float energyKeV )
@@ -253,22 +251,24 @@ void RenderData::setXrayEnergy( float energyKeV )
 
 RenderData::Quad::Quad()
     :
-      m_positionsInfo( BufferComponentType::Float,
-                       BufferNormalizeValues::False,
-                       sk_numQuadPosComps,
-                       sk_numQuadPosComps * sizeof(float),
-                       sk_byteOffset,
-                       sk_numQuadVerts ),
+    m_positionsInfo(
+        BufferComponentType::Float,
+        BufferNormalizeValues::False,
+        sk_numQuadPosComps,
+        sk_numQuadPosComps * sizeof(float),
+        sk_byteOffset,
+        sk_numQuadVerts ),
 
-      m_indicesInfo( IndexType::UInt32,
-                     PrimitiveMode::TriangleStrip,
-                     sk_numQuadVerts,
-                     sk_indexOffset ),
+    m_indicesInfo(
+        IndexType::UInt32,
+        PrimitiveMode::TriangleStrip,
+        sk_numQuadVerts,
+        sk_indexOffset ),
 
-      m_positionsObject( BufferType::VertexArray, BufferUsagePattern::StaticDraw ),
-      m_indicesObject( BufferType::Index, BufferUsagePattern::StaticDraw ),
+    m_positionsObject( BufferType::VertexArray, BufferUsagePattern::StaticDraw ),
+    m_indicesObject( BufferType::Index, BufferUsagePattern::StaticDraw ),
 
-      m_vaoParams( m_indicesInfo )
+    m_vaoParams( m_indicesInfo )
 {
     static constexpr GLuint sk_positionIndex = 0;
 
@@ -297,17 +297,19 @@ RenderData::Quad::Quad()
 
 RenderData::Circle::Circle()
     :
-      m_positionsInfo( BufferComponentType::Float,
-                       BufferNormalizeValues::False,
-                       sk_numQuadPosComps,
-                       sk_numQuadPosComps * sizeof(float),
-                       sk_byteOffset,
-                       sk_numQuadVerts ),
+    m_positionsInfo(
+        BufferComponentType::Float,
+        BufferNormalizeValues::False,
+        sk_numQuadPosComps,
+        sk_numQuadPosComps * sizeof(float),
+        sk_byteOffset,
+        sk_numQuadVerts ),
 
-      m_indicesInfo( IndexType::UInt32,
-                     PrimitiveMode::TriangleStrip,
-                     sk_numQuadVerts,
-                     sk_indexOffset ),
+    m_indicesInfo(
+        IndexType::UInt32,
+        PrimitiveMode::TriangleStrip,
+        sk_numQuadVerts,
+        sk_indexOffset ),
 
       m_positionsObject( BufferType::VertexArray, BufferUsagePattern::StaticDraw ),
       m_indicesObject( BufferType::Index, BufferUsagePattern::StaticDraw ),
@@ -341,14 +343,13 @@ RenderData::Circle::Circle()
 
 RenderData::IsosurfaceData::IsosurfaceData()
     :
-      values( MAX_NUM_ISOSURFACES, 0.0f ),
-      opacities( MAX_NUM_ISOSURFACES, 0.0f ),
-      edgeStrengths( MAX_NUM_ISOSURFACES, 0.0f ),
-      colors( MAX_NUM_ISOSURFACES, glm::vec3{0.0f} ),
-      ambientLights( MAX_NUM_ISOSURFACES, glm::vec3{0.0f} ),
-      diffuseLights( MAX_NUM_ISOSURFACES, glm::vec3{0.0f} ),
-      specularLights( MAX_NUM_ISOSURFACES, glm::vec3{0.0f} ),
-      shininesses( MAX_NUM_ISOSURFACES, 0.0f ),
-      widthIn2d( 0.0f )
-{
-}
+    values( MAX_NUM_ISOSURFACES, 0.0f ),
+    opacities( MAX_NUM_ISOSURFACES, 0.0f ),
+    edgeStrengths( MAX_NUM_ISOSURFACES, 0.0f ),
+    colors( MAX_NUM_ISOSURFACES, glm::vec3{0.0f} ),
+    ambientLights( MAX_NUM_ISOSURFACES, glm::vec3{0.0f} ),
+    diffuseLights( MAX_NUM_ISOSURFACES, glm::vec3{0.0f} ),
+    specularLights( MAX_NUM_ISOSURFACES, glm::vec3{0.0f} ),
+    shininesses( MAX_NUM_ISOSURFACES, 0.0f ),
+    widthIn2d( 0.0f )
+{}

@@ -3,17 +3,14 @@
 #include "ui/Headers.h"
 #include "ui/Helpers.h"
 #include "ui/ImGuiCustomControls.h"
-#include "ui/Popups.h"
 #include "ui/Widgets.h"
 #include "ui/imgui/imGuIZMO.quat/imGuIZMOquat.h"
 
-#include "common/MathFuncs.h"
 #include "common/Types.h"
 
 #include "image/Image.h"
 
 #include "logic/app/Data.h"
-#include "logic/camera/MathUtility.h"
 #include "logic/states/AnnotationStateHelpers.h"
 
 #include <IconFontCppHeaders/IconsForkAwesome.h>

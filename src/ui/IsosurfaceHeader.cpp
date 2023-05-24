@@ -284,10 +284,10 @@ void renderIsosurfacesHeader(
     static const float sk_textBaseHeight = ImGui::GetTextLineHeightWithSpacing();
 
     static const IsosurfaceTableItemContentsType sk_contentsType =
-            IsosurfaceTableItemContentsType::SelectableSpanRow;
+        IsosurfaceTableItemContentsType::SelectableSpanRow;
 
     static const ImGuiSelectableFlags sk_selectableFlags =
-            ( IsosurfaceTableItemContentsType::SelectableSpanRow == sk_contentsType )
+        ( IsosurfaceTableItemContentsType::SelectableSpanRow == sk_contentsType )
             ? ( ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowItemOverlap )
             : ImGuiSelectableFlags_None;
 
@@ -331,9 +331,9 @@ void renderIsosurfacesHeader(
     // Header is ID'ed only by the image index.
     // ### allows the header name to change without changing its ID.
     const std::string headerName =
-            std::to_string( imageIndex ) + ") " +
-            image->settings().displayName() +
-            "###" + std::to_string( imageIndex );
+        std::to_string( imageIndex ) + ") " +
+        image->settings().displayName() +
+        "###" + std::to_string( imageIndex );
 
     const auto headerColors = computeHeaderBgAndTextColors( image->settings().borderColor() );
     ImGui::PushStyleColor( ImGuiCol_Header, headerColors.first );

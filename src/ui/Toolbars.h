@@ -5,8 +5,6 @@
 #include "common/PublicTypes.h"
 #include "common/Types.h"
 
-#include "logic/camera/CameraHelpers.h"
-
 #include <uuid.h>
 
 #include <functional>

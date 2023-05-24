@@ -314,6 +314,14 @@ enum class SegmentationOutlineStyle
     Disabled //!< Disabled outlining
 };
 
+/**
+ * @brief The SegmentationInterpolation enum
+ */
+enum class SegmentationInterpolation
+{
+    NearestNeighbor,
+    Linear
+};
 
 /**
  * @brief Information needed for positioning a single anatomical label and the crosshair
