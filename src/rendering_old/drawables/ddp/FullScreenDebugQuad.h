@@ -2,7 +2,7 @@
 #define FULLSCREENDEBUGQUAD_H
 
 #include "rendering_old/drawables/ddp/FullScreenQuad.h"
-#include "rendering_old/common/ShaderProviderType.h"
+#include "rendering/common/ShaderProviderType.h"
 #include "common/ObjectCounter.hpp"
 
 class GLTexture;

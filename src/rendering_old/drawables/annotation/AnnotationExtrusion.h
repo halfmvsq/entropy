@@ -2,7 +2,7 @@
 #define ANNOTATION_EXTRUSION_H
 
 #include "rendering_old/drawables/DrawableBase.h"
-#include "rendering_old/common/ShaderProviderType.h"
+#include "rendering/common/ShaderProviderType.h"
 #include "rendering_old/records/MeshGpuRecord.h"
 
 #include "common/ObjectCounter.hpp"

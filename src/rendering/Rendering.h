@@ -5,10 +5,10 @@
 #include "common/UuidRange.h"
 
 #include "logic/camera/CameraTypes.h"
-#include "rendering/utility/gl/GLShaderProgram.h"
+#include "logic/records/MeshRecord.h"
 
-#include "logic_old/records/MeshRecord.h"
-#include "rendering_old/common/ShaderProviderType.h"
+#include "rendering/common/ShaderProviderType.h"
+#include "rendering/utility/gl/GLShaderProgram.h"
 #include "rendering_old/drawables/BasicMesh.h"
 #include "rendering_old/utility/containers/ShaderProgramContainer.h"
 
@@ -16,12 +16,10 @@
 
 #include <uuid.h>
 
-#include <array>
 #include <functional>
 #include <list>
 #include <memory>
 #include <optional>
-#include <tuple>
 #include <utility>
 #include <vector>
 

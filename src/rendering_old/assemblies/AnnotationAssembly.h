@@ -9,7 +9,7 @@
 #include "logic_old/records/SlideAnnotationRecord.h"
 
 #include "rendering_old/assemblies/RenderingProperties.h"
-#include "rendering_old/common/ShaderProviderType.h"
+#include "rendering/common/ShaderProviderType.h"
 
 #include <glm/fwd.hpp>
 

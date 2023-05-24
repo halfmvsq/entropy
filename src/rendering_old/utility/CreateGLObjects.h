@@ -5,7 +5,7 @@
 #include "common/ParcellationLabelTable.h"
 
 #include "logic_old/records/ImageRecord.h"
-#include "logic_old/records/MeshRecord.h"
+#include "logic/records/MeshRecord.h"
 #include "logic_old/records/SlideAnnotationRecord.h"
 #include "logic_old/records/SlideRecord.h"
 

@@ -1,10 +1,8 @@
 #ifndef DUAL_DEPTH_PEEL_RENDERER_H
 #define DUAL_DEPTH_PEEL_RENDERER_H
 
-//#include "common/RangeTypes.h"
-
-#include "rendering_old/interfaces/IRenderer.h"
-#include "rendering_old/common/ShaderProviderType.h"
+#include "rendering/interfaces/IRenderer.h"
+#include "rendering/common/ShaderProviderType.h"
 
 #include <glm/vec2.hpp>
 
@@ -38,11 +36,12 @@ public:
      * @param[in] overlayProvider Function returning the root IDrawable of the overlay to be rendered.
      * The overlay must be managed externally to this class.
      */
-    DepthPeelRenderer( std::string name,
-                       ShaderProgramActivatorType shaderProgramActivator,
-                       UniformsProviderType uniformsProvider,
-                       DrawableProviderType sceneRootProvider,
-                       DrawableProviderType overlayRootProvider );
+    DepthPeelRenderer(
+        std::string name,
+        ShaderProgramActivatorType shaderProgramActivator,
+        UniformsProviderType uniformsProvider,
+        DrawableProviderType sceneRootProvider,
+        DrawableProviderType overlayRootProvider );
 
     DepthPeelRenderer( const DepthPeelRenderer& ) = delete;
     DepthPeelRenderer& operator=( const DepthPeelRenderer& ) = delete;

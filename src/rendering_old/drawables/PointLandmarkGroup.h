@@ -2,9 +2,9 @@
 #define DRAWABLE_POINT_LANDMARK_GROUP_H
 
 #include "rendering_old/drawables/DrawableBase.h"
-#include "rendering_old/common/ShaderProviderType.h"
+#include "rendering/common/ShaderProviderType.h"
 
-#include "logic_old/records/MeshRecord.h"
+#include "logic/records/MeshRecord.h"
 #include "logic_old/records/LandmarkGroupRecord.h"
 
 #include "common/ObjectCounter.hpp"

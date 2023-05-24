@@ -4,14 +4,14 @@
 #include "rendering_old/drawables/ddp/DdpBlendPassQuad.h"
 #include "rendering_old/drawables/ddp/DdpFinalPassQuad.h"
 #include "rendering_old/drawables/ddp/FullScreenDebugQuad.h"
+
 #include "rendering/utility/gl/GLErrorChecker.h"
 #include "rendering/utility/gl/GLFrameBufferObject.h"
 #include "rendering/utility/gl/GLTexture.h"
 
-#include "logic/camera/CameraHelpers.h"
-
 #include "common/Exception.hpp"
-#include "common/Utility.hpp"
+
+#include "logic/camera/CameraHelpers.h"
 
 #include <spdlog/spdlog.h>
 
@@ -21,7 +21,6 @@
 #include <GLFW/glfw3.h>
 
 #include <array>
-#include <iostream>
 
 
 namespace

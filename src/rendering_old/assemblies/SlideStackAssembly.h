@@ -5,7 +5,7 @@
 #include "rendering_old/interfaces/ITexturable3D.h"
 #include "rendering_old/assemblies/RenderingProperties.h"
 #include "rendering_old/common/MeshColorLayer.h"
-#include "rendering_old/common/ShaderProviderType.h"
+#include "rendering/common/ShaderProviderType.h"
 
 #include "common/ObjectCounter.hpp"
 #include "common/PublicTypes.h"

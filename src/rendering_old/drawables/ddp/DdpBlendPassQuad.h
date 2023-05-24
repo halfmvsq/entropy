@@ -2,7 +2,7 @@
 #define DDP_BLEND_PASS_QUAD_H
 
 #include "rendering_old/drawables/ddp/FullScreenQuad.h"
-#include "rendering_old/common/ShaderProviderType.h"
+#include "rendering/common/ShaderProviderType.h"
 #include "rendering/utility/gl/GLTexture.h"
 
 #include <array>

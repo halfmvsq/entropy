@@ -4,9 +4,9 @@
 #include "rendering_old/interfaces/IDrawableAssembly.h"
 #include "rendering_old/interfaces/ITexturable3D.h"
 #include "rendering_old/assemblies/RenderingProperties.h"
-#include "rendering_old/common/ShaderProviderType.h"
+#include "rendering/common/ShaderProviderType.h"
 
-#include "logic_old/records/MeshRecord.h"
+#include "logic/records/MeshRecord.h"
 
 #include "common/ObjectCounter.hpp"
 

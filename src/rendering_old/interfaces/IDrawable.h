@@ -28,8 +28,9 @@ public:
      * @param[in] renderStage Current rendering stage that can be used to modify how the object is rendered.
      * @param[in] objectsToRender Types of objects to render in this call.
      */
-    virtual void render( const RenderStage& renderStage,
-                         const ObjectsToRender& objectsToRender ) = 0;
+    virtual void render(
+        const RenderStage& renderStage,
+        const ObjectsToRender& objectsToRender ) = 0;
 
 
     /**
@@ -41,11 +42,12 @@ public:
      * @param[in] crosshairs Crosshairs of the view
      * @param[in] parentData Rendering data propagated from parent to child
      */
-    virtual void update( double time,
-                         const Viewport& viewport,
-                         const camera::Camera& camera,
-                         const CoordinateFrame& crosshairs,
-                         const AccumulatedRenderingData& parentData ) = 0;
+    virtual void update(
+        double time,
+        const Viewport& viewport,
+        const camera::Camera& camera,
+        const CoordinateFrame& crosshairs,
+        const AccumulatedRenderingData& parentData ) = 0;
 
 
     virtual void printTree( int depth ) const = 0;

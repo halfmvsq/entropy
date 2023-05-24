@@ -2,7 +2,7 @@
 #define CROSSHAIRS_3D_DRAWABLE_H
 
 #include "rendering_old/drawables/DrawableBase.h"
-#include "rendering_old/common/ShaderProviderType.h"
+#include "rendering/common/ShaderProviderType.h"
 #include "common/ObjectCounter.hpp"
 
 #include <array>

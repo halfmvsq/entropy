@@ -20,10 +20,8 @@
 #include "rendering/utility/gl/GLShader.h"
 
 /**************************/
-#include "mesh/MeshLoading.h"
 #include "rendering_old/renderers/DepthPeelRenderer.h"
 #include "rendering_old/utility/containers/BlankTextures.h"
-#include "rendering_old/utility/containers/ShaderProgramContainer.h"
 /**************************/
 
 #include "windowing/View.h"
@@ -53,6 +51,7 @@
 #include <list>
 #include <memory>
 #include <sstream>
+#include <tuple>
 #include <unordered_map>
 #include <utility>
 #include <vector>

@@ -2,7 +2,7 @@
 #define POLYGONIZER_H
 
 #include "rendering_old/computers/ComputerBase.h"
-#include "rendering_old/common/ShaderProviderType.h"
+#include "rendering/common/ShaderProviderType.h"
 #include "rendering/utility/containers/Uniforms.h"
 #include "rendering/utility/gl/GLErrorChecker.h"
 #include "rendering/utility/gl/GLVertexArrayObject.h"
