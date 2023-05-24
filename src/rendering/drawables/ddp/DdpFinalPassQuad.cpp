@@ -45,7 +45,7 @@ DdpFinalPassQuad::DdpFinalPassQuad(
     }
 }
 
-void DdpFinalPassQuad::setCurrentTextureID( uint32_t i )
+void DdpFinalPassQuad::setCurrentTextureId( uint32_t i )
 {
     m_currentTextureId = i;
 }

@@ -484,8 +484,8 @@ DepthPeelRenderer::Impl::ddp_blendTargets( bool currentId )
         /// @note Could also query GL_ANY_SAMPLES_PASSED
         glBeginQuery( GL_SAMPLES_PASSED, m_occQueryId );
     }
-
-    m_blendQuad.setCurrentTextureID( currentId );
+    
+    m_blendQuad.setCurrentTextureId( currentId );
     m_blendQuad.render( RenderStage::QuadResolve, ObjectsToRender::All );
 
     bool isBlendingDone = false;
@@ -517,8 +517,8 @@ void DepthPeelRenderer::Impl::ddp_composeFinal( bool currentId )
 
     glClearColor( 0.0f, 0.0f, 0.0f, 0.0f );
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-
-    m_finalQuad.setCurrentTextureID( currentId );
+    
+    m_finalQuad.setCurrentTextureId( currentId );
     m_finalQuad.render( RenderStage::QuadResolve, ObjectsToRender::All );
 }
 

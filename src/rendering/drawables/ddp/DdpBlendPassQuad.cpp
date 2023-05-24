@@ -41,7 +41,7 @@ DdpBlendPassQuad::DdpBlendPassQuad(
     }
 }
 
-void DdpBlendPassQuad::setCurrentTextureID( uint32_t i )
+void DdpBlendPassQuad::setCurrentTextureId( uint32_t i )
 {
     m_currentTextureId = i;
 }

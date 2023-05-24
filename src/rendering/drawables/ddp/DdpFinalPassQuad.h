@@ -27,7 +27,7 @@ public:
 
     ~DdpFinalPassQuad() override = default;
 
-    void setCurrentTextureID( uint32_t i );
+    void setCurrentTextureId( uint32_t i );
 
 
 private:
