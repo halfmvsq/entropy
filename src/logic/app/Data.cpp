@@ -425,22 +425,22 @@ std::optional<uuids::uuid> AppData::addIsosurface(
 
     auto compDataIt = m_imageToComponentData.find( imageUid );
 
-    // if ( std::end( m_imageToComponentData ) != compDataIt )
-    // {
-    //     if ( component >= compDataIt->second.size() )
-    //     {
-    //         compDataIt->second.resize( numComps );
-    //     }
+    if ( std::end( m_imageToComponentData ) != compDataIt )
+    {
+        if ( component >= compDataIt->second.size() )
+        {
+            compDataIt->second.resize( numComps );
+        }
 
-    //     auto uid = generateRandomUuid();
-    //     compDataIt->second.at( component ).m_isosurfaces.emplace( uid, std::move( isosurface ) );
-    //     return uid;
-    // }
-    // else
-    // {
-    //     spdlog::error( "No component data for image {}. Cannot add isosurface.", imageUid );
-    //     return std::nullopt;
-    // }
+        auto uid = generateRandomUuid();
+        compDataIt->second.at( component ).m_isosurfaces.emplace( uid, std::move( isosurface ) );
+        return uid;
+    }
+    else
+    {
+        spdlog::error( "No component data for image {}. Cannot add isosurface.", imageUid );
+        return std::nullopt;
+    }
 
     return std::nullopt;
 }
@@ -596,38 +596,35 @@ bool AppData::removeAnnotation( const uuids::uuid& annotUid )
 }
 
 bool AppData::removeIsosurface(
-    // const uuids::uuid& imageUid,
-    // ComponentIndexType component,
-    // const uuids::uuid& isosurfaceUid )
-    const uuids::uuid& ,
-    ComponentIndexType ,
-    const uuids::uuid&  )
+    const uuids::uuid& imageUid,
+    ComponentIndexType component,
+    const uuids::uuid& isosurfaceUid )
 {
-    // std::lock_guard< std::mutex > lock( m_componentDataMutex );
+    std::lock_guard< std::mutex > lock( m_componentDataMutex );
 
-    // const Image* img = image( imageUid );
-    // if ( ! img )
-    // {
-    //     spdlog::error( "Cannot remove isosurface from invalid image {}.", imageUid );
-    //     return false;
-    // }
+    const Image* img = image( imageUid );
+    if ( ! img )
+    {
+        spdlog::error( "Cannot remove isosurface from invalid image {}.", imageUid );
+        return false;
+    }
 
-    // const uint32_t numComps = img->header().numComponentsPerPixel();
-    // if ( component >= numComps )
-    // {
-    //     spdlog::error( "Cannot remove isosurface from invalid component {} of image {}.",
-    //                    component, imageUid );
-    //     return false;
-    // }
+    const uint32_t numComps = img->header().numComponentsPerPixel();
+    if ( component >= numComps )
+    {
+        spdlog::error( "Cannot remove isosurface from invalid component {} of image {}.",
+                       component, imageUid );
+        return false;
+    }
 
-    // auto compDataIt = m_imageToComponentData.find( imageUid );
-    // if ( std::end( m_imageToComponentData ) != compDataIt )
-    // {
-    //     if ( component < compDataIt->second.size() )
-    //     {
-    //         return ( compDataIt->second.at( component ).m_isosurfaces.erase( isosurfaceUid ) > 0 );
-    //     }
-    // }
+    auto compDataIt = m_imageToComponentData.find( imageUid );
+    if ( std::end( m_imageToComponentData ) != compDataIt )
+    {
+        if ( component < compDataIt->second.size() )
+        {
+            return ( compDataIt->second.at( component ).m_isosurfaces.erase( isosurfaceUid ) > 0 );
+        }
+    }
 
     return false;
 }
@@ -735,9 +732,9 @@ const std::map< uint32_t, Image >& AppData::noiseEstimates(
 }
 
 const Isosurface* AppData::isosurface(
-        const uuids::uuid& imageUid,
-        ComponentIndexType component,
-        const uuids::uuid& isosurfaceUid ) const
+    const uuids::uuid& imageUid,
+    ComponentIndexType component,
+    const uuids::uuid& isosurfaceUid ) const
 {
     std::lock_guard< std::mutex > lock( m_componentDataMutex );
 
@@ -755,22 +752,22 @@ const Isosurface* AppData::isosurface(
         return nullptr;
     }
 
-    // auto compDataIt = m_imageToComponentData.find( imageUid );
-    // if ( std::end( m_imageToComponentData ) != compDataIt )
-    // {
-    //     if ( component < compDataIt->second.size() )
-    //     {
-    //         return &( compDataIt->second.at( component ).m_isosurfaces.at( isosurfaceUid ) );
-    //     }
-    // }
+    auto compDataIt = m_imageToComponentData.find( imageUid );
+    if ( std::end( m_imageToComponentData ) != compDataIt )
+    {
+        if ( component < compDataIt->second.size() )
+        {
+            return &( compDataIt->second.at( component ).m_isosurfaces.at( isosurfaceUid ) );
+        }
+    }
 
     return nullptr;
 }
 
 Isosurface* AppData::isosurface(
-        const uuids::uuid& imageUid,
-        ComponentIndexType component,
-        const uuids::uuid& isosurfaceUid )
+    const uuids::uuid& imageUid,
+    ComponentIndexType component,
+    const uuids::uuid& isosurfaceUid )
 {
     return const_cast<Isosurface*>( const_cast<const AppData*>(this)->isosurface(
         imageUid, component, isosurfaceUid ) );
@@ -784,22 +781,22 @@ bool AppData::updateIsosurfaceMeshCpuRecord(
 {
     std::lock_guard< std::mutex > lock( m_componentDataMutex );
 
-    // auto compDataIt = m_imageToComponentData.find( imageUid );
+    auto compDataIt = m_imageToComponentData.find( imageUid );
 
-    // if ( std::end(m_imageToComponentData) != compDataIt )
-    // {
-    //     if ( component < compDataIt->second.size() )
-    //     {
-    //         auto& isosurfaces = compDataIt->second.at( component ).m_isosurfaces;
-    //         auto surfaceIt = isosurfaces.find( isosurfaceUid );
+    if ( std::end(m_imageToComponentData) != compDataIt )
+    {
+        if ( component < compDataIt->second.size() )
+        {
+            auto& isosurfaces = compDataIt->second.at( component ).m_isosurfaces;
+            auto surfaceIt = isosurfaces.find( isosurfaceUid );
 
-    //         if ( std::end(isosurfaces) != surfaceIt )
-    //         {
-    //             surfaceIt->second.mesh.setCpuData( std::move(cpuRecord) );
-    //             return true;
-    //         }
-    //     }
-    // }
+            if ( std::end(isosurfaces) != surfaceIt )
+            {
+                surfaceIt->second.mesh.setCpuData( std::move(cpuRecord) );
+                return true;
+            }
+        }
+    }
 
     return false;
 }
@@ -1210,32 +1207,31 @@ uuid_range_t AppData::landmarkGroupUidsOrdered() const
 }
 
 uuid_range_t AppData::isosurfaceUids(
-        // const uuids::uuid& imageUid, ComponentIndexType component ) const
-        const uuids::uuid& , ComponentIndexType  ) const
+    const uuids::uuid& imageUid, ComponentIndexType component ) const
 {
     std::lock_guard< std::mutex > lock( m_componentDataMutex );
 
-    // const Image* img = image( imageUid );
-    // if ( ! img )
-    // {
-    //     spdlog::error( "Cannot remove isosurface from invalid image {}.", imageUid );
-    //     return {};
-    // }
+    const Image* img = image( imageUid );
+    if ( ! img )
+    {
+        spdlog::error( "Cannot remove isosurface from invalid image {}.", imageUid );
+        return {};
+    }
 
-    // const uint32_t numComps = img->header().numComponentsPerPixel();
-    // if ( component >= numComps )
-    // {
-    //     return {};
-    // }
+    const uint32_t numComps = img->header().numComponentsPerPixel();
+    if ( component >= numComps )
+    {
+        return {};
+    }
 
-    // auto compDataIt = m_imageToComponentData.find( imageUid );
-    // if ( std::end( m_imageToComponentData ) != compDataIt )
-    // {
-    //     if ( component < compDataIt->second.size() )
-    //     {
-    //         return compDataIt->second.at( component ).m_isosurfaces | boost::adaptors::map_keys;
-    //     }
-    // }
+    auto compDataIt = m_imageToComponentData.find( imageUid );
+    if ( std::end( m_imageToComponentData ) != compDataIt )
+    {
+        if ( component < compDataIt->second.size() )
+        {
+            return compDataIt->second.at( component ).m_isosurfaces | boost::adaptors::map_keys;
+        }
+    }
 
     return {};
 }
@@ -1355,8 +1351,7 @@ bool AppData::assignDefUidToImage( const uuids::uuid& imageUid, const uuids::uui
     return false;
 }
 
-const std::vector<uuids::uuid>&
-AppData::imageToLandmarkGroupUids( const uuids::uuid& imageUid ) const
+const std::vector<uuids::uuid>& AppData::imageToLandmarkGroupUids( const uuids::uuid& imageUid ) const
 {
     auto it = m_imageToLandmarkGroups.find( imageUid );
     if ( std::end(m_imageToLandmarkGroups) != it )
@@ -1367,7 +1362,7 @@ AppData::imageToLandmarkGroupUids( const uuids::uuid& imageUid ) const
 }
 
 bool AppData::assignActiveLandmarkGroupUidToImage(
-        const uuids::uuid& imageUid, const uuids::uuid& lmGroupUid )
+    const uuids::uuid& imageUid, const uuids::uuid& lmGroupUid )
 {
     if ( image( imageUid ) && landmarkGroup( lmGroupUid ) )
     {
@@ -1378,7 +1373,7 @@ bool AppData::assignActiveLandmarkGroupUidToImage(
 }
 
 std::optional<uuids::uuid> AppData::imageToActiveLandmarkGroupUid(
-        const uuids::uuid& imageUid ) const
+    const uuids::uuid& imageUid ) const
 {
     auto it = m_imageToActiveLandmarkGroup.find( imageUid );
     if ( std::end( m_imageToActiveLandmarkGroup ) != it )
@@ -1389,7 +1384,7 @@ std::optional<uuids::uuid> AppData::imageToActiveLandmarkGroupUid(
 }
 
 bool AppData::assignLandmarkGroupUidToImage(
-        const uuids::uuid& imageUid, uuids::uuid lmGroupUid )
+    const uuids::uuid& imageUid, uuids::uuid lmGroupUid )
 {
     if ( image( imageUid ) && landmarkGroup( lmGroupUid ) )
     {
@@ -1409,8 +1404,8 @@ bool AppData::assignLandmarkGroupUidToImage(
 }
 
 bool AppData::assignActiveAnnotationUidToImage(
-        const uuids::uuid& imageUid,
-        const std::optional<uuids::uuid>& annotUid )
+    const uuids::uuid& imageUid,
+    const std::optional<uuids::uuid>& annotUid )
 {
     if ( image( imageUid ) )
     {
@@ -1428,8 +1423,7 @@ bool AppData::assignActiveAnnotationUidToImage(
     return false;
 }
 
-std::optional<uuids::uuid> AppData::imageToActiveAnnotationUid(
-        const uuids::uuid& imageUid ) const
+std::optional<uuids::uuid> AppData::imageToActiveAnnotationUid( const uuids::uuid& imageUid ) const
 {
     auto it = m_imageToActiveAnnotation.find( imageUid );
     if ( std::end( m_imageToActiveAnnotation ) != it )
