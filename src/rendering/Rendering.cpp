@@ -108,7 +108,7 @@ std::unique_ptr<DepthPeelRenderer> createDdpRenderer(
 
     // Maximum number of dual depth peeling iterations. Three iterations enables
     // 100% pixel perfect rendering of six transparent layers.
-    static constexpr uint sk_maxPeels = 3;
+    static constexpr uint32_t sk_maxPeels = 3;
     renderer->setMaxNumberOfPeels( sk_maxPeels );
 
     // Override the maximum depth peel limit by using occlusion queries.
@@ -1157,7 +1157,7 @@ Rendering::bindImageTextures( const ImgSegPair& p )
 
         if ( useDistMap )
         {
-            const auto distMaps = m_appData.distanceMaps( *imageUid, activeComp );
+            const auto& distMaps = m_appData.distanceMaps( *imageUid, activeComp );
 
             if ( distMaps.empty() )
             {
@@ -1501,8 +1501,8 @@ void Rendering::renderAllImages(
     const bool modSegOpacity = renderData.m_modulateSegOpacityWithImageOpacity;
 
     const auto renderMode = view.renderMode();
-    const auto metricImages = view.metricImages();
-    const auto renderedImages = view.renderedImages();
+    const auto& metricImages = view.metricImages();
+    const auto& renderedImages = view.renderedImages();
 
     switch ( getShaderGroup( renderMode ) )
     {
@@ -1965,8 +1965,8 @@ void Rendering::renderAllAnnotations(
         const glm::vec3& worldOffsetXhairs )
 {
     const auto shaderType = view.renderMode();
-    const auto metricImages = view.metricImages();
-    const auto renderedImages = view.renderedImages();
+    const auto& metricImages = view.metricImages();
+    const auto& renderedImages = view.renderedImages();
 
     CurrentImages I;
 

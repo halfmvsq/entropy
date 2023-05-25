@@ -387,6 +387,10 @@ private:
         std::map< uint32_t, Image > m_noiseEstimates;
 
         /// Isosurfaces for the component
+        // typedef std::unique_ptr<Isosurface> EntityPtr;
+        // typedef std::unordered_map<int, EntityPtr> EntityMap;
+        // std::unique_ptr<Isosurface> aDummyStub; //<-- add this line
+
         std::unordered_map< uuids::uuid, Isosurface > m_isosurfaces;
     };
 

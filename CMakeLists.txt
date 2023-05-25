@@ -157,14 +157,17 @@ target_include_directories( imgui PRIVATE
     )
 
 target_compile_options( imgui PRIVATE
-     $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>:
-          -Werror -Wall -Wextra -Wpointer-arith -Winit-self -Wunreachable-code
-          -Wshadow -pedantic-errors -g -ftrapv>
-          -Wno-error=deprecated-copy
-          -Wno-error=empty-body
-          -Wno-empty-body # suppressed due to empty IM_ASSERT
-     $<$<CXX_COMPILER_ID:MSVC>:
-          /W4> )
+    $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>:
+        -Werror -Wall -Wextra -Wpointer-arith -Winit-self -Wunreachable-code
+        -Wshadow -pedantic-errors -g -ftrapv
+        -Wno-error=deprecated-copy
+        -Wno-error=empty-body
+        -Wno-empty-body # suppressed due to empty IM_ASSERT
+    >
+    $<$<CXX_COMPILER_ID:MSVC>:
+        /W4
+    >
+)
 
 set_target_properties( imgui PROPERTIES
     CXX_STANDARD 20
@@ -640,9 +643,7 @@ set( CMAKE_VERBOSE_MAKEFILE ON )
 set( default_build_type "Release" )
 
 if( NOT CMAKE_BUILD_TYPE )
-    set( CMAKE_BUILD_TYPE "${default_build_type}" CACHE
-        STRING "Choose the type of build (Debug or Release)" FORCE )
-
+    set( CMAKE_BUILD_TYPE "${default_build_type}" CACHE STRING "Choose the type of build" FORCE )
     message( STATUS "Setting build type to '${default_build_type}' as none was specified." )
     set_property( CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" )
 endif()
@@ -652,11 +653,19 @@ if( ${CMAKE_BINARY_DIR} STREQUAL ${PROJECT_SOURCE_DIR} )
     message( FATAL_ERROR "Source and build directories are the same." )
 endif()
 
-set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O3" )
-set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fstack-protector-all -g" )
+# set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O3" )
+# set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fstack-protector-all -g" )
 
 message( "CMAKE_CXX_FLAGS_DEBUG is ${CMAKE_CXX_FLAGS_DEBUG}" )
 message( "CMAKE_CXX_FLAGS_RELEASE is ${CMAKE_CXX_FLAGS_RELEASE}" )
+
+if( CMAKE_CXX_COMPILER_LOADED )
+    message( STATUS "Compiler information:" )
+    message( STATUS "   -Path: ${CMAKE_CXX_COMPILER}" )
+    message( STATUS "   -ID: ${CMAKE_CXX_COMPILER_ID}" )
+    message( STATUS "   -Version: ${CMAKE_CXX_COMPILER_VERSION}" )
+    message( STATUS "   -Part of GCC: ${CMAKE_COMPILER_IS_GNUCXX}" )
+endif()
 
 
 # if( UNIX AND NOT APPLE )
@@ -751,20 +760,26 @@ target_compile_definitions( ${EXEC_NAME} PRIVATE
     ${VTK_DEFINITIONS} )
 
 target_compile_options( ${EXEC_NAME} PRIVATE
-     $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>:
-          -Werror -Wall -Wextra -Wpointer-arith -Winit-self -Wunreachable-code
-          -Wno-error=array-bounds
-          -Wno-error=empty-body
-          -Wno-error=maybe-uninitialized
-          -Wno-error=stringop-overflow
-          -Wshadow -g -ftrapv>
-          #-Wconversion -Wsign-conversion
-     $<$<CXX_COMPILER_ID:AppleClang>:
-          -Werror -Wall -Wextra -Wpointer-arith -Winit-self -Wunreachable-code
-          -Wno-error=array-bounds
-          -Wshadow -g -ftrapv>
-     $<$<CXX_COMPILER_ID:MSVC>:
-          /W4> )
+    $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>:
+        -Werror -Wall -Wextra -Wpointer-arith -Winit-self -Wunreachable-code
+        -Wno-error=array-bounds
+        -Wno-error=empty-body
+        -Wno-error=maybe-uninitialized
+        -Wno-error=stringop-overflow
+        -Wshadow -g -ftrapv
+        #-Wconversion -Wsign-conversion
+        -O3
+    >
+    $<$<CXX_COMPILER_ID:AppleClang>:
+        -Werror -Wall -Wextra -Wpointer-arith -Winit-self -Wunreachable-code
+        -Wno-error=array-bounds
+        -Wshadow -g -ftrapv
+        -O3
+    >
+    $<$<CXX_COMPILER_ID:MSVC>:
+        /W4 /Ox
+    >
+)
 
 set_target_properties( ${EXEC_NAME} PROPERTIES
     CXX_STANDARD 20

@@ -1106,19 +1106,6 @@ bool EntropyApp::loadSerializedImage(
     for ( uint32_t i = 0; i < image->header().numComponentsPerPixel(); ++i )
     {
         image->settings().setColorMapIndex( i, sk_defaultImageColorMapIndex );
-
-        // Load isosurfaces:
-//        const auto& stats = image->settings().componentStatistics( i );
-
-//        Isosurface surface;
-//        surface.name = "Skin";
-//        surface.value = stats.m_quantiles[sk_defaultIsovalueQuantile];
-//        surface.setDefaultMaterialWithColor( glm::vec3{ 0.5f, 0.75f, 1.0f } );
-
-//        if ( const auto uid = m_data.addIsosurface( *imageUid, i, std::move( surface ) ) )
-//        {
-//            spdlog::info( "Added isosurface {}", *uid );
-//        }
     }
 
     return true;

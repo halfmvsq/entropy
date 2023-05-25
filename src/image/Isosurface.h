@@ -29,8 +29,19 @@ struct SurfaceQuality
 /**
  * @brief Isosurface properties
  */
-struct Isosurface
+class Isosurface
 {
+public:
+
+    // Isosurface() = default;
+    // Isosurface(const Isosurface&) = delete;
+    // Isosurface(Isosurface&&) = default;
+
+    // ~Isosurface() = default;
+
+    // Isosurface& operator=(const Isosurface&) = delete;
+    // Isosurface& operator=(Isosurface&&) = default;
+
     std::string name; //!< Display name
     double value = 0.0; //!< Isovalue, defined in image intensity units
     glm::vec3 color = glm::vec3{ 0.0f }; //!< RGB color

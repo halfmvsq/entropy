@@ -700,7 +700,7 @@ Image createImageFromItkImage(
     writeImage<T, 3, false>( itkImage, filename.string() );
     spdlog::debug( "Wrote temporary image file '{}'", filename );
 
-    Image image( filename, Image::ImageRepresentation::Image, Image::MultiComponentBufferType::SeparateImages );
+    Image image( filename.string(), Image::ImageRepresentation::Image, Image::MultiComponentBufferType::SeparateImages );
 
     image.header().setExistsOnDisk( false );
     image.header().setFileName( "<none>" );
