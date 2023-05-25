@@ -809,22 +809,22 @@ bool AppData::updateIsosurfaceMeshGpuRecord(
 {
     std::lock_guard< std::mutex > lock( m_componentDataMutex );
 
-    // auto compDataIt = m_imageToComponentData.find( imageUid );
+     auto compDataIt = m_imageToComponentData.find( imageUid );
 
-    // if ( std::end(m_imageToComponentData) != compDataIt )
-    // {
-    //     if ( component < compDataIt->second.size() )
-    //     {
-    //         auto& isosurfaces = compDataIt->second.at( component ).m_isosurfaces;
-    //         auto surfaceIt = isosurfaces.find( isosurfaceUid );
+     if ( std::end(m_imageToComponentData) != compDataIt )
+     {
+         if ( component < compDataIt->second.size() )
+         {
+             auto& isosurfaces = compDataIt->second.at( component ).m_isosurfaces;
+             auto surfaceIt = isosurfaces.find( isosurfaceUid );
 
-    //         if ( std::end(isosurfaces) != surfaceIt )
-    //         {
-    //             surfaceIt->second.mesh.setGpuData( std::move(gpuRecord) );
-    //             return true;
-    //         }
-    //     }
-    // }
+             if ( std::end(isosurfaces) != surfaceIt )
+             {
+                 surfaceIt->second.mesh.setGpuData( std::move(gpuRecord) );
+                 return true;
+             }
+         }
+     }
 
     return false;
 }
