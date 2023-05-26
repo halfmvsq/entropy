@@ -310,10 +310,15 @@ void renderPaletteWindow(
 
             ImGui::NextColumn();
 
+            const bool doQuantize =
+                ( ! getImageColorMapContinuous() && (ImageColorMap::InterpolationMode::Linear == cmap->interpolationMode()) );
+
             ImGui::paletteButton(
                 cmap->name().c_str(),
                 cmap->data_RGBA_asVector(),
-                getImageColorMapInverted(), getImageColorMapContinuous(), getImageColorMapLevels(),
+                getImageColorMapInverted(),
+                doQuantize,
+                getImageColorMapLevels(),
                 buttonSize );
 
             if ( ImGui::IsItemHovered() )

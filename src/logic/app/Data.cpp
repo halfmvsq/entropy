@@ -21,64 +21,52 @@
 CMRC_DECLARE(colormaps);
 
 
-namespace
-{
-
-// Empty vector of UIDs. Used as a return value.
-static const std::vector<uuids::uuid> sk_emptyUidVector{};
-
-// Empty list of UIDs. Used as a return value.
-static const std::list<uuids::uuid> sk_emptyUidList{};
-
-}
-
-
 AppData::AppData()
     :
-      m_settings(),
-      m_state(),
+    m_settings(),
+    m_state(),
 
-      m_guiData(),
-      m_renderData(),
-      m_windowData(),
-      m_project(),
+    m_guiData(),
+    m_renderData(),
+    m_windowData(),
+    m_project(),
 
-      m_images(),
-      m_imageUidsOrdered(),
+    m_images(),
+    m_imageUidsOrdered(),
 
-      m_segs(),
-      m_segUidsOrdered(),
+    m_segs(),
+    m_segUidsOrdered(),
 
-      m_defs(),
-      m_defUidsOrdered(),
+    m_defs(),
+    m_defUidsOrdered(),
 
-      m_imageColorMaps(),
-      m_imageColorMapUidsOrdered(),
+    m_imageColorMaps(),
+    m_imageColorMapUidsOrdered(),
 
-      m_labelTables(),
-      m_labelTablesUidsOrdered(),
+    m_labelTables(),
+    m_labelTablesUidsOrdered(),
 
-      m_landmarkGroups(),
-      m_landmarkGroupUidsOrdered(),
+    m_landmarkGroups(),
+    m_landmarkGroupUidsOrdered(),
 
-      m_annotations(),
+    m_annotations(),
 
-      m_refImageUid( std::nullopt ),
-      m_activeImageUid( std::nullopt ),
+    m_refImageUid( std::nullopt ),
+    m_activeImageUid( std::nullopt ),
 
-      m_imageToSegs(),
-      m_imageToActiveSeg(),
+    m_imageToSegs(),
+    m_imageToActiveSeg(),
 
-      m_imageToDefs(),
-      m_imageToActiveDef(),
+    m_imageToDefs(),
+    m_imageToActiveDef(),
 
-      m_imageToLandmarkGroups(),
-      m_imageToActiveLandmarkGroup(),
+    m_imageToLandmarkGroups(),
+    m_imageToActiveLandmarkGroup(),
 
-      m_imageToAnnotations(),
-      m_imageToActiveAnnotation(), 
+    m_imageToAnnotations(),
+    m_imageToActiveAnnotation(),
 
-      m_imagesBeingSegmented()
+    m_imagesBeingSegmented()
 {
     spdlog::debug( "Start loading image color maps" );
     loadImageColorMaps();
@@ -116,19 +104,20 @@ serialize::EntropyProject& AppData::project()
     return m_project;
 }
 
-void AppData::loadImageColorMaps()
+void AppData::loadLinearRampImageColorMaps()
 {
-    // First load the default linears colormaps
+    // Create and load the default linear color maps. These are linear ramps with 256 steps,
+    // though only 2 steps are required when linear interpolation is used for the maps.
     static constexpr std::size_t sk_numSteps = 256;
 
-    const glm::vec3 black( 0.0f, 0.0f, 0.0f );
-    const glm::vec3 red( 1.0f, 0.0f, 0.0f );
-    const glm::vec3 green( 0.0f, 1.0f, 0.0f );
-    const glm::vec3 blue( 0.0f, 0.0f, 1.0f );
-    const glm::vec3 yellow( 1.0f, 1.0f, 0.0f );
-    const glm::vec3 cyan( 0.0f, 1.0f, 1.0f );
-    const glm::vec3 magenta( 1.0f, 0.0f, 1.0f );
-    const glm::vec3 white( 1.0f, 1.0f, 1.0f );
+    const glm::vec4 black( 0.0f, 0.0f, 0.0f, 1.0f );
+    const glm::vec4 red( 1.0f, 0.0f, 0.0f, 1.0f );
+    const glm::vec4 green( 0.0f, 1.0f, 0.0f, 1.0f );
+    const glm::vec4 blue( 0.0f, 0.0f, 1.0f, 1.0f );
+    const glm::vec4 yellow( 1.0f, 1.0f, 0.0f, 1.0f );
+    const glm::vec4 cyan( 0.0f, 1.0f, 1.0f, 1.0f );
+    const glm::vec4 magenta( 1.0f, 0.0f, 1.0f, 1.0f );
+    const glm::vec4 white( 1.0f, 1.0f, 1.0f, 1.0f );
 
     const auto greyMapUid = generateRandomUuid();
     const auto redMapUid = generateRandomUuid();
@@ -137,13 +126,6 @@ void AppData::loadImageColorMaps()
     const auto yellowMapUid = generateRandomUuid();
     const auto cyanMapUid = generateRandomUuid();
     const auto magentaMapUid = generateRandomUuid();
-
-//    const auto discreteMapUid = generateRandomUuid();
-//    m_imageColorMaps.emplace(
-//        discreteMapUid, ImageColorMap(
-//                            "discrete", "discrete", "discrete",
-//            {red, green, blue, yellow} ) );
-//                                      //{black, red, green, blue, yellow, cyan, magenta, white} ) );
 
 
     m_imageColorMaps.emplace(
@@ -181,7 +163,7 @@ void AppData::loadImageColorMaps()
             black, magenta, sk_numSteps, "Linear magenta",
             "Linear magenta", "linear_magenta_0-100_c0_n256" ) );
 
-//    m_imageColorMapUidsOrdered.push_back( discreteMapUid );
+
     m_imageColorMapUidsOrdered.push_back( greyMapUid );
     m_imageColorMapUidsOrdered.push_back( redMapUid );
     m_imageColorMapUidsOrdered.push_back( greenMapUid );
@@ -189,10 +171,88 @@ void AppData::loadImageColorMaps()
     m_imageColorMapUidsOrdered.push_back( yellowMapUid );
     m_imageColorMapUidsOrdered.push_back( cyanMapUid );
     m_imageColorMapUidsOrdered.push_back( magentaMapUid );
+}
 
+void AppData::loadDiscreteImageColorMaps()
+{
+    const glm::vec4 blackTransparent( 0.0f, 0.0f, 0.0f, 0.0f );
+    const glm::vec4 blackOpaque( 0.0f, 0.0f, 0.0f, 1.0f );
+    const glm::vec4 white( 1.0f, 1.0f, 1.0f, 1.0f );
+
+    const glm::vec4 red( 1.0f, 0.0f, 0.0f, 1.0f );
+    const glm::vec4 green( 0.0f, 1.0f, 0.0f, 1.0f );
+    const glm::vec4 blue( 0.0f, 0.0f, 1.0f, 1.0f );
+    const glm::vec4 yellow( 1.0f, 1.0f, 0.0f, 1.0f );
+    const glm::vec4 cyan( 0.0f, 1.0f, 1.0f, 1.0f );
+    const glm::vec4 magenta( 1.0f, 0.0f, 1.0f, 1.0f );
+
+    const auto twMapUid = generateRandomUuid();
+    const auto kwMapUid = generateRandomUuid();
+    const auto rgbMapUid = generateRandomUuid();
+    const auto rgbyMapUid = generateRandomUuid();
+    const auto rgbycmMapUid = generateRandomUuid();
+    const auto rygcbmMapUid = generateRandomUuid();
+    const auto krgbycmwMapUid = generateRandomUuid();
+
+    m_imageColorMaps.emplace(
+        kwMapUid, ImageColorMap(
+            "Discrete Black, White", "Black, white discrete color map", "Black-white_discrete",
+            ImageColorMap::InterpolationMode::Nearest,
+            std::vector< glm::vec4 >{ blackOpaque, white } ) );
+
+    m_imageColorMaps.emplace(
+        twMapUid, ImageColorMap(
+            "Discrete Transparent, White", "Transparent-White discrete color map", "Transparent-white_discrete",
+            ImageColorMap::InterpolationMode::Nearest,
+            std::vector< glm::vec4 >{ blackTransparent, white } ) );
+
+    m_imageColorMaps.emplace(
+        rgbMapUid, ImageColorMap(
+            "Discrete RGB", "Red-green-blue discrete color map", "Red-green-blue_discrete",
+            ImageColorMap::InterpolationMode::Nearest,
+            std::vector< glm::vec4 >{ red, green, blue } ) );
+
+    m_imageColorMaps.emplace(
+        rgbyMapUid, ImageColorMap(
+            "Discrete RGBY", "Red-green-blue-yellow discrete color map", "Red-green-blue-yellow_discrete",
+            ImageColorMap::InterpolationMode::Nearest,
+            std::vector< glm::vec4 >{ red, green, blue, yellow } ) );
+
+    m_imageColorMaps.emplace(
+        rgbycmMapUid, ImageColorMap(
+            "Discrete RGBYCM", "Red-green-blue-yellow-cyan-magnenta discrete color map",
+            "Red-green-blue-yellow-cyan-magenta_discrete",
+            ImageColorMap::InterpolationMode::Nearest,
+            std::vector< glm::vec4 >{ red, green, blue, yellow, cyan, magenta } ) );
+
+    m_imageColorMaps.emplace(
+        rygcbmMapUid, ImageColorMap(
+            "Discrete RYGCBM", "Red-yellow-green-cyan-blue-magnenta discrete color map",
+            "Red-yellow-green-cyan-blue-magnenta_discrete",
+            ImageColorMap::InterpolationMode::Nearest,
+            std::vector< glm::vec4 >{ red, yellow, green, cyan, blue, magenta } ) );
+
+    m_imageColorMaps.emplace(
+        krgbycmwMapUid, ImageColorMap(
+            "Discrete KRGBYCMW", "Black-red-green-blue-yellow-cyan-magnenta-white discrete color map",
+            "Black-red-green-blue-yellow-cyan-magenta-white_discrete",
+            ImageColorMap::InterpolationMode::Nearest,
+            std::vector< glm::vec4 >{ blackOpaque, red, green, blue, yellow, cyan, magenta, white } ) );
+
+    m_imageColorMapUidsOrdered.push_back( twMapUid );
+    m_imageColorMapUidsOrdered.push_back( kwMapUid );
+    m_imageColorMapUidsOrdered.push_back( rgbMapUid );
+    m_imageColorMapUidsOrdered.push_back( rgbyMapUid );
+    m_imageColorMapUidsOrdered.push_back( rgbycmMapUid );
+    m_imageColorMapUidsOrdered.push_back( rygcbmMapUid );
+    m_imageColorMapUidsOrdered.push_back( krgbycmwMapUid );
+}
+
+void AppData::loadImageColorMapsFromDisk()
+{
     try
     {
-        spdlog::debug( "Begin loading image color maps" );
+        spdlog::debug( "Begin loading image color maps from disk" );
 
         auto loadMapsFromDir = [this] ( const std::string& dir )
         {
@@ -220,6 +280,13 @@ void AppData::loadImageColorMaps()
     {
         spdlog::critical( "Exception when loading image colormap file: {}", e.what() );
     }
+}
+
+void AppData::loadImageColorMaps()
+{
+    loadLinearRampImageColorMaps();
+    loadDiscreteImageColorMaps();
+    loadImageColorMapsFromDisk();
 
     spdlog::debug( "Loaded {} image color maps", m_imageColorMaps.size() );
 }
@@ -1353,6 +1420,8 @@ bool AppData::assignDefUidToImage( const uuids::uuid& imageUid, const uuids::uui
 
 const std::vector<uuids::uuid>& AppData::imageToLandmarkGroupUids( const uuids::uuid& imageUid ) const
 {
+    static const std::vector<uuids::uuid> sk_emptyUidVector{};
+
     auto it = m_imageToLandmarkGroups.find( imageUid );
     if ( std::end(m_imageToLandmarkGroups) != it )
     {
@@ -1436,6 +1505,8 @@ std::optional<uuids::uuid> AppData::imageToActiveAnnotationUid( const uuids::uui
 const std::list<uuids::uuid>&
 AppData::annotationsForImage( const uuids::uuid& imageUid ) const
 {
+    static const std::list<uuids::uuid> sk_emptyUidList{};
+
     auto it = m_imageToAnnotations.find( imageUid );
     if ( std::end(m_imageToAnnotations) != it )
     {

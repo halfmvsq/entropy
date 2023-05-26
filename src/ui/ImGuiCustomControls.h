@@ -32,7 +32,7 @@ IMGUI_API bool paletteButton(
     const char* label,
     const std::vector<glm::vec4>& colors,
     bool inverted,
-    bool continuous,
+    bool quantize,
     int quantizationLevels,
     const ImVec2& size );
 

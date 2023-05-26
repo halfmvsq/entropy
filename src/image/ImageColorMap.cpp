@@ -14,16 +14,18 @@
 
 
 ImageColorMap::ImageColorMap(
-    std::string name,
-    std::string technicalName,
-    std::string description,
+    const std::string& name,
+    const std::string& technicalName,
+    const std::string& description,
+    InterpolationMode interpMode,
     std::vector< glm::vec3 > colors )
     :
-    m_name( std::move( name ) ),
-    m_technicalName( std::move( technicalName ) ),
-    m_description( std::move( description ) ),
+    m_name( name ),
+    m_technicalName( technicalName ),
+    m_description( description ),
     m_preview( 0 ),
-    m_interpolationMode( InterpolationMode::Linear )
+    m_interpolationMode( interpMode )
+//    m_forcedInterpolationMode( forcedInterpMode )
 {
     if ( colors.empty() )
     {
@@ -37,16 +39,19 @@ ImageColorMap::ImageColorMap(
 }
 
 ImageColorMap::ImageColorMap(
-    std::string name,
-    std::string technicalName,
-    std::string description,
+    const std::string& name,
+    const std::string& technicalName,
+    const std::string& description,
+    InterpolationMode interpMode,
     std::vector< glm::vec4 > colors )
     :
-    m_name( std::move( name ) ),
-    m_technicalName( std::move( technicalName ) ),
-    m_description( std::move( description ) ),
+    m_name( name ),
+    m_technicalName( technicalName ),
+    m_description( description ),
     m_colors_RGBA_F32( std::move( colors ) ),
-    m_preview( 0 )
+    m_preview( 0 ),
+    m_interpolationMode( interpMode )
+//    m_forcedInterpolationMode( forcedInterpMode )
 {
     if ( m_colors_RGBA_F32.empty() )
     {
@@ -260,40 +265,43 @@ ImageColorMap ImageColorMap::loadImageColorMap( std::istringstream& csv )
 
     spdlog::trace( "Loaded image color map \"{}\" (\"{}\") with {} colors", briefName, technicalName, colors.size() );
 
-    return ImageColorMap( std::move( briefName ), std::move( technicalName ), std::move( description ), std::move( colors ) );
+    return ImageColorMap(
+        briefName, technicalName, description,
+        InterpolationMode::Linear,
+        std::move( colors ) );
 }
 
 
 ImageColorMap ImageColorMap::createLinearImageColorMap(
-        const glm::vec3& startColor,
-        const glm::vec3& endColor,
-        size_t numSteps,
-        std::string briefName,
-        std::string description,
-        std::string technicalName )
+    const glm::vec4& startColor,
+    const glm::vec4& endColor,
+    std::size_t numSteps,
+    std::string briefName,
+    std::string description,
+    std::string technicalName )
 {
-    const size_t N = ( numSteps >= 2 ? numSteps : 2 );
+    const std::size_t N = ( numSteps >= 2 ? numSteps : 2 );
 
     // Number of pixels in preview image of the color map
     static constexpr int sk_previewSize = 64;
 
     // Linearly interpolate between start and end colors
-    std::vector< glm::vec3 > colors( N );
+    std::vector< glm::vec4 > colors( N );
 
     const float Nm1 = static_cast<float>( N - 1 );
 
-    for ( size_t i = 0; i < N; ++i )
+    for ( std::size_t i = 0; i < N; ++i )
     {
         colors[i] = startColor + static_cast<float>( i ) / Nm1 * endColor;
     }
 
-    ImageColorMap map( std::move( briefName ), std::move( technicalName ),
-                       std::move( description ), std::move( colors ) );
+    ImageColorMap map( briefName, technicalName, description, InterpolationMode::Linear, colors );
 
     std::vector< glm::vec4 > previewColors( sk_previewSize );
+
     for ( uint32_t i = 0; i < sk_previewSize; ++i )
     {
-        previewColors[i] = glm::vec4{ glm::vec3{ static_cast<float>( i ) / sk_previewSize }, 1.0f };
+        previewColors[i] = glm::vec4{ static_cast<float>( i ) / sk_previewSize };
     }
 
     map.setPreviewMap( previewColors );
@@ -311,3 +319,33 @@ ImageColorMap::InterpolationMode ImageColorMap::interpolationMode() const
 {
     return m_interpolationMode;
 }
+
+//void ImageColorMap::setForcedInterpolationMode( const ImageColorMap::ForcedInterpolationMode& mode )
+//{
+//    m_forcedInterpolationMode = mode;
+//}
+
+//ImageColorMap::ForcedInterpolationMode ImageColorMap::forcedInterpolationMode() const
+//{
+//    return m_forcedInterpolationMode;
+//}
+
+//ImageColorMap::InterpolationMode ImageColorMap::finalInterpolationMode() const
+//{
+//    switch ( m_forcedInterpolationMode )
+//    {
+//    case ForcedInterpolationMode::Nearest:
+//    {
+//        return InterpolationMode::Nearest;
+//    }
+//    case ForcedInterpolationMode::Linear:
+//    {
+//        return InterpolationMode::Linear;
+//    }
+//    default:
+//    case ForcedInterpolationMode::None:
+//    {
+//        return m_interpolationMode;
+//    }
+//    }
+//}

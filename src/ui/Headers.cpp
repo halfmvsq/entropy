@@ -1116,11 +1116,14 @@ void renderImageHeader(
             {
                 snprintf( label, 128, "%s##cmap_%zu", cmap->name().c_str(), imageIndex );
 
+                const bool doQuantize =
+                    ( ! imgSettings.colorMapContinuous() && (ImageColorMap::InterpolationMode::Linear == cmap->interpolationMode()) );
+
                 ImGui::paletteButton(
                     label,
                     cmap->data_RGBA_asVector(),
                     imgSettings.isColorMapInverted(),
-                    imgSettings.colorMapContinuous(),
+                    doQuantize,
                     imgSettings.colorMapQuantizationLevels(),
                     ImVec2( contentWidth, height ) );
 
@@ -1130,9 +1133,13 @@ void renderImageHeader(
                 }
 
 
+                // If the color map has nearest-neighbor interpolation mode,
+                // then we are forced to use the discrete setting:
+//                const bool forcedDiscrete = ( ImageColorMap::InterpolationMode::Nearest == cmap->interpolationMode() );
+
                 bool colorMapContinuous = imgSettings.colorMapContinuous();
 
-                if ( ImGui::RadioButton( "Continuous", colorMapContinuous ) )
+                if ( ImGui::RadioButton( "Continuous", colorMapContinuous /*&& ! forcedDiscrete*/ ) )
                 {
                     colorMapContinuous = true;
                     imgSettings.setColorMapContinuous( colorMapContinuous );
@@ -1140,7 +1147,7 @@ void renderImageHeader(
                 }
 
                 ImGui::SameLine();
-                if ( ImGui::RadioButton( "Discrete", ! colorMapContinuous ) )
+                if ( ImGui::RadioButton( "Discrete", ! colorMapContinuous /*|| forcedDiscrete*/ ) )
                 {
                     colorMapContinuous = false;
                     imgSettings.setColorMapContinuous( colorMapContinuous );
@@ -1179,7 +1186,7 @@ void renderImageHeader(
                 }
 
 //                ImageColorMap::InterpolationMode interpMode = cmap->interpolationMode();
-//                bool discreteCmap = ( ImageColorMap::InterpolationMode::Nearest == interpMode );
+//                const bool discreteCmap = ( ImageColorMap::InterpolationMode::Nearest == interpMode );
 
 //                if ( ImGui::Checkbox( "Discrete##DiscreteColorMap", &discreteCmap ) )
 //                {

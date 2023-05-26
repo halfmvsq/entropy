@@ -12,15 +12,15 @@
 class AppData;
 
 // Return vector of image UIDs for which textures were created
-std::vector<uuids::uuid> createImageTextures( AppData& appData, uuid_range_t imageUids );
+std::vector<uuids::uuid>
+createImageTextures( AppData& appData, uuid_range_t imageUids );
 
 // Return vector of seg UIDs for which textures were created
-std::vector<uuids::uuid> createSegTextures( AppData& appData, uuid_range_t segUids );
+std::vector<uuids::uuid>
+createSegTextures( AppData& appData, uuid_range_t segUids );
 
 std::unordered_map< uuids::uuid, std::unordered_map<uint32_t, GLTexture> >
 createDistanceMapTextures( const AppData& appData );
-
-
 
 std::unordered_map< uuids::uuid, GLTexture >
 createImageColorMapTextures( const AppData& appData );

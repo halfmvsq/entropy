@@ -45,7 +45,7 @@ bool paletteButton(
     const char* label,
     const std::vector<glm::vec4>& colors,
     bool inverted,
-    bool continuous,
+    bool quantize,
     int quantizationLevels,
     const ImVec2& size )
 {
@@ -95,7 +95,7 @@ bool paletteButton(
             // 0 to numColors - 1
             int idx = startIndex + dir * i * static_cast<int>( step );
 
-//            if ( ! continuous )
+//            if ( quantize )
 //            {
 //                const float L = static_cast<float>(quantizationLevels);
 
@@ -126,7 +126,7 @@ bool paletteButton(
 
             std::size_t index = i;
 
-            if ( ! continuous )
+            if ( quantize )
             {
                 // Index normalized from 0 to 1:
                 const float normIndex = static_cast<float>(i) / static_cast<float>( colors.size() - 1 );

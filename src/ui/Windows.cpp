@@ -1241,11 +1241,14 @@ void renderSettingsWindow(
         const ImageColorMap* cmap = getImageColorMap( getColormapIndex() );
         snprintf( label, 128, "%s##cmap_%s", cmap->name().c_str(), name );
 
+        const bool doQuantize =
+            ( ! metricParams.m_cmapContinuous && (ImageColorMap::InterpolationMode::Linear == cmap->interpolationMode()) );
+
         ImGui::paletteButton(
             label,
             cmap->data_RGBA_asVector(),
             metricParams.m_invertCmap,
-            metricParams.m_cmapContinuous,
+            doQuantize,
             metricParams.m_cmapQuantizationLevels,
             ImVec2( contentWidth, height ) );
 

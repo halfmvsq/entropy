@@ -396,6 +396,11 @@ private:
 
     mutable std::mutex m_componentDataMutex;
 
+
+    void loadLinearRampImageColorMaps();
+    void loadDiscreteImageColorMaps();
+    void loadImageColorMapsFromDisk();
+
     void loadImageColorMaps();
 
     /// @todo Put into EntropyApp

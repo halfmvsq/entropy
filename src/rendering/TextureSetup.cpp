@@ -446,10 +446,23 @@ createImageColorMapTextures( const AppData& appData )
         // We should never sample outside the texture coordinate range [0.0, 1.0], anyway
         T.setWrapMode( tex::WrapMode::ClampToEdge );
 
-        // All sampling of color maps uses linearly interpolation
         T.setAutoGenerateMipmaps( false );
-        T.setMinificationFilter( tex::MinificationFilter::Linear );
-        T.setMagnificationFilter( tex::MagnificationFilter::Linear );
+
+        switch ( map->interpolationMode() )
+        {
+        case ImageColorMap::InterpolationMode::Nearest:
+        {
+            T.setMinificationFilter( tex::MinificationFilter::Nearest );
+            T.setMagnificationFilter( tex::MagnificationFilter::Nearest );
+            break;
+        }
+        case ImageColorMap::InterpolationMode::Linear:
+        {
+            T.setMinificationFilter( tex::MinificationFilter::Linear );
+            T.setMagnificationFilter( tex::MagnificationFilter::Linear );
+            break;
+        }
+        }
 
         spdlog::trace( "Generated texture for image color map {}", *cmapUid );
     }

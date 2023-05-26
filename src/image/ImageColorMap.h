@@ -23,6 +23,13 @@ public:
         Linear
     };
 
+//    enum class ForcedInterpolationMode
+//    {
+//        Nearest, //!< Only nearest-neighbor interpolation
+//        Linear, //!< Only linear interpolation
+//        None //!< Disable interpolation forcing
+//    };
+
     /**
      * @brief Construct color map from a vector of RGB 32-bit float tuples.
      * The alpha component of each color is assumed to be 1.0.
@@ -34,9 +41,10 @@ public:
      * in range [0.0, 1.0]. The color's alpha value is assumed to be 1.0.
      */
     ImageColorMap(
-        std::string name,
-        std::string technicalName,
-        std::string description,
+        const std::string& name,
+        const std::string& technicalName,
+        const std::string& description,
+        InterpolationMode interpMode,
         std::vector< glm::vec3 > colors );
 
     /**
@@ -48,9 +56,10 @@ public:
      * with components in range [0.0, 1.0]
      */
     ImageColorMap(
-        std::string name,
-        std::string technicalName,
-        std::string description,
+        const std::string& name,
+        const std::string& technicalName,
+        const std::string& description,
+        InterpolationMode interpMode,
         std::vector< glm::vec4 > colors );
 
     ImageColorMap( const ImageColorMap& ) = default;
@@ -123,6 +132,14 @@ public:
     void setInterpolationMode( const InterpolationMode& mode );
     InterpolationMode interpolationMode() const;
 
+//    /// @brief Set/get forced interpolation mode
+//    void setForcedInterpolationMode( const ForcedInterpolationMode& mode );
+//    ForcedInterpolationMode forcedInterpolationMode() const;
+
+//    /// @brief Get final interpolation mode
+//    InterpolationMode finalInterpolationMode() const;
+
+
     /// Get the sized internal texture format for the color map
     static tex::SizedInternalFormat textureFormat_RGBA_F32();
 
@@ -131,8 +148,8 @@ public:
 
     /// Create a linear colormap that interpolates between given start and end colors
     static ImageColorMap createLinearImageColorMap(
-        const glm::vec3& startColor,
-        const glm::vec3& endColor,
+        const glm::vec4& startColor,
+        const glm::vec4& endColor,
         std::size_t numSteps,
         std::string briefName,
         std::string description,
@@ -141,25 +158,19 @@ public:
 
 private:
 
-    /// Short name of the color map
-    std::string m_name;
-
-    /// Technical name of the color map
-    std::string m_technicalName;
-
-    /// Description of the color map
-    std::string m_description;
+    std::string m_name; //!< Short name of the color map
+    std::string m_technicalName; //!< Technical name of the color map
+    std::string m_description; //!< Description of the color map
 
     /// Table of premultiplied alpha colors represented using
     /// 32-bit floating point values per RGBA component.
     /// Components are only meaningful if in range [0.0, 1.0]
     std::vector< glm::vec4 > m_colors_RGBA_F32;
 
-    /// Preview color map
-    std::vector< glm::vec4 > m_preview;
+    std::vector< glm::vec4 > m_preview; //!< Preview color map
+    InterpolationMode m_interpolationMode; //!< Interpolation mode
 
-    /// Color map interpolation mode
-    InterpolationMode m_interpolationMode;
+//    ForcedInterpolationMode m_forcedInterpolationMode;
 };
 
 #endif // IMAGE_COLORMAP_H
