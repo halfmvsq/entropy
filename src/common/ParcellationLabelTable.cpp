@@ -30,9 +30,9 @@ static const auto sk_valMinMax = std::make_pair( 0.5f, 1.0f );
 ParcellationLabelTable::ParcellationLabelTable(
     std::size_t labelCount, std::size_t maxLabelCount )
     :
-      m_colors_RGBA_U8(),
-      m_properties(),
-      m_maxLabelCount( std::min( maxLabelCount, labelCountUpperBound() ) )
+    m_colors_RGBA_U8(),
+    m_properties(),
+    m_maxLabelCount( std::min( maxLabelCount, labelCountUpperBound() ) )
 {
     static const std::vector<float> sk_startAngles{
         0.0f, 120.0f, 240.0f,
@@ -42,16 +42,15 @@ ParcellationLabelTable::ParcellationLabelTable(
 
     std::size_t labelCountAdjusted = labelCount;
 
-    if ( labelCountAdjusted < 7 )
+    if ( labelCountAdjusted < 12 )
     {
-        spdlog::warn( "Parcellation label table must have at least 7 labels" );
-        labelCountAdjusted = 7;
+        spdlog::warn( "Parcellation label table must have at least 12 labels" );
+        labelCountAdjusted = 12;
     }
 
     if ( labelCountAdjusted > m_maxLabelCount )
     {
-        spdlog::warn( "Parcellation label count ({}) exceeds maximum ({})",
-                      labelCountAdjusted, m_maxLabelCount );
+        spdlog::warn( "Parcellation label count ({}) exceeds maximum ({})", labelCountAdjusted, m_maxLabelCount );
         labelCountAdjusted = m_maxLabelCount;
     }
 
@@ -68,15 +67,15 @@ ParcellationLabelTable::ParcellationLabelTable(
     }
 
     const std::vector< glm::vec3 > hsvSamples = math::generateRandomHsvSamples(
-        labelCount - 12, sk_hueMinMax, sk_satMinMax, sk_valMinMax, sk_seed );
+        labelCountAdjusted - 12, sk_hueMinMax, sk_satMinMax, sk_valMinMax, sk_seed );
 
     std::transform( std::begin( hsvSamples ), std::end( hsvSamples ),
                     std::back_inserter( rgbValues ),
                     glm::rgbColor< float, glm::precision::defaultp > );
 
-    m_colors_RGBA_U8.resize( labelCount );
+    m_colors_RGBA_U8.resize( labelCountAdjusted );
 
-    for ( std::size_t i = 0; i < labelCount; ++i )
+    for ( std::size_t i = 0; i < labelCountAdjusted; ++i )
     {
         LabelProperties props;
 
@@ -138,8 +137,7 @@ const uint8_t* ParcellationLabelTable::colorData_RGBA_nonpremult_U8() const
 }
 
 
-tex::SizedInternalBufferTextureFormat
-ParcellationLabelTable::bufferTextureFormat_RGBA_U8()
+tex::SizedInternalBufferTextureFormat ParcellationLabelTable::bufferTextureFormat_RGBA_U8()
 {
     static const tex::SizedInternalBufferTextureFormat sk_format =
         tex::SizedInternalBufferTextureFormat::RGBA8_UNorm;
