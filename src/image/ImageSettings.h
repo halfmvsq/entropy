@@ -498,7 +498,7 @@ private:
         bool m_colorMapContinuous = true; //!< Whether the color map is continuous or discrete
         uint32_t m_numColorMapLevels = 8; //!< Number of quantization levels
 
-        glm::vec3 m_hsvModFactors{ 0.0f, 1.0f, 1.0f }; //!< HSV modification factors
+        glm::vec3 m_hsvModFactors{ 0.0f, 1.0f, 0.5f }; //!< HSV modification factors
 
         std::size_t m_labelTableIndex = 0; //!< Label table index (for segmentation images only)
 

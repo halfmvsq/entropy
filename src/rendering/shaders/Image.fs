@@ -42,14 +42,13 @@ uniform vec2 u_imgSlopeIntercept;
 
 uniform vec2 u_imgCmapSlopeIntercept; // Slopes and intercepts for the image color maps
 uniform int u_imgCmapQuantLevels; // Number of image color map quantization levels
+//uniform vec3 u_imgCmapHsvModFactors; // HSV modification factors for image color
 
 uniform vec2 u_imgMinMax; // Min and max image values (in texture intenstiy units)
 uniform vec2 u_imgThresholds; // Image lower and upper thresholds (in texture intensity units)
 
 uniform float u_imgOpacity; // Image opacity
 uniform float u_segOpacity; // Segmentation opacity
-
-uniform vec3 u_hsvModFactors; // HSV modification factors for image color
 
 uniform bool u_masking; // Whether to mask image based on segmentation being non-zero
 
@@ -94,7 +93,7 @@ const uvec3 neigh[8] = uvec3[8](
     uvec3(1, 0, 0), uvec3(1, 0, 1), uvec3(1, 1, 0), uvec3(1, 1, 1) );
 
 
-/// Taken from http://lolengine.net/blog/2013/07/27/rgb-to-hsv-in-glsl
+/// Copied from https://www.laurivan.com/rgb-to-hsv-to-rgb-for-shaders/
 vec3 rgb2hsv(vec3 c)
 {
     vec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
@@ -489,21 +488,23 @@ void main()
     // Normalize color map coordinates:
     cmapCoord = u_imgCmapSlopeIntercept[0] * cmapCoord + u_imgCmapSlopeIntercept[1];
 
-    // Look up image color (RGBA):
-    vec4 imgColor = texture( u_imgCmapTex, cmapCoord );
 
-    // Convert RGBA to HSV and apply HSV modification factors:
-    vec3 imgColorHsv = rgb2hsv( imgColor.rgb );
+//    // Look up image color (RGBA):
+//    vec4 imgColor = texture( u_imgCmapTex, cmapCoord );
 
-    imgColorHsv[0] += u_hsvModFactors[0];
-    imgColorHsv[1] *= u_hsvModFactors[1];
-    imgColorHsv[2] *= u_hsvModFactors[2];
+//    // Convert RGBA to HSV and apply HSV modification factors:
+//    vec3 imgColorHsv = rgb2hsv( imgColor.rgb );
 
-    // Convert back to RGB
-    imgColor.rgb = hsv2rgb(imgColorHsv);
+//    imgColorHsv.x += u_imgCmapHsvModFactors.x;
+//    imgColorHsv.yz *= u_imgCmapHsvModFactors.yz;
 
-//    vec4 imgLayer = texture( u_imgCmapTex, cmapCoord ) * imgAlpha;
-    vec4 imgLayer = imgAlpha * imgColor.a * vec4(imgColor.rgb, 1.0);
+//    // Convert back to RGB
+//    imgColor.rgb = hsv2rgb(imgColorHsv);
+
+//    vec4 imgLayer = imgAlpha * imgColor.a * vec4(imgColor.rgb, 1.0);
+
+    vec4 imgLayer = texture( u_imgCmapTex, cmapCoord ) * imgAlpha;
+
 
     // Look up segmentation color:
     vec4 segLayer = computeLabelColor( int(seg) ) * segAlpha;

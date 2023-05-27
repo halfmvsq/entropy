@@ -169,7 +169,8 @@ tex::SizedInternalFormat ImageColorMap::textureFormat_RGBA_F32()
 }
 
 
-ImageColorMap ImageColorMap::loadImageColorMap( std::istringstream& csv )
+std::optional<ImageColorMap>
+ImageColorMap::loadImageColorMap( std::istringstream& csv )
 {
     /// @todo Throws are not needed here. Just return flag that colormap could not be loaded.
 
@@ -196,7 +197,7 @@ ImageColorMap ImageColorMap::loadImageColorMap( std::istringstream& csv )
     else
     {
         spdlog::error( "Could not extract brief name of colormap from CSV" );
-        throw_debug( "Invalid colormap: could not load name" )
+        return std::nullopt;
     }
 
     if ( std::getline( csv, line ) )
@@ -207,7 +208,7 @@ ImageColorMap ImageColorMap::loadImageColorMap( std::istringstream& csv )
     else
     {
         spdlog::error( "Could not extract technical name of colormap '{}'", briefName );
-        throw_debug( "Invalid colormap: could not load technical name" )
+        return std::nullopt;
     }
 
     if ( std::getline( csv, line ) )
@@ -218,7 +219,7 @@ ImageColorMap ImageColorMap::loadImageColorMap( std::istringstream& csv )
     else
     {
         spdlog::error( "Could not extract description of colormap '{}'", briefName );
-        throw_debug( "Invalid colormap: could not load description" )
+        return std::nullopt;
     }
 
     // Read a color from each line of the file
@@ -237,21 +238,21 @@ ImageColorMap ImageColorMap::loadImageColorMap( std::istringstream& csv )
             const float r = std::stof( c[0], nullptr );
             const float g = std::stof( c[1], nullptr );
             const float b = std::stof( c[2], nullptr );
-            colors.push_back( glm::vec4{ r, g, b, 1 } );
+            colors.push_back( glm::vec4{ r, g, b, 1.0f } );
         }
         else if ( 4 == c.size() )
         {
-            // Pre-multiple the alpha component:
+            // Do NOT pre-multiply by the alpha component:
             const float r = std::stof( c[0], nullptr );
             const float g = std::stof( c[1], nullptr );
             const float b = std::stof( c[2], nullptr );
             const float a = std::stof( c[3], nullptr );
-            colors.push_back( a * glm::vec4{ r, g, b, 1 } );
+            colors.push_back( glm::vec4{ r, g, b, a } );
         }
         else
         {
             spdlog::error( "Invalid color map \"{}\": Color {} has {} components", briefName, count, c.size() );
-            throw_debug( "Invalid colormap: missing color components" )
+            return std::nullopt;
         }
 
         ++count;
@@ -260,7 +261,7 @@ ImageColorMap ImageColorMap::loadImageColorMap( std::istringstream& csv )
     if ( colors.empty() )
     {
         spdlog::error( "Invalid color map '{}' has no colors", briefName );
-        throw_debug( "Invalid colormap: no colors" )
+        return std::nullopt;
     }
 
     spdlog::trace( "Loaded image color map \"{}\" (\"{}\") with {} colors", briefName, technicalName, colors.size() );

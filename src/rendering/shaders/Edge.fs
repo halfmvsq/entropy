@@ -25,6 +25,7 @@ uniform vec2 u_imgSlopeIntercept; // Slopes and intercepts for image normalizati
 uniform vec2 u_imgSlopeInterceptLargest; // Slopes and intercepts for image normalization
 uniform vec2 u_imgCmapSlopeIntercept; // Slopes and intercepts for the image color maps
 uniform int u_imgCmapQuantLevels; // Number of quantization levels
+//uniform vec3 u_imgCmapHsvModFactors; // HSV modification factors for image color
 
 uniform vec2 u_imgMinMax; // Min and max image values
 uniform vec2 u_imgThresholds; // Image lower and upper thresholds, mapped to OpenGL texture intensity
@@ -70,6 +71,25 @@ uniform vec3 u_texSamplingDirsForSegOutline[2];
 // Opacity of the interior of the segmentation
 uniform float u_segInteriorOpacity;
 
+
+/// Copied from https://www.laurivan.com/rgb-to-hsv-to-rgb-for-shaders/
+vec3 rgb2hsv(vec3 c)
+{
+    vec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
+    vec4 p = mix(vec4(c.bg, K.wz), vec4(c.gb, K.xy), step(c.b, c.g));
+    vec4 q = mix(vec4(p.xyw, c.r), vec4(c.r, p.yzx), step(p.x, c.r));
+
+    float d = q.x - min(q.w, q.y);
+    float e = 1.0e-10;
+    return vec3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);
+}
+
+vec3 hsv2rgb(vec3 c)
+{
+    vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+    vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+    return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+}
 
 // Sobel edge detection convolution filters:
 // Scharr version (see https://en.wikipedia.org/wiki/Sobel_operator)
@@ -319,6 +339,21 @@ void main()
     // Quantize the color map.
     float cmapCoord = mix( floor( float(u_imgCmapQuantLevels) * imgNorm) / float(u_imgCmapQuantLevels - 1), imgNorm, float( 0 == u_imgCmapQuantLevels ) );
     cmapCoord = u_imgCmapSlopeIntercept[0] * cmapCoord + u_imgCmapSlopeIntercept[1];
+
+
+//    // Look up image color (RGBA):
+//    vec4 imgColor = texture( u_imgCmapTex, cmapCoord );
+
+//    // Convert RGBA to HSV and apply HSV modification factors:
+//    vec3 imgColorHsv = rgb2hsv( imgColor.rgb );
+
+//    imgColorHsv.r += u_imgCmapHsvModFactors.r;
+//    imgColorHsv.g *= u_imgCmapHsvModFactors.g;
+
+//    // Convert back to RGB
+//    imgColor.rgb = hsv2rgb(imgColorHsv);
+
+//    vec4 imageLayer = alpha * float(u_overlayEdges) * imgColor.a * vec4(imgColor.rgb, 1.0);
 
     vec4 imageLayer = alpha * float(u_overlayEdges) * texture( u_imgCmapTex, cmapCoord );
 

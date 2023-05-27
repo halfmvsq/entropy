@@ -266,9 +266,12 @@ void AppData::loadImageColorMapsFromDisk()
                 cmrc::file f = filesystem.open( dir + i.filename() );
                 std::istringstream iss( std::string( f.begin(), f.end() ) );
 
-                const auto uid = generateRandomUuid();
-                m_imageColorMaps.emplace( uid, ImageColorMap::loadImageColorMap( iss ) );
-                m_imageColorMapUidsOrdered.push_back( uid );
+                if ( auto cmap = ImageColorMap::loadImageColorMap( iss ) )
+                {
+                    const auto uid = generateRandomUuid();
+                    m_imageColorMaps.emplace( uid, std::move( *cmap ) );
+                    m_imageColorMapUidsOrdered.push_back( uid );
+                }
             }
         };
 

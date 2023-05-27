@@ -1185,32 +1185,34 @@ void renderImageHeader(
 //                    }
                 }
 
-
+/*
                 glm::vec3 hsvMods = imgSettings.colorMapHsvModFactors();
 
                 int hueMod = static_cast<int>( 360.0f * hsvMods[0] );
                 int satMod = static_cast<int>( 100.0f * hsvMods[1] );
-                int valMod = static_cast<int>( 100.0f * hsvMods[2] );
+//                int valMod = static_cast<int>( 200.0f * (hsvMods[2] - 0.5f) );
 
-                ImGui::Text( "HSV adjustment:" );
+                ImGui::Text( "Color adjustment adjustment:" );
+                ImGui::SameLine(); helpMarker( "Apply hue and saturation adjustments to the color map" );
 
-                if ( mySliderS32( "Hue", &hueMod, 0, 360 ) )
+                if ( mySliderS32( "Hue", &hueMod, 0, 360, "%d deg" ) )
                 {
                     imgSettings.setColorMapHueModFactor( hueMod / 360.0f );
                     updateImageUniforms();
                 }
 
-                if ( mySliderS32( "Saturation", &satMod, 0, 100 ) )
+                if ( mySliderS32( "Saturation", &satMod, 0, 100, "%d" ) )
                 {
                     imgSettings.setColorMapSatModFactor( satMod / 100.0f );
                     updateImageUniforms();
                 }
 
-                if ( mySliderS32( "Value", &valMod, 0, 100 ) )
-                {
-                    imgSettings.setColorMapValModFactor( valMod / 100.0f );
-                    updateImageUniforms();
-                }
+//                if ( mySliderS32( "Value", &valMod, -100, 100, "%d" ) )
+//                {
+//                    imgSettings.setColorMapValModFactor( valMod / 200.0f + 0.5f );
+//                    updateImageUniforms();
+//                }
+*/
 
 //                ImageColorMap::InterpolationMode interpMode = cmap->interpolationMode();
 //                const bool discreteCmap = ( ImageColorMap::InterpolationMode::Nearest == interpMode );
