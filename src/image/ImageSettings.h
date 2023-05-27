@@ -327,6 +327,20 @@ public:
     bool colorMapContinuous() const;
 
 
+    /// Set the hue, saturation, and value modification factors
+    void setColorMapHueModFactor( uint32_t component, double hueMod );
+    void setColorMapSatModFactor( uint32_t component, double satMod );
+    void setColorMapValModFactor( uint32_t component, double valMod );
+
+    void setColorMapHueModFactor( double hueMod );
+    void setColorMapSatModFactor( double satMod );
+    void setColorMapValModFactor( double valMod );
+
+    /// Get the hue, saturation, and value modification factors
+    const glm::vec3& colorMapHsvModFactors( uint32_t component ) const;
+    const glm::vec3& colorMapHsvModFactors() const;
+
+
     /// Get the label table index
     void setLabelTableIndex( uint32_t component, std::size_t index );
     void setLabelTableIndex( std::size_t index );
@@ -483,6 +497,8 @@ private:
 
         bool m_colorMapContinuous = true; //!< Whether the color map is continuous or discrete
         uint32_t m_numColorMapLevels = 8; //!< Number of quantization levels
+
+        glm::vec3 m_hsvModFactors{ 0.0f, 1.0f, 1.0f }; //!< HSV modification factors
 
         std::size_t m_labelTableIndex = 0; //!< Label table index (for segmentation images only)
 

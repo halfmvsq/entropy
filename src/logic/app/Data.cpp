@@ -196,13 +196,13 @@ void AppData::loadDiscreteImageColorMaps()
 
     m_imageColorMaps.emplace(
         kwMapUid, ImageColorMap(
-            "Discrete Black, White", "Black, white discrete color map", "Black-white_discrete",
+            "Discrete Black and White", "Black, white discrete color map", "Black-white_discrete",
             ImageColorMap::InterpolationMode::Nearest,
             std::vector< glm::vec4 >{ blackOpaque, white } ) );
 
     m_imageColorMaps.emplace(
         twMapUid, ImageColorMap(
-            "Discrete Transparent, White", "Transparent-White discrete color map", "Transparent-white_discrete",
+            "Discrete Transparent and White", "Transparent-White discrete color map", "Transparent-white_discrete",
             ImageColorMap::InterpolationMode::Nearest,
             std::vector< glm::vec4 >{ blackTransparent, white } ) );
 

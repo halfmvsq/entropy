@@ -876,6 +876,7 @@ void Rendering::updateImageUniforms( const uuids::uuid& imageUid )
     const auto& imgSettings = img->settings();
 
     uniforms.cmapQuantLevels = imgSettings.colorMapContinuous() ? 0 : imgSettings.colorMapQuantizationLevels();
+    uniforms.hsvModFactors = imgSettings.colorMapHsvModFactors();
 
     if ( const auto cmapUid = m_appData.imageColorMapUid( imgSettings.colorMapIndex() ) )
     {
@@ -1628,6 +1629,8 @@ void Rendering::renderAllImages(
                         P->setUniform( "u_isoOpacities", renderData.m_isosurfaceData.opacities );
                         P->setUniform( "u_isoColors", renderData.m_isosurfaceData.colors );
                         P->setUniform( "u_isoWidth", renderData.m_isosurfaceData.widthIn2d );
+
+                        P->setUniform( "u_hsvModFactors", U.hsvModFactors );
                     }
                 }
                 else
@@ -2298,6 +2301,7 @@ bool Rendering::createImageProgram( GLShaderProgram& program )
         fsUniforms.insertUniform( "u_imgThresholds", UniformType::Vec2, sk_zeroVec2 );
         fsUniforms.insertUniform( "u_imgOpacity", UniformType::Float, 0.0f );
         fsUniforms.insertUniform( "u_segOpacity", UniformType::Float, 0.0f );
+        fsUniforms.insertUniform( "u_hsvModFactors", UniformType::Vec3, glm::vec3{ 0.0f, 1.0f, 1.0f } );
 
         fsUniforms.insertUniform( "u_masking", UniformType::Bool, false );
 

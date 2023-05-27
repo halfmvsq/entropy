@@ -377,6 +377,17 @@ void ImageSettings::setColorMapContinuous( bool continuous ) { setColorMapContin
 bool ImageSettings::colorMapContinuous( uint32_t i ) const { return m_componentSettings[i].m_colorMapContinuous; }
 bool ImageSettings::colorMapContinuous() const { return colorMapContinuous( m_activeComponent ); }
 
+void ImageSettings::setColorMapHueModFactor( uint32_t i, double hueMod ) { m_componentSettings[i].m_hsvModFactors[0] = hueMod; }
+void ImageSettings::setColorMapSatModFactor( uint32_t i, double satMod ) { m_componentSettings[i].m_hsvModFactors[1] = satMod; }
+void ImageSettings::setColorMapValModFactor( uint32_t i, double valMod ) { m_componentSettings[i].m_hsvModFactors[2] = valMod; }
+
+void ImageSettings::setColorMapHueModFactor( double hueMod ) { setColorMapHueModFactor( m_activeComponent, hueMod ); }
+void ImageSettings::setColorMapSatModFactor( double satMod ) { setColorMapSatModFactor( m_activeComponent, satMod ); }
+void ImageSettings::setColorMapValModFactor( double valMod ) { setColorMapValModFactor( m_activeComponent, valMod ); }
+
+const glm::vec3& ImageSettings::colorMapHsvModFactors( uint32_t i ) const { return m_componentSettings[i].m_hsvModFactors; }
+const glm::vec3& ImageSettings::colorMapHsvModFactors() const { return colorMapHsvModFactors(m_activeComponent); }
+
 void ImageSettings::setLabelTableIndex( uint32_t i, std::size_t index ) { m_componentSettings[i].m_labelTableIndex = index; }
 void ImageSettings::setLabelTableIndex( std::size_t index ) { setLabelTableIndex( m_activeComponent, index ); }
 
