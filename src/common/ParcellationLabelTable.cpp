@@ -35,7 +35,10 @@ ParcellationLabelTable::ParcellationLabelTable(
       m_maxLabelCount( std::min( maxLabelCount, labelCountUpperBound() ) )
 {
     static const std::vector<float> sk_startAngles{
-        0.0f, 120.0f, 240.0f, 60.0f, 180.0f, 300.0f };
+        0.0f, 120.0f, 240.0f,
+        60.0f, 180.0f, 300.0f,
+        30.0f, 150.0f, 270.0f,
+        90.0f, 210.0f, 330.0f };
 
     std::size_t labelCountAdjusted = labelCount;
 
@@ -58,14 +61,14 @@ ParcellationLabelTable::ParcellationLabelTable(
     // The first label (0) is always black:
     rgbValues.push_back( glm::vec3{ 0.0f, 0.0f, 0.0f } );
 
-    // Insert the six primary colors for labels 1-7:
+    // Insert the twelve "primary colors" for labels 1-12:
     for ( float s : sk_startAngles )
     {
         rgbValues.push_back( glm::rgbColor( glm::vec3{ s, 1.0f, 1.0f } ) );
     }
 
     const std::vector< glm::vec3 > hsvSamples = math::generateRandomHsvSamples(
-        labelCount - 7, sk_hueMinMax, sk_satMinMax, sk_valMinMax, sk_seed );
+        labelCount - 12, sk_hueMinMax, sk_satMinMax, sk_valMinMax, sk_seed );
 
     std::transform( std::begin( hsvSamples ), std::end( hsvSamples ),
                     std::back_inserter( rgbValues ),
