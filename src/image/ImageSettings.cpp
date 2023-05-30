@@ -385,6 +385,9 @@ void ImageSettings::setColorMapHueModFactor( double hueMod ) { setColorMapHueMod
 void ImageSettings::setColorMapSatModFactor( double satMod ) { setColorMapSatModFactor( m_activeComponent, satMod ); }
 void ImageSettings::setColorMapValModFactor( double valMod ) { setColorMapValModFactor( m_activeComponent, valMod ); }
 
+void ImageSettings::setColormapHsvModfactors( uint32_t i, const glm::vec3& hsvMods ) { m_componentSettings[i].m_hsvModFactors = hsvMods; }
+void ImageSettings::setColormapHsvModfactors( const glm::vec3& hsvMods ) { setColormapHsvModfactors( m_activeComponent, hsvMods ); }
+
 const glm::vec3& ImageSettings::colorMapHsvModFactors( uint32_t i ) const { return m_componentSettings[i].m_hsvModFactors; }
 const glm::vec3& ImageSettings::colorMapHsvModFactors() const { return colorMapHsvModFactors(m_activeComponent); }
 

@@ -293,7 +293,7 @@ ImageColorMap ImageColorMap::createLinearImageColorMap(
 
     for ( std::size_t i = 0; i < N; ++i )
     {
-        colors[i] = startColor + static_cast<float>( i ) / Nm1 * endColor;
+        colors[i] = startColor + static_cast<float>(i) / Nm1 * (endColor - startColor);
     }
 
     ImageColorMap map( briefName, technicalName, description, InterpolationMode::Linear, colors );

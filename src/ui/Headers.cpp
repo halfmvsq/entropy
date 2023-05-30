@@ -851,10 +851,11 @@ void renderImageHeader(
             // Speed of range slider is based on the range
             const float speed = static_cast<float>( threshMax - threshMin ) / 1000.0f;
 
-            if ( ImGui::DragFloatRange2( "Threshold", &threshLow, &threshHigh,
-                                         speed, threshMin, threshMax,
-                                         minValuesFormat, maxValuesFormat,
-                                         ImGuiSliderFlags_AlwaysClamp ) )
+            if ( ImGui::DragFloatRange2(
+                    "Threshold", &threshLow, &threshHigh,
+                    speed, threshMin, threshMax,
+                    minValuesFormat, maxValuesFormat,
+                    ImGuiSliderFlags_AlwaysClamp ) )
             {
                 imgSettings.setThresholdLow( static_cast<double>( threshLow ) );
                 imgSettings.setThresholdHigh( static_cast<double>( threshHigh ) );
@@ -1185,13 +1186,24 @@ void renderImageHeader(
 //                    }
                 }
 
-/*
-                glm::vec3 hsvMods = imgSettings.colorMapHsvModFactors();
 
-                int hueMod = static_cast<int>( 360.0f * hsvMods[0] );
-                int satMod = static_cast<int>( 100.0f * hsvMods[1] );
-//                int valMod = static_cast<int>( 200.0f * (hsvMods[2] - 0.5f) );
+                glm::ivec3 hsvMods = glm::ivec3{ 360.0f * imgSettings.colorMapHsvModFactors() };
 
+//                int hueMod = static_cast<int>( 360.0f * hsvMods[0] );
+//                int satMod = static_cast<int>( 100.0f * hsvMods[1] );
+//                int valMod = static_cast<int>( 100.0f * hsvMods[2] );
+
+                static constexpr int hsv_min = 0;
+                static constexpr int hsv_max = 360;
+
+                if ( ImGui::SliderScalarN( "HSV Adjustment", ImGuiDataType_S32, glm::value_ptr(hsvMods), 3, &hsv_min, &hsv_max ) )
+                {
+                    imgSettings.setColormapHsvModfactors( glm::vec3{hsvMods} / 360.0f );
+                    updateImageUniforms();
+                }
+                ImGui::SameLine(); helpMarker( "Apply HSV adjustment to the color map" );
+
+                /*
                 ImGui::Text( "Color adjustment adjustment:" );
                 ImGui::SameLine(); helpMarker( "Apply hue and saturation adjustments to the color map" );
 
@@ -1201,17 +1213,17 @@ void renderImageHeader(
                     updateImageUniforms();
                 }
 
-                if ( mySliderS32( "Saturation", &satMod, 0, 100, "%d" ) )
+                if ( mySliderS32( "Saturation", &satMod, 0, 100, "%d %" ) )
                 {
                     imgSettings.setColorMapSatModFactor( satMod / 100.0f );
                     updateImageUniforms();
                 }
 
-//                if ( mySliderS32( "Value", &valMod, -100, 100, "%d" ) )
-//                {
-//                    imgSettings.setColorMapValModFactor( valMod / 200.0f + 0.5f );
-//                    updateImageUniforms();
-//                }
+                if ( mySliderS32( "Value", &valMod, 0, 100, "%d %" ) )
+                {
+                    imgSettings.setColorMapValModFactor( valMod / 100.0f );
+                    updateImageUniforms();
+                }
 */
 
 //                ImageColorMap::InterpolationMode interpMode = cmap->interpolationMode();

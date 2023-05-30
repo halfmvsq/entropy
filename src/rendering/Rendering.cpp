@@ -1620,7 +1620,7 @@ void Rendering::renderAllImages(
                 if ( ! doXray )
                 {
                     P->setUniform( "u_imgSlopeIntercept", U.slopeIntercept_normalized_T_texture );
-//                    P->setUniform( "u_imgCmapHsvModFactors", U.hsvModFactors );
+                    P->setUniform( "u_imgCmapHsvModFactors", U.hsvModFactors );
 
                     if ( ! U.showEdges )
                     {
@@ -2296,7 +2296,7 @@ bool Rendering::createImageProgram( GLShaderProgram& program )
         fsUniforms.insertUniform( "u_imgSlopeIntercept", UniformType::Vec2, sk_zeroVec2 );
         fsUniforms.insertUniform( "u_imgCmapSlopeIntercept", UniformType::Vec2, sk_zeroVec2 );
         fsUniforms.insertUniform( "u_imgCmapQuantLevels", UniformType::Int, 0 );
-//        fsUniforms.insertUniform( "u_imgCmapHsvModFactors", UniformType::Vec3, glm::vec3{ 0.0f, 1.0f, 0.5f } );
+        fsUniforms.insertUniform( "u_imgCmapHsvModFactors", UniformType::Vec3, glm::vec3{ 0.0f, 1.0f, 0.5f } );
 
         fsUniforms.insertUniform( "u_imgMinMax", UniformType::Vec2, sk_zeroVec2 );
         fsUniforms.insertUniform( "u_imgThresholds", UniformType::Vec2, sk_zeroVec2 );
@@ -2691,7 +2691,7 @@ bool Rendering::createEdgeProgram( GLShaderProgram& program )
         fsUniforms.insertUniform( "u_imgSlopeInterceptLargest", UniformType::Vec2, sk_zeroVec2 );
         fsUniforms.insertUniform( "u_imgCmapSlopeIntercept", UniformType::Vec2, sk_zeroVec2 );
         fsUniforms.insertUniform( "u_imgCmapQuantLevels", UniformType::Int, 0 );
-//        fsUniforms.insertUniform( "u_imgCmapHsvModFactors", UniformType::Vec3, glm::vec3{ 0.0f, 1.0f, 0.5f } );
+        fsUniforms.insertUniform( "u_imgCmapHsvModFactors", UniformType::Vec3, glm::vec3{ 0.0f, 1.0f, 0.5f } );
 
         fsUniforms.insertUniform( "u_imgMinMax", UniformType::Vec2, sk_zeroVec2 );
         fsUniforms.insertUniform( "u_imgThresholds", UniformType::Vec2, sk_zeroVec2 );

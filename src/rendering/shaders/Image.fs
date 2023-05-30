@@ -42,7 +42,7 @@ uniform vec2 u_imgSlopeIntercept;
 
 uniform vec2 u_imgCmapSlopeIntercept; // Slopes and intercepts for the image color maps
 uniform int u_imgCmapQuantLevels; // Number of image color map quantization levels
-//uniform vec3 u_imgCmapHsvModFactors; // HSV modification factors for image color
+uniform vec3 u_imgCmapHsvModFactors; // HSV modification factors for image color
 
 uniform vec2 u_imgMinMax; // Min and max image values (in texture intenstiy units)
 uniform vec2 u_imgThresholds; // Image lower and upper thresholds (in texture intensity units)
@@ -490,20 +490,19 @@ void main()
 
 
 //    // Look up image color (RGBA):
-//    vec4 imgColor = texture( u_imgCmapTex, cmapCoord );
+    vec4 imgColor = texture( u_imgCmapTex, cmapCoord );
 
 //    // Convert RGBA to HSV and apply HSV modification factors:
-//    vec3 imgColorHsv = rgb2hsv( imgColor.rgb );
+    vec3 imgColorHsv = rgb2hsv( imgColor.rgb );
 
-//    imgColorHsv.x += u_imgCmapHsvModFactors.x;
-//    imgColorHsv.yz *= u_imgCmapHsvModFactors.yz;
+    imgColorHsv.x += u_imgCmapHsvModFactors.x;
+    imgColorHsv.yz *= u_imgCmapHsvModFactors.yz;
 
 //    // Convert back to RGB
-//    imgColor.rgb = hsv2rgb(imgColorHsv);
+    imgColor.rgb = hsv2rgb( imgColorHsv );
 
-//    vec4 imgLayer = imgAlpha * imgColor.a * vec4(imgColor.rgb, 1.0);
-
-    vec4 imgLayer = texture( u_imgCmapTex, cmapCoord ) * imgAlpha;
+    vec4 imgLayer = imgAlpha * imgColor.a * vec4(imgColor.rgb, 1.0);
+//    vec4 imgLayer = texture( u_imgCmapTex, cmapCoord ) * imgAlpha;
 
 
     // Look up segmentation color:
