@@ -17,7 +17,6 @@
 
 #include <IconFontCppHeaders/IconsForkAwesome.h>
 
-#define IMGUI_DEFINE_MATH_OPERATORS
 #include <imgui/imgui.h>
 
 // GLFW and OpenGL 3 bindings for ImGui:

@@ -42,4 +42,11 @@ std::optional< std::string > renderFileButtonDialogAndWindow(
     const char* dialogTitle,
     const std::vector< std::string > dialogFilters );
 
+bool SliderScalarN_multiComp(
+    const char* label,
+    ImGuiDataType data_type,
+    void* v, int components,
+    const void** v_min, const void** v_max,
+    const char** format, ImGuiSliderFlags flags);
+
 } // namespace ImGui

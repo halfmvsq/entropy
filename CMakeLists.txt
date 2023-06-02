@@ -176,13 +176,25 @@ set_target_properties( imgui PROPERTIES
 
 
 #--------------------------------------------------------------------------------
+# imgui-knobs (included as Git submodule):
+# C++ port of https://github.com/DGriffin91/imgui-rs-knobs
+# for drawing knob widgets in ImGui
+#--------------------------------------------------------------------------------
+
+# Note: Due to warnings and errors in the original sources, they have been modified
+# and included in Entropy's source folder ui/imgui/imgui-knobs
+
+#set( IMGUI_KNOBS_DIR ${EXT_DIR}/imgui-knobs )
+
+
+#--------------------------------------------------------------------------------
 # imGuIZMO.quat (included as Git submodule):
 # A ImGui widget: like a trackball it provides a way to rotate models, lights,
 # or objects with mouse, and graphically visualize their position in space.
 #--------------------------------------------------------------------------------
 
-# Note: Due to warnings in these sources, they modified and included in our local
-# source source folder ui/imgui/imGuIZMO.quat
+# Note: Due to warnings in these sources, they have been modified and included in
+# Entropy's source folder ui/imgui/imGuIZMO.quat
 
 # set( IMGUIZMO_INCLUDE_DIR ${EXT_DIR}/imGuIZMO.quat )
 
@@ -558,6 +570,7 @@ set( ENTROPY_SOURCES
     ${SRC_DIR}/ui/Windows.cpp
 
     ${SRC_DIR}/ui/imgui/imGuIZMO.quat/imGuIZMOquat.cpp
+    ${SRC_DIR}/ui/imgui/imgui-knobs/imgui-knobs.cpp
 
     ${SRC_DIR}/windowing/ControlFrame.cpp
     ${SRC_DIR}/windowing/GlfwCallbacks.cpp
@@ -738,6 +751,7 @@ target_include_directories( ${EXEC_NAME} PRIVATE
     ${GLAD_INCLUDE_DIR}
     ${IMGUI_BINDINGS_DIR}
     ${IMGUI_INCLUDE_DIR}
+    ${IMGUI_KNOBS_DIR}
     ${IMPLOT_INCLUDE_DIR}
     ${ITK_INCLUDE_DIRS}
     ${JSON_INCLUDE_DIR}

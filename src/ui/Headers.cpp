@@ -23,6 +23,8 @@
 #include <imgui/imgui.h>
 #include <imgui/misc/cpp/imgui_stdlib.h>
 
+#include <ui/imgui/imgui-knobs/imgui-knobs.h>
+
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -990,6 +992,8 @@ void renderImageHeader(
         }
         ImGui::SameLine();
 
+        /// @todo Clear this up.... [1, 99]%
+        /// Or separate buttons for low, high window
         if ( ImGui::Button( "99\%" ) )
         {
             imgSettings.setWindowLow( stats.m_quantiles[10] );
@@ -1187,24 +1191,66 @@ void renderImageHeader(
                 }
 
 
-                glm::ivec3 hsvMods = glm::ivec3{ 360.0f * imgSettings.colorMapHsvModFactors() };
+                glm::vec3 hsvMods = imgSettings.colorMapHsvModFactors();
+                glm::ivec3 hsvModsInt = glm::ivec3{ 360.0f * hsvMods[0], 100.0f * hsvMods[1], 100.0f * hsvMods[2] };
 
 //                int hueMod = static_cast<int>( 360.0f * hsvMods[0] );
 //                int satMod = static_cast<int>( 100.0f * hsvMods[1] );
 //                int valMod = static_cast<int>( 100.0f * hsvMods[2] );
 
-                static constexpr int hsv_min = 0;
-                static constexpr int hsv_max = 360;
+                static constexpr int hue_min = 0;
+                static constexpr int hue_max = 360;
 
-                if ( ImGui::SliderScalarN( "HSV Adjustment", ImGuiDataType_S32, glm::value_ptr(hsvMods), 3, &hsv_min, &hsv_max ) )
+                static constexpr int sv_min = 0;
+                static constexpr int sv_max = 100;
+
+                ImGui::Text( "Color adjustments:" );
+
+                ImGui::BeginGroup();
+//                ImGui::PushMultiItemsWidths(2, ImGui::CalcItemWidth());
+
+                if ( ImGuiKnobs::KnobInt( "Hue", glm::value_ptr(hsvModsInt), hue_min, hue_max, 1, "%i%",
+                    ImGuiKnobVariant_Stepped, 0,
+                    ImGuiKnobFlags_ValueTooltip | ImGuiKnobFlags_DragHorizontal, 12 ) )
                 {
-                    imgSettings.setColormapHsvModfactors( glm::vec3{hsvMods} / 360.0f );
+                    imgSettings.setColorMapHueModFactor( hsvModsInt[0] / 360.0f );
                     updateImageUniforms();
                 }
-                ImGui::SameLine(); helpMarker( "Apply HSV adjustment to the color map" );
+//                ImGui::PopItemWidth();
+
+//                ImGui::SameLine();
+
+                if ( ImGui::SliderScalarN( "Sat. & value", ImGuiDataType_S32, &(hsvModsInt[1]), 2, &sv_min, &sv_max ) )
+                {
+//                    imgSettings.setColormapHsvModfactors( glm::vec3{hsvMods} / 360.0f );
+                    imgSettings.setColorMapSatModFactor( hsvModsInt[1] / 100.0f );
+                    imgSettings.setColorMapValModFactor( hsvModsInt[2] / 100.0f );
+                    updateImageUniforms();
+                }
+//                ImGui::PopItemWidth();
+
+                ImGui::SameLine(); helpMarker( "Apply saturation and value adjustments to the color map" );
+
+                ImGui::EndGroup();
+
+
+
+//                int hsv_mins[3] = {0, 0, 0};
+//                int hsv_maxs[3] = {360, 100, 100};
+//                const char* hsv_formats[3] = {"%d deg", "%d", "%d"};
+
+
+//                if ( ImGui::SliderScalarN_multiComp( "HSV", ImGuiDataType_S32, glm::value_ptr(hsvModsInt), 3, &hsv_mins, hsv_maxs, hsv_formats, 0 ) )
+//                {
+//                    imgSettings.setColorMapHueModFactor( hsvModsInt[0] / 360.0f );
+//                    imgSettings.setColorMapSatModFactor( hsvModsInt[1] / 100.0f );
+//                    imgSettings.setColorMapValModFactor( hsvModsInt[2] / 100.0f );
+//                    updateImageUniforms();
+//                }
+
 
                 /*
-                ImGui::Text( "Color adjustment adjustment:" );
+                ImGui::Text( "Color adjustments:" );
                 ImGui::SameLine(); helpMarker( "Apply hue and saturation adjustments to the color map" );
 
                 if ( mySliderS32( "Hue", &hueMod, 0, 360, "%d deg" ) )
