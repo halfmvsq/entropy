@@ -1031,8 +1031,8 @@ void renderImageHeader(
         auto getImageInterpMode = [&imgSettings] ()
         {
             return ( imgSettings.displayImageAsColor() )
-                ? imgSettings.colorInterpolationMode()
-                : imgSettings.interpolationMode();
+                       ? imgSettings.colorInterpolationMode()
+                       : imgSettings.interpolationMode();
         };
 
         auto setImageInterpMode = [&imgSettings] ( const InterpolationMode& mode )
@@ -1063,84 +1063,65 @@ void renderImageHeader(
         ImGui::SameLine(); helpMarker( "Select the image interpolation type" );
 
 
-        ImGui::Dummy( ImVec2( 0.0f, 1.0f ) );
+        std::size_t cmapIndex = getCurrentImageColormapIndex();
 
-        if ( ! imgSettings.displayImageAsColor() )
+        ImageColorMap* cmap = getImageColorMap( cmapIndex );
+
+        if ( cmap && ! imgSettings.displayImageAsColor() )
         {
-            // Image colormap dialog:
             bool* showImageColormapWindow = &( guiData.m_showImageColormapWindow[imageUid] );
-            ImGui::Spacing();
-            *showImageColormapWindow |= ImGui::Button( "Select colormap" );
 
-            ImGui::SameLine();
-            bool invertedCmap = imgSettings.isColorMapInverted();
-            if ( ImGui::Checkbox( "Inverted", &invertedCmap ) )
-            {
-                imgSettings.setColorMapInverted( invertedCmap );
-                updateImageUniforms();
-            }
-            ImGui::SameLine(); helpMarker( "Select/invert the image colormap" );
-
-            auto getImageColorMapInverted = [&imgSettings] ()
-            {
-                return imgSettings.isColorMapInverted();
-            };
-
-            auto getImageColorMapContinuous = [&imgSettings] ()
-            {
-                return imgSettings.colorMapContinuous();
-            };
-
-            auto getImageColorMapLevels = [&imgSettings] ()
-            {
-                return imgSettings.colorMapQuantizationLevels();
-            };
-
-            renderPaletteWindow(
-                std::string( "Select colormap for image '" + imgSettings.displayName() +
-                             "' (component " + std::to_string( imgSettings.activeComponent() ) + ")" ).c_str(),
-                showImageColormapWindow,
-                getNumImageColorMaps,
-                getImageColorMap,
-                getCurrentImageColormapIndex,
-                setCurrentImageColormapIndex,
-                getImageColorMapInverted,
-                getImageColorMapContinuous,
-                getImageColorMapLevels,
-                updateImageUniforms );
-
+            glm::vec3 hsvMods = imgSettings.colorMapHsvModFactors();
+            glm::ivec3 hsvModsInt = glm::ivec3{ 360.0f * hsvMods[0], 100.0f * hsvMods[1], 100.0f * hsvMods[2] };
 
             // Colormap preview:
             const float contentWidth = ImGui::GetContentRegionAvail().x;
             const float height = ( ImGui::GetIO().Fonts->Fonts[0]->FontSize * ImGui::GetIO().FontGlobalScale );
 
             char label[128];
-            std::size_t cmapIndex = getCurrentImageColormapIndex();
+            snprintf( label, 128, "%s##cmap_%zu", cmap->name().c_str(), imageIndex );
 
-            if ( ImageColorMap* cmap = getImageColorMap( cmapIndex ) )
+            const bool doQuantize =
+                ( ! imgSettings.colorMapContinuous() && (ImageColorMap::InterpolationMode::Linear == cmap->interpolationMode()) );
+
+//            ImGui::Dummy( ImVec2( 0.0f, 2.0f ) );
+            ImGui::Spacing();
+
+            ImGui::Text( "Color map:" );
+
+            *showImageColormapWindow |= ImGui::paletteButton(
+                label,
+                cmap->data_RGBA_asVector(),
+                imgSettings.isColorMapInverted(),
+                doQuantize, imgSettings.colorMapQuantizationLevels(),
+                hsvMods,
+                ImVec2( contentWidth, height ) );
+
+            if ( ImGui::IsItemHovered() )
             {
-                snprintf( label, 128, "%s##cmap_%zu", cmap->name().c_str(), imageIndex );
+                ImGui::SetTooltip( "%s", cmap->description().c_str() );
+            }
 
-                const bool doQuantize =
-                    ( ! imgSettings.colorMapContinuous() && (ImageColorMap::InterpolationMode::Linear == cmap->interpolationMode()) );
+            ImGui::SetNextItemOpen( false, ImGuiCond_Appearing );
 
-                ImGui::paletteButton(
-                    label,
-                    cmap->data_RGBA_asVector(),
-                    imgSettings.isColorMapInverted(),
-                    doQuantize,
-                    imgSettings.colorMapQuantizationLevels(),
-                    ImVec2( contentWidth, height ) );
+            if ( ImGui::TreeNode( "Color settings" ) )
+            {
+                // Image colormap dialog:
+                *showImageColormapWindow |= ImGui::Button( "Select color map" );
 
-                if ( ImGui::IsItemHovered() )
+                bool invertedCmap = imgSettings.isColorMapInverted();
+
+                if ( ImGui::Checkbox( "Inverted", &invertedCmap ) )
                 {
-                    ImGui::SetTooltip( "%s", cmap->description().c_str() );
+                    imgSettings.setColorMapInverted( invertedCmap );
+                    updateImageUniforms();
                 }
+                ImGui::SameLine(); helpMarker( "Invert the image color map" );
 
 
                 // If the color map has nearest-neighbor interpolation mode,
                 // then we are forced to use the discrete setting:
-//                const bool forcedDiscrete = ( ImageColorMap::InterpolationMode::Nearest == cmap->interpolationMode() );
+                //                const bool forcedDiscrete = ( ImageColorMap::InterpolationMode::Nearest == cmap->interpolationMode() );
 
                 bool colorMapContinuous = imgSettings.colorMapContinuous();
 
@@ -1159,11 +1140,12 @@ void renderImageHeader(
                     updateImageUniforms();
                 }
 
+                ImGui::SameLine(); helpMarker( "Render color map as either continuous or discrete" );
+
                 if ( ! colorMapContinuous )
                 {
                     int numColorMapLevels = static_cast<int>( imgSettings.colorMapQuantizationLevels() );
 
-                    //if ( mySliderS32( "Levels", &numColorMapLevels, 2, 256 ) )
                     ImGui::InputInt( "Color levels", &numColorMapLevels );
                     {
                         numColorMapLevels = std::min( std::max( numColorMapLevels, 2 ), 256 );
@@ -1171,268 +1153,237 @@ void renderImageHeader(
                         updateImageUniforms();
                     }
                     ImGui::SameLine(); helpMarker( "Number of image color map quantization levels" );
-
-//                    if ( ImGui::BeginCombo( "Levels", std::to_string( numColorMapLevels ).c_str() ) )
-//                    {
-//                        for ( uint32_t i = 1; i <= 256; ++i )
-//                        {
-//                            const bool isSelected = ( numColorMapLevels == i );
-//                            if ( ImGui::Selectable( std::to_string(i).c_str(), isSelected) )
-//                            {
-//                                numColorMapLevels = i;
-//                                imgSettings.setColorMapQuantizationLevels( numColorMapLevels );
-//                            }
-
-//                            if ( isSelected ) ImGui::SetItemDefaultFocus();
-//                        }
-
-//                        ImGui::EndCombo();
-//                    }
                 }
 
-
-                glm::vec3 hsvMods = imgSettings.colorMapHsvModFactors();
-                glm::ivec3 hsvModsInt = glm::ivec3{ 360.0f * hsvMods[0], 100.0f * hsvMods[1], 100.0f * hsvMods[2] };
-
-//                int hueMod = static_cast<int>( 360.0f * hsvMods[0] );
-//                int satMod = static_cast<int>( 100.0f * hsvMods[1] );
-//                int valMod = static_cast<int>( 100.0f * hsvMods[2] );
 
                 static constexpr int hue_min = 0;
                 static constexpr int hue_max = 360;
 
-                static constexpr int sv_min = 0;
-                static constexpr int sv_max = 100;
+                static constexpr int sat_min = 0;
+                static constexpr int sat_max = 100;
 
-                ImGui::Text( "Color adjustments:" );
+                static constexpr int val_min = 0;
+                static constexpr int val_max = 100;
 
-                ImGui::BeginGroup();
-//                ImGui::PushMultiItemsWidths(2, ImGui::CalcItemWidth());
+                ImGui::Spacing();
+                ImGui::Text( "HSV color adjustment:" );
+                /*
+                    if ( ImGuiKnobs::KnobInt(
+                            "Hue", glm::value_ptr(hsvModsInt), hue_min, hue_max, 1, "%i%",
+                            ImGuiKnobVariant_Stepped, 0,
+                            ImGuiKnobFlags_ValueTooltip | ImGuiKnobFlags_DragHorizontal, 12 ) )
+                    {
+                        imgSettings.setColorMapHueModFactor( hsvModsInt[0] / 360.0f );
+                        updateImageUniforms();
+                    }
 
-                if ( ImGuiKnobs::KnobInt( "Hue", glm::value_ptr(hsvModsInt), hue_min, hue_max, 1, "%i%",
-                    ImGuiKnobVariant_Stepped, 0,
-                    ImGuiKnobFlags_ValueTooltip | ImGuiKnobFlags_DragHorizontal, 12 ) )
+                    if ( ImGui::SliderScalarN( "Sat. & value", ImGuiDataType_S32, &(hsvModsInt[1]), 2, &sv_min, &sv_max ) )
+                    {
+                        //                    imgSettings.setColormapHsvModfactors( glm::vec3{hsvMods} / 360.0f );
+                        imgSettings.setColorMapSatModFactor( hsvModsInt[1] / 100.0f );
+                        imgSettings.setColorMapValModFactor( hsvModsInt[2] / 100.0f );
+                        updateImageUniforms();
+                    }
+
+                    ImGui::SameLine(); helpMarker( "Apply saturation and value adjustments to the color map" );
+*/
+
+                const int* hsv_mins[3] = { &hue_min, &sat_min, &val_min };
+                const int* hsv_maxs[3] = { &hue_max, &sat_max, &val_max };
+
+                const std::string h_format( "%d deg" );
+                const std::string s_format( "%d" );
+                const std::string v_format( "%d" );
+
+                const char* hsv_formats[3] = { h_format.c_str(), s_format.c_str(), v_format.c_str() };
+
+                if ( ImGui::SliderScalarN_multiComp( "HSV", ImGuiDataType_S32, glm::value_ptr(hsvModsInt), 3, reinterpret_cast<const void**>(hsv_mins), reinterpret_cast<const void**>(hsv_maxs), hsv_formats, 0 ) )
                 {
                     imgSettings.setColorMapHueModFactor( hsvModsInt[0] / 360.0f );
-                    updateImageUniforms();
-                }
-//                ImGui::PopItemWidth();
-
-//                ImGui::SameLine();
-
-                if ( ImGui::SliderScalarN( "Sat. & value", ImGuiDataType_S32, &(hsvModsInt[1]), 2, &sv_min, &sv_max ) )
-                {
-//                    imgSettings.setColormapHsvModfactors( glm::vec3{hsvMods} / 360.0f );
                     imgSettings.setColorMapSatModFactor( hsvModsInt[1] / 100.0f );
                     imgSettings.setColorMapValModFactor( hsvModsInt[2] / 100.0f );
                     updateImageUniforms();
                 }
-//                ImGui::PopItemWidth();
 
-                ImGui::SameLine(); helpMarker( "Apply saturation and value adjustments to the color map" );
-
-                ImGui::EndGroup();
-
-
-
-//                int hsv_mins[3] = {0, 0, 0};
-//                int hsv_maxs[3] = {360, 100, 100};
-//                const char* hsv_formats[3] = {"%d deg", "%d", "%d"};
-
-
-//                if ( ImGui::SliderScalarN_multiComp( "HSV", ImGuiDataType_S32, glm::value_ptr(hsvModsInt), 3, &hsv_mins, hsv_maxs, hsv_formats, 0 ) )
-//                {
-//                    imgSettings.setColorMapHueModFactor( hsvModsInt[0] / 360.0f );
-//                    imgSettings.setColorMapSatModFactor( hsvModsInt[1] / 100.0f );
-//                    imgSettings.setColorMapValModFactor( hsvModsInt[2] / 100.0f );
-//                    updateImageUniforms();
-//                }
-
-
-                /*
-                ImGui::Text( "Color adjustments:" );
-                ImGui::SameLine(); helpMarker( "Apply hue and saturation adjustments to the color map" );
-
-                if ( mySliderS32( "Hue", &hueMod, 0, 360, "%d deg" ) )
-                {
-                    imgSettings.setColorMapHueModFactor( hueMod / 360.0f );
-                    updateImageUniforms();
-                }
-
-                if ( mySliderS32( "Saturation", &satMod, 0, 100, "%d %" ) )
-                {
-                    imgSettings.setColorMapSatModFactor( satMod / 100.0f );
-                    updateImageUniforms();
-                }
-
-                if ( mySliderS32( "Value", &valMod, 0, 100, "%d %" ) )
-                {
-                    imgSettings.setColorMapValModFactor( valMod / 100.0f );
-                    updateImageUniforms();
-                }
-*/
-
-//                ImageColorMap::InterpolationMode interpMode = cmap->interpolationMode();
-//                const bool discreteCmap = ( ImageColorMap::InterpolationMode::Nearest == interpMode );
-
-//                if ( ImGui::Checkbox( "Discrete##DiscreteColorMap", &discreteCmap ) )
-//                {
-//                    cmap->setInterpolationMode(
-//                        discreteCmap
-//                        ? ImageColorMap::InterpolationMode::Nearest
-//                        : ImageColorMap::InterpolationMode::Linear );
-
-//                    updateImageColorMapInterpolationMode( cmapIndex );
-//                }
-//                ImGui::SameLine(); helpMarker( "Discrete" );
+                ImGui::TreePop();
             }
 
-//            ImGui::Dummy( ImVec2( 0.0f, 1.0f ) );
-
-
-            // Edge settings
-            ImGui::Spacing();
-            ImGui::Separator();
-            ImGui::Spacing();
-
-            // Show edges:
-            bool showEdges = imgSettings.showEdges();
-            if ( ImGui::Checkbox( "Show edges", &showEdges ) )
+            auto getImageColorMapInverted = [&imgSettings] ()
             {
-                imgSettings.setShowEdges( showEdges );
+                return imgSettings.isColorMapInverted();
+            };
+
+            auto getImageColorMapContinuous = [&imgSettings] ()
+            {
+                return imgSettings.colorMapContinuous();
+            };
+
+            auto getImageColorMapLevels = [&imgSettings] ()
+            {
+                return imgSettings.colorMapQuantizationLevels();
+            };
+
+            renderPaletteWindow(
+                std::string( "Select colormap for image '" + imgSettings.displayName() +
+                            "' (component " + std::to_string( imgSettings.activeComponent() ) + ")" ).c_str(),
+                showImageColormapWindow,
+                getNumImageColorMaps,
+                getImageColorMap,
+                getCurrentImageColormapIndex,
+                setCurrentImageColormapIndex,
+                getImageColorMapInverted,
+                getImageColorMapContinuous,
+                getImageColorMapLevels,
+                hsvMods,
+                updateImageUniforms );
+        }
+
+
+        // Edge settings
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        // Show edges:
+        bool showEdges = imgSettings.showEdges();
+        if ( ImGui::Checkbox( "Show edges", &showEdges ) )
+        {
+            imgSettings.setShowEdges( showEdges );
+            updateImageUniforms();
+        }
+        ImGui::SameLine(); helpMarker( "Show/hide the edges of the image (E)" );
+
+
+        ImGui::SetNextItemOpen( showEdges, ImGuiCond_Appearing );
+
+        if ( showEdges && ImGui::TreeNode( "Edge settings" ) )
+        {
+            // Recommend linear interpolation:
+            if ( InterpolationMode::NearestNeighbor == imgSettings.interpolationMode() )
+            {
+                ImGui::Text( "Note: Linear or cubic interpolation are recommended when showing edges." );
+                //                    imgSettings.setInterpolationMode( InterpolationMode::Linear );
+                //                    updateImageInterpolationMode();
+            }
+
+
+            // Threshold edges:
+            bool thresholdEdges = imgSettings.thresholdEdges();
+            if ( ImGui::Checkbox( "Hard edges", &thresholdEdges ) )
+            {
+                imgSettings.setThresholdEdges( thresholdEdges );
                 updateImageUniforms();
             }
-            ImGui::SameLine(); helpMarker( "Show/hide the edges of the image (E)" );
+            ImGui::SameLine(); helpMarker( "Apply thresholding to edge gradient magnitude to get hard edges" );
 
 
-            if ( showEdges )
+
+            //                // Windowed edges:
+            //                bool windowedEdges = imgSettings.windowedEdges();
+            //                if ( ImGui::Checkbox( "Compute edges after windowing", &windowedEdges ) )
+            //                {
+            //                    imgSettings.setWindowedEdges( windowedEdges );
+            //                    updateImageUniforms();
+            //                }
+            //                ImGui::SameLine();
+            //                HelpMarker( "Compute edges after applying windowing (width/level) to the image" );
+
+
+            // Use Sobel or Frei-Chen:
+            //                bool useFreiChen = imgSettings.useFreiChen();
+            //                if ( ImGui::Checkbox( "Frei-Chen filter", &useFreiChen ) )
+            //                {
+            //                    imgSettings.setUseFreiChen( useFreiChen );
+            //                    updateImageUniforms();
+            //                }
+            //                ImGui::SameLine();
+            //                HelpMarker( "Compute edges using Sobel or Frei-Chen convolution filters" );
+
+
+            // Overlay edges:
+            bool overlayEdges = imgSettings.overlayEdges();
+            if ( ImGui::Checkbox( "Overlay edges on image", &overlayEdges ) )
             {
-                // Recommend linear interpolation:
-                if ( InterpolationMode::NearestNeighbor == imgSettings.interpolationMode() )
+                if ( imgSettings.colormapEdges() )
                 {
-                    ImGui::Text( "Note: Linear or cubic interpolation are recommended when showing edges." );
-                    //                    imgSettings.setInterpolationMode( InterpolationMode::Linear );
-                    //                    updateImageInterpolationMode();
+                    // Do not allow edge overlay if edges are colormapped
+                    overlayEdges = false;
                 }
 
-
-                // Threshold edges:
-                bool thresholdEdges = imgSettings.thresholdEdges();
-                if ( ImGui::Checkbox( "Hard edges", &thresholdEdges ) )
-                {
-                    imgSettings.setThresholdEdges( thresholdEdges );
-                    updateImageUniforms();
-                }
-                ImGui::SameLine(); helpMarker( "Apply thresholding to edge gradient magnitude to get hard edges" );
-
-
-
-                //                // Windowed edges:
-                //                bool windowedEdges = imgSettings.windowedEdges();
-                //                if ( ImGui::Checkbox( "Compute edges after windowing", &windowedEdges ) )
-                //                {
-                //                    imgSettings.setWindowedEdges( windowedEdges );
-                //                    updateImageUniforms();
-                //                }
-                //                ImGui::SameLine();
-                //                HelpMarker( "Compute edges after applying windowing (width/level) to the image" );
-
-
-                // Use Sobel or Frei-Chen:
-                //                bool useFreiChen = imgSettings.useFreiChen();
-                //                if ( ImGui::Checkbox( "Frei-Chen filter", &useFreiChen ) )
-                //                {
-                //                    imgSettings.setUseFreiChen( useFreiChen );
-                //                    updateImageUniforms();
-                //                }
-                //                ImGui::SameLine();
-                //                HelpMarker( "Compute edges using Sobel or Frei-Chen convolution filters" );
-
-
-                // Overlay edges:
-                bool overlayEdges = imgSettings.overlayEdges();
-                if ( ImGui::Checkbox( "Overlay edges on image", &overlayEdges ) )
-                {
-                    if ( imgSettings.colormapEdges() )
-                    {
-                        // Do not allow edge overlay if edges are colormapped
-                        overlayEdges = false;
-                    }
-
-                    imgSettings.setOverlayEdges( overlayEdges );
-                    updateImageUniforms();
-                }
-                ImGui::SameLine(); helpMarker( "Overlay edges on top of the image" );
-
-
-                // Colormap the edges (always false if overlaying the edges or thresholding the edges):
-                if ( overlayEdges || thresholdEdges )
-                {
-                    imgSettings.setColormapEdges( false );
-                    updateImageUniforms();
-                }
-
-
-                bool colormapEdges = imgSettings.colormapEdges();
-
-                if ( ! overlayEdges && ! thresholdEdges )
-                {
-                    if ( ImGui::Checkbox( "Apply colormap to edges", &colormapEdges ) )
-                    {
-                        if ( overlayEdges )
-                        {
-                            colormapEdges = false;
-                        }
-
-                        imgSettings.setColormapEdges( colormapEdges );
-                        updateImageUniforms();
-                    }
-                    ImGui::SameLine(); helpMarker( "Apply the image colormap to image edges" );
-                }
-
-
-                if ( ! colormapEdges )
-                {
-                    glm::vec4 edgeColor{ imgSettings.edgeColor(), imgSettings.edgeOpacity() };
-
-                    if ( ImGui::ColorEdit4( "Edge color", glm::value_ptr( edgeColor ), sk_colorAlphaEditFlags ) )
-                    {
-                        imgSettings.setEdgeColor( edgeColor );
-                        imgSettings.setEdgeOpacity( static_cast<double>( edgeColor.a ) );
-                        updateImageUniforms();
-                    }
-                    ImGui::SameLine(); helpMarker( "Edge color and opacity" );
-                }
-                else
-                {
-                    // Cannot overlay edges with colormapping enabled
-                    imgSettings.setOverlayEdges( false );
-                    updateImageUniforms();
-                }
-
-
-                // Edge magnitude (only shown if thresholding edges):
-                if ( thresholdEdges )
-                {
-                    double edgeMag = imgSettings.edgeMagnitude();
-                    if ( mySliderF64( "Magnitude", &edgeMag, 0.01, 1.00 ) )
-                    {
-                        imgSettings.setEdgeMagnitude( edgeMag );
-                        updateImageUniforms();
-                    }
-                    ImGui::SameLine(); helpMarker( "Magnitude of threshold above which hard edges are shown" );
-                }
-                else
-                {
-                    double edgeMag = 1.0 - imgSettings.edgeMagnitude();
-                    if ( mySliderF64( "Scale", &edgeMag, 0.01, 1.00 ) )
-                    {
-                        imgSettings.setEdgeMagnitude( 1.0 - edgeMag );
-                        updateImageUniforms();
-                    }
-                    ImGui::SameLine(); helpMarker( "Scale applied to edge magnitude" );
-                }
+                imgSettings.setOverlayEdges( overlayEdges );
+                updateImageUniforms();
             }
+            ImGui::SameLine(); helpMarker( "Overlay edges on top of the image" );
+
+
+            // Colormap the edges (always false if overlaying the edges or thresholding the edges):
+            if ( overlayEdges || thresholdEdges )
+            {
+                imgSettings.setColormapEdges( false );
+                updateImageUniforms();
+            }
+
+
+            bool colormapEdges = imgSettings.colormapEdges();
+
+            if ( ! overlayEdges && ! thresholdEdges )
+            {
+                if ( ImGui::Checkbox( "Apply colormap to edges", &colormapEdges ) )
+                {
+                    if ( overlayEdges )
+                    {
+                        colormapEdges = false;
+                    }
+
+                    imgSettings.setColormapEdges( colormapEdges );
+                    updateImageUniforms();
+                }
+                ImGui::SameLine(); helpMarker( "Apply the image colormap to image edges" );
+            }
+
+
+            if ( ! colormapEdges )
+            {
+                glm::vec4 edgeColor{ imgSettings.edgeColor(), imgSettings.edgeOpacity() };
+
+                if ( ImGui::ColorEdit4( "Edge color", glm::value_ptr( edgeColor ), sk_colorAlphaEditFlags ) )
+                {
+                    imgSettings.setEdgeColor( edgeColor );
+                    imgSettings.setEdgeOpacity( static_cast<double>( edgeColor.a ) );
+                    updateImageUniforms();
+                }
+                ImGui::SameLine(); helpMarker( "Edge color and opacity" );
+            }
+            else
+            {
+                // Cannot overlay edges with colormapping enabled
+                imgSettings.setOverlayEdges( false );
+                updateImageUniforms();
+            }
+
+
+            // Edge magnitude (only shown if thresholding edges):
+            if ( thresholdEdges )
+            {
+                double edgeMag = imgSettings.edgeMagnitude();
+                if ( mySliderF64( "Magnitude", &edgeMag, 0.01, 1.00 ) )
+                {
+                    imgSettings.setEdgeMagnitude( edgeMag );
+                    updateImageUniforms();
+                }
+                ImGui::SameLine(); helpMarker( "Magnitude of threshold above which hard edges are shown" );
+            }
+            else
+            {
+                double edgeMag = 1.0 - imgSettings.edgeMagnitude();
+                if ( mySliderF64( "Scale", &edgeMag, 0.01, 1.00 ) )
+                {
+                    imgSettings.setEdgeMagnitude( 1.0 - edgeMag );
+                    updateImageUniforms();
+                }
+                ImGui::SameLine(); helpMarker( "Scale applied to edge magnitude" );
+            }
+
+            ImGui::TreePop();
         }
 
         ImGui::Spacing();

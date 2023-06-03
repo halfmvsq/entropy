@@ -1230,6 +1230,7 @@ void renderSettingsWindow(
             getImageColorMapInverted,
             getImageColorMapContinuous,
             getImageColorMapLevels,
+            glm::vec3{0.0f, 1.0f, 1.0f},
             updateMetricUniforms );
 
 
@@ -1250,6 +1251,7 @@ void renderSettingsWindow(
             metricParams.m_invertCmap,
             doQuantize,
             metricParams.m_cmapQuantizationLevels,
+            glm::vec3{ 0.0f, 1.0f, 1.0f },
             ImVec2( contentWidth, height ) );
 
         if ( ImGui::IsItemHovered() )

@@ -34,6 +34,7 @@ IMGUI_API bool paletteButton(
     bool inverted,
     bool quantize,
     int quantizationLevels,
+    const glm::vec3& hsvModFactors,
     const ImVec2& size );
 
 

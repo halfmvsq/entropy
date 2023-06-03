@@ -74,6 +74,9 @@ void renderPaletteWindow(
     const std::function< bool (void) >& getImageColorMapInverted,
     const std::function< bool (void) >& getImageColorMapContinuous,
     const std::function< int (void) >& getImageColorMapLevels,
+    const glm::vec3& hsvModFactors,
     const std::function< void (void) >& updateImageUniforms );
+
+void renderColorMapWindow();
 
 #endif // UI_WIDGETS_H

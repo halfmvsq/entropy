@@ -1,13 +1,14 @@
 #include "ui/ImGuiCustomControls.h"
 
+// File browser for ImGui:
+// We use the version in src/ui/imgui, since there are modifications to our local version
+// (compared the version on Github) that allow it to work on macOS.
+#include "ui/imgui/imgui-filebrowser/imfilebrowser.h"
+
 #include <imgui/imgui_internal.h>
 
-// File browser for ImGui:
-// We use the version in src/imgui, since there are modifications to our local version
-// (compared the version on Github) that allow it to work on macOS.
-#include "imgui/imgui-filebrowser/imfilebrowser.h"
-
 #include <glm/glm.hpp>
+#include <glm/gtx/color_space.hpp>
 
 // On Apple platforms, we must use the alternative ghc::filesystem,
 // because it is not fully implemented or supported prior to macOS 10.15.
@@ -26,6 +27,7 @@ namespace fs = std::filesystem;
 namespace fs = ghc::filesystem;
 #endif
 
+#include <iostream>
 
 namespace
 {
@@ -71,6 +73,7 @@ bool paletteButton(
     bool inverted,
     bool quantize,
     int quantizationLevels,
+    const glm::vec3& hsvModFactors,
     const ImVec2& size )
 {
     ImGuiWindow* window = GetCurrentWindow();
@@ -166,21 +169,36 @@ bool paletteButton(
                 index = colors.size() - 1 - index;
             }
 
+            glm::vec3 colorHsv = glm::hsvColor( glm::vec3{ colors[index] } );
+
+            colorHsv[0] += 360.0f * hsvModFactors[0];
+            colorHsv[0] = std::fmod( colorHsv[0], 360.0f );
+
+            colorHsv[1] *= hsvModFactors[1];
+            colorHsv[2] *= hsvModFactors[2];
+
+            const glm::vec3 colorRgb = glm::rgbColor( colorHsv );
+
             drawList->AddRectFilled(
                 ImVec2( minX, posMin.y ),
                 ImVec2( minX + step, posMax.y ),
 
-                IM_COL32( 255.0f * colors[index].r,
-                          255.0f * colors[index].g,
-                          255.0f * colors[index].b,
+                IM_COL32( 255.0f * colorRgb.r,
+                          255.0f * colorRgb.g,
+                          255.0f * colorRgb.b,
                           255.0f * alpha * colors[index].a ) );
         }
     };
 
     renderFilledRects( ImGui::GetStyle().Alpha );
-    drawList->AddRect( posMin, posMax, IM_COL32( 128.0f, 128.0f, 128.0f, 255.0f ), 0.0f, 0, 0.5f );
 
-    return true;
+    bool hovered, held;
+    bool pressed = ImGui::ButtonBehavior(bb, id, &hovered, &held, 0);
+
+    const ImU32 col = GetColorU32((held && hovered) ? ImGuiCol_ButtonActive : hovered ? ImGuiCol_ButtonHovered : ImGuiCol_Button);
+    drawList->AddRect( posMin, posMax, col, 0.0f, 0, 0.5f );
+
+    return pressed;
 }
 
 
