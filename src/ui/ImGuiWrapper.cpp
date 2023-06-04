@@ -55,7 +55,7 @@ ImFont* loadFont(
     // ImGui will take ownership of the font (and be responsible for deleting it), so make a copy:
     char* fontData = new char[fontFile.size()];
 
-    for ( size_t i = 0; i < fontFile.size(); ++i )
+    for ( std::size_t i = 0; i < fontFile.size(); ++i )
     {
         fontData[i] = fontFile.cbegin()[i];
     }
@@ -65,23 +65,23 @@ ImFont* loadFont(
     // Set font_cfg->FontDataOwnedByAtlas=false to keep ownership of data and it won't be freed.
 
     return ImGui::GetIO().Fonts->AddFontFromMemoryTTF(
-            static_cast<void*>( fontData ),
-            static_cast<int32_t>( fontFile.size() ),
-            static_cast<float>( fontSize ),
-            &fontConfig, glyphRange );
+        static_cast<void*>( fontData ),
+        static_cast<int32_t>( fontFile.size() ),
+        static_cast<float>( fontSize ),
+        &fontConfig, glyphRange );
 }
 
 }
 
 
 ImGuiWrapper::ImGuiWrapper(
-        GLFWwindow* window,
-        AppData& appData,
-        CallbackHandler& callbackHandler )
+    GLFWwindow* window,
+    AppData& appData,
+    CallbackHandler& callbackHandler )
     :
-      m_appData( appData ),
-      m_callbackHandler( callbackHandler ),
-      m_contentScale( 1.0f )
+    m_appData( appData ),
+    m_callbackHandler( callbackHandler ),
+    m_contentScale( 1.0f )
 {
     IMGUI_CHECKVERSION();
 
@@ -96,7 +96,7 @@ ImGuiWrapper::ImGuiWrapper(
     io.LogFilename = "logs/entropy_ui.log";
 
     io.ConfigDragClickToInputText = true;
-//    io.MouseDrawCursor = true;
+    //    io.MouseDrawCursor = true;
 
     /// @todo Add window option for unsaved document (a little dot) when project changes
 
@@ -134,33 +134,33 @@ ImGuiWrapper::~ImGuiWrapper()
 
 
 void ImGuiWrapper::setCallbacks(
-        std::function< void ( void ) > postEmptyGlfwEvent,
-        std::function< void ( void ) > readjustViewport,
-        std::function< void ( const uuids::uuid& viewUid ) > recenterView,
-        AllViewsRecenterType recenterCurrentViews,
-        std::function< bool ( void ) > getOverlayVisibility,
-        std::function< void ( bool ) > setOverlayVisibility,
-        std::function< void ( void ) > updateAllImageUniforms,
-        std::function< void ( const uuids::uuid& viewUid )> updateImageUniforms,
-        std::function< void ( const uuids::uuid& imageUid )> updateImageInterpolationMode,
-        std::function< void ( std::size_t cmapIndex )> updateImageColorMapInterpolationMode,
-        std::function< void ( size_t tableIndex ) > updateLabelColorTableTexture,
-        std::function< void ( const uuids::uuid& imageUid, size_t labelIndex ) > moveCrosshairsToSegLabelCentroid,
-        std::function< void ()> updateMetricUniforms,
-        std::function< glm::vec3 () > getWorldDeformedPos,
-        std::function< std::optional<glm::vec3> ( size_t imageIndex ) > getSubjectPos,
-        std::function< std::optional<glm::ivec3> ( size_t imageIndex ) > getVoxelPos,
-        std::function< void ( size_t imageIndex, const glm::vec3& subjectPos ) > setSubjectPos,
-        std::function< void ( size_t imageIndex, const glm::ivec3& voxelPos ) > setVoxelPos,
-        std::function< std::vector< double> ( size_t imageIndex, bool getOnlyActiveComponent ) > getImageValues,
-        std::function< std::optional<int64_t> ( size_t imageIndex ) > getSegLabel,
-        std::function< std::optional<uuids::uuid>( const uuids::uuid& matchingImageUid, const std::string& segDisplayName ) > createBlankSeg,
-        std::function< bool ( const uuids::uuid& segUid ) > clearSeg,
-        std::function< bool ( const uuids::uuid& segUid ) > removeSeg,
-        std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const SeedSegmentationType& ) > executeGraphCutsSeg,
-        std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const SeedSegmentationType& ) > executePoissonSeg,
-        std::function< bool ( const uuids::uuid& imageUid, bool locked ) > setLockManualImageTransformation,
-        std::function< void () > paintActiveSegmentationWithActivePolygon )
+    std::function< void ( void ) > postEmptyGlfwEvent,
+    std::function< void ( void ) > readjustViewport,
+    std::function< void ( const uuids::uuid& viewUid ) > recenterView,
+    AllViewsRecenterType recenterCurrentViews,
+    std::function< bool ( void ) > getOverlayVisibility,
+    std::function< void ( bool ) > setOverlayVisibility,
+    std::function< void ( void ) > updateAllImageUniforms,
+    std::function< void ( const uuids::uuid& viewUid )> updateImageUniforms,
+    std::function< void ( const uuids::uuid& imageUid )> updateImageInterpolationMode,
+    std::function< void ( std::size_t cmapIndex )> updateImageColorMapInterpolationMode,
+    std::function< void ( std::size_t tableIndex ) > updateLabelColorTableTexture,
+    std::function< void ( const uuids::uuid& imageUid, std::size_t labelIndex ) > moveCrosshairsToSegLabelCentroid,
+    std::function< void ()> updateMetricUniforms,
+    std::function< glm::vec3 () > getWorldDeformedPos,
+    std::function< std::optional<glm::vec3> ( std::size_t imageIndex ) > getSubjectPos,
+    std::function< std::optional<glm::ivec3> ( std::size_t imageIndex ) > getVoxelPos,
+    std::function< void ( std::size_t imageIndex, const glm::vec3& subjectPos ) > setSubjectPos,
+    std::function< void ( std::size_t imageIndex, const glm::ivec3& voxelPos ) > setVoxelPos,
+    std::function< std::vector< double> ( std::size_t imageIndex, bool getOnlyActiveComponent ) > getImageValues,
+    std::function< std::optional<int64_t> ( std::size_t imageIndex ) > getSegLabel,
+    std::function< std::optional<uuids::uuid>( const uuids::uuid& matchingImageUid, const std::string& segDisplayName ) > createBlankSeg,
+    std::function< bool ( const uuids::uuid& segUid ) > clearSeg,
+    std::function< bool ( const uuids::uuid& segUid ) > removeSeg,
+    std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const SeedSegmentationType& ) > executeGraphCutsSeg,
+    std::function< bool ( const uuids::uuid& imageUid, const uuids::uuid& seedSegUid, const SeedSegmentationType& ) > executePoissonSeg,
+    std::function< bool ( const uuids::uuid& imageUid, bool locked ) > setLockManualImageTransformation,
+    std::function< void () > paintActiveSegmentationWithActivePolygon )
 {
     m_postEmptyGlfwEvent = postEmptyGlfwEvent;
     m_readjustViewport = readjustViewport;
@@ -205,7 +205,7 @@ void ImGuiWrapper::storeFuture( const uuids::uuid& taskUid, std::future<AsyncUiT
     m_futures.emplace( taskUid, std::move(future) );
 
     spdlog::debug( "Storing future for UI task {}. Total number of UI task futures: {}",
-                   taskUid, m_futures.size() );
+                  taskUid, m_futures.size() );
 }
 
 void ImGuiWrapper::addTaskToIsosurfaceGpuMeshGenerationQueue( const uuids::uuid& taskUid )
@@ -246,7 +246,7 @@ void ImGuiWrapper::generateIsosurfaceMeshGpuRecords()
         m_futures.erase( it );
 
         if ( AsyncUiTasks::IsosurfaceMeshGeneration != value.task ||
-             false == value.success ||
+            false == value.success ||
             ! value.imageUid || ! value.imageComponent || ! value.objectUid )
         {
             spdlog::error( "Failed task {}", taskUid );
@@ -254,7 +254,7 @@ void ImGuiWrapper::generateIsosurfaceMeshGpuRecords()
         }
 
         spdlog::info( "Task {}: Start generating GPU mesh for isosurface {} ",
-                      taskUid, *value.objectUid );
+                     taskUid, *value.objectUid );
 
         // Get the isosurface associated with this task
         const Isosurface* surface = m_appData.isosurface(
@@ -263,7 +263,7 @@ void ImGuiWrapper::generateIsosurfaceMeshGpuRecords()
         if ( ! surface )
         {
             spdlog::error( "Null isosurface for isosurface {} of image {}",
-                           *value.objectUid, *value.imageUid );
+                          *value.objectUid, *value.imageUid );
             continue;
         }
 
@@ -272,7 +272,7 @@ void ImGuiWrapper::generateIsosurfaceMeshGpuRecords()
         if ( ! cpuMeshRecord )
         {
             spdlog::error( "Null CPU mesh record for isosurface {} of image {}",
-                           *value.objectUid, *value.imageUid );
+                          *value.objectUid, *value.imageUid );
             continue;
         }
 
@@ -353,31 +353,31 @@ void ImGuiWrapper::initializeFonts()
     const float cousineFontSize = 14.0f;
 
     myImFormatString( cousineFontConfig.Name, IM_ARRAYSIZE(cousineFontConfig.Name),
-                      "%s, %.0fpx", "Cousine Regular", cousineFontSize );
+                     "%s, %.0fpx", "Cousine Regular", cousineFontSize );
 
     ImFontConfig helveticaFontConfig;
     const float helveticaFontSize = 16.0f;
 
     myImFormatString( helveticaFontConfig.Name, IM_ARRAYSIZE(helveticaFontConfig.Name),
-                      "%s, %.0fpx", "Helvetica Neue Light", helveticaFontSize );
+                     "%s, %.0fpx", "Helvetica Neue Light", helveticaFontSize );
 
     ImFontConfig spaceGroteskFontConfig;
     const float spaceGroteskFontSize = 16.0f;
 
     myImFormatString( spaceGroteskFontConfig.Name, IM_ARRAYSIZE(spaceGroteskFontConfig.Name),
-                      "%s, %.0fpx", "Space Grotesk Light", spaceGroteskFontSize );
+                     "%s, %.0fpx", "Space Grotesk Light", spaceGroteskFontSize );
 
     ImFontConfig sfMonoFontConfig;
     const float sfMonoFontSize = 14.0f;
 
     myImFormatString( sfMonoFontConfig.Name, IM_ARRAYSIZE(sfMonoFontConfig.Name),
-                      "%s, %.0fpx", "SF Mono Regular", sfMonoFontSize );
+                     "%s, %.0fpx", "SF Mono Regular", sfMonoFontSize );
 
     ImFontConfig sfProFontConfig;
     const float sfProFontSize = 16.0f;
 
     myImFormatString( sfProFontConfig.Name, IM_ARRAYSIZE(sfProFontConfig.Name),
-                      "%s, %.0fpx", "SF Pro Regular", sfProFontSize );
+                     "%s, %.0fpx", "SF Pro Regular", sfProFontSize );
 
     // Merge in icons from Fork Awesome:
     ImFontConfig forkAwesomeFontConfig;
@@ -387,7 +387,7 @@ void ImGuiWrapper::initializeFonts()
     const float forkAwesomeFontSize = 14.0f;
 
     myImFormatString( forkAwesomeFontConfig.Name, IM_ARRAYSIZE(forkAwesomeFontConfig.Name),
-                      "%s, %.0fpx", "Fork Awesome", forkAwesomeFontSize );
+                     "%s, %.0fpx", "Fork Awesome", forkAwesomeFontSize );
 
     /// @see For details about Fork Awesome fonts: https://forkaweso.me/Fork-Awesome/icons/
     static const ImWchar forkAwesomeIconGlyphRange[] = { ICON_MIN_FK, ICON_MAX_FK, 0 };
@@ -404,8 +404,8 @@ void ImGuiWrapper::initializeFonts()
     // Please handle those errors in your application (e.g. use an assertion, or display an error and quit).
     // The fonts will be rasterized at a given size (w/ oversampling) and stored into a texture when
     // calling ImFontAtlas::Build()/GetTexDataAsXXXX(), which ImGui_ImplXXXX_NewFrame below will call.
-/// @todo use Freetype Rasterizer and Small Font Sizes
-   
+    /// @todo use Freetype Rasterizer and Small Font Sizes
+
     ImFont* cousineFontPtr = loadFont( cousineFontPath, cousineFontConfig, m_contentScale * cousineFontSize, nullptr );
     ImFont* fork1Ptr = loadFont( forkAwesomeFontPath, forkAwesomeFontConfig, m_contentScale * forkAwesomeFontSize, forkAwesomeIconGlyphRange );
 
@@ -443,7 +443,7 @@ void ImGuiWrapper::initializeFonts()
     {
         spdlog::error( "Unable to load font {}", forkAwesomeFontPath );
     }
-       
+
     if ( spaceFontPtr && fork3Ptr )
     {
         m_appData.guiData().m_fonts[spaceGroteskFontPath] = spaceFontPtr;
@@ -454,7 +454,7 @@ void ImGuiWrapper::initializeFonts()
     {
         spdlog::error( "Unable to load font {}", forkAwesomeFontPath );
     }
-       
+
     if ( sfMonoFontPtr && fork4Ptr )
     {
         m_appData.guiData().m_fonts[sfMonoFontPath] = sfMonoFontPtr;
@@ -465,7 +465,7 @@ void ImGuiWrapper::initializeFonts()
     {
         spdlog::error( "Unable to load font {}", forkAwesomeFontPath );
     }
-       
+
     if ( sfProFontPtr && fork5Ptr )
     {
         m_appData.guiData().m_fonts[sfProFontPath] = sfProFontPtr;
@@ -481,7 +481,7 @@ void ImGuiWrapper::initializeFonts()
 }
 
 
-std::pair<const char*, const char*> ImGuiWrapper::getImageDisplayAndFileNames( size_t imageIndex ) const
+std::pair<const char*, const char*> ImGuiWrapper::getImageDisplayAndFileNames( std::size_t imageIndex ) const
 {
     static const std::string s_empty( "<unknown>" );
 
@@ -508,7 +508,7 @@ void ImGuiWrapper::render()
     /// @todo Move these functions elsewhere
 
     /// @todo remove this
-    auto getActiveImageIndex = [this] () -> size_t
+    auto getActiveImageIndex = [this] () -> std::size_t
     {
         if ( const auto imageUid = m_appData.activeImageUid() )
         {
@@ -522,7 +522,7 @@ void ImGuiWrapper::render()
         return 0;
     };
 
-    auto setActiveImageIndex = [this] ( size_t index )
+    auto setActiveImageIndex = [this] ( std::size_t index )
     {
         if ( const auto imageUid = m_appData.imageUid( index ) )
         {
@@ -537,7 +537,7 @@ void ImGuiWrapper::render()
         }
     };
 
-    auto getImageHasActiveSeg = [this] ( size_t index ) -> bool
+    auto getImageHasActiveSeg = [this] ( std::size_t index ) -> bool
     {
         if ( const auto imageUid = m_appData.imageUid( index ) )
         {
@@ -550,7 +550,7 @@ void ImGuiWrapper::render()
         }
     };
 
-    auto setImageHasActiveSeg = [this] ( size_t index, bool set )
+    auto setImageHasActiveSeg = [this] ( std::size_t index, bool set )
     {
         if ( const auto imageUid = m_appData.imageUid( index ) )
         {
@@ -579,12 +579,12 @@ void ImGuiWrapper::render()
     };
 
     /// @todo remove this
-    auto getNumImageColorMaps = [this] () -> size_t
+    auto getNumImageColorMaps = [this] () -> std::size_t
     {
         return m_appData.numImageColorMaps();
     };
 
-    auto getImageColorMap = [this] ( size_t cmapIndex ) -> ImageColorMap*
+    auto getImageColorMap = [this] ( std::size_t cmapIndex ) -> ImageColorMap*
     {
         if ( const auto cmapUid = m_appData.imageColorMapUid( cmapIndex ) )
         {
@@ -593,7 +593,7 @@ void ImGuiWrapper::render()
         return nullptr;
     };
 
-    auto getLabelTable = [this] ( size_t tableIndex ) -> ParcellationLabelTable*
+    auto getLabelTable = [this] ( std::size_t tableIndex ) -> ParcellationLabelTable*
     {
         if ( const auto tableUid = m_appData.labelTableUid( tableIndex ) )
         {
@@ -602,7 +602,7 @@ void ImGuiWrapper::render()
         return nullptr;
     };
 
-    auto getImageIsVisibleSetting = [this] ( size_t imageIndex ) -> bool
+    auto getImageIsVisibleSetting = [this] ( std::size_t imageIndex ) -> bool
     {
         if ( const auto imageUid = m_appData.imageUid( imageIndex ) )
         {
@@ -614,7 +614,7 @@ void ImGuiWrapper::render()
         return false;
     };
 
-    auto getImageIsActive = [this] ( size_t imageIndex ) -> bool
+    auto getImageIsActive = [this] ( std::size_t imageIndex ) -> bool
     {
         if ( const auto imageUid = m_appData.imageUid( imageIndex ) )
         {
@@ -680,15 +680,15 @@ void ImGuiWrapper::render()
     };
 
     auto setViewCameraRotation = [this] (
-            const uuids::uuid& viewUid,
-            const glm::quat& camera_T_world_rotationDelta )
+                                     const uuids::uuid& viewUid,
+                                     const glm::quat& camera_T_world_rotationDelta )
     {
         m_callbackHandler.doCameraRotate3d( viewUid, camera_T_world_rotationDelta );
     };
 
     auto setViewCameraDirection = [this] (
-            const uuids::uuid& viewUid,
-            const glm::vec3& worldFwdDirection )
+                                      const uuids::uuid& viewUid,
+                                      const glm::vec3& worldFwdDirection )
     {
         m_callbackHandler.handleSetViewForwardDirection( viewUid, worldFwdDirection );
     };
@@ -701,11 +701,11 @@ void ImGuiWrapper::render()
     };
 
     auto getObliqueViewDirections = [this] ( const uuids::uuid& viewUidToExclude )
-            -> std::vector< glm::vec3 >
+        -> std::vector< glm::vec3 >
     {
         std::vector< glm::vec3 > obliqueViewDirections;
 
-        for ( size_t i = 0; i < m_appData.windowData().numLayouts(); ++i )
+        for ( std::size_t i = 0; i < m_appData.windowData().numLayouts(); ++i )
         {
             const Layout* layout = m_appData.windowData().layout( i );
             if ( ! layout ) continue;
@@ -718,8 +718,8 @@ void ImGuiWrapper::render()
                 if ( ! camera::looksAlongOrthogonalAxis( view.second->camera() ) )
                 {
                     obliqueViewDirections.emplace_back(
-                                camera::worldDirection( view.second->camera(),
-                                                        Directions::View::Front ) );
+                        camera::worldDirection( view.second->camera(),
+                                               Directions::View::Front ) );
                 }
             }
         }
@@ -807,15 +807,15 @@ void ImGuiWrapper::render()
         if ( m_appData.guiData().m_showSegmentationsWindow )
         {
             renderSegmentationPropertiesWindow(
-                        m_appData,
-                        getLabelTable,
-                        m_updateImageUniforms,
-                        m_updateLabelColorTableTexture,
-                        m_moveCrosshairsToSegLabelCentroid,
-                        m_createBlankSeg,
-                        m_clearSeg,
-                        m_removeSeg,
-                        m_recenterAllViews );
+                m_appData,
+                getLabelTable,
+                m_updateImageUniforms,
+                m_updateLabelColorTableTexture,
+                m_moveCrosshairsToSegLabelCentroid,
+                m_createBlankSeg,
+                m_clearSeg,
+                m_removeSeg,
+                m_recenterAllViews );
         }
 
         if ( m_appData.guiData().m_showLandmarksWindow )
@@ -826,10 +826,10 @@ void ImGuiWrapper::render()
         if ( m_appData.guiData().m_showAnnotationsWindow )
         {
             renderAnnotationWindow(
-                        m_appData,
-                        setViewCameraDirection,
-                        m_paintActiveSegmentationWithActivePolygon,
-                        m_recenterAllViews );
+                m_appData,
+                setViewCameraDirection,
+                m_paintActiveSegmentationWithActivePolygon,
+                m_recenterAllViews );
         }
 
         if ( m_appData.guiData().m_showOpacityBlenderWindow )
@@ -838,32 +838,32 @@ void ImGuiWrapper::render()
         }
 
         renderModeToolbar(
-                    m_appData,
-                    getMouseMode,
-                    setMouseMode,
-                    m_readjustViewport,
-                    m_recenterAllViews,
-                    m_getOverlayVisibility,
-                    m_setOverlayVisibility,
-                    cycleViewLayout,
+            m_appData,
+            getMouseMode,
+            setMouseMode,
+            m_readjustViewport,
+            m_recenterAllViews,
+            m_getOverlayVisibility,
+            m_setOverlayVisibility,
+            cycleViewLayout,
 
-                    m_appData.numImages(),
-                    std::bind( &ImGuiWrapper::getImageDisplayAndFileNames, this, _1 ),
-                    getActiveImageIndex,
-                    setActiveImageIndex );
+            m_appData.numImages(),
+            std::bind( &ImGuiWrapper::getImageDisplayAndFileNames, this, _1 ),
+            getActiveImageIndex,
+            setActiveImageIndex );
 
         renderSegToolbar(
-                    m_appData,
-                    m_appData.numImages(),
-                    std::bind( &ImGuiWrapper::getImageDisplayAndFileNames, this, _1 ),
-                    getActiveImageIndex,
-                    setActiveImageIndex,
-                    getImageHasActiveSeg,
-                    setImageHasActiveSeg,
-                    m_readjustViewport,
-                    m_updateImageUniforms,
-                    m_executeGraphCutsSeg,
-                    m_executePoissonSeg );
+            m_appData,
+            m_appData.numImages(),
+            std::bind( &ImGuiWrapper::getImageDisplayAndFileNames, this, _1 ),
+            getActiveImageIndex,
+            setActiveImageIndex,
+            getImageHasActiveSeg,
+            setImageHasActiveSeg,
+            m_readjustViewport,
+            m_updateImageUniforms,
+            m_executeGraphCutsSeg,
+            m_executePoissonSeg );
 
         annotationToolbar( m_paintActiveSegmentationWithActivePolygon );
     }
@@ -888,60 +888,60 @@ void ImGuiWrapper::render()
             wholeWindowHeight );
 
         renderViewSettingsComboWindow(
-                    currentLayout.uid(),
-                    mindowFrameBounds,
-                    currentLayout.uiControls(),
-                    true,
-                    false,
+            currentLayout.uid(),
+            mindowFrameBounds,
+            currentLayout.uiControls(),
+            true,
+            false,
 
-                    m_appData.windowData().getContentScaleRatios(),
+            m_appData.windowData().getContentScaleRatios(),
 
-                    m_appData.numImages(),
-                    [this, &currentLayout] ( size_t index ) { return currentLayout.isImageRendered( m_appData, index ); },
-                    [this, &currentLayout] ( size_t index, bool visible ) { currentLayout.setImageRendered( m_appData, index, visible ); },
+            m_appData.numImages(),
+            [this, &currentLayout] ( std::size_t index ) { return currentLayout.isImageRendered( m_appData, index ); },
+            [this, &currentLayout] ( std::size_t index, bool visible ) { currentLayout.setImageRendered( m_appData, index, visible ); },
 
-                    [this, &currentLayout] ( size_t index ) { return currentLayout.isImageUsedForMetric( m_appData, index ); },
-                    [this, &currentLayout] ( size_t index, bool visible ) { currentLayout.setImageUsedForMetric( m_appData, index, visible ); },
-                    std::bind( &ImGuiWrapper::getImageDisplayAndFileNames, this, _1 ),
+            [this, &currentLayout] ( std::size_t index ) { return currentLayout.isImageUsedForMetric( m_appData, index ); },
+            [this, &currentLayout] ( std::size_t index, bool visible ) { currentLayout.setImageUsedForMetric( m_appData, index, visible ); },
+            std::bind( &ImGuiWrapper::getImageDisplayAndFileNames, this, _1 ),
 
-                    getImageIsVisibleSetting,
-                    getImageIsActive,
+            getImageIsVisibleSetting,
+            getImageIsActive,
 
-                    currentLayout.viewType(),
-                    currentLayout.renderMode(),
-                    currentLayout.intensityProjectionMode(),
+            currentLayout.viewType(),
+            currentLayout.renderMode(),
+            currentLayout.intensityProjectionMode(),
 
-                    [&currentLayout] ( const ViewType& viewType ) { return currentLayout.setViewType( viewType ); },
-                    [&currentLayout] ( const camera::ViewRenderMode& renderMode ) { return currentLayout.setRenderMode( renderMode ); },
-                    [&currentLayout] ( const camera::IntensityProjectionMode& ipMode ) { return currentLayout.setIntensityProjectionMode( ipMode ); },
+            [&currentLayout] ( const ViewType& viewType ) { return currentLayout.setViewType( viewType ); },
+            [&currentLayout] ( const camera::ViewRenderMode& renderMode ) { return currentLayout.setRenderMode( renderMode ); },
+            [&currentLayout] ( const camera::IntensityProjectionMode& ipMode ) { return currentLayout.setIntensityProjectionMode( ipMode ); },
 
-                    [this]() { m_recenterAllViews( sk_recenterCrosshairs, sk_doNotRecenterOnCurrentCrosshairsPosition, sk_resetObliqueOrientation, sk_resetZoom ); },
-                    nullptr,
+            [this]() { m_recenterAllViews( sk_recenterCrosshairs, sk_doNotRecenterOnCurrentCrosshairsPosition, sk_resetObliqueOrientation, sk_resetZoom ); },
+            nullptr,
 
-                    [this]() { return m_appData.renderData().m_intensityProjectionSlabThickness; },
-                    [this]( float thickness ) { m_appData.renderData().m_intensityProjectionSlabThickness = thickness; },
-                    [this]() { return m_appData.renderData().m_doMaxExtentIntensityProjection; },
-                    [this]( bool set ) { m_appData.renderData().m_doMaxExtentIntensityProjection = set; },
+            [this]() { return m_appData.renderData().m_intensityProjectionSlabThickness; },
+            [this]( float thickness ) { m_appData.renderData().m_intensityProjectionSlabThickness = thickness; },
+            [this]() { return m_appData.renderData().m_doMaxExtentIntensityProjection; },
+            [this]( bool set ) { m_appData.renderData().m_doMaxExtentIntensityProjection = set; },
 
-                    [this]() { return m_appData.renderData().m_xrayIntensityWindow; },
-                    [this]( float window ) { m_appData.renderData().m_xrayIntensityWindow = window; },
-                    [this]() { return m_appData.renderData().m_xrayIntensityLevel; },
-                    [this]( float level ) { m_appData.renderData().m_xrayIntensityLevel = level; },
-                    [this]() { return m_appData.renderData().m_xrayEnergyKeV; },
-                    [this]( float energy ) { m_appData.renderData().setXrayEnergy( energy ); }
-        );
+            [this]() { return m_appData.renderData().m_xrayIntensityWindow; },
+            [this]( float window ) { m_appData.renderData().m_xrayIntensityWindow = window; },
+            [this]() { return m_appData.renderData().m_xrayIntensityLevel; },
+            [this]( float level ) { m_appData.renderData().m_xrayIntensityLevel = level; },
+            [this]() { return m_appData.renderData().m_xrayEnergyKeV; },
+            [this]( float energy ) { m_appData.renderData().setXrayEnergy( energy ); }
+            );
 
         renderViewOrientationToolWindow(
-                    currentLayout.uid(),
-                    mindowFrameBounds,
-                    currentLayout.uiControls(),
-                    true,
-                    currentLayout.viewType(),
-                    [&getViewCameraRotation, &currentLayout] () { return getViewCameraRotation( currentLayout.uid() ); },
-                    [&setViewCameraRotation, &currentLayout] ( const glm::quat& q ) { return setViewCameraRotation( currentLayout.uid(), q ); },
-                    [&setViewCameraDirection, &currentLayout] ( const glm::vec3& dir ) { return setViewCameraDirection( currentLayout.uid(), dir ); },
-                    [&getViewNormal, &currentLayout] () { return getViewNormal( currentLayout.uid() ); },
-                    getObliqueViewDirections );
+            currentLayout.uid(),
+            mindowFrameBounds,
+            currentLayout.uiControls(),
+            true,
+            currentLayout.viewType(),
+            [&getViewCameraRotation, &currentLayout] () { return getViewCameraRotation( currentLayout.uid() ); },
+            [&setViewCameraRotation, &currentLayout] ( const glm::quat& q ) { return setViewCameraRotation( currentLayout.uid(), q ); },
+            [&setViewCameraDirection, &currentLayout] ( const glm::vec3& dir ) { return setViewCameraDirection( currentLayout.uid(), dir ); },
+            [&getViewNormal, &currentLayout] () { return getViewNormal( currentLayout.uid() ); },
+            getObliqueViewDirections );
     }
     else if ( m_appData.guiData().m_renderUiOverlays && ! currentLayout.isLightbox() )
     {
@@ -978,59 +978,59 @@ void ImGuiWrapper::render()
                 wholeWindowHeight );
 
             renderViewSettingsComboWindow(
-                        viewUid,
-                        mindowFrameBounds,
-                        view->uiControls(),
-                        false,
-                        true,
+                viewUid,
+                mindowFrameBounds,
+                view->uiControls(),
+                false,
+                true,
 
-                        m_appData.windowData().getContentScaleRatios(),
+                m_appData.windowData().getContentScaleRatios(),
 
-                        m_appData.numImages(),
-                        [this, view] ( size_t index ) { return view->isImageRendered( m_appData, index ); },
-                        [this, view] ( size_t index, bool visible ) { view->setImageRendered( m_appData, index, visible ); },
+                m_appData.numImages(),
+                [this, view] ( std::size_t index ) { return view->isImageRendered( m_appData, index ); },
+                [this, view] ( std::size_t index, bool visible ) { view->setImageRendered( m_appData, index, visible ); },
 
-                        [this, view] ( size_t index ) { return view->isImageUsedForMetric( m_appData, index ); },
-                        [this, view] ( size_t index, bool visible ) { view->setImageUsedForMetric( m_appData, index, visible ); },
+                [this, view] ( std::size_t index ) { return view->isImageUsedForMetric( m_appData, index ); },
+                [this, view] ( std::size_t index, bool visible ) { view->setImageUsedForMetric( m_appData, index, visible ); },
 
-                        std::bind( &ImGuiWrapper::getImageDisplayAndFileNames, this, _1 ),
-                        getImageIsVisibleSetting,
-                        getImageIsActive,
+                std::bind( &ImGuiWrapper::getImageDisplayAndFileNames, this, _1 ),
+                getImageIsVisibleSetting,
+                getImageIsActive,
 
-                        view->viewType(),
-                        view->renderMode(),
-                        view->intensityProjectionMode(),
+                view->viewType(),
+                view->renderMode(),
+                view->intensityProjectionMode(),
 
-                        setViewType,
-                        setRenderMode,
-                        setIntensityProjectionMode,
+                setViewType,
+                setRenderMode,
+                setIntensityProjectionMode,
 
-                        recenter,
-                        applyImageSelectionAndRenderModesToAllViews,
+                recenter,
+                applyImageSelectionAndRenderModesToAllViews,
 
-                        [this]() { return m_appData.renderData().m_intensityProjectionSlabThickness; },
-                        [this]( float thickness ) { m_appData.renderData().m_intensityProjectionSlabThickness = thickness; },
-                        [this]() { return m_appData.renderData().m_doMaxExtentIntensityProjection; },
-                        [this]( bool set ) { m_appData.renderData().m_doMaxExtentIntensityProjection = set; },
+                [this]() { return m_appData.renderData().m_intensityProjectionSlabThickness; },
+                [this]( float thickness ) { m_appData.renderData().m_intensityProjectionSlabThickness = thickness; },
+                [this]() { return m_appData.renderData().m_doMaxExtentIntensityProjection; },
+                [this]( bool set ) { m_appData.renderData().m_doMaxExtentIntensityProjection = set; },
 
-                        [this]() { return m_appData.renderData().m_xrayIntensityWindow; },
-                        [this]( float window ) { m_appData.renderData().m_xrayIntensityWindow = window; },
-                        [this]() { return m_appData.renderData().m_xrayIntensityLevel; },
-                        [this]( float level ) { m_appData.renderData().m_xrayIntensityLevel = level; },
-                        [this]() { return m_appData.renderData().m_xrayEnergyKeV; },
-                        [this]( float energy ) { m_appData.renderData().setXrayEnergy( energy ); } );
+                [this]() { return m_appData.renderData().m_xrayIntensityWindow; },
+                [this]( float window ) { m_appData.renderData().m_xrayIntensityWindow = window; },
+                [this]() { return m_appData.renderData().m_xrayIntensityLevel; },
+                [this]( float level ) { m_appData.renderData().m_xrayIntensityLevel = level; },
+                [this]() { return m_appData.renderData().m_xrayEnergyKeV; },
+                [this]( float energy ) { m_appData.renderData().setXrayEnergy( energy ); } );
 
             renderViewOrientationToolWindow(
-                    viewUid,
-                    mindowFrameBounds,
-                    view->uiControls(),
-                    false,
-                    view->viewType(),
-                    [&getViewCameraRotation, &viewUid] () { return getViewCameraRotation( viewUid ); },
-                    [&setViewCameraRotation, &viewUid] ( const glm::quat& q ) { return setViewCameraRotation( viewUid, q ); },
-                    [&setViewCameraDirection, &viewUid] ( const glm::vec3& dir ) { return setViewCameraDirection( viewUid, dir ); },
-                    [&getViewNormal, &viewUid] () { return getViewNormal( viewUid ); },
-                    getObliqueViewDirections );
+                viewUid,
+                mindowFrameBounds,
+                view->uiControls(),
+                false,
+                view->viewType(),
+                [&getViewCameraRotation, &viewUid] () { return getViewCameraRotation( viewUid ); },
+                [&setViewCameraRotation, &viewUid] ( const glm::quat& q ) { return setViewCameraRotation( viewUid, q ); },
+                [&setViewCameraDirection, &viewUid] ( const glm::vec3& dir ) { return setViewCameraDirection( viewUid, dir ); },
+                [&getViewNormal, &viewUid] () { return getViewNormal( viewUid ); },
+                getObliqueViewDirections );
         }
     }
 

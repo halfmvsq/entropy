@@ -172,13 +172,13 @@ glm::vec3 View::updateImageSlice( const AppData& appData, const glm::vec3& world
     float worldCameraToPlaneDistance;
 
     if ( math::vectorPlaneIntersection(
-             worldCameraOrigin, worldCameraFront,
-             worldViewPlane, worldCameraToPlaneDistance ) )
+            worldCameraOrigin, worldCameraFront,
+            worldViewPlane, worldCameraToPlaneDistance ) )
     {
         camera::setWorldTarget(
-                    m_camera,
-                    worldCameraOrigin + worldCameraToPlaneDistance * worldCameraFront,
-                    std::nullopt );
+            m_camera,
+            worldCameraOrigin + worldCameraToPlaneDistance * worldCameraFront,
+            std::nullopt );
 
         warnCount = 0; // Reset warning counter
     }

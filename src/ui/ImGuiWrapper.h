@@ -44,16 +44,16 @@ public:
         std::function< void ( const uuids::uuid& viewUid ) > updateImageUniforms,
         std::function< void ( const uuids::uuid& imageUid ) > updateImageInterpolationMode,
         std::function< void ( std::size_t cmapUid ) > updateImageColorMapInterpolationMode,
-        std::function< void ( size_t tableIndex ) > updateLabelColorTableTexture,
-        std::function< void ( const uuids::uuid& imageUid, size_t labelIndex ) > moveCrosshairsToSegLabelCentroid,
+        std::function< void ( std::size_t tableIndex ) > updateLabelColorTableTexture,
+        std::function< void ( const uuids::uuid& imageUid, std::size_t labelIndex ) > moveCrosshairsToSegLabelCentroid,
         std::function< void ()> updateMetricUniforms,
         std::function< glm::vec3 () > getWorldDeformedPos,
-        std::function< std::optional<glm::vec3> ( size_t imageIndex ) > getSubjectPos,
-        std::function< std::optional<glm::ivec3> ( size_t imageIndex ) > getVoxelPos,
-        std::function< void ( size_t imageIndex, const glm::vec3& subjectPos ) > setSubjectPos,
-        std::function< void ( size_t imageIndex, const glm::ivec3& voxelPos ) > setVoxelPos,
-        std::function< std::vector< double > ( size_t imageIndex, bool getOnlyActiveComponent ) > getImageValues,
-        std::function< std::optional<int64_t> ( size_t imageIndex ) > getSegLabel,
+        std::function< std::optional<glm::vec3> ( std::size_t imageIndex ) > getSubjectPos,
+        std::function< std::optional<glm::ivec3> ( std::size_t imageIndex ) > getVoxelPos,
+        std::function< void ( std::size_t imageIndex, const glm::vec3& subjectPos ) > setSubjectPos,
+        std::function< void ( std::size_t imageIndex, const glm::ivec3& voxelPos ) > setVoxelPos,
+        std::function< std::vector< double > ( std::size_t imageIndex, bool getOnlyActiveComponent ) > getImageValues,
+        std::function< std::optional<int64_t> ( std::size_t imageIndex ) > getSegLabel,
         std::function< std::optional<uuids::uuid>( const uuids::uuid& matchingImageUid, const std::string& segDisplayName ) > createBlankSeg,
         std::function< bool ( const uuids::uuid& segUid ) > clearSeg,
         std::function< bool ( const uuids::uuid& segUid ) > removeSeg,
@@ -85,16 +85,16 @@ private:
     std::function< void ( const uuids::uuid& viewUid ) > m_updateImageUniforms = nullptr;
     std::function< void ( const uuids::uuid& viewUid ) > m_updateImageInterpolationMode = nullptr;
     std::function< void ( std::size_t cmapIndex ) > m_updateImageColorMapInterpolationMode = nullptr;
-    std::function< void ( size_t tableIndex ) > m_updateLabelColorTableTexture = nullptr;
-    std::function< void ( const uuids::uuid& imageUid, size_t labelIndex ) > m_moveCrosshairsToSegLabelCentroid = nullptr;
+    std::function< void ( std::size_t tableIndex ) > m_updateLabelColorTableTexture = nullptr;
+    std::function< void ( const uuids::uuid& imageUid, std::size_t labelIndex ) > m_moveCrosshairsToSegLabelCentroid = nullptr;
     std::function< void ( void ) > m_updateMetricUniforms = nullptr;
     std::function< glm::vec3 () > m_getWorldDeformedPos = nullptr;
-    std::function< std::optional<glm::vec3> ( size_t imageIndex ) > m_getSubjectPos = nullptr;
-    std::function< std::optional<glm::ivec3> ( size_t imageIndex ) > m_getVoxelPos = nullptr;
-    std::function< void ( size_t imageIndex, const glm::vec3& subjectPos ) > m_setSubjectPos = nullptr;
-    std::function< void ( size_t imageIndex, const glm::ivec3& voxelPos ) > m_setVoxelPos = nullptr;
-    std::function< std::vector< double > ( size_t imageIndex, bool getOnlyActiveComponent ) > m_getImageValues = nullptr;
-    std::function< std::optional<int64_t> ( size_t imageIndex ) > m_getSegLabel = nullptr;
+    std::function< std::optional<glm::vec3> ( std::size_t imageIndex ) > m_getSubjectPos = nullptr;
+    std::function< std::optional<glm::ivec3> ( std::size_t imageIndex ) > m_getVoxelPos = nullptr;
+    std::function< void ( std::size_t imageIndex, const glm::vec3& subjectPos ) > m_setSubjectPos = nullptr;
+    std::function< void ( std::size_t imageIndex, const glm::ivec3& voxelPos ) > m_setVoxelPos = nullptr;
+    std::function< std::vector< double > ( std::size_t imageIndex, bool getOnlyActiveComponent ) > m_getImageValues = nullptr;
+    std::function< std::optional<int64_t> ( std::size_t imageIndex ) > m_getSegLabel = nullptr;
     std::function< std::optional<uuids::uuid>( const uuids::uuid& matchingImageUid, const std::string& segDisplayName ) > m_createBlankSeg = nullptr;
     std::function< bool ( const uuids::uuid& segUid ) > m_clearSeg = nullptr;
     std::function< bool ( const uuids::uuid& segUid ) > m_removeSeg = nullptr;
@@ -139,7 +139,7 @@ private:
     void storeFuture( const uuids::uuid& taskUid, std::future<AsyncUiTaskValue> future );
 
 
-    std::pair<const char*, const char*> getImageDisplayAndFileNames( size_t imageIndex ) const;
+    std::pair<const char*, const char*> getImageDisplayAndFileNames( std::size_t imageIndex ) const;
 };
 
 #endif // IMGUI_WRAPPER_H

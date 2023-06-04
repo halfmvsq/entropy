@@ -207,7 +207,7 @@ Layout createTriLayout( std::function< ViewConvention () > conventionProvider )
 }
 
 
-Layout createTriTopBottomLayout( size_t numRows, std::function< ViewConvention () > conventionProvider )
+Layout createTriTopBottomLayout( std::size_t numRows, std::function< ViewConvention () > conventionProvider )
 {
     using namespace camera;
 
@@ -243,7 +243,7 @@ Layout createTriTopBottomLayout( size_t numRows, std::function< ViewConvention (
     ViewOffsetSetting offsetSetting;
     offsetSetting.m_offsetMode = ViewOffsetMode::None;
 
-    for ( size_t r = 0; r < numRows; ++r )
+    for ( std::size_t r = 0; r < numRows; ++r )
     {
         const float height = 2.0f / static_cast<float>( numRows );
         const float bottom = 1.0f - ( static_cast<float>( r + 1 ) ) * height;
@@ -325,8 +325,8 @@ Layout createTriTopBottomLayout( size_t numRows, std::function< ViewConvention (
 
 Layout createGridLayout(
         const ViewType& viewType,
-        size_t width,
-        size_t height,
+        std::size_t width,
+        std::size_t height,
         bool offsetViews,
         bool isLightbox,
         std::function< ViewConvention () > conventionProvider,
@@ -359,7 +359,7 @@ Layout createGridLayout(
     const float w = 2.0f / static_cast<float>( width );
     const float h = 2.0f / static_cast<float>( height );
 
-    size_t count = 0;
+    std::size_t count = 0;
 
     ViewOffsetSetting offsetSetting;
     offsetSetting.m_offsetImage = imageUidForLightbox;
@@ -373,6 +373,10 @@ Layout createGridLayout(
         else
         {
             offsetSetting.m_offsetMode = ViewOffsetMode::RelativeToImageScrolls;
+
+            // Need to offset according to reference image scrolls, since the crosshairs
+            // always move relative to the reference image
+//            offsetSetting.m_offsetMode = ViewOffsetMode::RelativeToRefImageScrolls;
         }
     }
     else
@@ -381,9 +385,9 @@ Layout createGridLayout(
     }
 
 
-    for ( size_t j = 0; j < height; ++j )
+    for ( std::size_t j = 0; j < height; ++j )
     {
-        for ( size_t i = 0; i < width; ++i )
+        for ( std::size_t i = 0; i < width; ++i )
         {
             const float l = -1.0f + static_cast<float>( i ) * w;
             const float b = -1.0f + static_cast<float>( j ) * h;
@@ -459,7 +463,7 @@ void WindowData::setupViews()
     m_layouts.emplace_back( createFourUpLayout( conventionProvider ) );
     m_layouts.emplace_back( createTriLayout( conventionProvider ) );
 
-    static constexpr size_t refImage = 0;
+    static constexpr std::size_t refImage = 0;
 
     m_layouts.emplace_back(
                 createGridLayout(
@@ -470,22 +474,30 @@ void WindowData::setupViews()
 }
 
 void WindowData::addGridLayout(
-        size_t width, size_t height, bool offsetViews, bool isLightbox,
-        size_t imageIndexForLightbox, const uuids::uuid& imageUidForLightbox )
+    const ViewType& viewType,
+    std::size_t width,
+    std::size_t height,
+    bool offsetViews,
+    bool isLightbox,
+    std::size_t imageIndexForLightbox,
+    const uuids::uuid& imageUidForLightbox )
 {
     auto conventionProvider = [this] () { return m_viewConvention; };
 
     m_layouts.emplace_back(
-                createGridLayout(
-                    ViewType::Axial, width, height, offsetViews, isLightbox,
-                    conventionProvider,
-                    imageIndexForLightbox, imageUidForLightbox ) );
+        createGridLayout(
+            viewType, width, height, offsetViews, isLightbox,
+            conventionProvider,
+            imageIndexForLightbox, imageUidForLightbox ) );
 
     updateAllViews();
 }
 
 void WindowData::addLightboxLayoutForImage(
-        size_t numSlices, size_t imageIndex, const uuids::uuid& imageUid )
+    const ViewType& viewType,
+    std::size_t numSlices,
+    std::size_t imageIndex,
+    const uuids::uuid& imageUid )
 {
     static constexpr bool k_offsetViews = true;
     static constexpr bool k_isLightbox = true;
@@ -494,11 +506,13 @@ void WindowData::addLightboxLayoutForImage(
     const auto div = std::div( static_cast<int>( numSlices ), w );
     const int h = div.quot + ( div.rem > 0 ? 1 : 0 );
 
-    addGridLayout( static_cast<size_t>( w ), static_cast<size_t>( h ),
-                   k_offsetViews, k_isLightbox, imageIndex, imageUid );
+    addGridLayout(
+        viewType,
+        static_cast<std::size_t>( w ), static_cast<std::size_t>( h ),
+        k_offsetViews, k_isLightbox, imageIndex, imageUid );
 }
 
-void WindowData::addAxCorSagLayout( size_t numImages )
+void WindowData::addAxCorSagLayout( std::size_t numImages )
 {
     auto conventionProvider = [this] () { return m_viewConvention; };
 
@@ -506,7 +520,7 @@ void WindowData::addAxCorSagLayout( size_t numImages )
     updateAllViews();
 }
 
-void WindowData::removeLayout( size_t index )
+void WindowData::removeLayout( std::size_t index )
 {
     if ( index >= m_layouts.size() ) return;
 
@@ -521,7 +535,7 @@ void WindowData::setDefaultRenderedImagesForLayout(
     std::list<uuids::uuid> renderedImages;
     std::list<uuids::uuid> metricImages;
 
-    size_t count = 0;
+    std::size_t count = 0;
 
     for ( const auto& uid : orderedImageUids )
     {
@@ -557,7 +571,7 @@ void WindowData::setDefaultRenderedImagesForAllLayouts( uuid_range_t orderedImag
     std::list<uuids::uuid> renderedImages;
     std::list<uuids::uuid> metricImages;
 
-    size_t count = 0;
+    std::size_t count = 0;
 
     for ( const auto& uid : orderedImageUids )
     {
@@ -757,7 +771,7 @@ size_t WindowData::currentLayoutIndex() const
     return m_currentLayout;
 }
 
-const Layout* WindowData::layout( size_t index ) const
+const Layout* WindowData::layout( std::size_t index ) const
 {
     if ( index < m_layouts.size() )
     {
@@ -776,7 +790,7 @@ Layout& WindowData::currentLayout()
     return m_layouts.at( m_currentLayout );
 }
 
-void WindowData::setCurrentLayoutIndex( size_t index )
+void WindowData::setCurrentLayoutIndex( std::size_t index )
 {
     if ( index >= m_layouts.size() ) return;
     m_currentLayout = index;

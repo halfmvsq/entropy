@@ -78,8 +78,12 @@ void renderAddLayoutModalPopup(
             const bool offsetViews = ( isLightbox );
 
             auto& wd = appData.windowData();
-            wd.addGridLayout( static_cast<size_t>(width), static_cast<size_t>(height),
-                             offsetViews, isLightbox, 0, *refUid );
+
+            wd.addGridLayout(
+                ViewType::Axial,
+                static_cast<std::size_t>(width), static_cast<std::size_t>(height),
+                offsetViews, isLightbox, 0, *refUid );
+
             wd.setCurrentLayoutIndex( wd.numLayouts() - 1 );
             wd.setDefaultRenderedImagesForLayout( wd.currentLayout(), appData.imageUidsOrdered() );
 

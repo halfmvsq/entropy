@@ -77,31 +77,41 @@ public:
     void setActiveViewUid( const std::optional<uuids::uuid>& viewUid );
 
     /// Number of layouts
-    size_t numLayouts() const; 
+    std::size_t numLayouts() const;
 
     /// Current layout index
-    size_t currentLayoutIndex() const;
+    std::size_t currentLayoutIndex() const;
 
-    void setCurrentLayoutIndex( size_t index );
+    void setCurrentLayoutIndex( std::size_t index );
     void cycleCurrentLayout( int step );
 
-    const Layout* layout( size_t index ) const;
+    const Layout* layout( std::size_t index ) const;
 
     const Layout& currentLayout() const;
     Layout& currentLayout();
 
     /// Add a grid layout
-    void addGridLayout( size_t width, size_t height, bool offsetViews, bool isLightbox,
-                        size_t imageIndexForLightbox, const uuids::uuid& imageUidForLightbox );
+    void addGridLayout(
+        const ViewType& viewType,
+        std::size_t width,
+        std::size_t height,
+        bool offsetViews,
+        bool isLightbox,
+        std::size_t imageIndexForLightbox,
+        const uuids::uuid& imageUidForLightbox );
 
     /// Add a lightbox grid layout with enough views to hold a given number of slices
-    void addLightboxLayoutForImage( size_t numSlices, size_t imageIndex, const uuids::uuid& imageUid );
+    void addLightboxLayoutForImage(
+        const ViewType& viewType,
+        std::size_t numSlices,
+        std::size_t imageIndex,
+        const uuids::uuid& imageUid );
 
     /// Add a layout with one row per image and columns for axial, coronal, and sagittal views
-    void addAxCorSagLayout( size_t numImages );
+    void addAxCorSagLayout( std::size_t numImages );
 
     /// Remove a layout
-    void removeLayout( size_t index );
+    void removeLayout( std::size_t index );
 
     /// Get the window viewport
     const Viewport& viewport() const;
@@ -196,7 +206,7 @@ private:
     glm::vec2 m_contentScaleRatio;
 
     std::vector<Layout> m_layouts; // All view layouts
-    size_t m_currentLayout; // Index of the layout currently on display
+    std::size_t m_currentLayout; // Index of the layout currently on display
 
     // UID of the view in which the user is currently interacting with the mouse.
     // The mouse must be held down for the view to be active.

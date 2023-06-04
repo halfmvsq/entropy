@@ -4,7 +4,6 @@
 #include "image/ImageUtility.h"
 
 #include "logic/app/Data.h"
-#include "logic/camera/Camera.h"
 #include "logic/camera/CameraHelpers.h"
 #include "logic/camera/MathUtility.h"
 
@@ -187,8 +186,8 @@ float sliceScrollDistance(
 
 
 float sliceScrollDistance(
-        const glm::vec3& worldCameraFrontDir,
-        const Image& image )
+    const glm::vec3& worldCameraFrontDir,
+    const Image& image )
 {
     // Scroll in image Pixel space along the camera's front direction:
     const glm::mat3& pixel_T_world = image.transformations().pixel_T_worldDef();
@@ -200,9 +199,9 @@ float sliceScrollDistance(
 
 
 float computeViewOffsetDistance(
-        const AppData& appData,
-        const ViewOffsetSetting& offsetSetting,
-        const glm::vec3& worldCameraFront )
+    const AppData& appData,
+    const ViewOffsetSetting& offsetSetting,
+    const glm::vec3& worldCameraFront )
 {
     switch ( offsetSetting.m_offsetMode )
     {
@@ -211,7 +210,7 @@ float computeViewOffsetDistance(
         if ( const Image* refImg = appData.refImage() )
         {
             return static_cast<float>( offsetSetting.m_relativeOffsetSteps ) *
-                    data::sliceScrollDistance( worldCameraFront, *refImg );
+                   data::sliceScrollDistance( worldCameraFront, *refImg );
         }
 
         return 0.0f; // Invalid reference image, so do not offset
@@ -219,15 +218,15 @@ float computeViewOffsetDistance(
     case ViewOffsetMode::RelativeToImageScrolls:
     {
         const Image* image = ( offsetSetting.m_offsetImage )
-                ? appData.image( *(offsetSetting.m_offsetImage) )
-                : nullptr;
+            ? appData.image( *(offsetSetting.m_offsetImage) )
+            : nullptr;
 
         if ( image )
         {
+//            spdlog::debug( "{} scroll = {}", offsetSetting.m_relativeOffsetSteps, data::sliceScrollDistance( worldCameraFront, *image ) );
+
             return static_cast<float>( offsetSetting.m_relativeOffsetSteps ) *
-                    data::sliceScrollDistance( worldCameraFront, *image );
-
-
+                   data::sliceScrollDistance( worldCameraFront, *image );
         }
 
         return 0.0f; // Invalid image, so do not offset
@@ -247,11 +246,11 @@ float computeViewOffsetDistance(
 
 
 glm::vec2 sliceMoveDistance(
-        const AppData& data,
-        const glm::vec3& worldCameraRightDir,
-        const glm::vec3& worldCameraUpDir,
-        const ImageSelection& imageSelection,
-        const View* view )
+    const AppData& data,
+    const glm::vec3& worldCameraRightDir,
+    const glm::vec3& worldCameraUpDir,
+    const ImageSelection& imageSelection,
+    const View* view )
 {
     if ( 0 == data.numImages() )
     {
@@ -290,8 +289,8 @@ glm::vec2 sliceMoveDistance(
 
 
 AABB<float> computeWorldAABBoxEnclosingImages(
-        const AppData& appData,
-        const ImageSelection& imageSelection )
+    const AppData& appData,
+    const ImageSelection& imageSelection )
 {
     static const AABB<float> sk_defaultAABB{ {-1, -1, -1}, {1, 1, 1} };
 
@@ -341,8 +340,8 @@ AABB<float> computeWorldAABBoxEnclosingImages(
 
 
 std::optional< uuids::uuid > createLabelColorTableForSegmentation(
-        AppData& appData,
-        const uuids::uuid& segUid )
+    AppData& appData,
+    const uuids::uuid& segUid )
 {
     static constexpr int64_t sk_minNumLabels = static_cast<int64_t>(256);
 
@@ -401,8 +400,8 @@ std::optional< uuids::uuid > createLabelColorTableForSegmentation(
 
 
 std::optional<glm::ivec3> getImageVoxelCoordsAtCrosshairs(
-        const AppData& appData,
-        size_t imageIndex )
+    const AppData& appData,
+    size_t imageIndex )
 {
     const auto imageUid = appData.imageUid( imageIndex );
     const Image* image = imageUid ? appData.image( *imageUid ) : nullptr;

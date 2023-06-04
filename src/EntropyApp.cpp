@@ -12,7 +12,6 @@
 #include "logic/annotation/Annotation.h"
 #include "logic/annotation/LandmarkGroup.h"
 #include "logic/camera/MathUtility.h"
-//#include "logic/interaction/events/MouseEvent.h"
 #include "logic/serialization/ProjectSerialization.h"
 #include "logic/states/FsmList.hpp"
 //#include "logic/ipc/IPCMessage.h"
@@ -126,11 +125,8 @@ void EntropyApp::init()
         throw_debug( "Null annotation state machine" )
     }
 
-    // Initialize rendering
     m_rendering.init();
-
-    // Trigger initial windowing callbacks
-    m_glfw.init();
+    m_glfw.init(); // Trigger initial windowing callbacks
 
     spdlog::debug( "Done initializing application" );
 }
@@ -193,40 +189,60 @@ void EntropyApp::onImagesReady()
 
     // Prepare view layouts:
 
-    // This is a layout showing all images in one row:
     if ( 1 < m_data.numImages() )
     {
+        // Add a new layout with one row, and a different image in each column:
         static constexpr bool sk_offsetViews = false;
         static constexpr bool sk_isLightbox = false;
 
         if ( const auto& refUid = m_data.refImageUid() )
         {
             m_data.windowData().addGridLayout(
-                m_data.numImages(), 1, sk_offsetViews, sk_isLightbox, 0, *refUid );
+                ViewType::Axial, m_data.numImages(), 1, sk_offsetViews, sk_isLightbox, 0, *refUid );
         }
     }
 
-    // Axial, coronal, sagittal layout, with one row for each image:
+
+    // Add axial, coronal, sagittal layout, with one row for each image:
     m_data.windowData().addAxCorSagLayout( m_data.numImages() );
 
-    // Create Axial lightbox layouts for all images:
-    /// @todo Create Coronal and Sagittal lightboxes, too
-    size_t imageIndex = 0;
+
+    // Create axial, coronal, sagittal lightbox layouts for all images:
+    std::size_t imageIndex = 0;
+
+//    const Image* refImage = m_data.refImage();
+//    if ( ! refImage )
+//    {
+//        spdlog::error( "Null reference image" );
+//        throw_debug( "Null reference image" )
+//    }
 
     for ( const auto& imageUid : m_data.imageUidsOrdered() )
     {
         if ( const Image* image = m_data.image( imageUid ) )
         {
-            // Compute the number of slices along the World Axial direction:
+            // Compute the number of slices along the World x, y, z directions:
             const glm::mat3 pixel_T_world = glm::mat3{ image->transformations().pixel_T_worldDef() };
+            const glm::vec3 dims = glm::vec3{ image->header().pixelDimensions() };
 
-            const glm::vec3 pixelDirAxial = glm::abs(
-                glm::normalize( glm::vec3{ pixel_T_world * Directions::get( Directions::Anatomy::Inferior ) } ) );
+            const glm::vec3 pixelDirAxial = glm::abs( glm::normalize( glm::vec3{ pixel_T_world * Directions::get( Directions::Anatomy::Inferior ) } ) );
+            const glm::vec3 pixelDirCoronal = glm::abs( glm::normalize( glm::vec3{ pixel_T_world * Directions::get( Directions::Anatomy::Anterior ) } ) );
+            const glm::vec3 pixelDirSagittal = glm::abs( glm::normalize( glm::vec3{ pixel_T_world * Directions::get( Directions::Anatomy::Right ) } ) );
 
-            const uint32_t numAxialSlices = static_cast<uint32_t>(
-                std::abs( glm::dot( glm::vec3{ image->header().pixelDimensions() }, pixelDirAxial ) ) );
+            const std::size_t numAxialSlices = static_cast<std::size_t>( std::ceil( std::abs( glm::dot( dims, pixelDirAxial ) ) ) );
+            const std::size_t numCoronalSlices = static_cast<std::size_t>( std::ceil( std::abs( glm::dot( dims, pixelDirCoronal ) ) ) );
+            const std::size_t numSagittalSlices = static_cast<std::size_t>( std::ceil( std::abs( glm::dot( dims, pixelDirSagittal ) ) ) );
 
-            m_data.windowData().addLightboxLayoutForImage( numAxialSlices, imageIndex++, imageUid );
+            spdlog::critical( "for image {}, cor dir = {}, num cor slices = {}", imageIndex, glm::to_string(pixelDirAxial), numAxialSlices );
+
+            // Also print out scroll distance in this view...
+//            sliceScrollDistance( imageUid,  )
+
+            m_data.windowData().addLightboxLayoutForImage( ViewType::Axial, numAxialSlices, imageIndex, imageUid );
+            m_data.windowData().addLightboxLayoutForImage( ViewType::Coronal, numCoronalSlices, imageIndex, imageUid );
+            m_data.windowData().addLightboxLayoutForImage( ViewType::Sagittal, numSagittalSlices, imageIndex, imageUid );
+
+            ++imageIndex;
         }
     }
 
@@ -234,11 +250,11 @@ void EntropyApp::onImagesReady()
 
 
     m_callbackHandler.recenterViews(
-                m_data.state().recenteringMode(),
-                sk_recenterCrosshairs,
-                sk_doNotRecenterOnCurrentCrosshairsPos,
-                sk_resetObliqueOrientation,
-                sk_resetZoom );
+        m_data.state().recenteringMode(),
+        sk_recenterCrosshairs,
+        sk_doNotRecenterOnCurrentCrosshairsPos,
+        sk_resetObliqueOrientation,
+        sk_resetZoom );
 
     m_callbackHandler.setMouseMode( MouseMode::Pointer );
 
@@ -350,8 +366,8 @@ EntropyApp::loadImage( const std::string& fileName, bool ignoreIfAlreadyLoaded )
 
 std::pair< std::optional<uuids::uuid>, bool >
 EntropyApp::loadSegmentation(
-        const std::string& fileName,
-        const std::optional<uuids::uuid>& matchingImageUid )
+    const std::string& fileName,
+    const std::optional<uuids::uuid>& matchingImageUid )
 {
     // Setting indicating that the same segmentation image file can be loaded twice:
     static constexpr bool sk_canLoadSameSegFileTwice = false;
@@ -360,7 +376,7 @@ EntropyApp::loadSegmentation(
 
     // Return value indicating that segmentation was not loaded:
     static const std::pair< std::optional<uuids::uuid>, bool >
-            sk_noSegLoaded{ std::nullopt, false };
+        sk_noSegLoaded{ std::nullopt, false };
 
     // Has this segmentation already been loaded? Search for its file name:
     for ( const auto& segUid : m_data.segUidsOrdered() )
@@ -368,8 +384,7 @@ EntropyApp::loadSegmentation(
         const Image* seg = m_data.seg( segUid );
         if ( seg && seg->header().fileName() == fileName )
         {
-            spdlog::info( "Segmentation from file \"{}\" has already been loaded as {}",
-                          fileName, segUid );
+            spdlog::info( "Segmentation from file \"{}\" has already been loaded as {}", fileName, segUid );
 
             if ( ! sk_canLoadSameSegFileTwice )
             {
@@ -396,8 +411,7 @@ EntropyApp::loadSegmentation(
     spdlog::info( "Header:\n{}", seg.header() );
     spdlog::info( "Transformation:\n{}", seg.transformations() );
 
-    const Image* matchImg = ( matchingImageUid )
-            ? m_data.image( *matchingImageUid ) : nullptr;
+    const Image* matchImg = ( matchingImageUid ) ? m_data.image( *matchingImageUid ) : nullptr;
 
     if ( ! matchImg )
     {
@@ -557,9 +571,6 @@ EntropyApp::loadDeformationField( const std::string& fileName )
 }
 
 
-
-
-
 bool EntropyApp::loadSerializedImage(
     const serialize::Image& serializedImage,
     bool isReferenceImage )
@@ -578,13 +589,11 @@ bool EntropyApp::loadSerializedImage(
     {
         spdlog::debug( "Attempting to load image from \"{}\"", serializedImage.m_imageFileName );
 
-        std::tie( imageUid, isNewImage ) =
-            loadImage( serializedImage.m_imageFileName, sk_ignoreImageIfAlreadyLoaded );
+        std::tie( imageUid, isNewImage ) = loadImage( serializedImage.m_imageFileName, sk_ignoreImageIfAlreadyLoaded );
     }
     catch ( const std::exception& e )
     {
-        spdlog::error( "Exception loading image from \"{}\": {}",
-                       serializedImage.m_imageFileName, e.what() );
+        spdlog::error( "Exception loading image from \"{}\": {}", serializedImage.m_imageFileName, e.what() );
         return false;
     }
 
@@ -676,7 +685,7 @@ bool EntropyApp::loadSerializedImage(
                            *serializedImage.m_deformationFileName );
 
             std::tie( deformationUid, isDeformationNewImage ) =
-                    loadDeformationField( *serializedImage.m_deformationFileName );
+                loadDeformationField( *serializedImage.m_deformationFileName );
         }
         catch ( const std::exception& e )
         {
@@ -747,8 +756,7 @@ bool EntropyApp::loadSerializedImage(
     {
         std::vector<Annotation> annots;
 
-        if ( serialize::openAnnotationsFromJsonFile(
-                 annots, *serializedImage.m_annotationsFileName ) )
+        if ( serialize::openAnnotationsFromJsonFile( annots, *serializedImage.m_annotationsFileName ) )
         {
             spdlog::info( "Loaded annotations from JSON file \"{}\" for image {}",
                           *serializedImage.m_annotationsFileName, *imageUid );
@@ -788,8 +796,7 @@ bool EntropyApp::loadSerializedImage(
 
         if ( serialize::openLandmarkGroupCsvFile( landmarks, lm.m_csvFileName ) )
         {
-            spdlog::info( "Loaded landmarks from CSV file \"{}\" for image {}",
-                          lm.m_csvFileName, *imageUid );
+            spdlog::info( "Loaded landmarks from CSV file \"{}\" for image {}", lm.m_csvFileName, *imageUid );
 
             // Assign random colors to the landmarks. Make sure that landmarks with the same index
             // in different groups have the same color. This is done by seeding the random number
@@ -797,8 +804,8 @@ bool EntropyApp::loadSerializedImage(
             for ( auto& p : landmarks )
             {
                 const auto colors = math::generateRandomHsvSamples(
-                            1, sk_hueMinMax, sk_satMinMax, sk_valMinMax,
-                            static_cast<uint32_t>( p.first ) );
+                    1, sk_hueMinMax, sk_satMinMax, sk_valMinMax,
+                    static_cast<uint32_t>( p.first ) );
 
                 if ( ! colors.empty() )
                 {
