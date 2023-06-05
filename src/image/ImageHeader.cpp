@@ -149,10 +149,21 @@ void ImageHeader::setBoundingBox()
     m_subjectBBoxCorners = math::computeImageSubjectBoundingBoxCorners(
             m_pixelDimensions, m_directions, m_spacing, m_origin );
 
-    m_subjectBBoxSize = glm::vec3{
-            m_spacing.x * m_pixelDimensions.x,
-            m_spacing.y * m_pixelDimensions.y,
-            m_spacing.z * m_pixelDimensions.z };
+    glm::vec3 subjectMinBBoxCorner{ std::numeric_limits<float>::max() };
+    glm::vec3 subjectMaxBBoxCorner{ std::numeric_limits<float>::lowest() };
+
+    for ( const auto& corner : m_subjectBBoxCorners )
+    {
+        if ( corner.x < subjectMinBBoxCorner.x ) subjectMinBBoxCorner.x = corner.x;
+        if ( corner.y < subjectMinBBoxCorner.y ) subjectMinBBoxCorner.y = corner.y;
+        if ( corner.z < subjectMinBBoxCorner.z ) subjectMinBBoxCorner.z = corner.z;
+
+        if ( subjectMaxBBoxCorner.x < corner.x ) subjectMaxBBoxCorner.x = corner.x;
+        if ( subjectMaxBBoxCorner.y < corner.y ) subjectMaxBBoxCorner.y = corner.y;
+        if ( subjectMaxBBoxCorner.z < corner.z ) subjectMaxBBoxCorner.z = corner.z;
+    }
+
+    m_subjectBBoxSize = subjectMaxBBoxCorner - subjectMinBBoxCorner;
 
     m_subjectBBoxCenter = glm::vec3{ 0.0f, 0.0f, 0.0f };
 

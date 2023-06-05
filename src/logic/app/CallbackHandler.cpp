@@ -812,8 +812,8 @@ void CallbackHandler::doCrosshairsScroll(
     const glm::vec2& scrollOffset )
 {
     const float scrollDistance = data::sliceScrollDistance(
-                m_appData, hit.worldFrontAxis,
-                ImageSelection::VisibleImagesInView, hit.view );
+        m_appData, hit.worldFrontAxis,
+        ImageSelection::VisibleImagesInView, hit.view );
 
     glm::vec3 worldPos = m_appData.state().worldCrosshairs().worldOrigin() +
                 scrollOffset.y * scrollDistance * hit.worldFrontAxis;

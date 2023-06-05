@@ -32,11 +32,11 @@ namespace math
  * @return Vector of colors in HSV format
  */
 std::vector< glm::vec3 > generateRandomHsvSamples(
-        size_t numSamples,
-        const std::pair< float, float >& hueMinMax,
-        const std::pair< float, float >& satMinMax,
-        const std::pair< float, float >& valMinMax,
-        const std::optional<uint32_t>& seed );
+    size_t numSamples,
+    const std::pair< float, float >& hueMinMax,
+    const std::pair< float, float >& satMinMax,
+    const std::pair< float, float >& valMinMax,
+    const std::optional<uint32_t>& seed );
 
 /**
  * @brief Compute dimensions of image in Subject space
@@ -47,8 +47,8 @@ std::vector< glm::vec3 > generateRandomHsvSamples(
  * @return Vector of image dimensions in Subject space
  */
 glm::dvec3 computeSubjectImageDimensions(
-        const glm::u64vec3& pixelDimensions,
-        const glm::dvec3& pixelSpacing );
+    const glm::u64vec3& pixelDimensions,
+    const glm::dvec3& pixelSpacing );
 
 
 /**
@@ -61,9 +61,9 @@ glm::dvec3 computeSubjectImageDimensions(
  * @return 4x4 matrix transforming image Pixel to Subject space
  */
 glm::dmat4 computeImagePixelToSubjectTransformation(
-        const glm::dmat3& directions,
-        const glm::dvec3& pixelSpacing,
-        const glm::dvec3& origin );
+    const glm::dmat3& directions,
+    const glm::dvec3& pixelSpacing,
+    const glm::dvec3& origin );
 
 
 /**
@@ -75,7 +75,7 @@ glm::dmat4 computeImagePixelToSubjectTransformation(
  * @return 4x4 matrix transforming image Pixel to Texture space
  */
 glm::dmat4 computeImagePixelToTextureTransformation(
-        const glm::u64vec3& pixelDimensions );
+    const glm::u64vec3& pixelDimensions );
 
 
 /**
@@ -88,7 +88,7 @@ glm::vec3 computeInvPixelDimensions( const glm::u64vec3& pixelDimensions );
 
 
 std::array< glm::vec3, 8 > computeImagePixelAABBoxCorners(
-        const glm::u64vec3& pixelDimensions );
+    const glm::u64vec3& pixelDimensions );
 
 
 /**
@@ -102,15 +102,15 @@ std::array< glm::vec3, 8 > computeImagePixelAABBoxCorners(
  * @return Array of corners of the image bounding box in Subject space
  */
 std::array< glm::vec3, 8 > computeImageSubjectBoundingBoxCorners(
-        const glm::u64vec3& pixelDimensions,
-        const glm::mat3& directions,
-        const glm::vec3& pixelSpacing,
-        const glm::vec3& origin );
+    const glm::u64vec3& pixelDimensions,
+    const glm::mat3& directions,
+    const glm::vec3& pixelSpacing,
+    const glm::vec3& origin );
 
 
 
 std::pair< glm::vec3, glm::vec3 > computeMinMaxCornersOfAABBox(
-        const std::array< glm::vec3, 8 >& subjectCorners );
+    const std::array< glm::vec3, 8 >& subjectCorners );
 
 
 /**
@@ -121,7 +121,7 @@ std::pair< glm::vec3, glm::vec3 > computeMinMaxCornersOfAABBox(
  * @return All eight AABB corners
  */
 std::array< glm::vec3, 8 > computeAllAABBoxCornersFromMinMaxCorners(
-        const std::pair< glm::vec3, glm::vec3 >& boxMinMaxCorners );
+    const std::pair< glm::vec3, glm::vec3 >& boxMinMaxCorners );
 
 
 /**
@@ -135,7 +135,7 @@ std::array< glm::vec3, 8 > computeAllAABBoxCornersFromMinMaxCorners(
  * @todo SPIRAL CODE IS WRONG FOR hippo warp image
  */
 std::pair< std::string, bool > computeSpiralCodeFromDirectionMatrix(
-        const glm::dmat3& directions );
+    const glm::dmat3& directions );
 
 
 /**
@@ -147,7 +147,7 @@ std::pair< std::string, bool > computeSpiralCodeFromDirectionMatrix(
  * to the coordinate axes
  */
 glm::dmat3 computeClosestOrthogonalDirectionMatrix(
-        const glm::dmat3& directions );
+    const glm::dmat3& directions );
 
 
 /**
@@ -157,19 +157,19 @@ glm::dmat3 computeClosestOrthogonalDirectionMatrix(
  * @param worldCenter Center of rotation in World space
  */
 void rotateFrameAboutWorldPos(
-        CoordinateFrame& frame,
-        const glm::quat& rotation,
-        const glm::vec3& worldCenter );
+    CoordinateFrame& frame,
+    const glm::quat& rotation,
+    const glm::vec3& worldCenter );
 
 
 /**
  * @brief Finds the entering intersection between a ray e1+d and the volume's bounding box.
  */
 float computeRayAABBoxIntersection(
-        const glm::vec3& start,
-        const glm::vec3& dir,
-        const glm::vec3& minCorner,
-        const glm::vec3& maxCorner );
+    const glm::vec3& start,
+    const glm::vec3& dir,
+    const glm::vec3& minCorner,
+    const glm::vec3& maxCorner );
 
 std::pair<float,float> hits( glm::vec3 e1, glm::vec3 d, glm::vec3 uMinCorner, glm::vec3 uMaxCorner );
 
@@ -177,18 +177,18 @@ std::tuple<bool, float, float> slabs(glm::vec3 rayPos, glm::vec3 rayDir, glm::ve
 
 std::optional<float>
 computeRayLineSegmentIntersection(
-        const glm::vec2& rayOrigin,
-        const glm::vec2& rayDir,
-        const glm::vec2& lineA,
-        const glm::vec2& lineB );
+    const glm::vec2& rayOrigin,
+    const glm::vec2& rayDir,
+    const glm::vec2& lineA,
+    const glm::vec2& lineB );
 
 std::vector< glm::vec2 >
 computeRayAABoxIntersections(
-        const glm::vec2& rayOrigin,
-        const glm::vec2& rayDir,
-        const glm::vec2& boxMin,
-        const glm::vec2& boxSize,
-        bool doBothRayDirections = false );
+    const glm::vec2& rayOrigin,
+    const glm::vec2& rayDir,
+    const glm::vec2& boxMin,
+    const glm::vec2& boxSize,
+    bool doBothRayDirections = false );
 
 
 /**

@@ -146,10 +146,10 @@ std::vector<uuids::uuid> selectImages(
 
 
 float sliceScrollDistance(
-        const AppData& data,
-        const glm::vec3& worldCameraFrontDir,
-        const ImageSelection& imageSelection,
-        const View* view )
+    const AppData& data,
+    const glm::vec3& worldCameraFrontDir,
+    const ImageSelection& imageSelection,
+    const View* view )
 {
     if ( 0 == data.numImages() )
     {
@@ -167,7 +167,8 @@ float sliceScrollDistance(
 
         // Scroll in image Pixel space along the camera's front direction:
         const glm::mat3& pixel_T_world = image->transformations().pixel_T_worldDef();
-        const glm::vec3 pixelDir = glm::abs( glm::normalize( pixel_T_world * worldCameraFrontDir ) );
+        glm::vec3 pixelDir = glm::abs( glm::normalize( pixel_T_world * worldCameraFrontDir ) );
+        pixelDir /= ( pixelDir.x + pixelDir.y + pixelDir.z );
 
         // Scroll distance is proportional to spacing of image along the view direction
         float d = std::abs( glm::dot( glm::vec3{ image->header().spacing() }, pixelDir ) );
@@ -191,7 +192,9 @@ float sliceScrollDistance(
 {
     // Scroll in image Pixel space along the camera's front direction:
     const glm::mat3& pixel_T_world = image.transformations().pixel_T_worldDef();
-    const glm::vec3 pixelDir = glm::abs( glm::normalize( pixel_T_world * worldCameraFrontDir ) );
+
+    glm::vec3 pixelDir = glm::abs( glm::normalize( pixel_T_world * worldCameraFrontDir ) );
+    pixelDir /= ( pixelDir.x + pixelDir.y + pixelDir.z );
 
     // Scroll distance is proportional to spacing of image along the view direction:
     return std::abs( glm::dot( glm::vec3{ image.header().spacing() }, pixelDir ) );
@@ -223,8 +226,6 @@ float computeViewOffsetDistance(
 
         if ( image )
         {
-//            spdlog::debug( "{} scroll = {}", offsetSetting.m_relativeOffsetSteps, data::sliceScrollDistance( worldCameraFront, *image ) );
-
             return static_cast<float>( offsetSetting.m_relativeOffsetSteps ) *
                    data::sliceScrollDistance( worldCameraFront, *image );
         }
@@ -424,9 +425,9 @@ std::optional<glm::ivec3> getImageVoxelCoordsAtCrosshairs(
 
 
 std::optional<glm::ivec3> getSegVoxelCoordsAtCrosshairs(
-        const AppData& appData,
-        const uuids::uuid& segUid,
-        const uuids::uuid& matchingImgUid )
+    const AppData& appData,
+    const uuids::uuid& segUid,
+    const uuids::uuid& matchingImgUid )
 {
     const Image* seg = appData.seg( segUid );
     if ( ! seg ) return std::nullopt;
@@ -457,10 +458,10 @@ std::optional<glm::ivec3> getSegVoxelCoordsAtCrosshairs(
 
 
 std::vector< uuids::uuid > findAnnotationsForImage(
-        const AppData& appData,
-        const uuids::uuid& imageUid,
-        const glm::vec4& querySubjectPlaneEquation,
-        float planeDistanceThresh )
+    const AppData& appData,
+    const uuids::uuid& imageUid,
+    const glm::vec4& querySubjectPlaneEquation,
+    float planeDistanceThresh )
 {
     // Angle threshold (in degrees) for checking whether two vectors are parallel
     static constexpr float sk_parallelThreshold_degrees = 0.1f;
@@ -502,8 +503,8 @@ std::vector< uuids::uuid > findAnnotationsForImage(
 
 
 glm::vec3 roundPointToNearestImageVoxelCenter(
-        const Image& image,
-        const glm::vec3& worldPos )
+    const Image& image,
+    const glm::vec3& worldPos )
 {
     const auto& tx = image.transformations();
     const glm::vec4 refPixelPos = tx.pixel_T_worldDef() * glm::vec4{ worldPos, 1.0f };
@@ -553,9 +554,9 @@ std::optional<uuids::uuid> getSelectedAnnotation( const AppData& appData )
 
 
 glm::vec3 snapWorldPointToImageVoxels(
-        const AppData& appData,
-        const glm::vec3& worldPos,
-        const std::optional<CrosshairsSnapping>& force )
+    const AppData& appData,
+    const glm::vec3& worldPos,
+    const std::optional<CrosshairsSnapping>& force )
 {
     const CrosshairsSnapping snapping =
             force ? *force : appData.renderData().m_snapCrosshairs;

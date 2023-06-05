@@ -189,41 +189,41 @@ float convertOpenGlDepthToNdc( float depth );
 glm::vec3 sphere_T_ndc( const Camera&, const glm::vec2& ndcPos, const glm::vec3& worldSphereCenter );
 
 glm::quat rotationAlongArc(
-        const Camera&, const glm::vec2& ndcStartPos, const glm::vec2& ndcNewPos,
-        const glm::vec3& worldSphereCenter );
+    const Camera&, const glm::vec2& ndcStartPos, const glm::vec2& ndcNewPos,
+    const glm::vec3& worldSphereCenter );
 
 glm::quat rotation2dInCameraPlane(
-        const Camera&, const glm::vec2& ndcOldPos, const glm::vec2& ndcNewPos,
-        const glm::vec2& ndcRotationCenter = glm::vec2{ 0.0f, 0.0f } );
+    const Camera&, const glm::vec2& ndcOldPos, const glm::vec2& ndcNewPos,
+    const glm::vec2& ndcRotationCenter = glm::vec2{ 0.0f, 0.0f } );
 
 glm::quat rotation3dAboutCameraPlane(
-        const Camera&, const glm::vec2& ndcOldPos, const glm::vec2& ndcNewPos );
+    const Camera&, const glm::vec2& ndcOldPos, const glm::vec2& ndcNewPos );
 
 glm::vec3 translationInCameraPlane(
-        const Camera&, const glm::vec2& ndcOldPos, const glm::vec2& ndcNewPos, float ndcZ );
+    const Camera&, const glm::vec2& ndcOldPos, const glm::vec2& ndcNewPos, float ndcZ );
 
 glm::vec3 translationAboutCameraFrontBack(
-        const Camera&, const glm::vec2& ndcOldPos, const glm::vec2& ndcNewPos, float scale );
+    const Camera&, const glm::vec2& ndcOldPos, const glm::vec2& ndcNewPos, float scale );
 
 // Returns translation relative to the worldAxis
 float axisTranslationAlongWorldAxis(
-        const Camera&, const glm::vec2& ndcOldPos, const glm::vec2& ndcNewPos, float ndcZ,
-        const glm::vec3& worldAxis );
+    const Camera&, const glm::vec2& ndcOldPos, const glm::vec2& ndcNewPos, float ndcZ,
+    const glm::vec3& worldAxis );
 
 float rotationAngleAboutWorldAxis(
-        const Camera&, const glm::vec2& ndcOldPos, const glm::vec2& ndcNewPos, float ndcZ,
-        const glm::vec3& worldRotationAxis, const glm::vec3& worldRotationCenter );
+    const Camera&, const glm::vec2& ndcOldPos, const glm::vec2& ndcNewPos, float ndcZ,
+    const glm::vec3& worldRotationAxis, const glm::vec3& worldRotationCenter );
 
 glm::vec2 scaleFactorsAboutWorldAxis(
-        const Camera&, const glm::vec2& ndcOldPos, const glm::vec2& ndcNewPos, float ndcZ,
-        const glm::mat4& slide_T_world, const glm::vec3& slideRotationCenter );
+    const Camera&, const glm::vec2& ndcOldPos, const glm::vec2& ndcNewPos, float ndcZ,
+    const glm::mat4& slide_T_world, const glm::vec3& slideRotationCenter );
 
 glm::vec2 worldViewportDimensions( const Camera&, float ndcZ );
 
 // Returns translation in World space
 glm::vec3 worldTranslationPerpendicularToWorldAxis(
-        const Camera&, const glm::vec2& ndcOldPos, const glm::vec2& ndcNewPos, float ndcZ,
-        const glm::vec3& worldAxis );
+    const Camera&, const glm::vec2& ndcOldPos, const glm::vec2& ndcNewPos, float ndcZ,
+    const glm::vec3& worldAxis );
 
 /**
  * @brief Transform position from Window Pixel space to 2D Window NDC
@@ -232,8 +232,8 @@ glm::vec3 worldTranslationPerpendicularToWorldAxis(
  * @return
  */
 glm::vec2 windowNdc_T_window(
-        const Viewport& windowViewport,
-        const glm::vec2& windowPixelPos );
+    const Viewport& windowViewport,
+    const glm::vec2& windowPixelPos );
 
 glm::vec2 viewDevice_T_ndc( const Viewport&, const glm::vec2& ndcPos );
 glm::vec2 window_T_windowClip( const Viewport&, const glm::vec2& ndcPos );
@@ -263,8 +263,8 @@ glm::mat4 miewport_T_viewport( float viewportHeight );
  * std::none otherwise
  */
 std::optional< glm::vec3 > worldCameraPlaneIntersection(
-        const Camera&, const glm::vec2& ndcRayPos,
-        const glm::vec3& worldPlanePos );
+    const Camera&, const glm::vec2& ndcRayPos,
+    const glm::vec3& worldPlanePos );
 
 
 /**
@@ -274,25 +274,25 @@ std::optional< glm::vec3 > worldCameraPlaneIntersection(
  * @param[in] worldTarget Target point (World space)
  */
 void positionCameraForWorldTargetAndFov(
-        Camera&,
-        const glm::vec3& worldBoxSize,
-        const glm::vec3& worldTarget );
+    Camera&,
+    const glm::vec3& worldBoxSize,
+    const glm::vec3& worldTarget );
 
 void positionCameraForWorldTarget(
-        Camera&,
-        const glm::vec3& worldBoxSize,
-        const glm::vec3& worldTarget );
+    Camera&,
+    const glm::vec3& worldBoxSize,
+    const glm::vec3& worldTarget );
 
 void orientCameraToWorldTargetNormalDirection(
-        Camera&,
-        const glm::vec3& targetWorldNormalDirection );
+    Camera&,
+    const glm::vec3& targetWorldNormalDirection );
 
 void setWorldForwardDirection(
-        camera::Camera&,
-        const glm::vec3& worldForwardDirection );
+    Camera&,
+    const glm::vec3& worldForwardDirection );
 
 std::pair<float, float> computePullbackAndFarDistances(
-        const Camera&, const glm::vec3& worldBoxSize );
+    const Camera&, const glm::vec3& worldBoxSize );
 
 
 /**
@@ -334,8 +334,9 @@ std::array< glm::vec4, 6 > worldFrustumPlanes( const Camera& );
  * @param[in] ndcZ Z depth of position in NDC (set to -1 if the perspective is orthogonal)
  * @return Position in World space
  */
-glm::vec4 world_T_view( const Viewport& viewport, const camera::Camera& camera,
-                        const glm::vec2& viewPos, float ndcZ = -1.0f );
+glm::vec4 world_T_view(
+    const Viewport& viewport, const camera::Camera& camera,
+    const glm::vec2& viewPos, float ndcZ = -1.0f );
 
 
 /// @todo Make this function valid for perspective views, too!
@@ -343,27 +344,27 @@ glm::vec4 world_T_view( const Viewport& viewport, const camera::Camera& camera,
 glm::vec2 worldPixelSize( const Viewport& viewport, const camera::Camera& camera );
 
 glm::vec2 worldPixelSizeAtWorldPosition(
-        const Viewport& viewport, const camera::Camera& camera, const glm::vec3& worldPos );
+    const Viewport& viewport, const camera::Camera& camera, const glm::vec3& worldPos );
 
 float computeSmallestWorldDepthOffset( const camera::Camera& camera, const glm::vec3& worldPos );
 
 /// Convert a 3D position from World space to the view's Miewport space
 glm::vec2 miewport_T_world(
-        const Viewport& windowVP,
-        const camera::Camera& camera,
-        const glm::mat4& windowClip_T_viewClip,
-        const glm::vec3& worldPos );
+    const Viewport& windowVP,
+    const camera::Camera& camera,
+    const glm::mat4& windowClip_T_viewClip,
+    const glm::vec3& worldPos );
 
 glm::vec3 world_T_miewport(
-        const Viewport& windowVP,
-        const camera::Camera& camera,
-        const glm::mat4& viewClip_T_windowClip,
-        const glm::vec2& miewportPos );
+    const Viewport& windowVP,
+    const camera::Camera& camera,
+    const glm::mat4& viewClip_T_windowClip,
+    const glm::vec2& miewportPos );
 
 glm::vec2 worldPixelSize(
-            const Viewport& windowVP,
-            const camera::Camera& camera,
-            const glm::mat4& viewClip_T_windowClip );
+    const Viewport& windowVP,
+    const camera::Camera& camera,
+    const glm::mat4& viewClip_T_windowClip );
 
 /**
  * @brief Compute the matrix transformation between view Clip space and Clip space of the
@@ -384,14 +385,14 @@ glm::quat computeCameraRotationRelativeToWorld( const camera::Camera& camera );
  * @return Min and max coordinates of the frame in window space
  */
 FrameBounds computeMiewportFrameBounds(
-        const glm::vec4& winClipFrameViewport,
-        const glm::vec4& windowViewport );
+    const glm::vec4& winClipFrameViewport,
+    const glm::vec4& windowViewport );
 
 
 FrameBounds computeMindowFrameBounds(
-        const glm::vec4& winClipFrameViewport,
-        const glm::vec4& windowViewport,
-        float wholeWindowHeight );
+    const glm::vec4& winClipFrameViewport,
+    const glm::vec4& windowViewport,
+    float wholeWindowHeight );
 
 bool looksAlongOrthogonalAxis( const camera::Camera& camera );
 
@@ -403,15 +404,15 @@ bool looksAlongOrthogonalAxis( const camera::Camera& camera );
  * @return
  */
 bool areVectorsParallel(
-        const glm::vec3& a,
-        const glm::vec3& b,
-        float angleThreshold_degrees );
+    const glm::vec3& a,
+    const glm::vec3& b,
+    float angleThreshold_degrees );
 
 bool areViewDirectionsParallel(
-        const camera::Camera& camera1,
-        const camera::Camera& camera2,
-        const Directions::View& dir,
-        float angleThreshold_degrees );
+    const camera::Camera& camera1,
+    const camera::Camera& camera2,
+    const Directions::View& dir,
+    float angleThreshold_degrees );
 
 } // namespace camera
 

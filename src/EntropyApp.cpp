@@ -210,33 +210,30 @@ void EntropyApp::onImagesReady()
     // Create axial, coronal, sagittal lightbox layouts for all images:
     std::size_t imageIndex = 0;
 
-//    const Image* refImage = m_data.refImage();
-//    if ( ! refImage )
-//    {
-//        spdlog::error( "Null reference image" );
-//        throw_debug( "Null reference image" )
-//    }
-
     for ( const auto& imageUid : m_data.imageUidsOrdered() )
     {
         if ( const Image* image = m_data.image( imageUid ) )
         {
             // Compute the number of slices along the World x, y, z directions:
             const glm::mat3 pixel_T_world = glm::mat3{ image->transformations().pixel_T_worldDef() };
-            const glm::vec3 dims = glm::vec3{ image->header().pixelDimensions() };
+            const glm::vec3 spacing = image->header().spacing();
+            const glm::vec3 worldBboxSize = image->header().subjectBBoxSize();
 
-            const glm::vec3 pixelDirAxial = glm::abs( glm::normalize( glm::vec3{ pixel_T_world * Directions::get( Directions::Anatomy::Inferior ) } ) );
-            const glm::vec3 pixelDirCoronal = glm::abs( glm::normalize( glm::vec3{ pixel_T_world * Directions::get( Directions::Anatomy::Anterior ) } ) );
-            const glm::vec3 pixelDirSagittal = glm::abs( glm::normalize( glm::vec3{ pixel_T_world * Directions::get( Directions::Anatomy::Right ) } ) );
+            glm::vec3 pixelDirAxial = glm::abs( glm::normalize( glm::vec3{ pixel_T_world * Directions::get( Directions::Anatomy::Inferior ) } ) );
+            glm::vec3 pixelDirCoronal = glm::abs( glm::normalize( glm::vec3{ pixel_T_world * Directions::get( Directions::Anatomy::Anterior ) } ) );
+            glm::vec3 pixelDirSagittal = glm::abs( glm::normalize( glm::vec3{ pixel_T_world * Directions::get( Directions::Anatomy::Right ) } ) );
 
-            const std::size_t numAxialSlices = static_cast<std::size_t>( std::ceil( std::abs( glm::dot( dims, pixelDirAxial ) ) ) );
-            const std::size_t numCoronalSlices = static_cast<std::size_t>( std::ceil( std::abs( glm::dot( dims, pixelDirCoronal ) ) ) );
-            const std::size_t numSagittalSlices = static_cast<std::size_t>( std::ceil( std::abs( glm::dot( dims, pixelDirSagittal ) ) ) );
+            pixelDirAxial /= ( pixelDirAxial.x + pixelDirAxial.y + pixelDirAxial.z );
+            pixelDirCoronal /= ( pixelDirCoronal.x + pixelDirCoronal.y + pixelDirCoronal.z );
+            pixelDirSagittal /= ( pixelDirSagittal.x + pixelDirSagittal.y + pixelDirSagittal.z );
 
-            spdlog::critical( "for image {}, cor dir = {}, num cor slices = {}", imageIndex, glm::to_string(pixelDirAxial), numAxialSlices );
+            const float spacingAxial = glm::dot( spacing, pixelDirAxial );
+            const float spacingCoronal = glm::dot( spacing, pixelDirCoronal );
+            const float spacingSagittal = glm::dot( spacing, pixelDirSagittal );
 
-            // Also print out scroll distance in this view...
-//            sliceScrollDistance( imageUid,  )
+            const std::size_t numAxialSlices = static_cast<std::size_t>( std::ceil( worldBboxSize.z / spacingAxial ) );
+            const std::size_t numCoronalSlices = static_cast<std::size_t>( std::ceil( worldBboxSize.y / spacingCoronal ) );
+            const std::size_t numSagittalSlices = static_cast<std::size_t>( std::ceil( worldBboxSize.x / spacingSagittal ) );
 
             m_data.windowData().addLightboxLayoutForImage( ViewType::Axial, numAxialSlices, imageIndex, imageUid );
             m_data.windowData().addLightboxLayoutForImage( ViewType::Coronal, numCoronalSlices, imageIndex, imageUid );

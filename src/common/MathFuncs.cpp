@@ -331,10 +331,10 @@ void rotateFrameAboutWorldPos(
 
 
 float computeRayAABBoxIntersection(
-        const glm::vec3& start,
-        const glm::vec3& dir,
-        const glm::vec3& minCorner,
-        const glm::vec3& maxCorner )
+    const glm::vec3& start,
+    const glm::vec3& dir,
+    const glm::vec3& minCorner,
+    const glm::vec3& maxCorner )
 {
     const float t = glm::distance( minCorner, maxCorner );
 
@@ -346,7 +346,7 @@ float computeRayAABBoxIntersection(
 }
 
 std::pair<float,float> hits(
-        glm::vec3 e1, glm::vec3 d, glm::vec3 uMinCorner, glm::vec3 uMaxCorner )
+    glm::vec3 e1, glm::vec3 d, glm::vec3 uMinCorner, glm::vec3 uMaxCorner )
 {
     float t = glm::distance(uMinCorner, uMaxCorner);
 
