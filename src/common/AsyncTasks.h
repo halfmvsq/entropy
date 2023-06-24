@@ -1,5 +1,5 @@
-#ifndef ASYNC_UI_TASKS_H
-#define ASYNC_UI_TASKS_H
+#ifndef ASYNC_TASKS_H
+#define ASYNC_TASKS_H
 
 #include <uuid.h>
 
@@ -7,17 +7,17 @@
 #include <string>
 
 /**
- * Enumeration of asynchronous tasks created in the UI
+ * Enumeration of asynchronous tasks
  */
-enum class AsyncUiTasks
+enum class AsyncTasks
 {
     GraphCutsSegmentation,
     IsosurfaceMeshGeneration
 };
 
-struct AsyncUiTaskValue
+struct AsyncTaskDetails
 {
-    AsyncUiTasks task; //!< Type of task
+    AsyncTasks task; //!< Type of task
     std::string description; //!< Description of the task
     uuids::uuid taskUid; //!< UID of the task
 
@@ -27,4 +27,4 @@ struct AsyncUiTaskValue
     bool success = false; //!< Flag indicating task success (true) or failure (false)
 };
 
-#endif // ASYNC_UI_TASKS_H
+#endif // ASYNC_TASKS_H

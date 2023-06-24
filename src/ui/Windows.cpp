@@ -6,7 +6,7 @@
 #include "ui/Widgets.h"
 #include "ui/imgui/imGuIZMO.quat/imGuIZMOquat.h"
 
-#include "common/Types.h"
+#include "common/DirectionMaps.h"
 
 #include "image/Image.h"
 
@@ -1073,7 +1073,7 @@ void renderAnnotationWindow(
 
 void renderIsosurfacesWindow(
     AppData& appData,
-    std::function< void ( const uuids::uuid& taskUid, std::future<AsyncUiTaskValue> future ) > storeFuture,
+    std::function< void ( const uuids::uuid& taskUid, std::future<AsyncTaskDetails> future ) > storeFuture,
     std::function< void ( const uuids::uuid& taskUid ) > addTaskToIsosurfaceGpuMeshGenerationQueue )
 {
     if ( ImGui::Begin( "Isosurfaces",
@@ -1088,12 +1088,12 @@ void renderIsosurfacesWindow(
             const bool isActiveImage = activeUid && ( imageUid == *activeUid );
 
             renderIsosurfacesHeader(
-                        appData,
-                        imageUid,
-                        imageIndex++,
-                        isActiveImage,
-                        storeFuture,
-                        addTaskToIsosurfaceGpuMeshGenerationQueue );
+                appData,
+                imageUid,
+                imageIndex++,
+                isActiveImage,
+                storeFuture,
+                addTaskToIsosurfaceGpuMeshGenerationQueue );
         }
 
         ImGui::End();

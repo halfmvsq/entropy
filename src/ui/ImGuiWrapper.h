@@ -1,10 +1,9 @@
 #ifndef IMGUI_WRAPPER_H
 #define IMGUI_WRAPPER_H
 
+#include "common/AsyncTasks.h"
 #include "common/SegmentationTypes.h"
 #include "common/PublicTypes.h"
-
-#include "ui/AsyncUiTasks.h"
 
 #include <glm/fwd.hpp>
 #include <uuid.h>
@@ -109,7 +108,7 @@ private:
     /// Futures created by running tasks asynchronously from the UI.
     /// These are created during the lifetime of the application.
     /// -Key: UID for the task
-    std::unordered_map< uuids::uuid, std::future<AsyncUiTaskValue> > m_futures;
+    std::unordered_map< uuids::uuid, std::future<AsyncTaskDetails> > m_futures;
 
     /// Mutex protecting \c m_futures
     std::mutex m_futuresMutex;
@@ -136,7 +135,7 @@ private:
      * @param taskUid UID of the task
      * @param future The future
      */
-    void storeFuture( const uuids::uuid& taskUid, std::future<AsyncUiTaskValue> future );
+    void storeFuture( const uuids::uuid& taskUid, std::future<AsyncTaskDetails> future );
 
 
     std::pair<const char*, const char*> getImageDisplayAndFileNames( std::size_t imageIndex ) const;

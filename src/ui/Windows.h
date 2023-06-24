@@ -1,12 +1,13 @@
 #ifndef UI_WINDOWS_H
 #define UI_WINDOWS_H
 
+#include "common/AsyncTasks.h"
 #include "common/PublicTypes.h"
-#include "logic/camera/CameraHelpers.h" // Framebounds
+#include "common/Types.h"
+
 #include "logic/camera/CameraTypes.h"
 #include "windowing/ViewTypes.h"
 
-#include "ui/AsyncUiTasks.h"
 #include "ui/UiControls.h"
 
 #include <glm/fwd.hpp>
@@ -191,7 +192,7 @@ void renderAnnotationWindow(
 
 void renderIsosurfacesWindow(
     AppData& appData,
-    std::function< void ( const uuids::uuid& taskUid, std::future<AsyncUiTaskValue> future ) > storeFuture,
+    std::function< void ( const uuids::uuid& taskUid, std::future<AsyncTaskDetails> future ) > storeFuture,
     std::function< void ( const uuids::uuid& taskUid ) > addTaskToIsosurfaceGpuMeshGenerationQueue );
 
 

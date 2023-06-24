@@ -140,7 +140,7 @@ std::unique_ptr<MeshCpuRecord> generateLabelMesh(
 } // anonymous
 
 
-std::future<AsyncUiTaskValue> generateIsosurfaceMeshCpuRecord(
+std::future<AsyncTaskDetails> generateIsosurfaceMeshCpuRecord(
     const Image& image,
     const uuids::uuid& imageUid,
     uint32_t component,
@@ -157,8 +157,8 @@ std::future<AsyncUiTaskValue> generateIsosurfaceMeshCpuRecord(
         spdlog::info( "Start generating mesh for isosurface {} at value {} of image {}",
                       isosurfaceUid, isoValue, imageUid );
 
-        AsyncUiTaskValue retval;
-        retval.task = AsyncUiTasks::IsosurfaceMeshGeneration;
+        AsyncTaskDetails retval;
+        retval.task = AsyncTasks::IsosurfaceMeshGeneration;
         retval.description = std::string( "Generate mesh at image isovalue " + std::to_string( isoValue ) );
         retval.imageUid = imageUid;
         retval.imageComponent = component;

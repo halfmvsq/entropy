@@ -192,7 +192,7 @@ void ImGuiWrapper::setCallbacks(
 }
 
 
-void ImGuiWrapper::storeFuture( const uuids::uuid& taskUid, std::future<AsyncUiTaskValue> future )
+void ImGuiWrapper::storeFuture( const uuids::uuid& taskUid, std::future<AsyncTaskDetails> future )
 {
     std::lock_guard< std::mutex > lock( m_futuresMutex );
 
@@ -240,12 +240,12 @@ void ImGuiWrapper::generateIsosurfaceMeshGpuRecords()
         // In case the CPU mesh generation task is not done, then wait for it to finish
         // and get the result. (Note: it should be done, since tasks only get on this queue when
         // CPU mesh generation is done.)
-        const AsyncUiTaskValue value = future.get();
+        const AsyncTaskDetails value = future.get();
 
         // Remove the future
         m_futures.erase( it );
 
-        if ( AsyncUiTasks::IsosurfaceMeshGeneration != value.task ||
+        if ( AsyncTasks::IsosurfaceMeshGeneration != value.task ||
             false == value.success ||
             ! value.imageUid || ! value.imageComponent || ! value.objectUid )
         {

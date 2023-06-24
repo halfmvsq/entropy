@@ -175,7 +175,7 @@ std::optional<uuids::uuid> addNewSurface(
     const uuids::uuid& imageUid,
     uint32_t component,
     size_t index,
-    std::function< void ( const uuids::uuid& taskUid, std::future<AsyncUiTaskValue> future ) > storeFuture,
+    std::function< void ( const uuids::uuid& taskUid, std::future<AsyncTaskDetails> future ) > storeFuture,
     std::function< void ( const uuids::uuid& taskUid ) > addTaskToIsosurfaceGpuMeshGenerationQueue )
 {
     static constexpr uint32_t sk_defaultIsovalueQuantile = 750;
@@ -248,7 +248,7 @@ void renderIsosurfacesHeader(
     const uuids::uuid& imageUid,
     size_t imageIndex,
     bool isActiveImage,
-    std::function< void ( const uuids::uuid& taskUid, std::future<AsyncUiTaskValue> future ) > storeFuture,
+    std::function< void ( const uuids::uuid& taskUid, std::future<AsyncTaskDetails> future ) > storeFuture,
     std::function< void ( const uuids::uuid& taskUid ) > addTaskToIsosurfaceGpuMeshGenerationQueue )
 {
     static const ImGuiColorEditFlags sk_colorNoAlphaEditFlags =

@@ -1,8 +1,8 @@
 #ifndef MESH_LOADER_H
 #define MESH_LOADER_H
 
+#include "common/AsyncTasks.h"
 #include "mesh/MeshCpuRecord.h"
-#include "ui/AsyncUiTasks.h"
 
 #include <functional>
 #include <future>
@@ -11,7 +11,7 @@
 
 class Image;
 
-std::future<AsyncUiTaskValue> generateIsosurfaceMeshCpuRecord(
+std::future<AsyncTaskDetails> generateIsosurfaceMeshCpuRecord(
         const Image& image,
         const uuids::uuid& imageUid,
         uint32_t component,
