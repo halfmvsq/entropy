@@ -864,7 +864,8 @@ bool EntropyApp::loadSerializedImage(
     // calculations on images with interleaved components.
     if ( image->header().interleavedComponents() )
     {
-        spdlog::info( "Image {} has multiple, interleaved components, so the distance maps are not being computed", *imageUid );
+        spdlog::info( "Image {} has multiple, interleaved components, "
+                      "so the distance and noise estimate maps will not be computed", *imageUid );
     }
     else
     {
@@ -878,6 +879,8 @@ bool EntropyApp::loadSerializedImage(
         using NoiseImageType = itk::Image<ItkImageCompType, 3>;
         using DistanceMapImageType = itk::Image<DistanceMapCompType, 3>;
 
+        constexpr uint32_t radius = 1;
+
         for ( uint32_t comp = 0; comp < image->header().numComponentsPerPixel(); ++comp )
         {
             /// @note It is somewhat wasteful to recreate an ITK image for each component,
@@ -886,27 +889,28 @@ bool EntropyApp::loadSerializedImage(
 
             const ImageType::Pointer compImage = createItkImageFromImageComponent<ItkImageCompType>( *image, comp );
 
-
-            // Compute noise estimate for image component:
-            const uint32_t radius = 1;
-            const NoiseImageType::Pointer noiseEstimateItkImage = computeNoiseEstimate<ItkImageCompType>( compImage, radius );
+            const NoiseImageType::Pointer noiseEstimateItkImage =
+                computeNoiseEstimate<ItkImageCompType>( compImage, radius );
 
             if ( noiseEstimateItkImage )
             {
-                std::string displayName = std::string( "Noise estimate for component ") +
+                const std::string displayName = std::string( "Noise estimate for component ") +
                     std::to_string(comp) + " of '" + image->settings().displayName() + "'";
 
                 Image noiseEstimateImage = createImageFromItkImage<ItkImageCompType>( noiseEstimateItkImage, displayName );
-                const glm::uvec3& noiseImgSize = noiseEstimateImage.header().pixelDimensions();
+                const glm::uvec3 noiseImgSize = noiseEstimateImage.header().pixelDimensions();
+
+                // m_data.addImage( noiseEstimateImage ); // Add noise estimate as an image for debug purposes
+                m_data.addNoiseEstimate( *imageUid, comp, std::move(noiseEstimateImage), radius );
 
                 spdlog::debug( "Created noise estimate map (with dimensions {}x{}x{} voxels) with radius {} for "
                                "component {} of image {}", noiseImgSize.x, noiseImgSize.y, noiseImgSize.z,
                                radius, comp, *imageUid );
-
-//                m_data.addImage( noiseEstimateImage ); // Add noise estimate as an image for debug purposes
-                m_data.addNoiseEstimate( *imageUid, comp, std::move(noiseEstimateImage), radius );
             }
-
+            else
+            {
+                spdlog::error( "Unable to create noise estimate for component {} of image {}", comp, *imageUid );
+            }
 
             // Compute foreground distance map for image component:
             const auto& stats = image->settings().componentStatistics( comp );
@@ -919,18 +923,17 @@ bool EntropyApp::loadSerializedImage(
 
             if ( distMapItkImage )
             {
-                std::string displayName = std::string( "Distance map for component ") +
+                const std::string displayName = std::string( "Distance map for component ") +
                     std::to_string(comp) + " of '" + image->settings().displayName() + "'";
 
                 Image distMapImage = createImageFromItkImage<DistanceMapCompType>( distMapItkImage, displayName );
+                const glm::uvec3 distMapSize = distMapImage.header().pixelDimensions();
 
                 // m_data.addImage( distMapImage ); // Add distance map as an image for debug purposes
                 m_data.addDistanceMap( *imageUid, comp, std::move(distMapImage), static_cast<double>( minThreshold ) );
 
-                const glm::uvec3& mapSize = distMapImage.header().pixelDimensions();
-
                 spdlog::debug( "Created distance map (with dimensions {}x{}x{} voxels) to foreground region [{}, {}] "
-                               "of component {} of image {}", mapSize.x, mapSize.y, mapSize.z,
+                               "of component {} of image {}", distMapSize.x, distMapSize.y, distMapSize.z,
                                minThreshold, maxThreshold, comp, *imageUid );
             }
             else
