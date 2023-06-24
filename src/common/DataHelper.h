@@ -125,6 +125,10 @@ glm::vec3 snapWorldPointToImageVoxels(
     const glm::vec3& worldPos,
     const std::optional<CrosshairsSnapping>& force = std::nullopt );
 
+std::size_t computeNumImageSlicesAlongWorldDirection(
+    const Image& image,
+    const glm::vec3& worldDir );
+
 } // namespace data
 
 #endif // DATA_HELPER_H

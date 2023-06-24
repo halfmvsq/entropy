@@ -159,7 +159,7 @@ void EntropyApp::onImagesReady()
     static constexpr bool sk_resetObliqueOrientation = true;
     static constexpr bool sk_resetZoom = true;
 
-    spdlog::debug( "Images are ready! Begin setting up window state" );
+    spdlog::debug( "Images are loaded." );
 
     const Image* refImg = m_data.refImage();
 
@@ -187,11 +187,12 @@ void EntropyApp::onImagesReady()
     m_data.guiData().m_renderUiOverlays = true;
 
 
-    // Prepare view layouts:
+    spdlog::debug( "Begin setting up window state" );
 
+    // Prepare view layouts:
     if ( 1 < m_data.numImages() )
     {
-        // Add a new layout with one row, and a different image in each column:
+        // Add a new layout with one row and a different image in each column:
         static constexpr bool sk_offsetViews = false;
         static constexpr bool sk_isLightbox = false;
 
@@ -202,45 +203,33 @@ void EntropyApp::onImagesReady()
         }
     }
 
-
     // Add axial, coronal, sagittal layout, with one row for each image:
     m_data.windowData().addAxCorSagLayout( m_data.numImages() );
-
 
     // Create axial, coronal, sagittal lightbox layouts for all images:
     std::size_t imageIndex = 0;
 
     for ( const auto& imageUid : m_data.imageUidsOrdered() )
     {
-        if ( const Image* image = m_data.image( imageUid ) )
-        {
-            // Compute the number of slices along the World x, y, z directions:
-            const glm::mat3 pixel_T_world = glm::mat3{ image->transformations().pixel_T_worldDef() };
-            const glm::vec3 spacing = image->header().spacing();
-            const glm::vec3 worldBboxSize = image->header().subjectBBoxSize();
+        const Image* image = m_data.image( imageUid );
+        if ( ! image ) continue;
 
-            glm::vec3 pixelDirAxial = glm::abs( glm::normalize( glm::vec3{ pixel_T_world * Directions::get( Directions::Anatomy::Inferior ) } ) );
-            glm::vec3 pixelDirCoronal = glm::abs( glm::normalize( glm::vec3{ pixel_T_world * Directions::get( Directions::Anatomy::Anterior ) } ) );
-            glm::vec3 pixelDirSagittal = glm::abs( glm::normalize( glm::vec3{ pixel_T_world * Directions::get( Directions::Anatomy::Right ) } ) );
+        m_data.windowData().addLightboxLayoutForImage(
+            ViewType::Axial,
+            data::computeNumImageSlicesAlongWorldDirection( *image, Directions::get( Directions::Anatomy::Inferior ) ),
+            imageIndex, imageUid );
 
-            pixelDirAxial /= ( pixelDirAxial.x + pixelDirAxial.y + pixelDirAxial.z );
-            pixelDirCoronal /= ( pixelDirCoronal.x + pixelDirCoronal.y + pixelDirCoronal.z );
-            pixelDirSagittal /= ( pixelDirSagittal.x + pixelDirSagittal.y + pixelDirSagittal.z );
+        m_data.windowData().addLightboxLayoutForImage(
+            ViewType::Coronal,
+            data::computeNumImageSlicesAlongWorldDirection( *image, Directions::get( Directions::Anatomy::Anterior ) ),
+            imageIndex, imageUid );
 
-            const float spacingAxial = glm::dot( spacing, pixelDirAxial );
-            const float spacingCoronal = glm::dot( spacing, pixelDirCoronal );
-            const float spacingSagittal = glm::dot( spacing, pixelDirSagittal );
+        m_data.windowData().addLightboxLayoutForImage(
+            ViewType::Sagittal,
+            data::computeNumImageSlicesAlongWorldDirection( *image, Directions::get( Directions::Anatomy::Right ) ),
+            imageIndex, imageUid );
 
-            const std::size_t numAxialSlices = static_cast<std::size_t>( std::ceil( worldBboxSize.z / spacingAxial ) );
-            const std::size_t numCoronalSlices = static_cast<std::size_t>( std::ceil( worldBboxSize.y / spacingCoronal ) );
-            const std::size_t numSagittalSlices = static_cast<std::size_t>( std::ceil( worldBboxSize.x / spacingSagittal ) );
-
-            m_data.windowData().addLightboxLayoutForImage( ViewType::Axial, numAxialSlices, imageIndex, imageUid );
-            m_data.windowData().addLightboxLayoutForImage( ViewType::Coronal, numCoronalSlices, imageIndex, imageUid );
-            m_data.windowData().addLightboxLayoutForImage( ViewType::Sagittal, numSagittalSlices, imageIndex, imageUid );
-
-            ++imageIndex;
-        }
+        ++imageIndex;
     }
 
     m_data.windowData().setDefaultRenderedImagesForAllLayouts( m_data.imageUidsOrdered() );
@@ -974,8 +963,7 @@ bool EntropyApp::loadSerializedImage(
             spdlog::debug( "Attempting to load segmentation image from \"{}\"",
                            serializedSeg.m_segFileName );
 
-            std::tie( segInfo.uid, segInfo.isNewSeg ) =
-                    loadSegmentation( serializedSeg.m_segFileName, *imageUid );
+            std::tie( segInfo.uid, segInfo.isNewSeg ) = loadSegmentation( serializedSeg.m_segFileName, *imageUid );
         }
         catch ( const std::exception& e )
         {
@@ -1017,8 +1005,8 @@ bool EntropyApp::loadSerializedImage(
         try
         {
             const std::string segDisplayName =
-                    std::string( "Untitled segmentation for image '" ) +
-                    image->settings().displayName() + "'";
+                std::string( "Untitled segmentation for image '" ) +
+                image->settings().displayName() + "'";
 
             SegInfo segInfo;
             segInfo.uid = m_callbackHandler.createBlankSeg( *imageUid, segDisplayName );
@@ -1122,8 +1110,8 @@ void EntropyApp::loadImagesFromParams( const InputParams& params )
 
     // The image loader function is called from a new thread
     auto projectLoader = [this]
-            ( const serialize::EntropyProject& project,
-              const std::function< void( bool projectLoadedSuccessfully ) >& onProjectLoadingDone )
+        ( const serialize::EntropyProject& project,
+          const std::function< void( bool projectLoadedSuccessfully ) >& onProjectLoadingDone )
     {
         static constexpr size_t sk_defaultReferenceImageIndex = 0;
         static constexpr size_t sk_defaultActiveImageIndex = 1;
@@ -1169,8 +1157,8 @@ void EntropyApp::loadImagesFromParams( const InputParams& params )
         }
 
         const auto desiredActiveImageUid = ( sk_defaultActiveImageIndex < m_data.numImages() )
-                ? m_data.imageUid( sk_defaultActiveImageIndex )
-                : *refImageUid;
+            ? m_data.imageUid( sk_defaultActiveImageIndex )
+            : *refImageUid;
 
         if ( desiredActiveImageUid && m_data.setActiveImageUid( *desiredActiveImageUid ) )
         {

@@ -88,6 +88,8 @@ GlfwWrapper::GlfwWrapper( EntropyApp* app, int glMajorVersion, int glMinorVersio
     // for the OpenGL context and move it between GPUs if necessary. Forces it to always run on the discrete GPU.
     glfwWindowHint( GLFW_COCOA_GRAPHICS_SWITCHING, GLFW_FALSE );
 
+    glfwWindowHint( GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_FALSE );
+
     // Encoded name to use for autosaving the window frame
     glfwWindowHintString( GLFW_COCOA_FRAME_NAME, "EntropyViewer" );
 
@@ -134,6 +136,8 @@ GlfwWrapper::GlfwWrapper( EntropyApp* app, int glMajorVersion, int glMinorVersio
     glfwSetKeyCallback( m_window, keyCallback );
     glfwSetMouseButtonCallback( m_window, mouseButtonCallback );
     glfwSetScrollCallback( m_window, scrollCallback );
+
+    glfwSetWindowAttrib( m_window, GLFW_DECORATED, GLFW_TRUE );
 
     spdlog::debug( "Set GLFW callbacks" );
 

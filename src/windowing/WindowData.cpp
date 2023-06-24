@@ -324,14 +324,14 @@ Layout createTriTopBottomLayout( std::size_t numRows, std::function< ViewConvent
 
 
 Layout createGridLayout(
-        const ViewType& viewType,
-        std::size_t width,
-        std::size_t height,
-        bool offsetViews,
-        bool isLightbox,
-        std::function< ViewConvention () > conventionProvider,
-        const std::optional<size_t>& imageIndexForLightbox,
-        const std::optional<uuids::uuid>& imageUidForLightbox )
+    const ViewType& viewType,
+    std::size_t width,
+    std::size_t height,
+    bool offsetViews,
+    bool isLightbox,
+    std::function< ViewConvention () > conventionProvider,
+    const std::optional<size_t>& imageIndexForLightbox,
+    const std::optional<uuids::uuid>& imageUidForLightbox )
 {
     static const camera::ViewRenderMode s_shaderType = camera::ViewRenderMode::Image;
     static const camera::IntensityProjectionMode s_ipMode = camera::IntensityProjectionMode::None;
@@ -395,20 +395,19 @@ Layout createGridLayout(
             const int counter = static_cast<int>( width * j + i );
 
             offsetSetting.m_relativeOffsetSteps = ( offsetViews )
-                    ? ( counter - static_cast<int>( width * height ) / 2 )
-                    : 0;
+                ? ( counter - static_cast<int>( width * height ) / 2 ) : 0;
 
             auto view = std::make_shared<View>(
-                        glm::vec4{ l, b, w, h },
-                        offsetSetting,
-                        viewType,
-                        s_shaderType,
-                        s_ipMode,
-                        UiControls( ! isLightbox ),
-                        conventionProvider,
-                        rotationSyncGroupUid,
-                        translationSyncGroupUid,
-                        zoomSyncGroupUid );
+                glm::vec4{ l, b, w, h },
+                offsetSetting,
+                viewType,
+                s_shaderType,
+                s_ipMode,
+                UiControls( ! isLightbox ),
+                conventionProvider,
+                rotationSyncGroupUid,
+                translationSyncGroupUid,
+                zoomSyncGroupUid );
 
             if ( ! isLightbox )
             {
@@ -466,9 +465,9 @@ void WindowData::setupViews()
     static constexpr std::size_t refImage = 0;
 
     m_layouts.emplace_back(
-                createGridLayout(
-                    ViewType::Axial, 1, 1, false, false,
-                    conventionProvider, refImage, std::nullopt ) );
+        createGridLayout(
+            ViewType::Axial, 1, 1, false, false,
+            conventionProvider, refImage, std::nullopt ) );
 
     updateAllViews();
 }
