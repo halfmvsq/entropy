@@ -1,10 +1,8 @@
 #ifndef SHADERINFO_H
 #define SHADERINFO_H
 
-#include <QOpenGLFunctions_3_3_Core>
 
-
-class ShaderInfo : protected QOpenGLFunctions_3_3_Core
+class ShaderInfo
 {
 public:
 

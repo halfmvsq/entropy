@@ -3,22 +3,24 @@
 
 #include "common/Exception.hpp"
 
+#include <spdlog/spdlog.h>
+#include <spdlog/fmt/ostr.h>
+
 #include <sstream>
 
 
 GLFrameBufferObject::GLFrameBufferObject( const std::string& name )
-    : m_name( name ),
-      m_id( 0u )
+    :
+    m_name( name ),
+    m_id( 0u )
 {
-//    initializeOpenGLFunctions();
 }
 
 GLFrameBufferObject::GLFrameBufferObject( GLFrameBufferObject&& other ) noexcept
-    : m_name( other.m_name ),
-      m_id( other.m_id )
+    :
+    m_name( other.m_name ),
+    m_id( other.m_id )
 {
-//    initializeOpenGLFunctions();
-
     other.m_name = "";
     other.m_id = 0u;
 }
@@ -57,21 +59,23 @@ void GLFrameBufferObject::bind( const fbo::TargetType& target )
 }
 
 void GLFrameBufferObject::attach2DTexture(
-        const fbo::TargetType& target,
-        const fbo::AttachmentType& attachment,
-        const GLTexture& texture,
-        std::optional<int> colorAttachmentIndex )
+    const fbo::TargetType& target,
+    const fbo::AttachmentType& attachment,
+    const GLTexture& texture,
+    std::optional<int> colorAttachmentIndex )
 {
     if ( fbo::TargetType::DrawAndRead == target )
     {
-        throw_debug( "Invalid FBO target" );
+        spdlog::error( "Invalid FBO target" );
+        throw_debug( "Invalid FBO target" )
     }
 
     if ( tex::Target::Texture2D != texture.target() &&
-         tex::Target::Texture2DMultisample != texture.target() &&
-         tex::Target::TextureRectangle != texture.target() )
+        tex::Target::Texture2DMultisample != texture.target() &&
+        tex::Target::TextureRectangle != texture.target() )
     {
-        throw_debug( "Invalid texture target" );
+        spdlog::error( "Invalid texture target" );
+        throw_debug( "Invalid texture target" )
     }
 
     int index = 0;
@@ -86,26 +90,24 @@ void GLFrameBufferObject::attach2DTexture(
 
             if ( *colorAttachmentIndex < 0 || maxAttach <= *colorAttachmentIndex )
             {
-                std::ostringstream ss;
-                ss << "Invalid color attachment index " << *colorAttachmentIndex << std::ends;
-                throw_debug( ss.str() );
+                spdlog::error( "Invalid color attachment index {}", *colorAttachmentIndex );
+                throw_debug( "Invalid color attachment index" )
             }
 
             index = *colorAttachmentIndex;
         }
         else
         {
-            std::ostringstream ss;
-            ss << "No color attachment index specified" << std::ends;
-            throw_debug( ss.str() );
+            spdlog::error( "No color attachment index specified" );
+            throw_debug( "No color attachment index specified" )
         }
     }
 
     glFramebufferTexture2D(
-                underlyingType( target ),
-                underlyingType( attachment ) + static_cast<GLenum>(index),
-                underlyingType( texture.target() ),
-                texture.id(), 0 );
+        underlyingType( target ),
+        underlyingType( attachment ) + static_cast<GLenum>(index),
+        underlyingType( texture.target() ),
+        texture.id(), 0 );
 
     checkStatus();
 }
@@ -114,16 +116,16 @@ void GLFrameBufferObject::attach2DTexture(
 //glGetIntegerv(GL_MAX_DRAW_BUFFERS, &maxDrawBuf);
 
 void GLFrameBufferObject::attachCubeMapTexture(
-        const fbo::TargetType& target,
-        const fbo::AttachmentType& attachment,
-        const GLTexture& texture,
-        const tex::CubeMapFace& cubeMapFace,
-        GLint level,
-        std::optional<int> colorAttachmentIndex )
+    const fbo::TargetType& target,
+    const fbo::AttachmentType& attachment,
+    const GLTexture& texture,
+    const tex::CubeMapFace& cubeMapFace,
+    GLint level,
+    std::optional<int> colorAttachmentIndex )
 {
     if ( tex::Target::TextureCubeMap != texture.target() )
     {
-        throw_debug( "Invalid FBO target" );
+        throw_debug( "Invalid FBO target" )
     }
 
     int index = 0;
@@ -136,19 +138,18 @@ void GLFrameBufferObject::attachCubeMapTexture(
 
         if ( *colorAttachmentIndex < 0 || maxAttach <= *colorAttachmentIndex )
         {
-            std::ostringstream ss;
-            ss << "Invalid color attachment index " << *colorAttachmentIndex << std::ends;
-            throw_debug( ss.str() );
+            spdlog::error( "Invalid color attachment index {}", *colorAttachmentIndex );
+            throw_debug( "Invalid color attachment index" )
         }
 
         index = *colorAttachmentIndex;
     }
 
     glFramebufferTexture2D(
-                underlyingType( target ),
-                underlyingType( attachment ) + static_cast<GLenum>(index),
-                underlyingType( cubeMapFace ),
-                texture.id(), level );
+        underlyingType( target ),
+        underlyingType( attachment ) + static_cast<GLenum>(index),
+        underlyingType( cubeMapFace ),
+        texture.id(), level );
 
     checkStatus();
 }
@@ -164,9 +165,8 @@ void GLFrameBufferObject::checkStatus()
 
     if ( GL_FRAMEBUFFER_COMPLETE != status )
     {
-        std::ostringstream ss;
-        ss << "Framebuffer object " << m_name << " not complete: "
-           << glCheckFramebufferStatus( GL_FRAMEBUFFER ) << std::ends;
-        throw_debug( ss.str() );
+        spdlog::error( "Framebuffer object '{}' not complete: {}", m_name,
+                       glCheckFramebufferStatus( GL_FRAMEBUFFER ) );
+        throw_debug( "Framebuffer object not complete" )
     }
 }

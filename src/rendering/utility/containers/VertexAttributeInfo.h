@@ -2,19 +2,18 @@
 #define VERTEX_ATTRIBUTE_INFO_H
 
 #include "rendering/utility/gl/GLBufferTypes.h"
-#include "rendering/utility/gl/GLDrawTypes.h"
 
 class VertexAttributeInfo
 {
 public:
 
     VertexAttributeInfo(
-            BufferComponentType componentType,
-            BufferNormalizeValues normalizeValues,
-            int numComponents,
-            int strideInBytes,
-            int offsetInBytes,
-            uint64_t vertexCount );
+        BufferComponentType componentType,
+        BufferNormalizeValues normalizeValues,
+        int numComponents,
+        int strideInBytes,
+        int offsetInBytes,
+        uint64_t vertexCount );
 
     BufferComponentType componentType() const;
     BufferNormalizeValues normalizeValues() const;

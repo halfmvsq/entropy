@@ -3,19 +3,19 @@
 #include <utility>
 
 VertexAttributeInfo::VertexAttributeInfo(
-        BufferComponentType componentType,
-        BufferNormalizeValues normalizeValues,
-        int numComponents,
-        int strideInBytes,
-        int offsetInBytes,
-        uint64_t vertexCount )
+    BufferComponentType componentType,
+    BufferNormalizeValues normalizeValues,
+    int numComponents,
+    int strideInBytes,
+    int offsetInBytes,
+    uint64_t vertexCount )
     :
-      m_componentType( std::move( componentType ) ),
-      m_normalizeValues( std::move( normalizeValues ) ),
-      m_numComponents( numComponents ),
-      m_strideInBytes( strideInBytes ),
-      m_offsetInBytes( offsetInBytes ),
-      m_vertexCount( vertexCount )
+    m_componentType( std::move( componentType ) ),
+    m_normalizeValues( std::move( normalizeValues ) ),
+    m_numComponents( numComponents ),
+    m_strideInBytes( strideInBytes ),
+    m_offsetInBytes( offsetInBytes ),
+    m_vertexCount( vertexCount )
 {}
 
 BufferComponentType VertexAttributeInfo::componentType() const

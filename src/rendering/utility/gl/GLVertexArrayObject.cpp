@@ -3,8 +3,6 @@
 
 #include "common/Exception.hpp"
 
-#include <iostream>
-
 
 namespace
 {
@@ -25,7 +23,7 @@ size_t bytesPerIndexType( const IndexType& indexType )
 
 GLVertexArrayObject::GLVertexArrayObject()
     :
-      m_id( 0 )
+    m_id( 0 )
 {
 }
 
@@ -64,37 +62,38 @@ GLuint GLVertexArrayObject::id() const
 }
 
 void GLVertexArrayObject::setAttributeBuffer(
-        GLuint index,
-        GLint size,
-        const BufferComponentType& type,
-        const BufferNormalizeValues& normalize,
-        GLsizei stride,
-        GLint offset )
+    GLuint index,
+    GLint size,
+    const BufferComponentType& type,
+    const BufferNormalizeValues& normalize,
+    GLsizei stride,
+    GLint offset )
 {
     glVertexAttribPointer( index, size, underlyingType( type ), underlyingType( normalize ),
-                           stride, reinterpret_cast<const GLvoid*>( offset ) );
+                          stride, reinterpret_cast<const GLvoid*>( offset ) );
 
     CHECK_GL_ERROR( m_errorChecker )
 }
 
 void GLVertexArrayObject::setAttributeBuffer(
-        GLuint index, const VertexAttributeInfo& attribInfo )
+    GLuint index, const VertexAttributeInfo& attribInfo )
 {
-    setAttributeBuffer( index,
-                        attribInfo.numComponents(),
-                        attribInfo.componentType(),
-                        attribInfo.normalizeValues(),
-                        attribInfo.strideInBytes(),
-                        attribInfo.offsetInBytes() );
+    setAttributeBuffer(
+        index,
+        attribInfo.numComponents(),
+        attribInfo.componentType(),
+        attribInfo.normalizeValues(),
+        attribInfo.strideInBytes(),
+        attribInfo.offsetInBytes() );
 }
 
 void GLVertexArrayObject::setAttributeIntegerBuffer(
-        GLuint index, GLint size, const BufferComponentType& type,
-        GLsizei stride, GLint offset )
+    GLuint index, GLint size, const BufferComponentType& type,
+    GLsizei stride, GLint offset )
 {
     glVertexAttribIPointer(
-                index, size, underlyingType( type ),
-                stride, reinterpret_cast<const GLvoid*>( offset ) );
+        index, size, underlyingType( type ),
+        stride, reinterpret_cast<const GLvoid*>( offset ) );
 
     CHECK_GL_ERROR( m_errorChecker )
 }
@@ -126,35 +125,36 @@ void GLVertexArrayObject::disableVertexAttribute( GLuint index )
 void GLVertexArrayObject::drawElements( const IndexedDrawParams& params )
 {
     glDrawElements(	params.primitiveMode(),
-                    static_cast<GLsizei>( params.elementCount() ),
-                    params.indexType(),
-                    params.indices() );
+                   static_cast<GLsizei>( params.elementCount() ),
+                   params.indexType(),
+                   params.indices() );
 }
 
 
 GLVertexArrayObject::IndexedDrawParams::IndexedDrawParams(
-        const PrimitiveMode& primitiveMode,
-        std::size_t elementCount,
-        const IndexType& indexType,
-        std::size_t indexOffset )
+    const PrimitiveMode& primitiveMode,
+    std::size_t elementCount,
+    const IndexType& indexType,
+    std::size_t indexOffset )
     :
-      m_primitiveMode( underlyingType( primitiveMode ) ),
-      m_elementCount( 0 ),
-      m_indexType( underlyingType( indexType ) ),
-      m_indices( reinterpret_cast<GLvoid*>( indexOffset * bytesPerIndexType( indexType ) ) )
+    m_primitiveMode( underlyingType( primitiveMode ) ),
+    m_elementCount( 0 ),
+    m_indexType( underlyingType( indexType ) ),
+    m_indices( reinterpret_cast<GLvoid*>( indexOffset * bytesPerIndexType( indexType ) ) )
 {
     setElementCount( elementCount );
 }
 
 GLVertexArrayObject::IndexedDrawParams::IndexedDrawParams(
-        const VertexIndicesInfo& indicesInfo )
+    const VertexIndicesInfo& indicesInfo )
     :
-      m_primitiveMode( underlyingType( indicesInfo.primitiveMode() ) ),
-      m_elementCount( indicesInfo.indexCount() ),
-      m_indexType( underlyingType( indicesInfo.indexType() ) ),
-      m_indices( reinterpret_cast<GLvoid*>(
-                     indicesInfo.indexOffset() *
-                     bytesPerIndexType( indicesInfo.indexType() ) ) )
+    m_primitiveMode( underlyingType( indicesInfo.primitiveMode() ) ),
+    m_elementCount( indicesInfo.indexCount() ),
+    m_indexType( underlyingType( indicesInfo.indexType() ) ),
+
+    m_indices( reinterpret_cast<GLvoid*>(
+        indicesInfo.indexOffset() *
+        bytesPerIndexType( indicesInfo.indexType() ) ) )
 {}
 
 GLenum GLVertexArrayObject::IndexedDrawParams::primitiveMode() const

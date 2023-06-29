@@ -1,30 +1,27 @@
 #include "rendering/utility/containers/Uniforms.h"
-#include "rendering/utility/gl/GLShaderProgram.h"
 
-#include "common/Exception.hpp"
-
-#include <iostream>
-#include <sstream>
+#include <spdlog/spdlog.h>
+#include <spdlog/fmt/ostr.h>
 
 
 Uniforms::Decl::Decl()
     :
-      m_type( UniformType::Undefined ),
-      m_defaultValue( 0 ),
-      m_value( 0 ),
-      m_location( -1 ),
-      m_isRequired( false ),
-      m_isDirty( true )
+    m_type( UniformType::Undefined ),
+    m_defaultValue( 0 ),
+    m_value( 0 ),
+    m_location( -1 ),
+    m_isRequired( false ),
+    m_isDirty( true )
 {}
 
 Uniforms::Decl::Decl( UniformType type, ValueType defaultValue, bool isRequired )
     :
-      m_type( type ),
-      m_defaultValue( defaultValue ),
-      m_value( defaultValue ),
-      m_location( -1 ),
-      m_isRequired( isRequired ),
-      m_isDirty( true )
+    m_type( type ),
+    m_defaultValue( defaultValue ),
+    m_value( defaultValue ),
+    m_location( -1 ),
+    m_isRequired( isRequired ),
+    m_isDirty( true )
 {}
 
 void Uniforms::Decl::set( const ValueType& value )
@@ -36,7 +33,7 @@ void Uniforms::Decl::set( const ValueType& value )
 
 Uniforms::Uniforms( const UniformsMap& map )
     :
-      m_uniformsMap( map )
+    m_uniformsMap( map )
 {}
 
 
@@ -47,13 +44,14 @@ bool Uniforms::insertUniform( const std::string& name, const Uniforms::Decl& uni
 }
 
 
-bool Uniforms::insertUniform( const std::string& name, const UniformType& type,
-                              ValueType defaultValue, bool isRequired )
+bool Uniforms::insertUniform(
+    const std::string& name, const UniformType& type,
+    ValueType defaultValue, bool isRequired )
 {
     auto result = m_uniformsMap.emplace(
-                std::piecewise_construct,
-                std::forward_as_tuple( name ),
-                std::forward_as_tuple( type, defaultValue, isRequired ) );
+        std::piecewise_construct,
+        std::forward_as_tuple( name ),
+        std::forward_as_tuple( type, defaultValue, isRequired ) );
 
     return result.second;
 }
@@ -129,16 +127,14 @@ std::optional<GLint> Uniforms::location( const std::string& name ) const
 }
 
 GLint Uniforms::queryAndSetLocation(
-        const std::string& name,
-        std::function< GLint ( const std::string& ) > locationGetter )
+    const std::string& name,
+    std::function< GLint ( const std::string& ) > locationGetter )
 {
     const GLint loc = locationGetter( name );
 
     if ( -1 == loc )
     {
-        std::ostringstream msg;
-        msg << "Unrecognized uniform \"" << name << "\"" << std::ends;
-//        throw_debug( name )
+        spdlog::error( "Unrecognized unform '{}'", name );
         return loc;
     }
 
@@ -154,8 +150,7 @@ int Uniforms::queryAndSetAllLocations( std::function< GLint ( const std::string&
 
         if ( -1 == loc )
         {
-            std::ostringstream msg;
-            msg << "Unrecognized uniform \"" << uniform.first << "\"" << std::ends;
+            spdlog::error( "Unrecognized unform '{}'", uniform.first );
             return 1;
         }
     }

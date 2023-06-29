@@ -27,18 +27,18 @@ enum ImGuiKnobVariant_ {
 namespace ImGuiKnobs {
 
     struct color_set {
-        ImColor base;
-        ImColor hovered;
-        ImColor active;
-        ImColor inactive;
+        ImColor m_base;
+        ImColor m_hovered;
+        ImColor m_active;
+        ImColor m_inactive;
 
-        color_set(ImColor base, ImColor hovered, ImColor active, ImColor inactive) : base(base), hovered(hovered), active(active), inactive(inactive) {}
+        color_set(ImColor base, ImColor hovered, ImColor active, ImColor inactive) : m_base(base), m_hovered(hovered), m_active(active), m_inactive(inactive) {}
 
         color_set(ImColor color) {
-            base = color;
-            hovered = color;
-            active = color;
-            inactive = color;
+            m_base = color;
+            m_hovered = color;
+            m_active = color;
+            m_inactive = color;
         }
     };
 

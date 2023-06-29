@@ -1,7 +1,6 @@
 #ifndef VERTEX_INDICES_INFO_H
 #define VERTEX_INDICES_INFO_H
 
-#include "rendering/utility/gl/GLBufferTypes.h"
 #include "rendering/utility/gl/GLDrawTypes.h"
 
 class VertexIndicesInfo
@@ -9,10 +8,10 @@ class VertexIndicesInfo
 public:
 
     VertexIndicesInfo(
-            IndexType indexType,
-            PrimitiveMode primitiveMode,
-            uint64_t indexCount,
-            uint64_t indexOffset );
+        IndexType indexType,
+        PrimitiveMode primitiveMode,
+        uint64_t indexCount,
+        uint64_t indexOffset );
 
     IndexType indexType() const;
     PrimitiveMode primitiveMode() const;

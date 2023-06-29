@@ -3,15 +3,15 @@
 #include <utility>
 
 VertexIndicesInfo::VertexIndicesInfo(
-        IndexType indexType,
-        PrimitiveMode primitiveMode,
-        uint64_t indexCount,
-        uint64_t indexOffset )
+    IndexType indexType,
+    PrimitiveMode primitiveMode,
+    uint64_t indexCount,
+    uint64_t indexOffset )
     :
-      m_indexType( std::move( indexType ) ),
-      m_primitiveMode( std::move( primitiveMode ) ),
-      m_indexCount( indexCount ),
-      m_indexOffset( indexOffset )
+    m_indexType( std::move( indexType ) ),
+    m_primitiveMode( std::move( primitiveMode ) ),
+    m_indexCount( indexCount ),
+    m_indexOffset( indexOffset )
 {}
 
 IndexType VertexIndicesInfo::indexType() const

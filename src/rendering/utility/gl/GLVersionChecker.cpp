@@ -4,7 +4,9 @@
 
 #include <glad/glad.h>
 
-#include <iostream>
+#include <spdlog/spdlog.h>
+#include <spdlog/fmt/ostr.h>
+
 #include <sstream>
 
 
@@ -20,12 +22,9 @@ GLVersionChecker::GLVersionChecker()
 
     if ( majorVersion < 3 || ( majorVersion == 3 && minorVersion < 3 ) )
     {
-        std::ostringstream ss;
-        ss << "OpenGL version " << majorVersion << "." << minorVersion
-           << " is too low and not supported by HistoloZee.\n"
-           << "The minimum required OpenGL version is 3.3" << std::ends;
-
-        throw_debug( ss.str() )
+        spdlog::critical( "OpenGL version {}.{} is too low and not supported.", majorVersion, minorVersion );
+        spdlog::critical( "The minimum required OpenGL version is 3.3" );
+        throw_debug( "Invalid OpenGL version found" )
     }
 
     // Profile mask used to create the context:
@@ -50,8 +49,7 @@ GLVersionChecker::GLVersionChecker()
     ss << "\tVendor: " << glGetString( GL_VENDOR ) << std::endl;
     ss << "\tRenderer: " << glGetString( GL_RENDERER ) << std::endl;
 
-    /// @todo Logging:
-    std::cout << ss.str() << std::endl;
+    spdlog::info( "{}", ss.str() );
 
     CHECK_GL_ERROR( m_errorChecker )
 }

@@ -5,17 +5,20 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include <spdlog/spdlog.h>
+#include <spdlog/fmt/ostr.h>
+
 #include <fstream>
-#include <iostream>
-#include <sstream>
-#include <variant>
+//#include <iostream>
+//#include <sstream>
+//#include <variant>
 
 
 GLShaderProgram::GLShaderProgram( std::string name )
     :
-      m_name( std::move( name ) ),
-      m_handle( 0u ),
-      m_linked( false )
+    m_name( std::move( name ) ),
+    m_handle( 0u ),
+    m_linked( false )
 {
 }
 
@@ -68,7 +71,8 @@ void GLShaderProgram::attachShader( std::shared_ptr<GLShader> shader )
 {
     if ( ! shader || ! shader->isValid() )
     {
-        throw_debug( "Invalid shader; cannot attach to program" );
+        spdlog::error( "Invalid shader; cannot attach to program '{}'", m_name );
+        throw_debug( "Invalid shader; cannot attach to program" )
     }
 
     if ( ! m_handle )
@@ -77,6 +81,7 @@ void GLShaderProgram::attachShader( std::shared_ptr<GLShader> shader )
 
         if ( ! m_handle )
         {
+            spdlog::error( "Unable to create shader program '{}'", m_name );
             throw_debug( "Unable to create shader program" );
         }
     }
@@ -95,12 +100,12 @@ bool GLShaderProgram::link()
 {
     if ( ! m_handle )
     {
-        std::cerr << "Error: Program '" << m_name << "' has not been compiled." << std::endl;
+        spdlog::error( "Program '{}' has not been compiled", m_name );
         return false;
     }
     else if ( m_linked )
     {
-        std::cerr << "Error: Program '" << m_name << "' has already been linked." << std::endl;
+        spdlog::error( "Program '{}' has already been linked", m_name );
         return false;
     }
 
@@ -124,7 +129,7 @@ bool GLShaderProgram::link()
             logString = &cLog[0];
         }
 
-        std::cerr << "Link of program '" << m_name << "' failed:\n" << logString << std::endl;
+        spdlog::error( "Link of program '{}' failed: {}", m_name, logString );
         return false;
     }
 
@@ -140,8 +145,8 @@ bool GLShaderProgram::link()
 
     if ( 1 == ret )
     {
-        std::cerr << "Setting uniform(s) in program '" << m_name << "' failed" << std::endl;
-        throw_debug( "Error" );
+        spdlog::error( "Setting uniform(s) in program '{}' failed", m_name );
+        throw_debug( "Error" )
     }
 
     return true;
@@ -156,7 +161,7 @@ void GLShaderProgram::use()
     }
     else
     {
-        std::cerr << "Error: Program is not valid." << std::endl;
+        spdlog::error( "Program '{}' is not valid", m_name );
         return;
     }
 }
@@ -176,7 +181,7 @@ void GLShaderProgram::bindAttribLocation( const std::string& name, GLuint locati
 
 
 void GLShaderProgram::bindFragDataLocation(
-        const std::string& name, GLuint location )
+    const std::string& name, GLuint location )
 {
     glBindFragDataLocation( m_handle, location, name.c_str() );
 }
@@ -496,7 +501,7 @@ void GLShaderProgram::printActiveUniforms()
 
     std::vector<GLchar> nameData( static_cast<size_t>( maxUniformNameLength ) );
 
-    std::cout << "Active uniforms:" << std::endl;
+    spdlog::info( "Active uniforms:" );
 
     for ( int i = 0; i < numActiveUniforms; ++i )
     {
@@ -504,16 +509,15 @@ void GLShaderProgram::printActiveUniforms()
         GLint arraySize;
         GLenum type;
 
-        glGetActiveUniform( m_handle, GLuint(i), maxUniformNameLength, &actualLength,
-                            &arraySize, &type, &nameData[0] );
+        glGetActiveUniform(
+            m_handle, GLuint(i), maxUniformNameLength, &actualLength,
+            &arraySize, &type, &nameData[0] );
 
         const std::string name( &nameData[0], static_cast<size_t>( actualLength ) );
         const GLint location = glGetUniformLocation( m_handle, &nameData[0] );
 
-        std::cout << "\tuniform " << i << ": "
-                  << "location = " << location << ", "
-                  << "name = " << name << ", "
-                  << "type = " << Uniforms::getUniformTypeString( type ) << std::endl;
+        spdlog::info( "uniform {}: location = {}, name = {}, type = {}",
+                      i, location, name, Uniforms::getUniformTypeString( type ) );
     }
 
 #if 0
@@ -552,7 +556,7 @@ void GLShaderProgram::printActiveUniformBlocks()
     std::vector<GLchar> uniformBlockNameData( static_cast<size_t>( maxUniformBlockNameLength ) );
     std::vector<GLchar> uniformNameData( static_cast<size_t>( maxUniformNameLength ) );
 
-    std::cout << "Active uniform blocks:" << std::endl;
+    spdlog::info( "Active uniform blocks:" );
 
     for ( GLint i = 0; i < numUniformBlocks; ++i )
     {
@@ -560,24 +564,20 @@ void GLShaderProgram::printActiveUniformBlocks()
         GLint binding;
 
         glGetActiveUniformBlockName(
-                    m_handle, i, maxUniformBlockNameLength,
-                    &actualLength, &uniformBlockNameData[0] );
+            m_handle, i, maxUniformBlockNameLength,
+            &actualLength, &uniformBlockNameData[0] );
 
         glGetActiveUniformBlockiv( m_handle, i, GL_UNIFORM_BLOCK_BINDING, &binding );
 
         const std::string uniformBlockName( &uniformBlockNameData[0], actualLength );
 
-        std::cout << "\tblock " << i << ": "
-                  << "name = " << uniformBlockName << ", "
-                  << "binding = " << binding << std::endl;
+        spdlog::info( "block {}: name = {}, binding = {}", i, uniformBlockName, binding );
 
         GLint numUniforms;
-        glGetActiveUniformBlockiv( m_handle, i, GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS,
-                                   &numUniforms );
+        glGetActiveUniformBlockiv( m_handle, i, GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS, &numUniforms );
 
         std::vector<GLint> uniformIndices( numUniforms );
-        glGetActiveUniformBlockiv( m_handle, i, GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES,
-                                   &uniformIndices[0] );
+        glGetActiveUniformBlockiv( m_handle, i, GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES, &uniformIndices[0] );
 
         for ( GLint u = 0; u < numUniforms; ++u )
         {
@@ -590,10 +590,8 @@ void GLShaderProgram::printActiveUniformBlocks()
             const std::string uniformName( &uniformNameData[0], actualLength );
             const GLint location = glGetUniformLocation( m_handle, &uniformName[0] );
 
-            std::cout << "\t\tuniform " << u << ": "
-                      << "location = " << location << ", "
-                      << "name = " << uniformName << ", "
-                      << "type = " << Uniforms::getUniformTypeString(type) << std::endl;
+            spdlog::info( "uniform {}: location = {}, name = {}, type = {}",
+                          u, location, uniformName, Uniforms::getUniformTypeString(type) );
         }
     }
 
@@ -646,7 +644,7 @@ void GLShaderProgram::printActiveAttribs()
 
     std::vector<GLchar> nameData( maxAttribNameLength );
 
-    std::cout << "Active attributes:" << std::endl;
+    spdlog::info( "Active attributes:" );
 
     for ( GLint i = 0; i < numActiveAttribs; ++i )
     {
@@ -660,10 +658,8 @@ void GLShaderProgram::printActiveAttribs()
         const std::string name( &nameData[0], actualLength );
         const GLint location = glGetAttribLocation( m_handle, &nameData[0] );
 
-        std::cout << "\tattribute " << i << ": "
-                  << "location = " << location << ", "
-                  << "name = " << name << ", "
-                  << "type = " << Uniforms::getUniformTypeString( type ) << std::endl;
+        spdlog::info( "attribute {}: location = {}, name = {}, type = {}",
+                      i, location, name, Uniforms::getUniformTypeString( type ) );
     }
 
 #if 0
@@ -694,17 +690,17 @@ bool GLShaderProgram::isValid()
 {
     if ( ! m_handle )
     {
-        std::cerr << "Error: Program is not compiled." << std::endl;
+        spdlog::error( "Program '{}' is not compiled", m_name );
         return false;
     }
     else if ( ! m_linked )
     {
-        std::cerr << "Error: Program is not linked." << std::endl;
+        spdlog::error( "Program '{}' is not linked", m_name );
         return false;
     }
     else if ( ! glIsProgram( m_handle ) )
     {
-        std::cerr << "Error: Not a program." << std::endl;
+        spdlog::error( "Handle '{}' is not a program", m_handle );
         return false;
     }
 
@@ -727,9 +723,7 @@ bool GLShaderProgram::isValid()
             logString = &cLog[0];
         }
 
-        std::cerr << "Program " << m_name << " failed to validate:\n"
-                  << logString << std::endl;
-
+        spdlog::error( "Program '{}' failed to validate: {}", m_name, logString );
         return false;
     }
 
@@ -837,7 +831,8 @@ void GLShaderProgram::UniformSetter::operator()( const std::vector<glm::mat4>& m
 {
     if ( ! matrices.empty() )
     {
-        glUniformMatrix4fv( m_loc, static_cast<GLint>( matrices.size() ), GL_FALSE, glm::value_ptr( matrices.at(0) ) );
+        glUniformMatrix4fv( m_loc, static_cast<GLint>( matrices.size() ),
+                            GL_FALSE, glm::value_ptr( matrices.at(0) ) );
     }
 }
 

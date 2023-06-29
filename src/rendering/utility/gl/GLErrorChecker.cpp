@@ -1,6 +1,9 @@
 #include "rendering/utility/gl/GLErrorChecker.h"
 #include "common/Exception.hpp"
 
+#include <spdlog/spdlog.h>
+#include <spdlog/fmt/ostr.h>
+
 #include <sstream>
 #include <string>
 
@@ -40,6 +43,8 @@ void GLErrorChecker::operator()( const char* file, const char* function, int lin
 
         std::ostringstream ss;
         ss << "OpenGL error " << error << ": " << msg << std::ends;
+
+        spdlog::error( "{}", ss.str() );
 
         throw Exception( ss.str(), file, function, line );
     }

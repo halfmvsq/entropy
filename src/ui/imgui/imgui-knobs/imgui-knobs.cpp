@@ -111,7 +111,7 @@ namespace ImGuiKnobs {
                 ImGui::GetWindowDrawList()->AddCircleFilled(
                     {m_center[0] + cosf(angle) * dot_radius, m_center[1] + sinf(angle) * dot_radius},
                         dot_size,
-                    m_is_active ? color.active : (m_is_hovered ? color.hovered : color.inactive),
+                    m_is_active ? color.m_active : (m_is_hovered ? color.m_hovered : color.m_inactive),
                         segments);
             }
 
@@ -124,7 +124,7 @@ namespace ImGuiKnobs {
                 ImGui::GetWindowDrawList()->AddLine(
                     {m_center[0] + angle_cos * tick_end, m_center[1] + angle_sin * tick_end},
                     {m_center[0] + angle_cos * tick_start, m_center[1] + angle_sin * tick_start},
-                    m_is_active ? color.active : (m_is_hovered ? color.hovered : color.inactive),
+                    m_is_active ? color.m_active : (m_is_hovered ? color.m_hovered : color.m_inactive),
                     width * m_radius);
             }
 
@@ -134,7 +134,7 @@ namespace ImGuiKnobs {
                 ImGui::GetWindowDrawList()->AddCircleFilled(
                     m_center,
                         circle_radius,
-                    m_is_active ? color.active : (m_is_hovered ? color.hovered : color.inactive));
+                    m_is_active ? color.m_active : (m_is_hovered ? color.m_hovered : color.m_inactive));
             }
 
             void draw_arc(float radius, float size, float start_angle, float end_angle, color_set color, int segments, int bezier_count) {
@@ -147,7 +147,7 @@ namespace ImGuiKnobs {
                         start_angle,
                         end_angle,
                         track_size,
-                    m_is_active ? color.active : (m_is_hovered ? color.hovered : color.inactive),
+                    m_is_active ? color.m_active : (m_is_hovered ? color.m_hovered : color.m_inactive),
                         segments,
                         bezier_count);
             }

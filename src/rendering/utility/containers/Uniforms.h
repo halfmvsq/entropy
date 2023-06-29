@@ -10,7 +10,6 @@
 
 #include <array>
 #include <functional>
-#include <memory>
 #include <optional>
 #include <string>
 #include <unordered_map>
@@ -125,8 +124,8 @@ public:
     std::optional<GLint> location( const std::string& name ) const;
 
     GLint queryAndSetLocation(
-            const std::string& name,
-            std::function< GLint ( const std::string& ) > locationGetter );
+        const std::string& name,
+        std::function< GLint ( const std::string& ) > locationGetter );
 
     int queryAndSetAllLocations( std::function< GLint ( const std::string& ) > locationGetter );
 

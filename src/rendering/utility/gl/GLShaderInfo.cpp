@@ -1,22 +1,22 @@
 #include "rendering/utility/gl/GLShaderInfo.h"
 
+#include <glad/glad.h>
+
 #include <cstdio>
 #include <string>
 
 
-ShaderInfo::
-ShaderInfo()
+ShaderInfo::ShaderInfo()
 {
-    initializeOpenGLFunctions();
 }
 
 
 #ifdef USING_GL_VERSION_4_3
 void
-ShaderInfo::
-debugCallback( GLenum source, GLenum type, GLuint id,
-               GLenum severity, GLsizei length,
-               const GLchar * msg, const void * param )
+    ShaderInfo::
+    debugCallback( GLenum source, GLenum type, GLuint id,
+                  GLenum severity, GLsizei length,
+                  const GLchar * msg, const void * param )
 {
     std::string sourceStr;
 
@@ -119,17 +119,15 @@ debugCallback( GLenum source, GLenum type, GLuint id,
     }
 
     printf( "%s:%s[%s](%d): %s\n",
-            sourceStr.c_str(),
-            typeStr.c_str(),
-            sevStr.c_str(),
-            id, msg );
+           sourceStr.c_str(),
+           typeStr.c_str(),
+           sevStr.c_str(),
+           id, msg );
 }
 #endif
 
 
-bool
-ShaderInfo::
-checkForOpenGLError( const char* file, int line )
+bool ShaderInfo::checkForOpenGLError( const char* file, int line )
 {
     GLenum glErr;
     bool error = false;
@@ -169,9 +167,7 @@ checkForOpenGLError( const char* file, int line )
 }
 
 
-void
-ShaderInfo::
-dumpGLInfo( bool dumpExtensions )
+void ShaderInfo::dumpGLInfo( bool dumpExtensions )
 {
     const GLubyte *renderer = glGetString( GL_RENDERER );
     const GLubyte *vendor = glGetString( GL_VENDOR );

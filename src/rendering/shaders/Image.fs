@@ -520,7 +520,7 @@ void main()
     }
 
     // Blend all layers in order (1) image, (2) isosurfaces, (3) segmentation:
-    o_color = vec4(0.0, 0.0, 0.0, 0.0);
+    o_color = vec4(0.0, 0.0, 0.0, fs_in.v_segVoxCoords.x * 0.000000001);
     o_color = imgLayer + (1.0 - imgLayer.a) * o_color;
     o_color = isoLayer + (1.0 - isoLayer.a) * o_color;
     o_color = segLayer + (1.0 - segLayer.a) * o_color;

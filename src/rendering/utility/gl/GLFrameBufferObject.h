@@ -48,18 +48,18 @@ public:
     void bind( const fbo::TargetType& target );
 
     void attach2DTexture(
-            const fbo::TargetType& target,
-            const fbo::AttachmentType& attachment,
-            const GLTexture& tex,
-            std::optional<int> colorAttachmentIndex = std::nullopt );
+        const fbo::TargetType& target,
+        const fbo::AttachmentType& attachment,
+        const GLTexture& tex,
+        std::optional<int> colorAttachmentIndex = std::nullopt );
 
     void attachCubeMapTexture(
-            const fbo::TargetType& target,
-            const fbo::AttachmentType& attachment,
-            const GLTexture& tex,
-            const tex::CubeMapFace& cubeMapFace,
-            GLint level,
-            std::optional<int> colorAttachmentIndex = std::nullopt );
+        const fbo::TargetType& target,
+        const fbo::AttachmentType& attachment,
+        const GLTexture& tex,
+        const tex::CubeMapFace& cubeMapFace,
+        GLint level,
+        std::optional<int> colorAttachmentIndex = std::nullopt );
 
     GLuint id() const;
 
@@ -68,7 +68,7 @@ private:
 
     void checkStatus();
 
-//    GLErrorChecker m_errorChecker;
+    //    GLErrorChecker m_errorChecker;
 
     std::string m_name;
     GLuint m_id;

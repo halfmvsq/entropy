@@ -93,11 +93,11 @@ static const std::string ROBOTO_LIGHT( "robotoLight" );
  * @return Unique pointer to the renderer
  */
 std::unique_ptr<DepthPeelRenderer> createDdpRenderer(
-        int viewUid,
-        ShaderProgramActivatorType shaderActivator,
-        UniformsProviderType uniformsProvider,
-        GetterType<IDrawable*> rootProvider,
-        GetterType<IDrawable*> overlayProvider )
+    int viewUid,
+    ShaderProgramActivatorType shaderActivator,
+    UniformsProviderType uniformsProvider,
+    GetterType<IDrawable*> rootProvider,
+    GetterType<IDrawable*> overlayProvider )
 {
     std::ostringstream name;
     name << "DdpRenderer_" << viewUid << std::ends;
@@ -141,26 +141,27 @@ const Uniforms::SamplerIndexType Rendering::msk_jumpTexSampler{ 4 };
 
 Rendering::Rendering( AppData& appData )
     :
-      m_appData( appData ),
+    m_appData( appData ),
 
-      m_nvg( nvgCreateGL3( NVG_ANTIALIAS | NVG_STENCIL_STROKES /*| NVG_DEBUG*/ ) ),
+    m_nvg( nvgCreateGL3( NVG_ANTIALIAS | NVG_STENCIL_STROKES /*| NVG_DEBUG*/ ) ),
 
-      m_crossCorrelationProgram( "CrossCorrelationProgram" ),
-      m_differenceProgram( "DifferenceProgram" ),
-      m_edgeProgram( "EdgeProgram" ),
-      m_imageProgram( "ImageProgram" ),
-      m_imageRgbaProgram( "ImageRgbaProgram" ),
-      m_xrayProgram( "XrayProgram" ),
-      m_overlayProgram( "OverlayProgram" ),
-      m_raycastIsoSurfaceProgram( "RayCastIsoSurfaceProgram" ),
-      m_simpleProgram( "SimpleProgram" ),
+    m_crossCorrelationProgram( "CrossCorrelationProgram" ),
+    m_differenceProgram( "DifferenceProgram" ),
+    m_edgeProgram( "EdgeProgram" ),
+    m_imageProgram( "ImageProgram" ),
+    m_imageRgbaProgram( "ImageRgbaProgram" ),
+    m_xrayProgram( "XrayProgram" ),
+    m_overlayProgram( "OverlayProgram" ),
+    m_raycastIsoSurfaceProgram( "RayCastIsoSurfaceProgram" ),
+    m_simpleProgram( "SimpleProgram" ),
 
-      m_isAppDoneLoadingImages( false ),
-      m_showOverlays( true )
+    m_isAppDoneLoadingImages( false ),
+    m_showOverlays( true )
 {
     if ( ! m_nvg )
     {
-        spdlog::error( "Could not initialize nanovg. Proceeding without vector graphics." );
+        spdlog::error( "Could not initialize 'nanovg' vector graphcis library. "
+                       "Proceeding without vector graphics." );
     }
 
     try
@@ -170,9 +171,9 @@ Rendering::Rendering( AppData& appData )
         const cmrc::file robotoFont = filesystem.open( "resources/fonts/Roboto/Roboto-Light.ttf" );
 
         const int robotoLightFont = nvgCreateFontMem(
-                    m_nvg, ROBOTO_LIGHT.c_str(),
-                    reinterpret_cast<uint8_t*>( const_cast<char*>( robotoFont.begin() ) ),
-                    static_cast<int32_t>( robotoFont.size() ), 0 );
+            m_nvg, ROBOTO_LIGHT.c_str(),
+            reinterpret_cast<uint8_t*>( const_cast<char*>( robotoFont.begin() ) ),
+            static_cast<int32_t>( robotoFont.size() ), 0 );
 
         if ( -1 == robotoLightFont )
         {
@@ -188,8 +189,6 @@ Rendering::Rendering( AppData& appData )
 
 
     /***************************************************/
-
-    // auto shaderPrograms = std::make_unique<ShaderProgramContainer>();
 
     // This is a shared pointer, since it gets passed down to rendering
     // objects where it is held as a weak pointer
@@ -228,11 +227,11 @@ Rendering::Rendering( AppData& appData )
     int viewUid = 0;
     
     m_renderer = createDdpRenderer(
-            viewUid,
-            m_shaderActivator,
-            m_uniformsProvider,
-            m_rootDrawableProvider,
-            m_overlayDrawableProvider );
+        viewUid,
+        m_shaderActivator,
+        m_uniformsProvider,
+        m_rootDrawableProvider,
+        m_overlayDrawableProvider );
 
 }
 
@@ -2243,6 +2242,7 @@ void Rendering::createShaderPrograms()
 
 bool Rendering::createImageProgram( GLShaderProgram& program )
 {
+    spdlog::info("START {}", __PRETTY_FUNCTION__ );
     static const std::string vsFileName{ "src/rendering/shaders/Image.vs" };
     static const std::string fsFileName{ "src/rendering/shaders/Image.fs" };
 
