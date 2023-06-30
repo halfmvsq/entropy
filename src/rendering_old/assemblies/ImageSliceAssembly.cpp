@@ -4,7 +4,7 @@
 #include "rendering_old/drawables/ImageSlice.h"
 #include "rendering_old/drawables/Transformation.h"
 #include "rendering_old/records/MeshGpuRecord.h"
-#include "rendering_old/utility/CreateGLObjects.h"
+#include "rendering/utility/CreateGLObjects.h"
 
 #include "common/DirectionMaps.h"
 #include "common/Exception.hpp"

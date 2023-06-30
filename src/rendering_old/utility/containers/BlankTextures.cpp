@@ -1,5 +1,5 @@
 #include "rendering_old/utility/containers/BlankTextures.h"
-#include "rendering_old/utility/CreateGLObjects.h"
+#include "rendering/utility/CreateGLObjects.h"
 #include "rendering/utility/gl/GLTexture.h"
 #include "common/Types.h"
 

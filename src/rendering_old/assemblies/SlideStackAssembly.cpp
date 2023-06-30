@@ -5,9 +5,9 @@
 #include "rendering_old/drawables/slides/SlideSlice.h"
 #include "rendering_old/drawables/slides/SlideStackArrow.h"
 #include "rendering_old/records/MeshGpuRecord.h"
-#include "rendering_old/utility/CreateGLObjects.h"
+#include "rendering/utility/CreateGLObjects.h"
 #include "rendering/utility/UnderlyingEnumType.h"
-#include "rendering_old/utility/vtk/PolyDataGenerator.h"
+#include "rendering/utility/vtk/PolyDataGenerator.h"
 
 #include "common/Exception.hpp"
 #include "logic/camera/MathUtility.h"

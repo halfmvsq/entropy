@@ -12,13 +12,13 @@
 class Image;
 
 std::future<AsyncTaskDetails> generateIsosurfaceMeshCpuRecord(
-        const Image& image,
-        const uuids::uuid& imageUid,
-        uint32_t component,
-        double isoValue,
-        const uuids::uuid& isosurfaceUid,
-        std::function< bool ( const uuids::uuid& isosurfaceUid, std::unique_ptr<MeshCpuRecord> ) > meshCpuRecordUpdater,
-        std::function< void () > addTaskToIsosurfaceGpuMeshGenerationQueue );
+    const Image& image,
+    const uuids::uuid& imageUid,
+    uint32_t component,
+    double isoValue,
+    const uuids::uuid& isosurfaceUid,
+    std::function< bool ( const uuids::uuid& isosurfaceUid, std::unique_ptr<MeshCpuRecord> ) > meshCpuRecordUpdater,
+    std::function< void () > addTaskToIsosurfaceGpuMeshGenerationQueue );
 
 /// @todo Put this function here
 //std::map< int64_t, double >

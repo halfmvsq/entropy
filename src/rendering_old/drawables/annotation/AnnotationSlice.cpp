@@ -8,7 +8,7 @@
 
 #include "rendering_old/common/MeshPolygonOffset.h"
 #include "rendering_old/drawables/BasicMesh.h"
-#include "rendering_old/utility/CreateGLObjects.h"
+#include "rendering/utility/CreateGLObjects.h"
 #include "rendering/utility/UnderlyingEnumType.h"
 
 #include <glm/glm.hpp>

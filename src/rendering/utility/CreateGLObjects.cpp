@@ -28,11 +28,12 @@ std::shared_ptr<GLTexture> createTexture2d( const glm::i64vec2& size, const void
 
     texture->setSize( glm::uvec3{ size.x, size.y, 1 } );
 
-    texture->setData( 0,
-                      tex::SizedInternalFormat::RGBA8_UNorm,
-                      tex::BufferPixelFormat::BGRA,
-                      tex::BufferPixelDataType::UInt8,
-                      data );
+    texture->setData(
+        0,
+        tex::SizedInternalFormat::RGBA8_UNorm,
+        tex::BufferPixelFormat::BGRA,
+        tex::BufferPixelDataType::UInt8,
+        data );
 
     //    static const glm::vec4 sk_transparentBlack{ 0.0f, 0.0f, 0.0f, 0.0f };
     //    texture->setBorderColor( sk_transparentBlack );
@@ -51,7 +52,7 @@ std::shared_ptr<GLTexture> createTexture2d( const glm::i64vec2& size, const void
 
 /// @todo Remove this, as it is redundant with createMeshGpuRecordFromVtkPolyData
 std::unique_ptr<MeshGpuRecord> convertPolyDataToMeshGpuRecord(
-        vtkSmartPointer<vtkPolyData> polyData )
+    vtkSmartPointer<vtkPolyData> polyData )
 {
     const auto positionsArrayBuffer = vtkconvert::extractPointsToFloatArrayBuffer( polyData );
     const auto normalsArrayBuffer = vtkconvert::extractNormalsToUIntArrayBuffer( polyData );
@@ -72,16 +73,16 @@ std::unique_ptr<MeshGpuRecord> convertPolyDataToMeshGpuRecord(
     }
 
     VertexAttributeInfo positionsInfo(
-                BufferComponentType::Float, BufferNormalizeValues::False,
-                3, 3 * sizeof(float), 0, positionsArrayBuffer->vectorCount() );
+        BufferComponentType::Float, BufferNormalizeValues::False,
+        3, 3 * sizeof(float), 0, positionsArrayBuffer->vectorCount() );
 
     VertexAttributeInfo normalsInfo(
-                BufferComponentType::Int_2_10_10_10, BufferNormalizeValues::True,
-                4, sizeof(uint32_t), 0, positionsArrayBuffer->vectorCount() );
+        BufferComponentType::Int_2_10_10_10, BufferNormalizeValues::True,
+        4, sizeof(uint32_t), 0, positionsArrayBuffer->vectorCount() );
 
     VertexIndicesInfo indexInfo(
-                IndexType::UInt32, PrimitiveMode::Triangles,
-                indicesArrayBuffer->length(), 0 );
+        IndexType::UInt32, PrimitiveMode::Triangles,
+        indicesArrayBuffer->length(), 0 );
 
     GLBufferObject positionsObject( BufferType::VertexArray, BufferUsagePattern::StaticDraw );
     GLBufferObject normalsObject( BufferType::VertexArray, BufferUsagePattern::StaticDraw );
@@ -99,9 +100,9 @@ std::unique_ptr<MeshGpuRecord> convertPolyDataToMeshGpuRecord(
     // since it is never needed again and just takes up space.
 
     auto gpuRecord = std::make_unique<MeshGpuRecord>(
-                std::move( positionsObject ),
-                std::move( indicesObject ),
-                positionsInfo, indexInfo );
+        std::move( positionsObject ),
+        std::move( indicesObject ),
+        positionsInfo, indexInfo );
 
     gpuRecord->setNormals( std::move( normalsObject ), normalsInfo );
 
@@ -116,11 +117,11 @@ namespace gpuhelper
 {
 
 std::unique_ptr<ImageGpuRecord> createImageGpuRecord(
-        const Image* imageCpuRecord,
-        const uint32_t componentIndex,
-        const tex::MinificationFilter& minFilter,
-        const tex::MagnificationFilter& magFilter,
-        bool useNormalizedIntegers )
+    const Image* imageCpuRecord,
+    const uint32_t componentIndex,
+    const tex::MinificationFilter& minFilter,
+    const tex::MagnificationFilter& magFilter,
+    bool useNormalizedIntegers )
 {
     static constexpr GLint sk_alignment = 1;
     static const tex::WrapMode sk_wrapMode = tex::WrapMode::ClampToEdge;
@@ -141,10 +142,10 @@ std::unique_ptr<ImageGpuRecord> createImageGpuRecord(
     GLTexture::PixelStoreSettings pixelUnpackSettings = pixelPackSettings;
 
     auto texture = std::make_shared<GLTexture>(
-                tex::Target::Texture3D,
-                GLTexture::MultisampleSettings(),
-                pixelPackSettings,
-                pixelUnpackSettings );
+        tex::Target::Texture3D,
+        GLTexture::MultisampleSettings(),
+        pixelPackSettings,
+        pixelUnpackSettings );
 
     texture->generate();
 
@@ -170,28 +171,29 @@ std::unique_ptr<ImageGpuRecord> createImageGpuRecord(
 
     if ( useNormalizedIntegers )
     {
-        texture->setData( sk_mipmapLevel,
-                          GLTexture::getSizedInternalNormalizedRedFormat( componentType ),
-                          GLTexture::getBufferPixelNormalizedRedFormat( componentType ),
-                          GLTexture::getBufferPixelDataType( componentType ),
-                          imageCpuRecord->bufferAsVoid( componentIndex ) );
+        texture->setData(
+            sk_mipmapLevel,
+            GLTexture::getSizedInternalNormalizedRedFormat( componentType ),
+            GLTexture::getBufferPixelNormalizedRedFormat( componentType ),
+            GLTexture::getBufferPixelDataType( componentType ),
+            imageCpuRecord->bufferAsVoid( componentIndex ) );
     }
     else
     {
-        texture->setData( sk_mipmapLevel,
-                          GLTexture::getSizedInternalRedFormat( componentType ),
-                          GLTexture::getBufferPixelRedFormat( componentType ),
-                          GLTexture::getBufferPixelDataType( componentType ),
-                          imageCpuRecord->bufferAsVoid( componentIndex ) );
+        texture->setData(
+            sk_mipmapLevel,
+            GLTexture::getSizedInternalRedFormat( componentType ),
+            GLTexture::getBufferPixelRedFormat( componentType ),
+            GLTexture::getBufferPixelDataType( componentType ),
+            imageCpuRecord->bufferAsVoid( componentIndex ) );
     }
-
 
     return std::make_unique<ImageGpuRecord>( texture );
 }
 
 
 std::unique_ptr<MeshGpuRecord> createSliceMeshGpuRecord(
-        const BufferUsagePattern& bufferUsagePattern )
+    const BufferUsagePattern& bufferUsagePattern )
 {
     static constexpr int sk_numCoords = 3;
     static constexpr int sk_numVerts = 7;
@@ -212,29 +214,28 @@ std::unique_ptr<MeshGpuRecord> createSliceMeshGpuRecord(
     using TexCoord2DType = glm::vec2;
     using VertexIndexType = uint32_t;
 
-
     VertexAttributeInfo positionsInfo(
-                BufferComponentType::Float,
-                BufferNormalizeValues::False,
-                sk_numCoords, sizeof( PositionType ),
-                sk_offset, sk_numVerts );
+        BufferComponentType::Float,
+        BufferNormalizeValues::False,
+        sk_numCoords, sizeof( PositionType ),
+        sk_offset, sk_numVerts );
 
     VertexAttributeInfo normalsInfo(
-                BufferComponentType::Int_2_10_10_10,
-                BufferNormalizeValues::True,
-                4, sizeof( NormalType ),
-                sk_offset, sk_numVerts );
+        BufferComponentType::Int_2_10_10_10,
+        BufferNormalizeValues::True,
+        4, sizeof( NormalType ),
+        sk_offset, sk_numVerts );
 
     VertexAttributeInfo texCoordsInfo(
-                BufferComponentType::Float,
-                BufferNormalizeValues::False,
-                2, sizeof( TexCoord2DType ),
-                sk_offset, sk_numVerts );
+        BufferComponentType::Float,
+        BufferNormalizeValues::False,
+        2, sizeof( TexCoord2DType ),
+        sk_offset, sk_numVerts );
 
     VertexIndicesInfo indexInfo(
-                IndexType::UInt32,
-                PrimitiveMode::TriangleFan,
-                sk_numIndices, 0 );
+        IndexType::UInt32,
+        PrimitiveMode::TriangleFan,
+        sk_numIndices, 0 );
 
     GLBufferObject positionsObject( BufferType::VertexArray, bufferUsagePattern );
     GLBufferObject normalsObject( BufferType::VertexArray, bufferUsagePattern );
@@ -252,14 +253,14 @@ std::unique_ptr<MeshGpuRecord> createSliceMeshGpuRecord(
     indicesObject.allocate( sk_numIndices * sizeof( VertexIndexType ), sk_sliceIndices.data() );
 
     return std::make_unique<MeshGpuRecord>(
-                std::move( positionsObject ),
-                std::move( normalsObject ),
-                std::move( texCoordsObject ),
-                std::move( indicesObject ),
-                std::move( positionsInfo ),
-                std::move( normalsInfo ),
-                std::move( texCoordsInfo ),
-                std::move( indexInfo ) );
+        std::move( positionsObject ),
+        std::move( normalsObject ),
+        std::move( texCoordsObject ),
+        std::move( indicesObject ),
+        std::move( positionsInfo ),
+        std::move( normalsInfo ),
+        std::move( texCoordsInfo ),
+        std::move( indexInfo ) );
 }
 
 
@@ -313,9 +314,9 @@ std::unique_ptr<MeshGpuRecord> createCrosshairMeshGpuRecord( double coneToCylind
 
 
 std::unique_ptr<MeshGpuRecord> createMeshGpuRecord(
-        size_t vertexCount, size_t indexCount,
-        const PrimitiveMode& primitiveMode,
-        const BufferUsagePattern& bufferUsagePattern )
+    size_t vertexCount, size_t indexCount,
+    const PrimitiveMode& primitiveMode,
+    const BufferUsagePattern& bufferUsagePattern )
 {
     static constexpr int sk_numCoords = 3;
 
@@ -370,9 +371,9 @@ std::unique_ptr<MeshGpuRecord> createMeshGpuRecord(
 
 
 std::unique_ptr<MeshGpuRecord> createMeshGpuRecordFromVtkPolyData(
-        vtkSmartPointer<vtkPolyData> polyData,
-        const MeshPrimitiveType& primitiveType,
-        const BufferUsagePattern& bufferUsagePattern )
+    vtkSmartPointer<vtkPolyData> polyData,
+    const MeshPrimitiveType& primitiveType,
+    const BufferUsagePattern& bufferUsagePattern )
 {
     if ( ! polyData )
     {
@@ -851,16 +852,16 @@ std::unique_ptr<SlideAnnotationGpuRecord> createSlideAnnotationGpuRecord( const 
 
 
     VertexAttributeInfo positionsInfo(
-                BufferComponentType::Float, BufferNormalizeValues::False,
-                3, sizeof( glm::vec3 ), 0, vertices.size() );
+        BufferComponentType::Float, BufferNormalizeValues::False,
+        3, sizeof( glm::vec3 ), 0, vertices.size() );
 
     VertexAttributeInfo normalsInfo(
-                BufferComponentType::Int_2_10_10_10, BufferNormalizeValues::True,
-                4, sizeof( uint32_t ), 0, normals.size() );
+        BufferComponentType::Int_2_10_10_10, BufferNormalizeValues::True,
+        4, sizeof( uint32_t ), 0, normals.size() );
 
     VertexIndicesInfo indexInfo(
-                IndexType::UInt32, PrimitiveMode::Triangles,
-                indices.size(), 0 );
+        IndexType::UInt32, PrimitiveMode::Triangles,
+        indices.size(), 0 );
 
     GLBufferObject positionsObject( BufferType::VertexArray, BufferUsagePattern::StaticDraw );
     GLBufferObject normalsObject( BufferType::VertexArray, BufferUsagePattern::StaticDraw );
@@ -875,9 +876,9 @@ std::unique_ptr<SlideAnnotationGpuRecord> createSlideAnnotationGpuRecord( const 
     indicesObject.allocate( sizeof( uint32_t ) * indices.size(), indices.data() );
 
     auto gpuRecord = std::make_shared<MeshGpuRecord>(
-                std::move( positionsObject ),
-                std::move( indicesObject ),
-                positionsInfo, indexInfo );
+        std::move( positionsObject ),
+        std::move( indicesObject ),
+        positionsInfo, indexInfo );
 
     gpuRecord->setNormals( std::move( normalsObject ), normalsInfo );
 
@@ -895,14 +896,14 @@ std::unique_ptr<GLTexture> createImageColorMapTexture( const ImageColorMap* colo
     auto texture = std::make_unique<GLTexture>( tex::Target::Texture1D );
 
     texture->generate();
-
     texture->setSize( glm::uvec3{ colorMap->numColors(), 1, 1 } );
 
-    texture->setData( 0, // level 0
-                      ImageColorMap::textureFormat_RGBA_F32(),
-                      tex::BufferPixelFormat::RGBA,
-                      tex::BufferPixelDataType::Float32,
-                      colorMap->data_RGBA_F32() );
+    texture->setData(
+        0, // level 0
+        ImageColorMap::textureFormat_RGBA_F32(),
+        tex::BufferPixelFormat::RGBA,
+        tex::BufferPixelDataType::Float32,
+        colorMap->data_RGBA_F32() );
 
     // We should never sample outside the texture coordinate range [0.0, 1.0], anyway
     texture->setWrapMode( tex::WrapMode::ClampToEdge );
@@ -926,8 +927,8 @@ std::unique_ptr<GLBufferTexture> createLabelColorTableTextureBuffer(
 
     // Buffer contents will be modified once and used many times
     auto colorMapTexture = std::make_unique<GLBufferTexture>(
-                labels->bufferTextureFormat_RGBA_U8(),
-                BufferUsagePattern::StaticDraw );
+        labels->bufferTextureFormat_RGBA_U8(),
+        BufferUsagePattern::StaticDraw );
 
     colorMapTexture->generate();
     colorMapTexture->allocate( labels->numColorBytes_RGBA_U8(), labels->colorData_RGBA_nonpremult_U8() );
@@ -938,8 +939,8 @@ std::unique_ptr<GLBufferTexture> createLabelColorTableTextureBuffer(
 
 
 GLTexture createBlankRGBATexture(
-        const ComponentType& componentType,
-        const tex::Target& target )
+    const ComponentType& componentType,
+    const tex::Target& target )
 {
     static std::array< int8_t, 4 > sk_data_I8 = { 0, 0, 0, 0 };
     static std::array< uint8_t, 4 > sk_data_U8 = { 0, 0, 0, 0 };
@@ -962,10 +963,11 @@ GLTexture createBlankRGBATexture(
 
     GLTexture::PixelStoreSettings pixelUnpackSettings = pixelPackSettings;
 
-    GLTexture texture( target,
-                       GLTexture::MultisampleSettings(),
-                       pixelPackSettings,
-                       pixelUnpackSettings );
+    GLTexture texture(
+        target,
+        GLTexture::MultisampleSettings(),
+        pixelPackSettings,
+        pixelUnpackSettings );
 
     texture.generate();
     texture.setSize( glm::uvec3{ 1, 1, 1 } );
@@ -991,11 +993,12 @@ GLTexture createBlankRGBATexture(
     case ComponentType::Undefined :  throw_debug( "Undefined texture not supported" );
     }
 
-    texture.setData( 0,
-                     GLTexture::getSizedInternalRGBAFormat( componentType ),
-                     GLTexture::getBufferPixelRGBAFormat( componentType ),
-                     GLTexture::getBufferPixelDataType( componentType ),
-                     data );
+    texture.setData(
+        0,
+        GLTexture::getSizedInternalRGBAFormat( componentType ),
+        GLTexture::getBufferPixelRGBAFormat( componentType ),
+        GLTexture::getBufferPixelDataType( componentType ),
+        data );
 
     texture.setWrapMode( tex::WrapMode::ClampToEdge );
 

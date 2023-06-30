@@ -20,8 +20,10 @@
 #include "rendering/utility/gl/GLShader.h"
 
 /**************************/
+#include "rendering/utility/CreateGLObjects.h"
 #include "rendering/renderers/DepthPeelRenderer.h"
-#include "rendering_old/utility/containers/BlankTextures.h"
+//#include "rendering_old/utility/containers/BlankTextures.h"
+//#include "rendering/utility/vtk/PolyDataGenerator.h"
 /**************************/
 
 #include "windowing/View.h"
@@ -203,24 +205,24 @@ Rendering::Rendering( AppData& appData )
 //                blankTextures );
     /***************************************************/
 
+
     m_shaderPrograms = std::make_unique<ShaderProgramContainer>();
     m_shaderPrograms->initializeGL();
 
     m_shaderActivator = std::bind( &ShaderProgramContainer::useProgram, m_shaderPrograms.get(), std::placeholders::_1 );
     m_uniformsProvider = std::bind( &ShaderProgramContainer::getRegisteredUniforms, m_shaderPrograms.get(), std::placeholders::_1 );
 
+    const glm::dvec3 center{ 0.0 };
+    const double radius = 100.0;
+    const double height = 200.0;
 
-    // meshgen::generateIsoSurface();
-    // m_meshRecord = std::make_unique<MeshRecord>();
+    m_cylinderGpuMeshRecord = gpuhelper::createCylinderMeshGpuRecord( center, radius, height );
+    m_basicMesh = std::make_unique<BasicMesh>( "TestCylinder", m_shaderActivator, m_uniformsProvider, m_cylinderGpuMeshRecord );
 
-    // m_basicMesh = std::make_unique<BasicMesh>(
-    //     "basic mesh", m_shaderActivator, m_uniformsProvider );
-
-    m_rootDrawableProvider = [] () -> IDrawable*
+    m_rootDrawableProvider = [this] () -> IDrawable*
     {
-        return nullptr;
+        return m_basicMesh.get();
     };
-
 
     m_overlayDrawableProvider = [] () -> IDrawable* { return nullptr; };
 
@@ -232,7 +234,6 @@ Rendering::Rendering( AppData& appData )
         m_uniformsProvider,
         m_rootDrawableProvider,
         m_overlayDrawableProvider );
-
 }
 
 Rendering::~Rendering()

@@ -1,7 +1,7 @@
 #include "rendering_old/drawables/TexturedMesh.h"
 #include "rendering_old/ShaderNames.h"
 #include "rendering_old/records/MeshGpuRecord.h"
-#include "rendering_old/utility/CreateGLObjects.h"
+#include "rendering/utility/CreateGLObjects.h"
 #include "rendering/utility/UnderlyingEnumType.h"
 #include "rendering_old/utility/containers/BlankTextures.h"
 #include "rendering/utility/gl/GLShaderProgram.h"

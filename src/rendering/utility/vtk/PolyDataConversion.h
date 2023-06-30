@@ -1,5 +1,5 @@
-#ifndef POLYDATACONVERSION_H
-#define POLYDATACONVERSION_H
+#ifndef POLYDATA_CONVERSION_H
+#define POLYDATA_CONVERSION_H
 
 #include "rendering/utility/vtk/VectorArrayBuffer.h"
 
@@ -26,4 +26,4 @@ extractIndicesToUIntArrayBuffer( const vtkSmartPointer<vtkPolyData> polyData );
 
 } // namespace vtkconvert
 
-#endif // POLYDATACONVERSION_H
+#endif // POLYDATA_CONVERSION_H

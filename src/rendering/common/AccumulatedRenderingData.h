@@ -6,8 +6,7 @@
 
 /**
  * @brief Data for rendering that gets accumulated as the tree of drawables is traversed.
- * In other words, this struct is used for propagating data from a parent drawable to its
- * child drawables.
+ * In other words, this struct is used for propagating data from a drawable to its children.
  */
 struct AccumulatedRenderingData
 {

@@ -13,7 +13,6 @@
 #include <memory>
 #include <utility>
 
-
 class MeshGpuRecord;
 
 
@@ -23,15 +22,16 @@ class MeshGpuRecord;
  * @todo Implement layering with offset towards/away from viewer.
  */
 class BasicMesh final :
-        public DrawableBase,
-        public ObjectCounter<BasicMesh>
+    public DrawableBase,
+    public ObjectCounter<BasicMesh>
 {
 public:
 
-    BasicMesh( std::string name,
-               ShaderProgramActivatorType shaderProgramActivator,
-               UniformsProviderType uniformsProvider,
-               std::weak_ptr<MeshGpuRecord> meshGpuRecord );
+    BasicMesh(
+        std::string name,
+        ShaderProgramActivatorType shaderProgramActivator,
+        UniformsProviderType uniformsProvider,
+        std::weak_ptr<MeshGpuRecord> meshGpuRecord );
 
     BasicMesh( const BasicMesh& ) = delete;
     BasicMesh& operator=( const BasicMesh& ) = delete;
@@ -87,8 +87,11 @@ private:
     void doRender( const RenderStage& stage ) override;
     void doTeardownState() override;
 
-    void doUpdate( double time, const Viewport&,
-                   const camera::Camera&, const CoordinateFrame& crosshairs ) override;
+    void doUpdate(
+        double time,
+        const Viewport&,
+        const camera::Camera&,
+        const CoordinateFrame& crosshairs ) override;
 
     void initVao();
     void updateLayerOpacities();

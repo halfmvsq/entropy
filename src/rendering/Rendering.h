@@ -230,6 +230,7 @@ private:
     std::unique_ptr<IRenderer> m_renderer;
     std::unique_ptr<ShaderProgramContainer> m_shaderPrograms;
     std::unique_ptr<MeshRecord> m_meshRecord;
+    std::shared_ptr<MeshGpuRecord> m_cylinderGpuMeshRecord;
     std::unique_ptr<BasicMesh> m_basicMesh;
 
     ShaderProgramActivatorType m_shaderActivator;

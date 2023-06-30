@@ -59,8 +59,7 @@ public:
     const AccumulatedRenderingData& getAccumulatedRenderingData() const;
 
 
-    /// Add a new child to this drawable in sequence behind the last child. This drawable will hold
-    /// a weak pointer to the child.
+    /// Add a new child to this drawable in sequence behind the last child.
     /// @return True iff the child was added.
     bool addChild( std::weak_ptr<DrawableBase> child );
 
@@ -101,7 +100,7 @@ public:
 
     /// Matrix transformation from this Drawable to its parent Drawable. It is safe to call this
     /// function from within doUpdate().
-    /// @note This calls does NOT recursively update transformations of all of the Drawable's
+    /// @note This call does NOT recursively update transformations of all of the Drawable's
     /// children and descendants. To do so, it is necessary to call update() at the top level.
     void set_parent_T_this( glm::mat4 parent_T_this );
 

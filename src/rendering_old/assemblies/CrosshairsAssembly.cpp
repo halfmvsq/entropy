@@ -1,6 +1,6 @@
 #include "rendering_old/assemblies/CrosshairsAssembly.h"
 #include "rendering_old/drawables/Crosshairs.h"
-#include "rendering_old/utility/CreateGLObjects.h"
+#include "rendering/utility/CreateGLObjects.h"
 
 #include "common/Exception.hpp"
 #include "rendering_old/records/MeshGpuRecord.h"

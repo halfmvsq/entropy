@@ -3,13 +3,13 @@
 #include "mesh/vtkdetails/MeshGeneration.hpp"
 
 #include "common/MathFuncs.h"
-#include "common/Types.h"
+//#include "common/Types.h"
 
 #include "image/Image.h"
 #include "image/ImageHeader.h"
 #include "image/ImageUtility.tpp"
 
-#include "rendering_old/utility/CreateGLObjects.h"
+#include "rendering/utility/CreateGLObjects.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>

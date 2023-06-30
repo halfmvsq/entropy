@@ -111,7 +111,7 @@ vtkSmartPointer<vtkPolyData> generateCube()
 
 
 vtkSmartPointer<vtkPolyData> generateCylinder(
-        const glm::dvec3& center, double radius, double height )
+    const glm::dvec3& center, double radius, double height )
 {
     vtkNew<vtkCylinderSource> cylinderSource;
 
@@ -182,7 +182,7 @@ vtkSmartPointer<vtkPolyData> generateSphere()
 
 
 vtkSmartPointer<vtkPolyData> generatePointyCylinders(
-        double coneToCylinderLengthRatio )
+    double coneToCylinderLengthRatio )
 {
     vtkNew<vtkConeSource> coneSource1;
     vtkNew<vtkConeSource> coneSource2;
