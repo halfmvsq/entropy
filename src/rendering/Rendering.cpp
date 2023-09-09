@@ -234,6 +234,8 @@ Rendering::Rendering( AppData& appData )
         m_uniformsProvider,
         m_rootDrawableProvider,
         m_overlayDrawableProvider );
+
+    m_renderer->initialize();
 }
 
 Rendering::~Rendering()
@@ -452,11 +454,11 @@ bool Rendering::createImageTexture( const uuids::uuid& imageUid )
 */
 
 void Rendering::updateSegTexture(
-        const uuids::uuid& segUid,
-        const ComponentType& compType,
-        const glm::uvec3& startOffsetVoxel,
-        const glm::uvec3& sizeInVoxels,
-        const void* data )
+    const uuids::uuid& segUid,
+    const ComponentType& compType,
+    const glm::uvec3& startOffsetVoxel,
+    const glm::uvec3& sizeInVoxels,
+    const void* data )
 {
     // Load seg data into first mipmap level
     static constexpr GLint sk_mipmapLevel = 0;
@@ -478,20 +480,21 @@ void Rendering::updateSegTexture(
         return;
     }
 
-    T.setSubData( sk_mipmapLevel,
-                  startOffsetVoxel,
-                  sizeInVoxels,
-                  GLTexture::getBufferPixelRedFormat( compType ),
-                  GLTexture::getBufferPixelDataType( compType ),
-                  data );
+    T.setSubData(
+        sk_mipmapLevel,
+        startOffsetVoxel,
+        sizeInVoxels,
+        GLTexture::getBufferPixelRedFormat( compType ),
+        GLTexture::getBufferPixelDataType( compType ),
+        data );
 }
 
 void Rendering::updateSegTextureWithInt64Data(
-        const uuids::uuid& segUid,
-        const ComponentType& compType,
-        const glm::uvec3& startOffsetVoxel,
-        const glm::uvec3& sizeInVoxels,
-        const int64_t* data )
+    const uuids::uuid& segUid,
+    const ComponentType& compType,
+    const glm::uvec3& startOffsetVoxel,
+    const glm::uvec3& sizeInVoxels,
+    const int64_t* data )
 {
     if ( ! data )
     {
@@ -516,18 +519,21 @@ void Rendering::updateSegTextureWithInt64Data(
     case ComponentType::UInt8:
     {
         const std::vector<uint8_t> castData( data, data + N );
+
         return updateSegTexture( segUid, compType, startOffsetVoxel, sizeInVoxels,
             static_cast<const void*>( castData.data() ) );
     }
     case ComponentType::UInt16:
     {
         const std::vector<uint16_t> castData( data, data + N );
+
         return updateSegTexture( segUid, compType, startOffsetVoxel, sizeInVoxels,
             static_cast<const void*>( castData.data() ) );
     }
     case ComponentType::UInt32:
     {
         const std::vector<uint32_t> castData( data, data + N );
+
         return updateSegTexture( segUid, compType, startOffsetVoxel, sizeInVoxels,
             static_cast<const void*>( castData.data() ) );
     }
@@ -827,9 +833,10 @@ void Rendering::render()
     const glm::ivec4 deviceViewport = m_appData.windowData().viewport().getDeviceAsVec4();
     glViewport( deviceViewport[0], deviceViewport[1], deviceViewport[2], deviceViewport[3] );
 
-    glClearColor( m_appData.renderData().m_2dBackgroundColor.r,
-                  m_appData.renderData().m_2dBackgroundColor.g,
-                  m_appData.renderData().m_2dBackgroundColor.b, 1.0f );
+    glClearColor(
+        m_appData.renderData().m_2dBackgroundColor.r,
+        m_appData.renderData().m_2dBackgroundColor.g,
+        m_appData.renderData().m_2dBackgroundColor.b, 1.0f );
 
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
 
@@ -857,7 +864,7 @@ void Rendering::updateImageUniforms( const uuids::uuid& imageUid )
         spdlog::debug( "Adding rendering uniforms for image {}", imageUid );
 
         m_appData.renderData().m_uniforms.insert(
-                    std::make_pair( imageUid, RenderData::ImageUniforms() ) );
+            std::make_pair( imageUid, RenderData::ImageUniforms() ) );
     }
 
     RenderData::ImageUniforms& uniforms = m_appData.renderData().m_uniforms[imageUid];
@@ -893,8 +900,7 @@ void Rendering::updateImageUniforms( const uuids::uuid& imageUid )
         }
         else
         {
-            spdlog::error( "Null image color map {} on updating uniforms for image {}",
-                           *cmapUid, imageUid );
+            spdlog::error( "Null image color map {} on updating uniforms for image {}", *cmapUid, imageUid );
         }
     }
     else
@@ -949,19 +955,19 @@ void Rendering::updateImageUniforms( const uuids::uuid& imageUid )
         for ( uint32_t i = 0; i < imgSettings.numComponents(); ++i )
         {
             uniforms.slopeInterceptRgba_normalized_T_texture[i] =
-                    imgSettings.slopeInterceptVec2_normalized_T_texture( i );
+                imgSettings.slopeInterceptVec2_normalized_T_texture( i );
 
             uniforms.thresholdsRgba[i] = glm::vec2{
-                    static_cast<float>( imgSettings.mapNativeIntensityToTexture( imgSettings.thresholds( i ).first ) ),
-                    static_cast<float>( imgSettings.mapNativeIntensityToTexture( imgSettings.thresholds( i ).second ) ) };
+                static_cast<float>( imgSettings.mapNativeIntensityToTexture( imgSettings.thresholds( i ).first ) ),
+                static_cast<float>( imgSettings.mapNativeIntensityToTexture( imgSettings.thresholds( i ).second ) ) };
 
             uniforms.minMaxRgba[i] = glm::vec2{
-                    static_cast<float>( imgSettings.mapNativeIntensityToTexture( imgSettings.minMaxImageRange( i ).first ) ),
-                    static_cast<float>( imgSettings.mapNativeIntensityToTexture( imgSettings.minMaxImageRange( i ).second ) ) };
+                static_cast<float>( imgSettings.mapNativeIntensityToTexture( imgSettings.minMaxImageRange( i ).first ) ),
+                static_cast<float>( imgSettings.mapNativeIntensityToTexture( imgSettings.minMaxImageRange( i ).second ) ) };
 
             uniforms.imgOpacityRgba[i] = static_cast<float>(
-                        ( ( imgSettings.globalVisibility() && imgSettings.visibility( i ) ) ? 1.0 : 0.0 ) *
-                        imgSettings.globalOpacity() * imgSettings.opacity( i ) );
+                ( ( imgSettings.globalVisibility() && imgSettings.visibility( i ) ) ? 1.0 : 0.0 ) *
+                imgSettings.globalOpacity() * imgSettings.opacity( i ) );
         }
 
         if ( 3 == imgSettings.numComponents() )
@@ -972,8 +978,8 @@ void Rendering::updateImageUniforms( const uuids::uuid& imageUid )
             uniforms.minMaxRgba[3] = glm::vec2{ 0.0f, 1.0f };
                     
             uniforms.imgOpacityRgba[3] = static_cast<float>(
-                        ( imgSettings.globalVisibility() ? 1.0 : 0.0 ) *
-                        imgSettings.globalOpacity() );
+                ( imgSettings.globalVisibility() ? 1.0 : 0.0 ) *
+                imgSettings.globalOpacity() );
         }
     }
     else
@@ -996,8 +1002,8 @@ void Rendering::updateImageUniforms( const uuids::uuid& imageUid )
 
     // Map the native thresholds to OpenGL texture values:
     uniforms.thresholds = glm::vec2{
-            static_cast<float>( imgSettings.mapNativeIntensityToTexture( imgSettings.thresholds().first ) ),
-            static_cast<float>( imgSettings.mapNativeIntensityToTexture( imgSettings.thresholds().second ) ) };
+        static_cast<float>( imgSettings.mapNativeIntensityToTexture( imgSettings.thresholds().first ) ),
+        static_cast<float>( imgSettings.mapNativeIntensityToTexture( imgSettings.thresholds().second ) ) };
 
     // Map the native image values to OpenGL texture values:
     uniforms.minMax = glm::vec2{
@@ -1005,9 +1011,9 @@ void Rendering::updateImageUniforms( const uuids::uuid& imageUid )
         static_cast<float>( imgSettings.mapNativeIntensityToTexture( imgSettings.minMaxImageRange().second ) ) };
 
     uniforms.imgOpacity =
-            ( static_cast<float>( imgSettings.globalVisibility() && imgSettings.visibility() ) ? 1.0 : 0.0 ) *
-            imgSettings.opacity() *
-            ( ( imgSettings.numComponents() > 0 ) ? imgSettings.globalOpacity() : 1.0f );
+        ( static_cast<float>( imgSettings.globalVisibility() && imgSettings.visibility() ) ? 1.0 : 0.0 ) *
+        imgSettings.opacity() *
+        ( ( imgSettings.numComponents() > 0 ) ? imgSettings.globalOpacity() : 1.0f );
 
 
     // Edges
@@ -1471,8 +1477,8 @@ void Rendering::renderOneImage(
     }
 
     drawImageViewIntersections(
-                m_nvg, miewportViewBounds, worldOffsetXhairs, m_appData, view, I,
-                renderData.m_globalSliceIntersectionParams.renderInactiveImageViewIntersections );
+        m_nvg, miewportViewBounds, worldOffsetXhairs, m_appData, view, I,
+        renderData.m_globalSliceIntersectionParams.renderInactiveImageViewIntersections );
 
     setupOpenGlState();
 }
@@ -1495,9 +1501,9 @@ void Rendering::volumeRenderOneImage(
 
 
 void Rendering::renderAllImages(
-        const View& view,
-        const FrameBounds& miewportViewBounds,
-        const glm::vec3& worldOffsetXhairs )
+    const View& view,
+    const FrameBounds& miewportViewBounds,
+    const glm::vec3& worldOffsetXhairs )
 {
     static std::list< std::reference_wrapper<GLTexture> > boundImageTextures;
     static std::list< std::reference_wrapper<GLTexture> > boundMetricTextures;
@@ -1663,8 +1669,7 @@ void Rendering::renderAllImages(
                     P->setUniform( "u_edgeColor", U.edgeColor );
                 }
 
-                renderOneImage( view, miewportViewBounds, worldOffsetXhairs,
-                                *P, CurrentImages{ imgSegPair }, U.showEdges );
+                renderOneImage( view, miewportViewBounds, worldOffsetXhairs, *P, CurrentImages{ imgSegPair }, U.showEdges );
             }
             else
             {
@@ -1698,8 +1703,7 @@ void Rendering::renderAllImages(
                 P->setUniform( "u_showFix", isFixedImage ); // ignored if not checkerboard or quadrants
                 P->setUniform( "renderMode", displayModeUniform );
 
-                renderOneImage( view, miewportViewBounds, worldOffsetXhairs,
-                                *P, CurrentImages{ imgSegPair }, U.showEdges );
+                renderOneImage( view, miewportViewBounds, worldOffsetXhairs, *P, CurrentImages{ imgSegPair }, U.showEdges );
             }
 
             P->stopUse();
@@ -1797,8 +1801,8 @@ void Rendering::renderAllImages(
                 P.setUniform( "u_imgOpacity", std::vector<float>{ U0.imgOpacity, U1.imgOpacity } );
 
                 P.setUniform( "u_segOpacity", std::vector<float>{
-                                  U0.segOpacity * ( modSegOpacity ? U0.imgOpacity : 1.0f ),
-                                  U1.segOpacity * ( modSegOpacity ? U1.imgOpacity : 1.0f ) } );
+                    U0.segOpacity * ( modSegOpacity ? U0.imgOpacity : 1.0f ),
+                    U1.segOpacity * ( modSegOpacity ? U1.imgOpacity : 1.0f ) } );
 
                 P.setUniform( "magentaCyan", renderData.m_overlayMagentaCyan );
 
@@ -1919,9 +1923,9 @@ void Rendering::renderAllImages(
 
 
 void Rendering::renderAllLandmarks(
-        const View& view,
-        const FrameBounds& miewportViewBounds,
-        const glm::vec3& worldOffsetXhairs )
+    const View& view,
+    const FrameBounds& miewportViewBounds,
+    const glm::vec3& worldOffsetXhairs )
 {
     const auto shaderType = view.renderMode();
     const auto metricImages = view.metricImages();
@@ -1935,8 +1939,10 @@ void Rendering::renderAllLandmarks(
 
         for ( const auto& imgSegPair : I )
         {
-            drawLandmarks( m_nvg, miewportViewBounds, worldOffsetXhairs,
-                           m_appData, view, CurrentImages{ imgSegPair } );
+            drawLandmarks(
+                m_nvg, miewportViewBounds, worldOffsetXhairs,
+                m_appData, view, CurrentImages{ imgSegPair } );
+
             setupOpenGlState();
         }
     }
@@ -1948,8 +1954,10 @@ void Rendering::renderAllLandmarks(
 
         for ( const auto& imgSegPair : I )
         {
-            drawLandmarks( m_nvg, miewportViewBounds, worldOffsetXhairs,
-                           m_appData, view, CurrentImages{ imgSegPair } );
+            drawLandmarks(
+                m_nvg, miewportViewBounds, worldOffsetXhairs,
+                m_appData, view, CurrentImages{ imgSegPair } );
+
             setupOpenGlState();
         }
     }
@@ -1960,8 +1968,9 @@ void Rendering::renderAllLandmarks(
     else
     {
         // This function guarantees that I has size at least 2:
-        drawLandmarks( m_nvg, miewportViewBounds, worldOffsetXhairs,
-                       m_appData, view, getImageAndSegUidsForMetricShaders( metricImages ) );
+        drawLandmarks(
+            m_nvg, miewportViewBounds, worldOffsetXhairs,
+            m_appData, view, getImageAndSegUidsForMetricShaders( metricImages ) );
 
         setupOpenGlState();
     }
@@ -1969,9 +1978,9 @@ void Rendering::renderAllLandmarks(
 
 
 void Rendering::renderAllAnnotations(
-        const View& view,
-        const FrameBounds& miewportViewBounds,
-        const glm::vec3& worldOffsetXhairs )
+    const View& view,
+    const FrameBounds& miewportViewBounds,
+    const glm::vec3& worldOffsetXhairs )
 {
     const auto shaderType = view.renderMode();
     const auto& metricImages = view.metricImages();
@@ -1985,8 +1994,10 @@ void Rendering::renderAllAnnotations(
 
         for ( const auto& imgSegPair : I )
         {
-            drawAnnotations( m_nvg, miewportViewBounds, worldOffsetXhairs,
-                             m_appData, view, CurrentImages{ imgSegPair } );
+            drawAnnotations(
+                m_nvg, miewportViewBounds, worldOffsetXhairs,
+                m_appData, view, CurrentImages{ imgSegPair } );
+
             setupOpenGlState();
         }
     }
@@ -1998,8 +2009,10 @@ void Rendering::renderAllAnnotations(
 
         for ( const auto& imgSegPair : I )
         {
-            drawAnnotations( m_nvg, miewportViewBounds, worldOffsetXhairs,
-                             m_appData, view, CurrentImages{ imgSegPair } );
+            drawAnnotations(
+                m_nvg, miewportViewBounds, worldOffsetXhairs,
+                m_appData, view, CurrentImages{ imgSegPair } );
+
             setupOpenGlState();
         }
     }
@@ -2010,8 +2023,10 @@ void Rendering::renderAllAnnotations(
     else
     {
         // This function guarantees that I has size at least 2:
-        drawAnnotations( m_nvg, miewportViewBounds, worldOffsetXhairs,
-                         m_appData, view, getImageAndSegUidsForMetricShaders( metricImages ) );
+        drawAnnotations(
+            m_nvg, miewportViewBounds, worldOffsetXhairs,
+            m_appData, view, getImageAndSegUidsForMetricShaders( metricImages ) );
+
         setupOpenGlState();
     }
 }
@@ -2030,29 +2045,29 @@ void Rendering::renderImageData()
     const bool renderLandmarksOnTop = renderData.m_globalLandmarkParams.renderOnTopOfAllImagePlanes;
     const bool renderAnnotationsOnTop = renderData.m_globalAnnotationParams.renderOnTopOfAllImagePlanes;
 
-    for ( const auto& viewPair : m_appData.windowData().currentLayout().views() )
+    // Render images for each view in the layout
+    for ( const auto& V : m_appData.windowData().currentLayout().views() )
     {
-        if ( ! viewPair.second ) continue;
-        View& view = *( viewPair.second );
+        if ( ! V.second ) continue;
+        View& view = *( V.second );
 
+        // Offset the crosshairs according to the image slice in the view
         const glm::vec3 worldOffsetXhairs = view.updateImageSlice(
-                    m_appData, m_appData.state().worldCrosshairs().worldOrigin() );
+            m_appData, m_appData.state().worldCrosshairs().worldOrigin() );
 
         const auto miewportViewBounds = camera::computeMiewportFrameBounds(
-                    view.windowClipViewport(), m_appData.windowData().viewport().getAsVec4() );
+            view.windowClipViewport(), m_appData.windowData().viewport().getAsVec4() );
 
         renderAllImages( view, miewportViewBounds, worldOffsetXhairs );
 
         // Do not render landmarks and annotations in volume rendering mode
         if ( camera::ViewRenderMode::VolumeRender != view.renderMode() )
         {
-            if ( renderLandmarksOnTop )
-            {
+            if ( renderLandmarksOnTop ) {
                 renderAllLandmarks( view, miewportViewBounds, worldOffsetXhairs );
             }
 
-            if ( renderAnnotationsOnTop )
-            {
+            if ( renderAnnotationsOnTop ) {
                 renderAllAnnotations( view, miewportViewBounds, worldOffsetXhairs );
             }
         }
@@ -2134,34 +2149,35 @@ void Rendering::renderVectorOverlays()
 
         // Bounds of the view frame in Miewport space:
         const auto miewportViewBounds = camera::computeMiewportFrameBounds(
-                    view->windowClipViewport(), windowVP.getAsVec4() );
+            view->windowClipViewport(), windowVP.getAsVec4() );
 
         // Do not render vector overlays when view is disabled
-        if ( m_showOverlays &&
-             camera::ViewRenderMode::Disabled != view->renderMode() )
+        if ( m_showOverlays && camera::ViewRenderMode::Disabled != view->renderMode() )
         {
             const auto labelPosInfo = math::computeAnatomicalLabelPosInfo(
-                        miewportViewBounds,
-                        windowVP,
-                        view->camera(),
-                        world_T_refSubject,
-                        view->windowClip_T_viewClip(),
-                        m_appData.state().worldCrosshairs().worldOrigin() );
+                miewportViewBounds,
+                windowVP,
+                view->camera(),
+                world_T_refSubject,
+                view->windowClip_T_viewClip(),
+                m_appData.state().worldCrosshairs().worldOrigin() );
 
             // Do not render crosshairs in volume rendering mode
             if ( camera::ViewRenderMode::VolumeRender != view->renderMode() )
             {
-                drawCrosshairs( m_nvg, miewportViewBounds, *view,
-                                m_appData.renderData().m_crosshairsColor, labelPosInfo );
+                drawCrosshairs(
+                    m_nvg, miewportViewBounds, *view,
+                    m_appData.renderData().m_crosshairsColor, labelPosInfo );
             }
 
             if ( AnatomicalLabelType::Disabled != m_appData.renderData().m_anatomicalLabelType )
             {
-                drawAnatomicalLabels( m_nvg, miewportViewBounds,
-                                      ( ViewType::Oblique == view->viewType() ),
-                                      m_appData.renderData().m_anatomicalLabelColor,
-                                      m_appData.renderData().m_anatomicalLabelType,
-                                      labelPosInfo );
+                drawAnatomicalLabels(
+                    m_nvg, miewportViewBounds,
+                    ( ViewType::Oblique == view->viewType() ),
+                    m_appData.renderData().m_anatomicalLabelColor,
+                    m_appData.renderData().m_anatomicalLabelType,
+                    labelPosInfo );
             }
         }
 
@@ -3057,7 +3073,7 @@ void Rendering::updateIsosurfaceDataFor2d( AppData& appData, const uuids::uuid& 
         ( settings.minMaxImageRange().second - settings.minMaxImageRange().first ) / 100.0;
 
     isoData.widthIn2d = std::max( 1.0e-4f, static_cast<float>(
-                settings.mapNativeIntensityToTexture( w ) - settings.mapNativeIntensityToTexture( 0.0 ) ) );
+        settings.mapNativeIntensityToTexture( w ) - settings.mapNativeIntensityToTexture( 0.0 ) ) );
 
     if ( ! settings.showIsosurfacesIn2d() || ! settings.isosurfacesVisible() )
     {
@@ -3095,9 +3111,7 @@ void Rendering::updateIsosurfaceDataFor2d( AppData& appData, const uuids::uuid& 
         isoData.values[i] = static_cast<float>( texValue );
 
         // The isolines are hidden if the image is hidden
-        isoData.opacities[i] = ( settings.visibility()
-                                 ? surface->opacity * settings.isosurfaceOpacityModulator()
-                                 : 0.0f );
+        isoData.opacities[i] = settings.visibility() ? surface->opacity * settings.isosurfaceOpacityModulator() : 0.0f;
 
         if ( settings.applyImageColormapToIsosurfaces() )
         {
@@ -3161,9 +3175,7 @@ void Rendering::updateIsosurfaceDataFor3d( AppData& appData, const uuids::uuid& 
         isoData.values[i] = static_cast<float>( texValue );
 
         // The isosurfaces are hidden if the image is hidden
-        isoData.opacities[i] = ( settings.visibility()
-                                 ? surface->opacity * settings.isosurfaceOpacityModulator()
-                                 : 0.0f );
+        isoData.opacities[i] = settings.visibility() ? surface->opacity * settings.isosurfaceOpacityModulator() : 0.0f;
 
         isoData.edgeStrengths[i] = surface->edgeStrength;
         isoData.shininesses[i] = surface->material.shininess;
