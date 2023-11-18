@@ -186,11 +186,18 @@ void main()
 
     // Convert physical (mm) to texel units along the ray direction
     float texel_T_mm = length( texRayDir );
-    texRayDir /= texel_T_mm; // normalize the direction!
+    texRayDir /= texel_T_mm; // normalize the direction
+
+    vec3 dirSq = texRayDir * texRayDir;
+
+    vec3 dims = vec3( textureSize(u_imgTex, 0) );
+    vec3 spacing = vec3(1.0 / dims.x, 1.0 / dims.y, 1.0 / dims.z);
 
     // Step size computed as a samplingFactor fraction of the voxel spacing along the ray:
-    vec3 dims = vec3( textureSize(u_imgTex, 0) );
-    float texStep = samplingFactor * dot( vec3(1.0 / dims.x, 1.0 / dims.y, 1.0 / dims.z) , abs(texRayDir) );
+    float texStep = samplingFactor * min( min(
+        spacing.x * sqrt(1 + (dirSq.y + dirSq.z)) / max(dirSq.x, 1.0e-6),
+        spacing.y * sqrt(1 + (dirSq.z + dirSq.x)) / max(dirSq.y, 1.0e-6) ),
+        spacing.z * sqrt(1 + (dirSq.x + dirSq.y)) / max(dirSq.z, 1.0e-6) );
 
     // Randomly purturb the ray starting positions along the ray direction:
     vec4 texEyePos = u_imgTexture_T_world * vec4(worldEyePos, 1.0);

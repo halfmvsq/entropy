@@ -157,8 +157,7 @@ float sliceScrollDistance(
     }
 
     float distance = std::numeric_limits<float>::max();
-
-    size_t numImagesUsed = 0;
+    std::size_t numImagesUsed = 0;
 
     for ( const auto& imageUid : selectImages( data, imageSelection, view ) )
     {
@@ -167,13 +166,24 @@ float sliceScrollDistance(
 
         // Scroll in image Pixel space along the camera's front direction:
         const glm::mat3& pixel_T_world = image->transformations().pixel_T_worldDef();
-        glm::vec3 pixelDir = glm::abs( glm::normalize( pixel_T_world * worldCameraFrontDir ) );
-        pixelDir /= ( pixelDir.x + pixelDir.y + pixelDir.z );
+        const glm::vec3 pixelDir = glm::normalize( pixel_T_world * worldCameraFrontDir );
+        const glm::vec3 pixelDirSq = pixelDir * pixelDir;
 
-        // Scroll distance is proportional to spacing of image along the view direction
-        float d = std::abs( glm::dot( glm::vec3{ image->header().spacing() }, pixelDir ) );
+        const glm::vec3 pixelDirSqInv{
+            glm::epsilonEqual(pixelDirSq.x, 0.0f, glm::epsilon<float>()) ?
+                std::numeric_limits<float>::max() : 1.0f / pixelDirSq.x,
+            glm::epsilonEqual(pixelDirSq.y, 0.0f, glm::epsilon<float>()) ?
+                std::numeric_limits<float>::max() : 1.0f / pixelDirSq.y,
+            glm::epsilonEqual(pixelDirSq.z, 0.0f, glm::epsilon<float>()) ?
+                std::numeric_limits<float>::max() : 1.0f / pixelDirSq.z
+        };
+
+        const float d = std::min( std::min(
+                image->header().spacing().x * std::sqrt( 1.0f + (pixelDirSq.y + pixelDirSq.z) * pixelDirSqInv.x ),
+                image->header().spacing().y * std::sqrt( 1.0f + (pixelDirSq.z + pixelDirSq.x) * pixelDirSqInv.y ) ),
+            image->header().spacing().z * std::sqrt( 1.0f + (pixelDirSq.x + pixelDirSq.y) * pixelDirSqInv.z ) );
+
         distance = std::min( distance, d );
-
         ++numImagesUsed;
     }
 
