@@ -146,15 +146,19 @@ list( APPEND IMGUI_SOURCES
     ${IMGUI_SRC_DIR}/imgui_draw.cpp
     ${IMGUI_SRC_DIR}/imgui_tables.cpp
     ${IMGUI_SRC_DIR}/imgui_widgets.cpp
-    ${IMGUI_SRC_DIR}/misc/cpp/imgui_stdlib.cpp )
+    ${IMGUI_SRC_DIR}/misc/cpp/imgui_stdlib.cpp
+    ${IMGUI_SRC_DIR}/backends/imgui_impl_glfw.cpp # GLFW bindings for ImGui
+    ${IMGUI_SRC_DIR}/backends/imgui_impl_opengl3.cpp # OpenGL 3 bindings for ImGui
+)
 
 add_library( imgui STATIC ${IMGUI_SOURCES} )
 
 target_include_directories( imgui PRIVATE
     ${IMGUI_INCLUDE_DIR}
     ${SRC_DIR} # needed for IMGUI_USER_CONFIG file
+    ${EXT_DIR}/glfw/include
     ${SPDLOG_INCLUDE_DIR} # needed for spdlog.h included in IMGUI_USER_CONFIG
-    )
+)
 
 target_compile_options( imgui PRIVATE
     $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>:
@@ -725,7 +729,8 @@ add_executable( ${EXEC_NAME} )
 target_sources( ${EXEC_NAME} PRIVATE
     ${ENTROPY_SOURCES}
     ${ENTROPY_HEADERS}
-    ${EXTERNAL_SOURCES} )
+    # ${EXTERNAL_SOURCES}
+)
 
 target_link_libraries( ${EXEC_NAME} PRIVATE
     ${ITK_LIBRARIES}
