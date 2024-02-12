@@ -10,6 +10,23 @@
 #include <vector>
 
 
+// On Apple platforms, we must use the alternative ghc::filesystem,
+// because it is not fully implemented or supported prior to macOS 10.15.
+#if !defined(__APPLE__)
+#if defined(__cplusplus) && __cplusplus >= 201703L && defined(__has_include)
+#if __has_include(<filesystem>)
+#define GHC_USE_STD_FS
+#include <filesystem>
+namespace fs = std::filesystem;
+#endif
+#endif
+#endif
+
+#ifndef GHC_USE_STD_FS
+#include <ghc/filesystem.hpp>
+namespace fs = ghc::filesystem;
+#endif
+
 namespace
 {
 
@@ -59,7 +76,7 @@ std::string getFileName( const std::string& filePath, bool withExtension )
         std::vector<std::string> pSplit = splitPath( filePath, delims );
         return pSplit.back();
 #else
-        const std::filesystem::path p( filePath );
+        const fs::filesystem::path p( filePath );
 
         // Check if path has a stem (i.e. filename without extension)
         if ( p.has_stem() )
@@ -85,7 +102,7 @@ std::string getFileName( const std::string& filePath, bool withExtension )
         return pSplit.back();
 #else
         // Return the file name with extension from path
-        const std::filesystem::path p( filePath );
+        const fs::filesystem::path p( filePath );
         return p.filename().string();
 #endif
     }

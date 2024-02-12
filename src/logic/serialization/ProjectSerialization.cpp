@@ -33,7 +33,6 @@ namespace fs = std::filesystem;
 namespace fs = ghc::filesystem;
 #endif
 
-
 //#if defined(_LIBCPP_VERSION) && (_LIBCPP_VERSION >= 1000)
 #if ! defined (_MSC_VER)
 #define HAS_IOS_BASE_FAILURE_DERIVED_FROM_SYSTEM_ERROR 1
