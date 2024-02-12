@@ -76,7 +76,7 @@ std::string getFileName( const std::string& filePath, bool withExtension )
         std::vector<std::string> pSplit = splitPath( filePath, delims );
         return pSplit.back();
 #else
-        const fs::filesystem::path p( filePath );
+        const fs::path p( filePath );
 
         // Check if path has a stem (i.e. filename without extension)
         if ( p.has_stem() )
@@ -102,7 +102,7 @@ std::string getFileName( const std::string& filePath, bool withExtension )
         return pSplit.back();
 #else
         // Return the file name with extension from path
-        const fs::filesystem::path p( filePath );
+        const fs::path p( filePath );
         return p.filename().string();
 #endif
     }
