@@ -114,7 +114,22 @@ float getSegInteriorAlpha( int texNum, uint seg )
             col * u_texSamplingDirsForSegOutline[1];
 
         // Segmentation value of neighbor at (row, col) offset
-        uint nseg = texture( u_segTex[texNum], fs_in.v_segTexCoords[texNum] + texSamplingPos )[0];
+//        uint nseg = texture( u_segTex[texNum], fs_in.v_segTexCoords[texNum] + texSamplingPos )[0];
+        uint nseg;
+
+        switch (texNum)
+        {
+        case 0:
+        {
+            nseg = texture( u_segTex[0], fs_in.v_segTexCoords[texNum] + texSamplingPos )[0];
+            break;
+        }
+        case 1:
+        {
+            nseg = texture( u_segTex[1], fs_in.v_segTexCoords[texNum] + texSamplingPos )[0];
+            break;
+        }
+        }
 
         // Fragment (with segmentation 'seg') is on the boundary (and hence gets
         // full alpha) if its value is not equal to one of its neighbors.
@@ -147,8 +162,27 @@ int when_ge( int x, int y )
 
 vec4 computeLabelColor( int label, int i )
 {
-    label -= label * when_ge( label, textureSize(u_segLabelCmapTex[i]) );
-    vec4 color = texelFetch( u_segLabelCmapTex[i], label );
+//    label -= label * when_ge( label, textureSize(u_segLabelCmapTex[i]) );
+//    vec4 color = texelFetch( u_segLabelCmapTex[i], label );
+
+    vec4 color;
+
+    switch (i)
+    {
+    case 0:
+    {
+        label -= label * when_ge( label, textureSize(u_segLabelCmapTex[0]) );
+        color = texelFetch( u_segLabelCmapTex[0], label );
+        break;
+    }
+    case 1:
+    {
+        label -= label * when_ge( label, textureSize(u_segLabelCmapTex[1]) );
+        color = texelFetch( u_segLabelCmapTex[1], label );
+        break;
+    }
+    }
+
     return color.a * color;
 }
 
@@ -168,7 +202,22 @@ void main()
         bool segMask = ! ( any(    lessThan( fs_in.v_segTexCoords[i], MIN_IMAGE_TEXCOORD + u_texSampleSize[i] ) ) ||
                            any( greaterThan( fs_in.v_segTexCoords[i], MAX_IMAGE_TEXCOORD - u_texSampleSize[i] ) ) );
 
-        uint label = texture( u_segTex[i], fs_in.v_segTexCoords[i] ).r; // Label value
+        // uint label = texture( u_segTex[i], fs_in.v_segTexCoords[i] ).r; // Label value
+        uint label;
+
+        switch (i)
+        {
+        case 0:
+        {
+            label = texture( u_segTex[0], fs_in.v_segTexCoords[i] ).r; // Label value
+            break;
+        }
+        case 1:
+        {
+            label = texture( u_segTex[1], fs_in.v_segTexCoords[i] ).r; // Label value
+            break;
+        }
+        }
 
         // Apply foreground mask and masking based on segmentation label:
         mask[i] = float( imgMask && ( u_metricMasking && ( label > 0u ) || ! u_metricMasking ) );

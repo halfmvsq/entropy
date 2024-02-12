@@ -143,7 +143,23 @@ float getSegInteriorAlpha( int texNum, uint seg )
             col * u_texSamplingDirsForSegOutline[1];
 
         // Segmentation value of neighbor at (row, col) offset
-        uint nseg = texture( u_segTex[texNum], fs_in.v_segTexCoords[texNum] + texSamplingPos )[0];
+        // uint nseg = texture( u_segTex[texNum], fs_in.v_segTexCoords[texNum] + texSamplingPos )[0];
+
+        uint nseg;
+
+        switch (texNum)
+        {
+        case 0:
+        {
+            nseg = texture( u_segTex[0], fs_in.v_segTexCoords[texNum] + texSamplingPos )[0];
+            break;
+        }
+        case 1:
+        {
+            nseg = texture( u_segTex[1], fs_in.v_segTexCoords[texNum] + texSamplingPos )[0];
+            break;
+        }
+        }
 
         // Fragment (with segmentation 'seg') is on the boundary (and hence gets
         // full alpha) if its value is not equal to one of its neighbors.
@@ -177,8 +193,27 @@ int when_ge( int x, int y )
 
 vec4 computeLabelColor( int label, int i )
 {
-    label -= label * when_ge( label, textureSize(u_segLabelCmapTex[i]) );
-    vec4 color = texelFetch( u_segLabelCmapTex[i], label );
+//    label -= label * when_ge( label, textureSize(u_segLabelCmapTex[i]) );
+//    vec4 color = texelFetch( u_segLabelCmapTex[i], label );
+
+    vec4 color;
+
+    switch (i)
+    {
+    case 0:
+    {
+        label -= label * when_ge( label, textureSize(u_segLabelCmapTex[0]) );
+        color = texelFetch( u_segLabelCmapTex[0], label );
+        break;
+    }
+    case 1:
+    {
+        label -= label * when_ge( label, textureSize(u_segLabelCmapTex[1]) );
+        color = texelFetch( u_segLabelCmapTex[1], label );
+        break;
+    }
+    }
+
     return color.a * color;
 }
 
@@ -186,7 +221,24 @@ vec4 computeLabelColor( int label, int i )
 vec4 getSegColor( int i )
 {
     // Look up label value and color:
-    uint label = texture( u_segTex[i], fs_in.v_segTexCoords[i] ).r;
+//    uint label = texture( u_segTex[i], fs_in.v_segTexCoords[i] ).r;
+
+    uint label;
+
+    switch (i)
+    {
+    case 0:
+    {
+        label = texture( u_segTex[0], fs_in.v_segTexCoords[i] ).r;
+        break;
+    }
+    case 1:
+    {
+        label = texture( u_segTex[1], fs_in.v_segTexCoords[i] ).r;
+        break;
+    }
+    }
+
     vec4 labelColor = computeLabelColor( int(label), i );
     //vec4 labelColor = texelFetch( u_segLabelCmapTex[i], int(label), 0 );
 
@@ -226,9 +278,27 @@ vec2 computeMetricAndMask( in int sampleOffset, out bool hitBoundary )
     {
         // Look up image and label values:
         // float img = texture( u_imgTex[i], img_tc[i] ).r;
-        float img = getImageValue( u_imgTex[i], img_tc[i] );
+        // float img = getImageValue( u_imgTex[i], img_tc[i] );
+        //  uint label = texture( u_segTex[i], seg_tc[i] ).r;
 
-        uint label = texture( u_segTex[i], seg_tc[i] ).r;
+        float img;
+        uint label;
+
+        switch (i)
+        {
+        case 0:
+        {
+            img = getImageValue( u_imgTex[0], img_tc[i] );
+            label = texture( u_segTex[0], seg_tc[i] ).r;
+            break;
+        }
+        case 1:
+        {
+            img = getImageValue( u_imgTex[1], img_tc[i] );
+            label = texture( u_segTex[1], seg_tc[i] ).r;
+            break;
+        }
+        }
 
         // Normalize images to [0.0, 1.0] range:
         imgNorm[i] = clamp( u_imgSlopeIntercept[i][0] * img + u_imgSlopeIntercept[i][1], 0.0, 1.0 );

@@ -117,8 +117,26 @@ int when_ge( int x, int y )
 
 vec4 computeLabelColor( int label, int i )
 {
-    label -= label * when_ge( label, textureSize(u_segLabelCmapTex[i]) );
-    vec4 color = texelFetch( u_segLabelCmapTex[i], label );
+//    label -= label * when_ge( label, textureSize(u_segLabelCmapTex[i]) );
+//    vec4 color = texelFetch( u_segLabelCmapTex[i], label );
+    vec4 color;
+
+    switch (i)
+    {
+    case 0:
+    {
+        label -= label * when_ge( label, textureSize(u_segLabelCmapTex[0]) );
+        color = texelFetch( u_segLabelCmapTex[0], label );
+        break;
+    }
+    case 1:
+    {
+        label -= label * when_ge( label, textureSize(u_segLabelCmapTex[1]) );
+        color = texelFetch( u_segLabelCmapTex[1], label );
+        break;
+    }
+    }
+
     return color.a * color;
 }
 
@@ -142,7 +160,22 @@ float getSegInteriorAlpha( int texNum, uint seg )
             col * u_texSamplingDirsForSegOutline[1];
 
         // Segmentation value of neighbor at (row, col) offset
-        uint nseg = texture( u_segTex[texNum], fs_in.v_segTexCoords[texNum] + texSamplingPos )[0];
+        // uint nseg = texture( u_segTex[texNum], fs_in.v_segTexCoords[texNum] + texSamplingPos )[0];
+        uint nseg;
+
+        switch (texNum)
+        {
+        case 0:
+        {
+            nseg = texture( u_segTex[0], fs_in.v_segTexCoords[texNum] + texSamplingPos )[0];
+            break;
+        }
+        case 1:
+        {
+            nseg = texture( u_segTex[1], fs_in.v_segTexCoords[texNum] + texSamplingPos )[0];
+            break;
+        }
+        }
 
         // Fragment (with segmentation 'seg') is on the boundary (and hence gets
         // full alpha) if its value is not equal to one of its neighbors.
@@ -181,9 +214,28 @@ void main()
                            any( greaterThan( fs_in.v_segTexCoords[i], MAX_IMAGE_TEXCOORD ) ) );
 
         // float val = texture( u_imgTex[i], fs_in.v_imgTexCoords[i] ).r; // Image value
-        float val = getImageValue( u_imgTex[i], fs_in.v_imgTexCoords[i], u_imgMinMax[i] );
+//        float val = getImageValue( u_imgTex[i], fs_in.v_imgTexCoords[i], u_imgMinMax[i] );
+//        uint label = texture( u_segTex[i], fs_in.v_segTexCoords[i] ).r; // Label value
 
-        uint label = texture( u_segTex[i], fs_in.v_segTexCoords[i] ).r; // Label value
+        float val;
+        uint label;
+
+        switch (i)
+        {
+        case 0:
+        {
+            val = getImageValue( u_imgTex[0], fs_in.v_imgTexCoords[i], u_imgMinMax[i] );
+            label = texture( u_segTex[0], fs_in.v_segTexCoords[i] ).r;
+            break;
+        }
+        case 1:
+        {
+            val = getImageValue( u_imgTex[1], fs_in.v_imgTexCoords[i], u_imgMinMax[i] );
+            label = texture( u_segTex[1], fs_in.v_segTexCoords[i] ).r;
+            break;
+        }
+        }
+
         float norm = clamp( u_imgSlopeIntercept[i][0] * val + u_imgSlopeIntercept[i][1], 0.0, 1.0 ); // Apply W/L
 
         // Apply opacity, foreground mask, and thresholds for images:
