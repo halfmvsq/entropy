@@ -31,7 +31,6 @@
 #include <filesystem>
 #include <string>
 #include <type_traits>
-#include <utility>
 #include <vector>
 
 // Without undefining min and max, there are some errors compiling in Visual Studio
@@ -698,7 +697,7 @@ Image createImageFromItkImage(
     const std::filesystem::path filename = std::filesystem::temp_directory_path() / "temp.nii.gz";
     
     writeImage<T, 3, false>( itkImage, filename.string() );
-    spdlog::debug( "Wrote temporary image file '{}'", filename );
+    spdlog::debug( "Wrote temporary image file '{}'", filename.string() );
 
     Image image( filename.string(), Image::ImageRepresentation::Image, Image::MultiComponentBufferType::SeparateImages );
 
@@ -708,7 +707,7 @@ Image createImageFromItkImage(
     
     if ( ! std::remove( filename.string().c_str() ) )
     {
-        spdlog::warn( "Unable to remove temporary image file '{}'", filename );
+        spdlog::warn( "Unable to remove temporary image file '{}'", filename.string() );
     }
 
     return image;

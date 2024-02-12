@@ -54,13 +54,13 @@ Image::Image(
 
     if ( ! imageIo || imageIo.IsNull() )
     {
-        spdlog::error( "Error creating ImageIOBase for image from file '{}'", fileName );
+        spdlog::error( "Error creating ImageIOBase for image from file {}", fileName );
         throw_debug( "Error creating ImageIOBase" )
     }
 
     if ( ! m_ioInfoOnDisk.set( imageIo ) )
     {
-        spdlog::error( "Error setting image IO information for image from file '{}'", fileName );
+        spdlog::error( "Error setting image IO information for image from file {}", fileName );
         throw_debug( "Error setting image IO information" )
     }
 
@@ -85,7 +85,7 @@ Image::Image(
 
         if ( ! baseImage )
         {
-            spdlog::error( "Unable to read vector ImageBase from file '{}'", fileName );
+            spdlog::error( "Unable to read vector ImageBase from file {}", fileName );
             throw_debug( "Unable to read vector image" )
         }
 
@@ -127,7 +127,7 @@ Image::Image(
 
         if ( 0 == numCompsToLoad )
         {
-            spdlog::error( "No components to load for image from file '{}'", fileName );
+            spdlog::error( "No components to load for image from file {}", fileName );
             throw_debug( "No components to load for image" )
         }
 
@@ -140,7 +140,7 @@ Image::Image(
 
             if ( ! allComponentBuffers )
             {
-                spdlog::error( "Null buffer holding all components of image from file '{}'", fileName );
+                spdlog::error( "Null buffer holding all components of image from file {}", fileName );
                 throw_debug( "Null image buffer" )
             }
         }
@@ -150,7 +150,7 @@ Image::Image(
         {
             if ( ! componentImages[i] )
             {
-                spdlog::error( "Null vector image component {} for image from file '{}'", i, fileName );
+                spdlog::error( "Null vector image component {} for image from file {}", i, fileName );
                 throw_debug( "Null vector component for image" )
             }
 
@@ -158,7 +158,7 @@ Image::Image(
 
             if ( ! buffer )
             {
-                spdlog::error( "Null buffer of vector image component {} for image from file '{}'", i, fileName );
+                spdlog::error( "Null buffer of vector image component {} for image from file {}", i, fileName );
                 throw_debug( "Null buffer of vector image component" )
             }
 
@@ -170,7 +170,7 @@ Image::Image(
                 {
                     if ( ! loadSegBuffer( static_cast<const void*>( buffer ), numPixels, srcItkCompType, dstItkCompType ) )
                     {
-                        spdlog::error( "Error loading segmentation image buffer for file '{}'", fileName );
+                        spdlog::error( "Error loading segmentation image buffer for file {}", fileName );
                         throw_debug( "Error loading segmentation image buffer" )
                     }
                 }
@@ -178,7 +178,7 @@ Image::Image(
                 {
                     if ( ! loadImageBuffer( static_cast<const void*>( buffer ), numPixels, srcItkCompType, dstItkCompType ) )
                     {
-                        spdlog::error( "Error loading image buffer for file '{}'", fileName );
+                        spdlog::error( "Error loading image buffer for file {}", fileName );
                         throw_debug( "Error loading image buffer" )
                     }
                 }
@@ -204,7 +204,7 @@ Image::Image(
             {
                 if ( ! loadSegBuffer( static_cast<const void*>( allComponentBuffers.get() ), numElements, srcItkCompType, dstItkCompType ) )
                 {
-                    spdlog::error( "Error loading segmentation image buffer for file '{}'", fileName );
+                    spdlog::error( "Error loading segmentation image buffer for file {}", fileName );
                     throw_debug( "Error loading segmentation image buffer" )
                 }
             }
@@ -212,7 +212,7 @@ Image::Image(
             {
                 if ( ! loadImageBuffer( static_cast<const void*>( allComponentBuffers.get() ), numElements, srcItkCompType, dstItkCompType ) )
                 {
-                    spdlog::error( "Error loading image buffer for file '{}'", fileName );
+                    spdlog::error( "Error loading image buffer for file {}", fileName );
                     throw_debug( "Error loading image buffer" )
                 }
             }
@@ -225,7 +225,7 @@ Image::Image(
 
         if ( ! baseImage )
         {
-            spdlog::error( "Unable to read ImageBase from file '{}'", fileName );
+            spdlog::error( "Unable to read ImageBase from file {}", fileName );
             throw_debug( "Unable to read image" )
         }
 
@@ -233,7 +233,7 @@ Image::Image(
 
         if ( ! image )
         {
-            spdlog::error( "Null image for file '{}' following downcast from ImageBase", fileName );
+            spdlog::error( "Null image for file {} following downcast from ImageBase", fileName );
             throw_debug( "Null image" )
         }
 
@@ -241,7 +241,7 @@ Image::Image(
 
         if ( ! buffer )
         {
-            spdlog::error( "Null buffer of scalar image from file '{}'", fileName );
+            spdlog::error( "Null buffer of scalar image from file {}", fileName );
             throw_debug( "Null buffer of scalar image" )
         }
 
@@ -249,7 +249,7 @@ Image::Image(
         {
             if ( ! loadSegBuffer( static_cast<const void*>( buffer ), numPixels, srcItkCompType, dstItkCompType ) )
             {
-                spdlog::error( "Error loading segmentation image buffer for file '{}'", fileName );
+                spdlog::error( "Error loading segmentation image buffer for file {}", fileName );
                 throw_debug( "Error loading segmentation image buffer" )
             }
         }
@@ -257,7 +257,7 @@ Image::Image(
         {
             if ( ! loadImageBuffer( static_cast<const void*>( buffer ), numPixels, srcItkCompType, dstItkCompType ) )
             {
-                spdlog::error( "Error loading image buffer for file '{}'", fileName );
+                spdlog::error( "Error loading image buffer for file {}", fileName );
                 throw_debug( "Error loading image buffer" )
             }
         }
@@ -340,7 +340,7 @@ Image::Image(
 
     case CType::UNKNOWNCOMPONENTTYPE:
     {
-        spdlog::error( "Unknown component type in image from file '{}'", m_ioInfoOnDisk.m_fileInfo.m_fileName );
+        spdlog::error( "Unknown component type in image from file {}", m_ioInfoOnDisk.m_fileInfo.m_fileName );
         throw_debug( "Unknown component type in image" )
     }
     }
@@ -375,7 +375,7 @@ Image::Image(
 
         if ( 0 == numCompsToLoad )
         {
-            spdlog::error( "No components to create for image from file '{}'", m_header.fileName() );
+            spdlog::error( "No components to create for image from file {}", m_header.fileName() );
             throw_debug( "No components to create for image" )
         }
 
@@ -616,7 +616,7 @@ bool Image::loadImageBuffer(
 
     case CType::UNKNOWNCOMPONENTTYPE:
     {
-        spdlog::error( "Unknown component type in image from file '{}'", m_ioInfoOnDisk.m_fileInfo.m_fileName );
+        spdlog::error( "Unknown component type in image from file {}", m_ioInfoOnDisk.m_fileInfo.m_fileName );
         return false;
     }
     }
@@ -754,7 +754,7 @@ bool Image::loadSegBuffer(
 
     case CType::UNKNOWNCOMPONENTTYPE:
     {
-        spdlog::error( "Unknown component type in image from file '{}'",
+        spdlog::error( "Unknown component type in image from file {}",
                       m_ioInfoOnDisk.m_fileInfo.m_fileName );
         return false;
     }

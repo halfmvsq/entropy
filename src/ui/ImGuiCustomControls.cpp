@@ -8,6 +8,8 @@
 #include <imgui/imgui_internal.h>
 
 #include <glm/glm.hpp>
+
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/color_space.hpp>
 
 // On Apple platforms, we must use the alternative ghc::filesystem,
@@ -26,8 +28,6 @@ namespace fs = std::filesystem;
 #include <ghc/filesystem.hpp>
 namespace fs = ghc::filesystem;
 #endif
-
-#include <iostream>
 
 namespace
 {

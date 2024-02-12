@@ -6,7 +6,6 @@
 
 #include <itkImageIOFactory.h>
 
-#include <filesystem>
 #include <limits>
 #include <vector>
 
