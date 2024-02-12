@@ -585,13 +585,6 @@ set( ENTROPY_SOURCES
     ${SRC_DIR}/windowing/WindowData.cpp
 )
 
-set( EXTERNAL_SOURCES
-    ${IMGUI_BINDINGS_DIR}/imgui_impl_glfw.cpp # GLFW bindings for ImGui
-    ${IMGUI_BINDINGS_DIR}/imgui_impl_opengl3.cpp # OpenGL 3 bindings for ImGui
-)
-
-set( EXTERNAL_HEADERS )
-
 set( SHADERS
     ${SRC_DIR}/rendering/shaders/Correlation.fs
     ${SRC_DIR}/rendering/shaders/Difference.fs
@@ -728,9 +721,7 @@ add_executable( ${EXEC_NAME} )
 
 target_sources( ${EXEC_NAME} PRIVATE
     ${ENTROPY_SOURCES}
-    ${ENTROPY_HEADERS}
-    # ${EXTERNAL_SOURCES}
-)
+    ${ENTROPY_HEADERS} )
 
 target_link_libraries( ${EXEC_NAME} PRIVATE
     ${ITK_LIBRARIES}
