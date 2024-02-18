@@ -165,20 +165,24 @@ void AppData::loadLinearRampImageColorMaps()
             "Linear magenta", "linear_magenta_0-100_c0_n256" ) );
 
 
-    ImageColorMap constantWhiteMap = ImageColorMap::createLinearImageColorMap(
-        white, white, sk_numSteps, "Constant white",
-        "Constant white", "constant_white_n256" );
+    const glm::vec4 transparentBlack{ 0.0, 0.0, 0.0, 0.0 };
 
-    constantWhiteMap.setColorRGBA( 0, glm::vec4{0.0f, 0.0f, 0.0f, 0.0f} );
-    constantWhiteMap.setColorRGBA( constantWhiteMap.numColors() - 1, glm::vec4{0.0f, 0.0f, 0.0f, 0.0f} );
+    ImageColorMap constantWhiteMap = ImageColorMap::createLinearImageColorMap(
+        white, white, sk_numSteps, "Constant white", "Constant white", "constant_white_n256" );
+
+    // constantWhiteMap.setInterpolationMode( ImageColorMap::InterpolationMode::Nearest );
+    // constantWhiteMap.setTransparentBorder( true );
+    constantWhiteMap.setColorRGBA( 0, transparentBlack );
+    constantWhiteMap.setColorRGBA( constantWhiteMap.numColors() - 1, transparentBlack );
     m_imageColorMaps.emplace( constantWhiteMapUid, std::move(constantWhiteMap) );
 
     ImageColorMap constantRedMap = ImageColorMap::createLinearImageColorMap(
-        red, red, sk_numSteps, "Constant red",
-        "Constant red", "constant_red_n256" );
+        red, red, sk_numSteps, "Constant red", "Constant red", "constant_red_n256" );
 
-    constantRedMap.setColorRGBA( 0, glm::vec4{0.0f, 0.0f, 0.0f, 0.0f} );
-    constantRedMap.setColorRGBA( constantRedMap.numColors() - 1, glm::vec4{0.0f, 0.0f, 0.0f, 0.0f} );
+    // constantRedMap.setInterpolationMode( ImageColorMap::InterpolationMode::Nearest );
+    // constantRedMap.setTransparentBorder( true );
+    constantRedMap.setColorRGBA( 0, transparentBlack );
+    constantRedMap.setColorRGBA( constantRedMap.numColors() - 1, transparentBlack );
     m_imageColorMaps.emplace( constantRedMapUid, std::move(constantRedMap) );
 
 

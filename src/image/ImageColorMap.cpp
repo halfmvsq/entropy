@@ -24,7 +24,8 @@ ImageColorMap::ImageColorMap(
     m_technicalName( technicalName ),
     m_description( description ),
     m_preview( 0 ),
-    m_interpolationMode( interpMode )
+    m_interpolationMode( interpMode ),
+    m_transparentBorder( false )
 //    m_forcedInterpolationMode( forcedInterpMode )
 {
     if ( colors.empty() )
@@ -155,6 +156,17 @@ glm::vec2 ImageColorMap::slopeIntercept( bool inverted ) const
     const float slope = inverted ? -1.0f : 1.0f;
     const float intercept = inverted ? 1.0f : 0.0f;
     return glm::vec2{ slope, intercept };
+}
+
+
+void ImageColorMap::setTransparentBorder( bool set )
+{
+    m_transparentBorder = set;
+}
+
+bool ImageColorMap::transparentBorder() const
+{
+    return m_transparentBorder;
 }
 
 

@@ -123,6 +123,11 @@ public:
     /// Slope and intercept used to map texels to range [0.0, 1.0]:
     glm::vec2 slopeIntercept( bool inverted = false ) const;
 
+    /// Set/get whether the map has a transparent border.
+    /// To be used with constant color maps.
+    void setTransparentBorder( bool set );
+    bool transparentBorder() const;
+
     /**
      * @brief Cyclically rotate the color map by a fractional amount of its total length
      * @param fraction Fractional amount (in [0.0, 1.0]) by which to rotate the map
@@ -173,6 +178,7 @@ private:
 
     std::vector< glm::vec4 > m_preview; //!< Preview color map
     InterpolationMode m_interpolationMode; //!< Interpolation mode
+    bool m_transparentBorder; //!< Transparent border
 
 //    ForcedInterpolationMode m_forcedInterpolationMode;
 };

@@ -403,6 +403,7 @@ std::vector<uuids::uuid> createSegTextures( AppData& appData, uuid_range_t segUi
 std::unordered_map< uuids::uuid, GLTexture >
 createImageColorMapTextures( const AppData& appData )
 {
+    static const glm::vec4 sk_border{ 0.0f, 0.0f, 0.0f, 0.0f };
     std::unordered_map< uuids::uuid, GLTexture > textures;
 
     if ( 0 == appData.numImageColorMaps() )
@@ -443,8 +444,16 @@ createImageColorMapTextures( const AppData& appData )
                    tex::BufferPixelDataType::Float32,
                    map->data_RGBA_F32() );
 
-        // We should never sample outside the texture coordinate range [0.0, 1.0], anyway
-        T.setWrapMode( tex::WrapMode::ClampToEdge );
+        if ( map->transparentBorder() )
+        {
+            T.setWrapMode( tex::WrapMode::ClampToBorder );
+            T.setBorderColor( sk_border );
+        }
+        else
+        {
+            // We should never sample outside the texture coordinate range [0.0, 1.0], anyway
+            T.setWrapMode( tex::WrapMode::ClampToEdge );
+        }
 
         T.setAutoGenerateMipmaps( false );
 

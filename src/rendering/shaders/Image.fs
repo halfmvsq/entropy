@@ -489,16 +489,16 @@ void main()
     cmapCoord = u_imgCmapSlopeIntercept[0] * cmapCoord + u_imgCmapSlopeIntercept[1];
 
 
-//    // Look up image color (RGBA):
+    // Look up image color (RGBA):
     vec4 imgColor = texture( u_imgCmapTex, cmapCoord );
 
-//    // Convert RGBA to HSV and apply HSV modification factors:
+    // Convert RGBA to HSV and apply HSV modification factors:
     vec3 imgColorHsv = rgb2hsv( imgColor.rgb );
 
     imgColorHsv.x += u_imgCmapHsvModFactors.x;
     imgColorHsv.yz *= u_imgCmapHsvModFactors.yz;
 
-//    // Convert back to RGB
+    // Convert back to RGB
     imgColor.rgb = hsv2rgb( imgColorHsv );
 
     vec4 imgLayer = imgAlpha * imgColor.a * vec4(imgColor.rgb, 1.0);
