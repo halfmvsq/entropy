@@ -1885,7 +1885,7 @@ void renderSettingsWindow(
             if ( ImGui::BeginTabItem( "Precision" ) )
             {
                 static constexpr uint32_t sk_minPrecision = 0;
-                static constexpr uint32_t sk_maxPrecision = 6;
+                static constexpr uint32_t sk_maxPrecision = 9;
                 static constexpr uint32_t sk_stepPrecision = 1;
 
                 ImGui::PushID( "precision" ); /*** PushID precision ***/

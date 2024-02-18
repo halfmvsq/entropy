@@ -117,6 +117,9 @@ public:
     /// Get the vector holding the data
     const std::vector< glm::vec4 >& data_RGBA_asVector() const;
 
+    /// Set a color
+    bool setColorRGBA( std::size_t i, const glm::vec4& rgba );
+
     /// Slope and intercept used to map texels to range [0.0, 1.0]:
     glm::vec2 slopeIntercept( bool inverted = false ) const;
 

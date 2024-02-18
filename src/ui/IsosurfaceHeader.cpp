@@ -780,7 +780,7 @@ void renderIsosurfacesHeader(
                 if ( imgSettings.showIsosurfacesIn2d() )
                 {
                     float width = static_cast<float>( imgSettings.isosurfaceWidthIn2d() );
-                    if ( mySliderF32( "Iso-line width", &width, 0.1f, 10.0f, "%0.2f \%" ) )
+                    if ( mySliderF32( "Iso-line width", &width, 0.001f, 10.000f, "%0.3f \%" ) )
                     {
                         imgSettings.setIsosurfaceWidthIn2d( static_cast<double>( width ) );
                     }

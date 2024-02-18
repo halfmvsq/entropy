@@ -121,7 +121,7 @@ glm::vec4 ImageColorMap::color_RGBA_F32( size_t index ) const
 }
 
 
-size_t ImageColorMap::numBytes_RGBA_F32() const
+std::size_t ImageColorMap::numBytes_RGBA_F32() const
 {
     return m_colors_RGBA_F32.size() * sizeof( glm::vec4 );
 }
@@ -136,6 +136,19 @@ const std::vector< glm::vec4 >& ImageColorMap::data_RGBA_asVector() const
 {
     return m_colors_RGBA_F32;
 }
+
+bool ImageColorMap::setColorRGBA( std::size_t i, const glm::vec4& rgba )
+{
+    if ( i < m_colors_RGBA_F32.size() )
+    {
+        m_colors_RGBA_F32[i] = rgba;
+        return true;
+    }
+
+    spdlog::error( "Could not set invalid index {} of colormap '{}'", i, name() );
+    return false;
+}
+
 
 glm::vec2 ImageColorMap::slopeIntercept( bool inverted ) const
 {
