@@ -23,6 +23,8 @@
 #include <imgui/imgui.h>
 #include <imgui/misc/cpp/imgui_stdlib.h>
 
+#include <implot.h>
+
 #include <ui/imgui/imgui-knobs/imgui-knobs.h>
 
 #include <glm/glm.hpp>
@@ -80,6 +82,102 @@ std::pair< ImVec4, ImVec4 > computeHeaderBgAndTextColors( const glm::vec3& color
     const ImVec4 headerTextColor = ( glm::luminosity( darkerBorderColorRgb ) < 0.75f ) ? sk_whiteText : sk_blackText;
 
     return { headerColor, headerTextColor };
+}
+
+
+
+double RandomGauss() {
+    static double V1, V2, S;
+    static int phase = 0;
+    double X;
+    if(phase == 0) {
+        do {
+            double U1 = (double)rand() / RAND_MAX;
+            double U2 = (double)rand() / RAND_MAX;
+            V1 = 2 * U1 - 1;
+            V2 = 2 * U2 - 1;
+            S = V1 * V1 + V2 * V2;
+        } while(S >= 1 || S == 0);
+
+        X = V1 * sqrt(-2 * log(S) / S);
+    } else
+        X = V2 * sqrt(-2 * log(S) / S);
+    phase = 1 - phase;
+    return X;
+}
+
+
+template <int N>
+struct NormalDistribution {
+    NormalDistribution(double mean, double sd) {
+        for (int i = 0; i < N; ++i)
+            Data[i] = RandomGauss()*sd + mean;
+    }
+    double Data[N];
+};
+
+void Demo_Histogram()
+{
+    static ImPlotHistogramFlags hist_flags = ImPlotHistogramFlags_Density;
+    static int  bins       = 50;
+    static double mu       = 5;
+    static double sigma    = 2;
+    ImGui::SetNextItemWidth(200);
+    if (ImGui::RadioButton("Sqrt",bins==ImPlotBin_Sqrt))       { bins = ImPlotBin_Sqrt;    } ImGui::SameLine();
+    if (ImGui::RadioButton("Sturges",bins==ImPlotBin_Sturges)) { bins = ImPlotBin_Sturges; } ImGui::SameLine();
+    if (ImGui::RadioButton("Rice",bins==ImPlotBin_Rice))       { bins = ImPlotBin_Rice;    } ImGui::SameLine();
+    if (ImGui::RadioButton("Scott",bins==ImPlotBin_Scott))     { bins = ImPlotBin_Scott;   } ImGui::SameLine();
+    if (ImGui::RadioButton("N Bins",bins>=0))                  { bins = 50;                }
+    if (bins>=0) {
+        ImGui::SameLine();
+        ImGui::SetNextItemWidth(200);
+        ImGui::SliderInt("##Bins", &bins, 1, 100);
+    }
+    ImGui::CheckboxFlags("Horizontal", (unsigned int*)&hist_flags, ImPlotHistogramFlags_Horizontal);
+    ImGui::SameLine();
+    ImGui::CheckboxFlags("Density", (unsigned int*)&hist_flags, ImPlotHistogramFlags_Density);
+    ImGui::SameLine();
+    ImGui::CheckboxFlags("Cumulative", (unsigned int*)&hist_flags, ImPlotHistogramFlags_Cumulative);
+
+    static bool range = false;
+    ImGui::Checkbox("Range", &range);
+    static float rmin = -3;
+    static float rmax = 13;
+    if (range) {
+        ImGui::SameLine();
+        ImGui::SetNextItemWidth(200);
+        ImGui::DragFloat2("##Range",&rmin,0.1f,-3,13);
+        ImGui::SameLine();
+        ImGui::CheckboxFlags("Exclude Outliers", (unsigned int*)&hist_flags, ImPlotHistogramFlags_NoOutliers);
+    }
+    static NormalDistribution<10000> dist(mu, sigma);
+    static double x[100];
+    static double y[100];
+    if (hist_flags & ImPlotHistogramFlags_Density) {
+        for (int i = 0; i < 100; ++i) {
+            x[i] = -3 + 16 * (double)i/99.0;
+            y[i] = exp( - (x[i]-mu)*(x[i]-mu) / (2*sigma*sigma)) / (sigma * sqrt(2*3.141592653589793238));
+        }
+        if (hist_flags & ImPlotHistogramFlags_Cumulative) {
+            for (int i = 1; i < 100; ++i)
+                y[i] += y[i-1];
+            for (int i = 0; i < 100; ++i)
+                y[i] /= y[99];
+        }
+    }
+
+    if (ImPlot::BeginPlot("##Histograms")) {
+        ImPlot::SetupAxes(nullptr,nullptr,ImPlotAxisFlags_AutoFit,ImPlotAxisFlags_AutoFit);
+        ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL,0.5f);
+        ImPlot::PlotHistogram("Empirical", dist.Data, 10000, bins, 1.0, range ? ImPlotRange(rmin,rmax) : ImPlotRange(), hist_flags);
+        if ((hist_flags & ImPlotHistogramFlags_Density) && !(hist_flags & ImPlotHistogramFlags_NoOutliers)) {
+            if (hist_flags & ImPlotHistogramFlags_Horizontal)
+                ImPlot::PlotLine("Theoretical",y,x,100);
+            else
+                ImPlot::PlotLine("Theoretical",x,y,100);
+        }
+        ImPlot::EndPlot();
+    }
 }
 
 } // anonymous
@@ -328,6 +426,7 @@ void renderImageHeaderInformation(
 
     if ( ImGui::TreeNode( "Intensity histogram" ) )
     {
+
 //        auto f = [&imgSettings] (int idx) -> f
 //        static float arr[] = { 0.6f, 0.1f, 1.0f, 0.5f, 0.92f, 0.1f, 0.2f };
 //        ImGui::PlotHistogram( "##histogram", imgSettings.componentStatistics( 0 ).m_histogram.data(), IM_ARRAYSIZE(arr), 0, NULL, 0.0f, 1.0f, ImVec2( 0, 80.0f ) );
@@ -336,6 +435,8 @@ void renderImageHeaderInformation(
 //        ImGui::PlotHistogram("Histogram", func, NULL, display_count, 0, NULL, -1.0f, 1.0f, ImVec2(0, 80));
 
 //        ImGui::PlotLines("Lines", values, IM_ARRAYSIZE(values), values_offset, overlay, -1.0f, 1.0f, ImVec2(0, 80.0f));
+
+        Demo_Histogram();
 
         ImGui::TreePop();
     }
@@ -894,6 +995,7 @@ void renderImageHeader(
             float windowWidth = static_cast<float>( imgSettings.windowWidth() );
             float windowCenter = static_cast<float>( imgSettings.windowCenter() );
 
+
             if ( mySliderF32( "Width", &windowWidth, windowWidthMin, windowWidthMax, valuesFormat ) )
             {
                 imgSettings.setWindowWidth( windowWidth );
@@ -902,12 +1004,50 @@ void renderImageHeader(
             ImGui::SameLine(); helpMarker( "Window width" );
 
 
+
+            // ImGui::DragFloat( "Width", &windowWidth, speed, windowWidthMin, windowWidthMax, valuesFormat, ImGuiSliderFlags_AlwaysClamp );
+            // ImGui::SameLine();
+
+
+
+            // const std::string levelFormat =
+            //     std::to_string(windowCenterMin) + " <= " +
+            //     std::string(valuesFormat)  + " <= " +
+            //     std::to_string(windowCenterMax);
+
             if ( mySliderF32( "Level", &windowCenter, windowCenterMin, windowCenterMax, valuesFormat ) )
             {
                 imgSettings.setWindowCenter( windowCenter );
                 updateImageUniforms();
             }
             ImGui::SameLine(); helpMarker( "Window level (center)" );
+
+
+            /*
+            windowWidth = static_cast<float>( imgSettings.windowWidth() );
+            windowCenter = static_cast<float>( imgSettings.windowCenter() );
+
+            std::array<float, 2> widthCenter{windowWidth, windowCenter};
+            const std::array<float, 2> widthCenterMin{windowWidthMin, windowCenterMin};
+            const std::array<float, 2> widthCenterMax{windowWidthMax, windowCenterMax};
+
+            if ( ImGui::SliderScalarN("Width/center", ImGuiDataType_Float, widthCenter.data(), 2, widthCenterMin.data(), widthCenterMax.data(), valuesFormat) )
+            {
+                imgSettings.setWindowWidth( widthCenter[0] );
+                imgSettings.setWindowCenter( widthCenter[1] );
+                updateImageUniforms();
+            }
+
+            widthCenter[0] = windowWidth;
+            widthCenter[1] = windowCenter;
+
+            if ( ImGui::DragScalarN("Width/center", ImGuiDataType_Float, widthCenter.data(), 2, 1.0, widthCenterMin.data(), widthCenterMax.data(), valuesFormat) )
+            {
+                imgSettings.setWindowWidth( widthCenter[0] );
+                imgSettings.setWindowCenter( widthCenter[1] );
+                updateImageUniforms();
+            }
+            */
         }
         else
         {

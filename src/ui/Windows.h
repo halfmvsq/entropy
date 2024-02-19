@@ -231,7 +231,8 @@ void renderInspectionWindow(
     const std::function< glm::vec3 () >& getWorldDeformedPos,
     const std::function< std::optional<glm::vec3> ( size_t imageIndex ) >& getSubjectPos,
     const std::function< std::optional<glm::ivec3> ( size_t imageIndex ) >& getVoxelPos,
-    const std::function< std::optional<double> ( size_t imageIndex ) >& getImageValue,
+    const std::function< std::optional<double> ( size_t imageIndex ) >& getImageValueNN,
+    const std::function< std::optional<double> ( size_t imageIndex ) >& getImageValueLinear,
     const std::function< std::optional<int64_t> ( size_t imageIndex ) >& getSegLabel,
     const std::function< ParcellationLabelTable* ( size_t tableIndex ) >& getLabelTable );
 
@@ -253,7 +254,8 @@ void renderInspectionWindowWithTable(
     const std::function< std::optional<glm::ivec3> ( size_t imageIndex ) >& getVoxelPos,
     const std::function< void ( size_t imageIndex, const glm::vec3& subjectPos ) > setSubjectPos,
     const std::function< void ( size_t imageIndex, const glm::ivec3& voxelPos ) > setVoxelPos,
-    const std::function< std::vector< double > ( size_t imageIndex, bool getOnlyActiveComponent ) >& getImageValues,
+    const std::function< std::vector< double > ( size_t imageIndex, bool getOnlyActiveComponent ) >& getImageValuesNN,
+    const std::function< std::vector< double > ( size_t imageIndex, bool getOnlyActiveComponent ) >& getImageValuesLinear,
     const std::function< std::optional<int64_t> ( size_t imageIndex ) >& getSegLabel,
     const std::function< ParcellationLabelTable* ( size_t tableIndex ) >& getLabelTable );
 

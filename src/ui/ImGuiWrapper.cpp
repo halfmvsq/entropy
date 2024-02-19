@@ -152,7 +152,8 @@ void ImGuiWrapper::setCallbacks(
     std::function< std::optional<glm::ivec3> ( std::size_t imageIndex ) > getVoxelPos,
     std::function< void ( std::size_t imageIndex, const glm::vec3& subjectPos ) > setSubjectPos,
     std::function< void ( std::size_t imageIndex, const glm::ivec3& voxelPos ) > setVoxelPos,
-    std::function< std::vector< double> ( std::size_t imageIndex, bool getOnlyActiveComponent ) > getImageValues,
+    std::function< std::vector< double> ( std::size_t imageIndex, bool getOnlyActiveComponent ) > getImageValuesNN,
+    std::function< std::vector< double> ( std::size_t imageIndex, bool getOnlyActiveComponent ) > getImageValuesLinear,
     std::function< std::optional<int64_t> ( std::size_t imageIndex ) > getSegLabel,
     std::function< std::optional<uuids::uuid>( const uuids::uuid& matchingImageUid, const std::string& segDisplayName ) > createBlankSeg,
     std::function< bool ( const uuids::uuid& segUid ) > clearSeg,
@@ -180,7 +181,8 @@ void ImGuiWrapper::setCallbacks(
     m_getVoxelPos = getVoxelPos;
     m_setSubjectPos = setSubjectPos;
     m_setVoxelPos = setVoxelPos;
-    m_getImageValues = getImageValues;
+    m_getImageValuesNN = getImageValuesNN;
+    m_getImageValuesLinear = getImageValuesLinear;
     m_getSegLabel = getSegLabel;
     m_createBlankSeg = createBlankSeg;
     m_clearSeg = clearSeg;
@@ -777,7 +779,8 @@ void ImGuiWrapper::render()
                 m_getVoxelPos,
                 m_setSubjectPos,
                 m_setVoxelPos,
-                m_getImageValues,
+                m_getImageValuesNN,
+                m_getImageValuesLinear,
                 m_getSegLabel,
                 getLabelTable );
         }

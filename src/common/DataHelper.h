@@ -85,6 +85,11 @@ getImageVoxelCoordsAtCrosshairs(
     const AppData& appData,
     size_t imageIndex );
 
+std::optional<glm::vec3>
+getImageVoxelCoordsContinuousAtCrosshairs(
+    const AppData& appData,
+    size_t imageIndex );
+
 std::optional<glm::ivec3>
 getSegVoxelCoordsAtCrosshairs(
     const AppData& appData,

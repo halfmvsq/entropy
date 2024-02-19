@@ -7,7 +7,10 @@
 #include "image/ImageSettings.h"
 #include "image/ImageTransformations.h"
 
+#include <glm/glm.hpp>
+
 #include <algorithm>
+#include <cmath>
 #include <optional>
 #include <ostream>
 #include <string>
@@ -144,6 +147,46 @@ public:
             static_cast<std::size_t>(i);
 
         return value<T>( component, index );
+    }
+
+    /// @brief Get the linearly interpolated value of the buffer at continuous image 3D index (i, j, k)
+    template<typename T>
+    std::optional<T> valueLinear( uint32_t component, double i, double j, double k ) const
+    {
+        const glm::u64vec3& dims = m_header.pixelDimensions();
+
+        if ( i < 0.0 || j < 0.0 || k < 0.0 || i >= dims.x || j >= dims.y || k >= dims.z )
+        {
+            return std::nullopt;
+        }
+
+        const glm::dvec3 c{ i, j, k };
+        const glm::ivec3 f = glm::ivec3{ glm::floor(c) };
+        const glm::dvec3 diff = c - glm::floor(c);
+
+        const auto c000 = value<double>( component, f.x + 0, f.y + 0, f.z + 0 );
+        const auto c001 = value<double>( component, f.x + 0, f.y + 0, f.z + 1 );
+        const auto c010 = value<double>( component, f.x + 0, f.y + 1, f.z + 0 );
+        const auto c011 = value<double>( component, f.x + 0, f.y + 1, f.z + 1 );
+        const auto c100 = value<double>( component, f.x + 1, f.y + 0, f.z + 0 );
+        const auto c101 = value<double>( component, f.x + 1, f.y + 0, f.z + 1 );
+        const auto c110 = value<double>( component, f.x + 1, f.y + 1, f.z + 0 );
+        const auto c111 = value<double>( component, f.x + 1, f.y + 1, f.z + 1 );
+
+        if ( ! c000 || ! c001 ||  ! c010 ||  ! c011 ||  ! c100 ||  ! c101 ||  ! c110 ||  ! c111 )
+        {
+            return std::nullopt;
+        }
+
+        const double c00 = c000.value() * (1.0 - diff.x) + c100.value() * diff.x;
+        const double c01 = c001.value() * (1.0 - diff.x) + c101.value() * diff.x;
+        const double c10 = c010.value() * (1.0 - diff.x) + c110.value() * diff.x;
+        const double c11 = c011.value() * (1.0 - diff.x) + c111.value() * diff.x;
+
+        const double c0 = c00 * (1.0 - diff.y) + c10 * diff.y;
+        const double c1 = c01 * (1.0 - diff.y) + c11 * diff.y;
+
+        return c0 * (1.0 - diff.z) + c1 * diff.z;
     }
 
     /// @brief Set the value of the buffer at image index (i, j, k)

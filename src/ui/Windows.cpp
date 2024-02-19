@@ -1953,10 +1953,13 @@ void renderInspectionWindow(
         const std::function< glm::vec3 () >& getWorldDeformedPos,
         const std::function< std::optional<glm::vec3> ( size_t imageIndex ) >& getSubjectPos,
         const std::function< std::optional<glm::ivec3> ( size_t imageIndex ) >& getVoxelPos,
-        const std::function< std::optional<double> ( size_t imageIndex ) >& getImageValue,
+        const std::function< std::optional<double> ( size_t imageIndex ) >& getImageValueNN,
+        const std::function< std::optional<double> ( size_t imageIndex ) >& getImageValueLinear,
         const std::function< std::optional<int64_t> ( size_t imageIndex ) >& getSegLabel,
         const std::function< ParcellationLabelTable* ( size_t tableIndex ) >& getLabelTable )
 {
+    std::ignore = getImageValueLinear;
+
     static constexpr size_t sk_refIndex = 0; // Index of the reference image
     static bool s_firstRun = false; // Is this the first run?
 
@@ -2171,14 +2174,13 @@ void renderInspectionWindow(
                 ImGui::Text( "<N/A>" );
             }
 
-            if ( const auto imageValue = getImageValue( imageIndex ) )
+            if ( const auto imageValue = getImageValueNN( imageIndex ) )
             {
                 if ( isComponentFloatingPoint( image->header().memoryComponentType() ) )
                 {
                     if ( image->header().numComponentsPerPixel() > 1 )
                     {
-                        ImGui::Text( "Value (comp. %d): %0.3f",
-                                     image->settings().activeComponent(), *imageValue );
+                        ImGui::Text( "Value (comp. %d): %0.3f", image->settings().activeComponent(), *imageValue );
                     }
                     else
                     {
@@ -2190,9 +2192,7 @@ void renderInspectionWindow(
                     if ( image->header().numComponentsPerPixel() > 1 )
                     {
                         // Multi-component case: show the value of the active component
-                        ImGui::Text( "Value (comp. %d): %d",
-                                     image->settings().activeComponent(),
-                                     static_cast<int>( *imageValue ) );
+                        ImGui::Text( "Value (comp. %d): %d", image->settings().activeComponent(), static_cast<int>( *imageValue ) );
                     }
                     else
                     {
@@ -2256,7 +2256,8 @@ void renderInspectionWindowWithTable(
         const std::function< std::optional<glm::ivec3> ( size_t imageIndex ) >& getVoxelPos,
         const std::function< void ( size_t imageIndex, const glm::vec3& subjectPos ) > setSubjectPos,
         const std::function< void ( size_t imageIndex, const glm::ivec3& voxelPos ) > setVoxelPos,
-        const std::function< std::vector< double > ( size_t imageIndex, bool getOnlyActiveComponent ) >& getImageValues,
+        const std::function< std::vector< double > ( size_t imageIndex, bool getOnlyActiveComponent ) >& getImageValuesNN,
+        const std::function< std::vector< double > ( size_t imageIndex, bool getOnlyActiveComponent ) >& getImageValuesLinear,
         const std::function< std::optional<int64_t> ( size_t imageIndex ) >& getSegLabel,
         const std::function< ParcellationLabelTable* ( size_t tableIndex ) >& getLabelTable )
 {
@@ -2439,7 +2440,7 @@ void renderInspectionWindowWithTable(
         ImGui::PopStyleColor( 1 ); // ImGuiCol_MenuBarBg
 
 
-        if ( ImGui::BeginTable( "Image Information", 6, sk_tableFlags ) )
+        if ( ImGui::BeginTable( "Image Information", 7, sk_tableFlags ) )
         {
             ImGui::TableSetupScrollFreeze( 1, 1 );
 
@@ -2447,6 +2448,7 @@ void renderInspectionWindowWithTable(
             ImGui::TableSetupColumn( "Image", ImGuiTableColumnFlags_WidthFixed, 150.0f );
 
             ImGui::TableSetupColumn( "Value", ImGuiTableColumnFlags_WidthFixed, 75.0f );
+            ImGui::TableSetupColumn( "Value (interp.)", ImGuiTableColumnFlags_WidthFixed, 75.0f );
             ImGui::TableSetupColumn( "Label", ImGuiTableColumnFlags_WidthFixed, 50.0f );
             ImGui::TableSetupColumn( "Region", ImGuiTableColumnFlags_DefaultHide | ImGuiTableColumnFlags_WidthFixed, 100.0f );
 
@@ -2479,12 +2481,14 @@ void renderInspectionWindowWithTable(
 
                 // Get all image component values
                 static constexpr bool sk_getOnlyActiveComponent = false;
-                std::vector< double > imageValues = getImageValues( imageIndex, sk_getOnlyActiveComponent );
+                std::vector< double > imageValuesNN = getImageValuesNN( imageIndex, sk_getOnlyActiveComponent );
+                std::vector< double > imageValuesLinear = getImageValuesLinear( imageIndex, sk_getOnlyActiveComponent );
 
                 const std::optional<int64_t> segLabel = getSegLabel( imageIndex );
 
                 const std::optional<glm::ivec3> voxelPos = getVoxelPos( imageIndex );
                 const std::optional<glm::vec3> subjectPos = getSubjectPos( imageIndex );
+
 
                 ImGui::TableNextColumn(); // "Image"              
 
@@ -2516,17 +2520,17 @@ void renderInspectionWindowWithTable(
                 ImGui::SameLine(); showSelectionButton();
 
 
-                ImGui::TableNextColumn(); // "Value"
+                ImGui::TableNextColumn(); // "Value (NN)"
 
-                if ( ! imageValues.empty() )
+                if ( ! imageValuesNN.empty() )
                 {
                     if ( isComponentFloatingPoint( image->header().memoryComponentType() ) )
                     {
                         if ( image->header().numComponentsPerPixel() > 1 )
                         {
                             ImGui::PushItemWidth( -1 );
-                            ImGui::InputScalarN( "##imageValues", ImGuiDataType_Double,
-                                                 imageValues.data(), imageValues.size(),
+                            ImGui::InputScalarN( "##imageValuesNN", ImGuiDataType_Double,
+                                                 imageValuesNN.data(), imageValuesNN.size(),
                                                 nullptr, nullptr, appData.guiData().m_imageValuePrecisionFormat.c_str(),
                                                  ImGuiInputTextFlags_ReadOnly );
                             ImGui::PopItemWidth();
@@ -2538,10 +2542,10 @@ void renderInspectionWindowWithTable(
                         }
                         else
                         {
-                            double a = imageValues[0];
+                            double a = imageValuesNN[0];
 
                             ImGui::PushItemWidth( -1 );
-                            ImGui::InputScalar( "##imageValues", ImGuiDataType_Double, &a, nullptr, nullptr,
+                            ImGui::InputScalar( "##imageValuesNN", ImGuiDataType_Double, &a, nullptr, nullptr,
                                                 appData.guiData().m_imageValuePrecisionFormat.c_str(),
                                                 ImGuiInputTextFlags_ReadOnly );
                             ImGui::PopItemWidth();
@@ -2551,16 +2555,16 @@ void renderInspectionWindowWithTable(
                     {
                         if ( image->header().numComponentsPerPixel() > 1 )
                         {
-                            std::vector< int64_t > imageValuesInt;
+                            std::vector< int64_t > imageValuesNNInt;
 
-                            for ( size_t i = 0; i < imageValues.size(); ++i )
+                            for ( size_t i = 0; i < imageValuesNN.size(); ++i )
                             {
-                                imageValuesInt.push_back( static_cast<int64_t>( imageValues[i] ) );
+                                imageValuesNNInt.push_back( static_cast<int64_t>( imageValuesNN[i] ) );
                             }
 
                             ImGui::PushItemWidth( -1 );
-                            ImGui::InputScalarN( "##imageValues", ImGuiDataType_S64,
-                                                 imageValuesInt.data(), imageValuesInt.size(),
+                            ImGui::InputScalarN( "##imageValuesNN", ImGuiDataType_S64,
+                                                 imageValuesNNInt.data(), imageValuesNNInt.size(),
                                                  nullptr, nullptr, "%ld", ImGuiInputTextFlags_ReadOnly );
                             ImGui::PopItemWidth();
 
@@ -2571,11 +2575,81 @@ void renderInspectionWindowWithTable(
                         }
                         else
                         {
-                            int64_t a = static_cast<int64_t>( imageValues[0] );
+                            int64_t a = static_cast<int64_t>( imageValuesNN[0] );
 
                             ImGui::PushItemWidth( -1 );
-                            ImGui::InputScalar( "##imageValues", ImGuiDataType_S64, &a, nullptr, nullptr, "%ld",
+                            ImGui::InputScalar( "##imageValuesNN", ImGuiDataType_S64, &a, nullptr, nullptr, "%ld",
                                                 ImGuiInputTextFlags_ReadOnly );
+                            ImGui::PopItemWidth();
+                        }
+                    }
+                }
+                else
+                {
+                    ImGui::Text( "<N/A>" );
+                }
+
+
+                ImGui::TableNextColumn(); // "Value (Linear)"
+
+                if ( ! imageValuesLinear.empty() )
+                {
+                    if ( isComponentFloatingPoint( image->header().memoryComponentType() ) )
+                    {
+                        if ( image->header().numComponentsPerPixel() > 1 )
+                        {
+                            ImGui::PushItemWidth( -1 );
+                            ImGui::InputScalarN( "##imageValuesLinear", ImGuiDataType_Double,
+                                                imageValuesLinear.data(), imageValuesLinear.size(),
+                                                nullptr, nullptr, appData.guiData().m_imageValuePrecisionFormat.c_str(),
+                                                ImGuiInputTextFlags_ReadOnly );
+                            ImGui::PopItemWidth();
+
+                            if ( ImGui::IsItemHovered() )
+                            {
+                                ImGui::SetTooltip( "Active component: %d", image->settings().activeComponent() );
+                            }
+                        }
+                        else
+                        {
+                            double a = imageValuesLinear[0];
+
+                            ImGui::PushItemWidth( -1 );
+                            ImGui::InputScalar( "##imageValuesLinear", ImGuiDataType_Double, &a, nullptr, nullptr,
+                                               appData.guiData().m_imageValuePrecisionFormat.c_str(),
+                                               ImGuiInputTextFlags_ReadOnly );
+                            ImGui::PopItemWidth();
+                        }
+                    }
+                    else
+                    {
+                        if ( image->header().numComponentsPerPixel() > 1 )
+                        {
+                            std::vector< int64_t > imageValuesLinearInt;
+
+                            for ( size_t i = 0; i < imageValuesLinear.size(); ++i )
+                            {
+                                imageValuesLinearInt.push_back( static_cast<int64_t>( imageValuesLinear[i] ) );
+                            }
+
+                            ImGui::PushItemWidth( -1 );
+                            ImGui::InputScalarN( "##imageValuesLinear", ImGuiDataType_S64,
+                                                imageValuesLinearInt.data(), imageValuesLinearInt.size(),
+                                                nullptr, nullptr, "%ld", ImGuiInputTextFlags_ReadOnly );
+                            ImGui::PopItemWidth();
+
+                            if ( ImGui::IsItemHovered() )
+                            {
+                                ImGui::SetTooltip( "Active component: %d", image->settings().activeComponent() );
+                            }
+                        }
+                        else
+                        {
+                            int64_t a = static_cast<int64_t>( imageValuesLinear[0] );
+
+                            ImGui::PushItemWidth( -1 );
+                            ImGui::InputScalar( "##imageValuesLinear", ImGuiDataType_S64, &a, nullptr, nullptr, "%ld",
+                                               ImGuiInputTextFlags_ReadOnly );
                             ImGui::PopItemWidth();
                         }
                     }

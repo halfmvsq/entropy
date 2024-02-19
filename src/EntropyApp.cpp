@@ -1302,6 +1302,7 @@ void EntropyApp::setCallbacks()
                 m_data.state().setWorldCrosshairsPos( worldPosRounded );
             },
 
+        // This gets the image value using NN interpolation
             [this] ( size_t imageIndex, bool getOnlyActiveComponent ) -> std::vector< double >
             {
                 std::vector< double > values;
@@ -1314,9 +1315,8 @@ void EntropyApp::setCallbacks()
                 {
                     if ( getOnlyActiveComponent )
                     {
-                        if ( const auto a = image->value<double>(
-                            image->settings().activeComponent(),
-                            coords->x, coords->y, coords->z ) )
+                        if ( const auto a = image->value<double>( image->settings().activeComponent(),
+                             coords->x, coords->y, coords->z ) )
                         {
                             // Return empty vector if component has undefined value
                             values.push_back( *a );
@@ -1345,6 +1345,51 @@ void EntropyApp::setCallbacks()
 
                 return values;
             },
+
+
+        // This gets the image value using linear interpolation
+        [this] ( size_t imageIndex, bool getOnlyActiveComponent ) -> std::vector< double >
+        {
+            std::vector< double > values;
+
+            const auto imageUid = m_data.imageUid( imageIndex );
+            const Image* image = imageUid ? m_data.image( *imageUid ) : nullptr;
+            if ( ! image ) return values;
+
+            if ( const auto coords = data::getImageVoxelCoordsContinuousAtCrosshairs( m_data, imageIndex ) )
+            {
+                if ( getOnlyActiveComponent )
+                {
+                    if ( const auto a = image->valueLinear<double>(
+                            image->settings().activeComponent(), coords->x, coords->y, coords->z ) )
+                    {
+                        // Return empty vector if component has undefined value
+                        values.push_back( *a );
+                    }
+                    else
+                    {
+                        return std::vector< double >{};
+                    }
+                }
+                else
+                {
+                    for ( uint32_t i = 0; i < image->header().numComponentsPerPixel(); ++i )
+                    {
+                        if ( const auto a = image->valueLinear<double>( i, coords->x, coords->y, coords->z ) )
+                        {
+                            values.push_back( *a );
+                        }
+                        else
+                        {
+                            // Return empty vector if any component has undefined value
+                            return std::vector< double >{};
+                        }
+                    }
+                }
+            }
+
+            return values;
+        },
 
             // This gets the active segmentation value:
             [this] ( size_t imageIndex ) -> std::optional<int64_t>

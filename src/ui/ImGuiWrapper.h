@@ -51,7 +51,8 @@ public:
         std::function< std::optional<glm::ivec3> ( std::size_t imageIndex ) > getVoxelPos,
         std::function< void ( std::size_t imageIndex, const glm::vec3& subjectPos ) > setSubjectPos,
         std::function< void ( std::size_t imageIndex, const glm::ivec3& voxelPos ) > setVoxelPos,
-        std::function< std::vector< double > ( std::size_t imageIndex, bool getOnlyActiveComponent ) > getImageValues,
+        std::function< std::vector< double > ( std::size_t imageIndex, bool getOnlyActiveComponent ) > getImageValuesNN,
+        std::function< std::vector< double > ( std::size_t imageIndex, bool getOnlyActiveComponent ) > getImageValuesLinear,
         std::function< std::optional<int64_t> ( std::size_t imageIndex ) > getSegLabel,
         std::function< std::optional<uuids::uuid>( const uuids::uuid& matchingImageUid, const std::string& segDisplayName ) > createBlankSeg,
         std::function< bool ( const uuids::uuid& segUid ) > clearSeg,
@@ -92,7 +93,8 @@ private:
     std::function< std::optional<glm::ivec3> ( std::size_t imageIndex ) > m_getVoxelPos = nullptr;
     std::function< void ( std::size_t imageIndex, const glm::vec3& subjectPos ) > m_setSubjectPos = nullptr;
     std::function< void ( std::size_t imageIndex, const glm::ivec3& voxelPos ) > m_setVoxelPos = nullptr;
-    std::function< std::vector< double > ( std::size_t imageIndex, bool getOnlyActiveComponent ) > m_getImageValues = nullptr;
+    std::function< std::vector< double > ( std::size_t imageIndex, bool getOnlyActiveComponent ) > m_getImageValuesNN = nullptr;
+    std::function< std::vector< double > ( std::size_t imageIndex, bool getOnlyActiveComponent ) > m_getImageValuesLinear = nullptr;
     std::function< std::optional<int64_t> ( std::size_t imageIndex ) > m_getSegLabel = nullptr;
     std::function< std::optional<uuids::uuid>( const uuids::uuid& matchingImageUid, const std::string& segDisplayName ) > m_createBlankSeg = nullptr;
     std::function< bool ( const uuids::uuid& segUid ) > m_clearSeg = nullptr;
