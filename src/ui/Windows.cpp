@@ -2448,7 +2448,7 @@ void renderInspectionWindowWithTable(
             ImGui::TableSetupColumn( "Image", ImGuiTableColumnFlags_WidthFixed, 150.0f );
 
             ImGui::TableSetupColumn( "Value", ImGuiTableColumnFlags_WidthFixed, 75.0f );
-            ImGui::TableSetupColumn( "Value (interp.)", ImGuiTableColumnFlags_WidthFixed, 75.0f );
+            ImGui::TableSetupColumn( "Value (interp.)", ImGuiTableColumnFlags_DefaultHide | ImGuiTableColumnFlags_WidthFixed, 75.0f );
             ImGui::TableSetupColumn( "Label", ImGuiTableColumnFlags_WidthFixed, 50.0f );
             ImGui::TableSetupColumn( "Region", ImGuiTableColumnFlags_DefaultHide | ImGuiTableColumnFlags_WidthFixed, 100.0f );
 

@@ -150,7 +150,7 @@ void Demo_Histogram()
         ImGui::SameLine();
         ImGui::CheckboxFlags("Exclude Outliers", (unsigned int*)&hist_flags, ImPlotHistogramFlags_NoOutliers);
     }
-    static NormalDistribution<10000> dist(mu, sigma);
+    static NormalDistribution<100000> dist(mu, sigma);
     static double x[100];
     static double y[100];
     if (hist_flags & ImPlotHistogramFlags_Density) {
@@ -169,7 +169,7 @@ void Demo_Histogram()
     if (ImPlot::BeginPlot("##Histograms")) {
         ImPlot::SetupAxes(nullptr,nullptr,ImPlotAxisFlags_AutoFit,ImPlotAxisFlags_AutoFit);
         ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL,0.5f);
-        ImPlot::PlotHistogram("Empirical", dist.Data, 10000, bins, 1.0, range ? ImPlotRange(rmin,rmax) : ImPlotRange(), hist_flags);
+        ImPlot::PlotHistogram("Empirical", dist.Data, 100000, bins, 1.0, range ? ImPlotRange(rmin,rmax) : ImPlotRange(), hist_flags);
         if ((hist_flags & ImPlotHistogramFlags_Density) && !(hist_flags & ImPlotHistogramFlags_NoOutliers)) {
             if (hist_flags & ImPlotHistogramFlags_Horizontal)
                 ImPlot::PlotLine("Theoretical",y,x,100);

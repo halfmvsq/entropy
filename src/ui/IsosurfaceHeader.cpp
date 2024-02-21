@@ -571,7 +571,7 @@ void renderIsosurfacesHeader(
 //                const double k_step = ( valueMax - valueMin ) / 2000.0;
 //                const double k_stepFast = sk_step / 100.0;
 
-                static constexpr double sk_step = 1.0;
+                static constexpr double sk_step = 0.1;
                 static constexpr double sk_stepFast = 10.0;
 
                 ImGui::PushItemWidth( -1 );
@@ -780,7 +780,8 @@ void renderIsosurfacesHeader(
                 if ( imgSettings.showIsosurfacesIn2d() )
                 {
                     float width = static_cast<float>( imgSettings.isosurfaceWidthIn2d() );
-                    if ( mySliderF32( "Iso-line width", &width, 0.001f, 10.000f, "%0.3f \%" ) )
+                    // if ( mySliderF32( "Iso-line width", &width, 0.001f, 10.000f, "%0.3f \%" ) )
+                    if ( ImGui::DragFloat( "Iso-line width", &width, 0.001f, 0.001f, 10.000f, "%0.3f \%", ImGuiSliderFlags_AlwaysClamp ) )
                     {
                         imgSettings.setIsosurfaceWidthIn2d( static_cast<double>( width ) );
                     }

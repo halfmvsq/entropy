@@ -106,9 +106,10 @@ serialize::EntropyProject& AppData::project()
 
 void AppData::loadLinearRampImageColorMaps()
 {
-    // Create and load the default linear color maps. These are linear ramps with 256 steps,
+    // Create and load the default linear color maps. These are linear ramps with 1024 steps,
     // though only 2 steps are required when linear interpolation is used for the maps.
-    static constexpr std::size_t sk_numSteps = 256;
+    // More steps reduce banding artifacts.
+    static constexpr std::size_t sk_numSteps = 1024;
 
     const glm::vec4 black( 0.0f, 0.0f, 0.0f, 1.0f );
     const glm::vec4 red( 1.0f, 0.0f, 0.0f, 1.0f );
@@ -132,57 +133,55 @@ void AppData::loadLinearRampImageColorMaps()
     m_imageColorMaps.emplace(
         greyMapUid, ImageColorMap::createLinearImageColorMap(
             black, white, sk_numSteps, "Linear grey",
-            "Linear grey", "linear_grey_0-100_c0_n256" ) );
+            "Linear grey", "linear_grey_0-100_n1024" ) );
 
     m_imageColorMaps.emplace(
         redMapUid, ImageColorMap::createLinearImageColorMap(
             black, red, sk_numSteps, "Linear red",
-            "Linear red", "linear_red_0-100_c0_n256" ) );
+            "Linear red", "linear_red_0-100_n1024" ) );
 
     m_imageColorMaps.emplace(
         greenMapUid, ImageColorMap::createLinearImageColorMap(
             black, green, sk_numSteps, "Linear green",
-            "Linear green", "linear_green_0-100_c0_n256" ) );
+            "Linear green", "linear_green_0-100_n1024" ) );
 
     m_imageColorMaps.emplace(
         blueMapUid, ImageColorMap::createLinearImageColorMap(
             black, blue, sk_numSteps, "Linear blue",
-            "Linear blue", "linear_blue_0-100_c0_n256" ) );
+            "Linear blue", "linear_blue_0-100_n1024" ) );
 
     m_imageColorMaps.emplace(
         yellowMapUid, ImageColorMap::createLinearImageColorMap(
             black, yellow, sk_numSteps, "Linear yellow",
-            "Linear yellow", "linear_yellow_0-100_c0_n256" ) );
+            "Linear yellow", "linear_yellow_0-100_n1024" ) );
 
     m_imageColorMaps.emplace(
         cyanMapUid, ImageColorMap::createLinearImageColorMap(
             black, cyan, sk_numSteps, "Linear cyan",
-            "Linear cyan", "linear_cyan_0-100_c0_n256" ) );
+            "Linear cyan", "linear_cyan_0-100_n1024" ) );
 
     m_imageColorMaps.emplace(
         magentaMapUid, ImageColorMap::createLinearImageColorMap(
             black, magenta, sk_numSteps, "Linear magenta",
-            "Linear magenta", "linear_magenta_0-100_c0_n256" ) );
+            "Linear magenta", "linear_magenta_0-100_n1024" ) );
 
 
-    const glm::vec4 transparentBlack{ 0.0, 0.0, 0.0, 0.0 };
+    const glm::vec4 transparentBlack{ 0.0f };
 
     ImageColorMap constantWhiteMap = ImageColorMap::createLinearImageColorMap(
-        white, white, sk_numSteps, "Constant white", "Constant white", "constant_white_n256" );
+        white, white, 1024, "Constant white", "Constant white", "constant_white_n1024" );
 
-    // constantWhiteMap.setInterpolationMode( ImageColorMap::InterpolationMode::Nearest );
-    // constantWhiteMap.setTransparentBorder( true );
-    constantWhiteMap.setColorRGBA( 0, transparentBlack );
-    constantWhiteMap.setColorRGBA( constantWhiteMap.numColors() - 1, transparentBlack );
+    constantWhiteMap.setInterpolationMode( ImageColorMap::InterpolationMode::Nearest );
+    constantWhiteMap.setTransparentBorder( true );
+    constantWhiteMap.setColorRGBA( 0, transparentBlack ); // Not sure why this is needed
     m_imageColorMaps.emplace( constantWhiteMapUid, std::move(constantWhiteMap) );
 
     ImageColorMap constantRedMap = ImageColorMap::createLinearImageColorMap(
-        red, red, sk_numSteps, "Constant red", "Constant red", "constant_red_n256" );
+        red, red, 1024, "Constant red", "Constant red", "constant_red_n1024" );
 
-    // constantRedMap.setInterpolationMode( ImageColorMap::InterpolationMode::Nearest );
-    // constantRedMap.setTransparentBorder( true );
-    constantRedMap.setColorRGBA( 0, transparentBlack );
-    constantRedMap.setColorRGBA( constantRedMap.numColors() - 1, transparentBlack );
+    constantRedMap.setInterpolationMode( ImageColorMap::InterpolationMode::Nearest );
+    constantRedMap.setTransparentBorder( true );
+    constantRedMap.setColorRGBA( 0, transparentBlack ); // Not sure why this is needed
     m_imageColorMaps.emplace( constantRedMapUid, std::move(constantRedMap) );
 
 

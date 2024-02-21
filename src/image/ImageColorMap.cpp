@@ -51,7 +51,8 @@ ImageColorMap::ImageColorMap(
     m_description( description ),
     m_colors_RGBA_F32( std::move( colors ) ),
     m_preview( 0 ),
-    m_interpolationMode( interpMode )
+    m_interpolationMode( interpMode ),
+    m_transparentBorder( false )
 //    m_forcedInterpolationMode( forcedInterpMode )
 {
     if ( m_colors_RGBA_F32.empty() )
