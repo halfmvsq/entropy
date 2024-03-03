@@ -506,8 +506,7 @@ std::pair< std::optional<uuids::uuid>, bool >
 EntropyApp::loadDeformationField( const fs::path& fileName )
 {
     // Return value indicating that deformation field was not loaded:
-    static const std::pair< std::optional<uuids::uuid>, bool >
-            sk_noDefLoaded{ std::nullopt, false };
+    static const std::pair< std::optional<uuids::uuid>, bool > sk_noDefLoaded{ std::nullopt, false };
 
     // Has this deformation field already been loaded? Search for its file name:
     for ( const auto& defUid : m_data.defUidsOrdered() )
@@ -526,6 +525,13 @@ EntropyApp::loadDeformationField( const fs::path& fileName )
     Image def( fileName, Image::ImageRepresentation::Image,
                Image::MultiComponentBufferType::InterleavedImage );
 
+    if ( def.header().numComponentsPerPixel() < 3 )
+    {
+        spdlog::error( "The deformation field from file {} has fewer than three components per pixel "
+                      "and so will not be loaded.", fileName );
+        return sk_noDefLoaded;
+    }
+
     spdlog::info( "Read deformation field image from file {}", fileName );
 
     std::ostringstream ss;
@@ -537,13 +543,6 @@ EntropyApp::loadDeformationField( const fs::path& fileName )
     spdlog::info( "Settings:\n{}", def.settings() );
 
     /// @todo Do check of deformation field header against the reference image header?
-
-    if ( def.header().numComponentsPerPixel() < 3 )
-    {
-        spdlog::error( "The deformation field from file {} has fewer than three components per pixel "
-                       "and so will not be loaded.", fileName );
-        return sk_noDefLoaded;
-    }
 
     if ( const auto defUid = m_data.addDef( std::move(def) ) )
     {
@@ -699,8 +698,7 @@ bool EntropyApp::loadSerializedImage(
                 break;
             }
 
-            deformation->settings().setDisplayName(
-                        deformation->settings().displayName() + " (deformation)" );
+            deformation->settings().setDisplayName( deformation->settings().displayName() + " (deformation)" );
 
             /// @todo Load this from project settings
             for ( uint32_t i = 0; i < deformation->header().numComponentsPerPixel(); ++i )
@@ -714,8 +712,7 @@ bool EntropyApp::loadSerializedImage(
             }
             else
             {
-                spdlog::error( "Unable to assign deformation field {} to image {}",
-                               *deformationUid, *imageUid );
+                spdlog::error( "Unable to assign deformation field {} to image {}", *deformationUid, *imageUid );
                 m_data.removeDef( *deformationUid );
                 break;
             }
