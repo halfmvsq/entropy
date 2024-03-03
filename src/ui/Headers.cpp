@@ -1598,7 +1598,8 @@ void renderImageHeader(
         {
             if ( auto fileName = imgTx.get_affine_T_subject_fileName() )
             {
-                ImGui::InputText( "File", &( *fileName ), ImGuiInputTextFlags_ReadOnly );
+                std::string fileNameString = fileName->string();
+                ImGui::InputText( "File", &fileNameString, ImGuiInputTextFlags_ReadOnly );
                 ImGui::Spacing();
             }
 

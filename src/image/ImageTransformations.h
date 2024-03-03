@@ -1,6 +1,7 @@
 #ifndef IMAGE_TX_H
 #define IMAGE_TX_H
 
+#include "common/filesystem.h"
 #include "image/ImageHeaderOverrides.h"
 
 #include <glm/mat4x4.hpp>
@@ -114,8 +115,8 @@ public:
     const glm::mat4& get_affine_T_subject() const;
 
     /// Set the name of the file with the affine_T_subject matrix
-    void set_affine_T_subject_fileName( const std::optional<std::string>& fileName );
-    const std::optional<std::string>& get_affine_T_subject_fileName() const;
+    void set_affine_T_subject_fileName( const std::optional<fs::path>& fileName );
+    const std::optional<fs::path>& get_affine_T_subject_fileName() const;
 
 
     void set_enable_worldDef_T_affine( bool enable );
@@ -188,7 +189,7 @@ private:
     glm::mat4 m_affine_T_subject; //!< Affine matrix loaded from disk, mapping Subject to AffineA space
     bool m_enable_affine_T_subject; //!< Is the affine_T_subject transformation used?
 
-    std::optional<std::string> m_affine_T_subject_fileName; //!< affine_T_subject matrix file name (if used)
+    std::optional<fs::path> m_affine_T_subject_fileName; //!< affine_T_subject matrix file name (if used)
 
     glm::mat4 m_worldDef_T_subject; //!< Subject to Deformed World space
     glm::mat4 m_subject_T_worldDef; //!< Deformed World to Subject space (inverse of above)

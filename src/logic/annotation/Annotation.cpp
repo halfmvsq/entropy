@@ -71,12 +71,12 @@ const std::string& Annotation::getDisplayName() const
     return m_displayName;
 }
 
-void Annotation::setFileName( std::string fileName )
+void Annotation::setFileName( fs::path fileName )
 {
     m_fileName = std::move( fileName );
 }
 
-const std::string& Annotation::getFileName() const
+const fs::path& Annotation::getFileName() const
 {
     return m_fileName;
 }

@@ -165,7 +165,7 @@ MetaDataMap getMetaDataMap( const ::itk::ImageIOBase::Pointer imageIo )
 
 FileInfo::FileInfo()
     :
-      m_fileName( "" ),
+      m_fileName(),
       m_byteOrder( itk::IOByteOrderEnum::OrderNotApplicable ),
       m_byteOrderString( "OrderNotApplicable" ),
       m_useCompression( false ),

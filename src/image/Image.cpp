@@ -1,10 +1,10 @@
 #include "image/Image.h"
 #include "image/ImageUtility.h"
-
 #include "image/ImageCastHelper.tpp"
 #include "image/ImageUtility.tpp"
 
 #include <spdlog/spdlog.h>
+#include <spdlog/fmt/ostr.h>
 
 #include <algorithm>
 #include <array>
@@ -27,7 +27,7 @@ static constexpr uint32_t MAX_INTERLEAVED_COMPS = 4;
 
 
 Image::Image(
-    const std::string& fileName,
+    const fs::path& fileName,
     ImageRepresentation imageRep,
     MultiComponentBufferType bufferType )
     :
@@ -74,7 +74,7 @@ Image::Image(
     const uint32_t numComps = m_ioInfoOnDisk.m_pixelInfo.m_numComponents;
     const bool isVectorImage = ( numComps > 1 );
 
-    spdlog::info( "Attempting to load image from '{}' with {} pixels and {} components per pixel",
+    spdlog::info( "Attempting to load image from {} with {} pixels and {} components per pixel",
                   fileName, numPixels, numComps );
 
     if ( isVectorImage )
@@ -115,9 +115,8 @@ Image::Image(
 
         if ( ImageRepresentation::Segmentation == m_imageRep )
         {
-            spdlog::warn( "Loading a segmentation image from '{}' with {} components. "
-                          "Only the first component of the segmentation will be used",
-                          fileName, numComps );
+            spdlog::warn( "Loading a segmentation image from {} with {} components. "
+                          "Only the first component of the segmentation will be used", fileName, numComps );
             numCompsToLoad = 1;
         }
 
@@ -201,7 +200,8 @@ Image::Image(
 
             if ( ImageRepresentation::Segmentation == m_imageRep )
             {
-                if ( ! loadSegBuffer( static_cast<const void*>( allComponentBuffers.get() ), numElements, srcItkCompType, dstItkCompType ) )
+                if ( ! loadSegBuffer( static_cast<const void*>( allComponentBuffers.get() ),
+                                   numElements, srcItkCompType, dstItkCompType ) )
                 {
                     spdlog::error( "Error loading segmentation image buffer for file {}", fileName );
                     throw_debug( "Error loading segmentation image buffer" )
@@ -209,7 +209,8 @@ Image::Image(
             }
             else
             {
-                if ( ! loadImageBuffer( static_cast<const void*>( allComponentBuffers.get() ), numElements, srcItkCompType, dstItkCompType ) )
+                if ( ! loadImageBuffer( static_cast<const void*>( allComponentBuffers.get() ),
+                                     numElements, srcItkCompType, dstItkCompType ) )
                 {
                     spdlog::error( "Error loading image buffer for file {}", fileName );
                     throw_debug( "Error loading image buffer" )
@@ -465,12 +466,12 @@ Image::Image(
 }
 
 
-bool Image::saveComponentToDisk( uint32_t component, const std::optional<std::string>& newFileName )
+bool Image::saveComponentToDisk( uint32_t component, const std::optional<fs::path>& newFileName )
 {
     constexpr uint32_t DIM = 3;
     constexpr bool s_isVectorImage = false;
 
-    const std::string fileName = ( newFileName ) ? *newFileName : m_header.fileName();
+    const fs::path fileName = ( newFileName ) ? *newFileName : m_header.fileName();
 
     if ( component >= m_header.numComponentsPerPixel() )
     {
@@ -753,8 +754,7 @@ bool Image::loadSegBuffer(
 
     case CType::UNKNOWNCOMPONENTTYPE:
     {
-        spdlog::error( "Unknown component type in image from file {}",
-                      m_ioInfoOnDisk.m_fileInfo.m_fileName );
+        spdlog::error( "Unknown component type in image from file {}", m_ioInfoOnDisk.m_fileInfo.m_fileName );
         return false;
     }
     }

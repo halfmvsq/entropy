@@ -1,6 +1,7 @@
 #ifndef ENTROPY_APP_H
 #define ENTROPY_APP_H
 
+#include "common/filesystem.h"
 #include "common/InputParams.h"
 
 #include "logic/app/CallbackHandler.h"
@@ -67,7 +68,7 @@ public:
     /// @return Uid and flag if loaded.
     /// False indcates that it was already loaded and that we are returning an existing image.
     std::pair< std::optional<uuids::uuid>, bool >
-    loadSegmentation( const std::string& fileName,
+    loadSegmentation( const fs::path& fileName,
                       const std::optional<uuids::uuid>& imageUid = std::nullopt );
 
     /**
@@ -78,7 +79,7 @@ public:
      * @todo If its header does not match the given image, then it is not loaded
      */
     std::pair< std::optional<uuids::uuid>, bool >
-    loadDeformationField( const std::string& fileName );
+    loadDeformationField( const fs::path& fileName );
 
     CallbackHandler& callbackHandler();
 
@@ -122,7 +123,7 @@ private:
     /// @return Uid and flag if loaded.
     /// False indcates that it was already loaded and that we are returning an existing image.
     std::pair< std::optional<uuids::uuid>, bool >
-    loadImage( const std::string& fileName, bool ignoreIfAlreadyLoaded );
+    loadImage( const fs::path& fileName, bool ignoreIfAlreadyLoaded );
 
 
     std::future<void> m_futureLoadProject;

@@ -1,4 +1,5 @@
 #include "ui/ImGuiCustomControls.h"
+#include "common/filesystem.h"
 
 // File browser for ImGui:
 // We use the version in src/ui/imgui, since there are modifications to our local version
@@ -8,26 +9,8 @@
 #include <imgui/imgui_internal.h>
 
 #include <glm/glm.hpp>
-
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/color_space.hpp>
-
-// On Apple platforms, we must use the alternative ghc::filesystem,
-// because it is not fully implemented or supported prior to macOS 10.15.
-#if !defined(__APPLE__)
-#if defined(__cplusplus) && __cplusplus >= 201703L && defined(__has_include)
-#if __has_include(<filesystem>)
-#define GHC_USE_STD_FS
-#include <filesystem>
-namespace fs = std::filesystem;
-#endif
-#endif
-#endif
-
-#ifndef GHC_USE_STD_FS
-#include <ghc/filesystem.hpp>
-namespace fs = ghc::filesystem;
-#endif
 
 namespace
 {

@@ -180,12 +180,12 @@ const glm::mat4& ImageTransformations::get_affine_T_subject() const
     return ( m_enable_affine_T_subject ) ? m_affine_T_subject : sk_ident;
 }
 
-void ImageTransformations::set_affine_T_subject_fileName( const std::optional<std::string>& fileName )
+void ImageTransformations::set_affine_T_subject_fileName( const std::optional<fs::path>& fileName )
 {
     m_affine_T_subject_fileName = fileName;
 }
 
-const std::optional<std::string>& ImageTransformations::get_affine_T_subject_fileName() const
+const std::optional<fs::path>& ImageTransformations::get_affine_T_subject_fileName() const
 {
     return m_affine_T_subject_fileName;
 }

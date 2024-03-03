@@ -1,6 +1,8 @@
 #ifndef IMAGE_H
 #define IMAGE_H
 
+#include "common/filesystem.h"
+
 #include "image/ImageHeader.h"
 #include "image/ImageHeaderOverrides.h"
 #include "image/ImageIoInfo.h"
@@ -47,7 +49,7 @@ public:
      * @param[in] bufferType Indicates whether multi-component images are loaded as
      * multiple buffers or as a single buffer with interleaved pixel components
      */
-    Image( const std::string& fileName,
+    Image( const fs::path& fileName,
            ImageRepresentation imageRep,
            MultiComponentBufferType bufferType );
 
@@ -84,7 +86,7 @@ public:
      *
      * @return True iff the image was saved successfully
      */
-    bool saveComponentToDisk( uint32_t component, const std::optional<std::string>& newFileName );
+    bool saveComponentToDisk( uint32_t component, const std::optional<fs::path>& newFileName );
 
     const ImageRepresentation& imageRep() const;
     const MultiComponentBufferType& bufferType() const;

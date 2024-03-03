@@ -2,6 +2,7 @@
 #define IMAGE_UTILITY_TPP
 
 #include "common/Exception.hpp"
+#include "common/filesystem.h"
 #include "common/Types.h"
 
 #include "image/Image.h"
@@ -28,7 +29,6 @@
 
 #include <array>
 #include <chrono>
-#include <filesystem>
 #include <string>
 #include <type_traits>
 #include <vector>
@@ -598,9 +598,7 @@ typename itk::ImageBase<NDim>::Pointer readImage( const std::string& fileName )
 
 
 template< class T, uint32_t NDim, bool PixelIsVector >
-bool writeImage(
-    typename itk::Image<T, NDim>::Pointer image,
-    const std::string& fileName )
+bool writeImage( typename itk::Image<T, NDim>::Pointer image, const fs::path& fileName )
 {
     using ImageType = typename std::conditional< PixelIsVector,
         itk::VectorImage<T, NDim>,
@@ -694,10 +692,10 @@ Image createImageFromItkImage(
 
     // return image;
 
-    const std::filesystem::path filename = std::filesystem::temp_directory_path() / "temp.nii.gz";
+    const fs::path filename = fs::temp_directory_path() / "temp.nii.gz";
     
-    writeImage<T, 3, false>( itkImage, filename.string() );
-    spdlog::debug( "Wrote temporary image file '{}'", filename.string() );
+    writeImage<T, 3, false>( itkImage, filename );
+    spdlog::debug( "Wrote temporary image file {}", filename );
 
     Image image( filename.string(), Image::ImageRepresentation::Image, Image::MultiComponentBufferType::SeparateImages );
 
@@ -705,7 +703,7 @@ Image createImageFromItkImage(
     image.header().setFileName( "<none>" );
     image.settings().setDisplayName( displayName );
     
-    if ( ! std::remove( filename.string().c_str() ) )
+    if ( ! std::remove( filename.c_str() ) )
     {
         spdlog::warn( "Unable to remove temporary image file '{}'", filename.string() );
     }

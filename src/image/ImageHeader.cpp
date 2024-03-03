@@ -5,17 +5,16 @@
 #include "common/MathFuncs.h"
 
 #include <glm/glm.hpp>
-
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/string_cast.hpp>
 
 #include <spdlog/spdlog.h>
-
+#include <spdlog/fmt/ostr.h>
 
 ImageHeader::ImageHeader(
-        const ImageIoInfo& ioInfoOnDisk,
-        const ImageIoInfo& ioInfoInMemory,
-        bool interleavedComponents )
+    const ImageIoInfo& ioInfoOnDisk,
+    const ImageIoInfo& ioInfoInMemory,
+    bool interleavedComponents )
     :
       m_ioInfoOnDisk( ioInfoOnDisk ),
       m_ioInfoInMemory( ioInfoInMemory ),
@@ -53,8 +52,7 @@ ImageHeader::ImageHeader(
         throw_debug( "undefined pixel type" )
     }
 
-    m_headerOverrides = ImageHeaderOverrides(
-        m_pixelDimensions, m_spacing, m_origin, m_directions );
+    m_headerOverrides = ImageHeaderOverrides( m_pixelDimensions, m_spacing, m_origin, m_directions );
 
     setSpace( m_ioInfoInMemory.m_spaceInfo );
 }
@@ -271,8 +269,8 @@ void ImageHeader::adjustComponents( const ComponentType& componentType, uint32_t
 bool ImageHeader::existsOnDisk() const { return m_existsOnDisk; }
 void ImageHeader::setExistsOnDisk( bool onDisk ) { m_existsOnDisk = onDisk; }
 
-const std::string& ImageHeader::fileName() const { return m_fileName; }
-void ImageHeader::setFileName( std::string fileName ) { m_fileName = std::move( fileName ); }
+const fs::path& ImageHeader::fileName() const { return m_fileName; }
+void ImageHeader::setFileName( fs::path fileName ) { m_fileName = std::move( fileName ); }
 
 uint32_t ImageHeader::numComponentsPerPixel() const { return m_numComponentsPerPixel; }
 uint64_t ImageHeader::numPixels() const { return m_numPixels; }

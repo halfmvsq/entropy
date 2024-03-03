@@ -16,23 +16,6 @@
 #include <string>
 #include <vector>
 
-// On Apple platforms, we must use the alternative ghc::filesystem,
-// because it is not fully implemented or supported prior to macOS 10.15.
-#if !defined(__APPLE__)
-#if defined(__cplusplus) && __cplusplus >= 201703L && defined(__has_include)
-#if __has_include(<filesystem>)
-#define GHC_USE_STD_FS
-#include <filesystem>
-namespace fs = std::filesystem;
-#endif
-#endif
-#endif
-
-#ifndef GHC_USE_STD_FS
-#include <ghc/filesystem.hpp>
-namespace fs = ghc::filesystem;
-#endif
-
 //#if defined(_LIBCPP_VERSION) && (_LIBCPP_VERSION >= 1000)
 #if ! defined (_MSC_VER)
 #define HAS_IOS_BASE_FAILURE_DERIVED_FROM_SYSTEM_ERROR 1
@@ -40,9 +23,7 @@ namespace fs = ghc::filesystem;
 #define HAS_IOS_BASE_FAILURE_DERIVED_FROM_SYSTEM_ERROR 0
 #endif
 
-
 using json = nlohmann::json;
-
 
 namespace
 {
@@ -77,9 +58,9 @@ namespace
 //}
 
 void applyToImagePaths(
-        serialize::EntropyProject& project,
-        const fs::path& projectBasePath,
-        std::function< void ( serialize::Image& image, const fs::path& projectBasePath ) > func )
+    serialize::EntropyProject& project,
+    const fs::path& projectBasePath,
+    std::function< void ( serialize::Image& image, const fs::path& projectBasePath ) > func )
 {
     func( project.m_referenceImage, projectBasePath );
 
@@ -305,17 +286,17 @@ void from_json( const json& j, serialize::Image& image )
 
     if ( j.count( "affine" ) )
     {
-        image.m_affineTxFileName = j.at( "affine" ).get<std::string>();
+        image.m_affineTxFileName = j.at( "affine" ).get<fs::path>();
     }
 
     if ( j.count( "deformation" ) )
     {
-        image.m_deformationFileName = j.at( "deformation" ).get<std::string>();
+        image.m_deformationFileName = j.at( "deformation" ).get<fs::path>();
     }
 
     if ( j.count( "annotations" ) )
     {
-        image.m_annotationsFileName = j.at( "annotations" ).get<std::string>();
+        image.m_annotationsFileName = j.at( "annotations" ).get<fs::path>();
     }
 
     if ( j.count( "segmentations" ) )
@@ -375,7 +356,7 @@ serialize::EntropyProject createProjectFromInputParams( const InputParams& param
         }
 
         // Add the additional images, which begin at index 1:
-        for ( size_t i = 1; i < params.imageFiles.size(); ++i )
+        for ( std::size_t i = 1; i < params.imageFiles.size(); ++i )
         {
             serialize::Image image;
             image.m_imageFileName = params.imageFiles[i].first;
@@ -413,7 +394,7 @@ serialize::EntropyProject createProjectFromInputParams( const InputParams& param
 }
 
 
-bool open( EntropyProject& project, const std::string& fileName )
+bool open( EntropyProject& project, const fs::path& fileName )
 {
     // Make all paths in the image absolute:
     auto makeCanonicalAbsolute = [] ( serialize::Image& image, const fs::path& projectBasePath )
@@ -421,31 +402,31 @@ bool open( EntropyProject& project, const std::string& fileName )
         const fs::path saveCurrentPath = fs::current_path(); // save current path
         fs::current_path( projectBasePath ); // set current path to project path
 
-        image.m_imageFileName = fs::canonical( image.m_imageFileName ).string();
+        image.m_imageFileName = fs::canonical( image.m_imageFileName );
 
         if ( image.m_affineTxFileName )
         {
-            image.m_affineTxFileName = fs::canonical( *image.m_affineTxFileName ).string();
+            image.m_affineTxFileName = fs::canonical( *image.m_affineTxFileName );
         }
 
         if ( image.m_deformationFileName )
         {
-            image.m_deformationFileName = fs::canonical( *image.m_deformationFileName ).string();
+            image.m_deformationFileName = fs::canonical( *image.m_deformationFileName );
         }
 
         if ( image.m_annotationsFileName )
         {
-            image.m_annotationsFileName = fs::canonical( *image.m_annotationsFileName ).string();
+            image.m_annotationsFileName = fs::canonical( *image.m_annotationsFileName );
         }
 
         for ( Segmentation& seg : image.m_segmentations )
         {
-            seg.m_segFileName = fs::canonical( seg.m_segFileName ).string();
+            seg.m_segFileName = fs::canonical( seg.m_segFileName );
         }
 
         for ( LandmarkGroup& lm : image.m_landmarkGroups )
         {
-            lm.m_csvFileName = fs::canonical( lm.m_csvFileName ).string();
+            lm.m_csvFileName = fs::canonical( lm.m_csvFileName );
         }
 
         fs::current_path( saveCurrentPath ); // restore current path
@@ -460,8 +441,7 @@ bool open( EntropyProject& project, const std::string& fileName )
 
         if ( ! inFile )
         {
-            throw std::system_error( errno, std::system_category(),
-                                     "Failed to open project file " + fileName );
+            throw std::system_error( errno, std::system_category(), "Failed to open project file " + fileName.string() );
         }
 
         json j;
@@ -478,8 +458,7 @@ bool open( EntropyProject& project, const std::string& fileName )
         if ( projectBasePath.empty() )
         {
             projectBasePath = fs::current_path();
-            spdlog::warn( "Project base path is empty; using current path ({})",
-                          projectBasePath );
+            spdlog::warn( "Project base path is empty; using current path ({})", projectBasePath );
         }
 
         projectBasePath = fs::canonical( projectBasePath );
@@ -490,7 +469,6 @@ bool open( EntropyProject& project, const std::string& fileName )
         const json jAbs = project;
         spdlog::debug( "Parsed project JSON (with absolute paths):\n{}", jAbs.dump( 2 ) );
         spdlog::info( "Loaded project from file {}", fileName );
-
         return true;
     }
     catch ( const std::ios_base::failure& e )
@@ -512,55 +490,47 @@ bool open( EntropyProject& project, const std::string& fileName )
         logStdErrno();
 #endif
 
-        spdlog::error( "Failure while project from JSON file {}: {}",
-                       fileName, e.what() );
+        spdlog::error( "Failure while project from JSON file {}: {}", fileName, e.what() );
         return false;
     }
     catch ( const std::exception& e )
     {
-        spdlog::error( "Error opening project from JSON file {}: {}",
-                       fileName, e.what() );
+        spdlog::error( "Error opening project from JSON file {}: {}", fileName, e.what() );
         return false;
     }
 }
 
 
-bool save( const EntropyProject& project, const std::string& fileName )
+bool save( const EntropyProject& project, const fs::path& fileName )
 {
     // Make all paths in the image relative to the base path:
     auto makeRelative = [] ( serialize::Image& image, const fs::path& projectBasePath )
     {
-        image.m_imageFileName = fs::relative(
-                    image.m_imageFileName, projectBasePath ).string();
+        image.m_imageFileName = fs::relative( image.m_imageFileName, projectBasePath );
 
         if ( image.m_affineTxFileName )
         {
-            image.m_affineTxFileName = fs::relative(
-                        *image.m_affineTxFileName, projectBasePath ).string();
+            image.m_affineTxFileName = fs::relative( *image.m_affineTxFileName, projectBasePath );
         }
 
         if ( image.m_deformationFileName )
         {
-            image.m_deformationFileName = fs::relative(
-                        *image.m_deformationFileName, projectBasePath ).string();
+            image.m_deformationFileName = fs::relative( *image.m_deformationFileName, projectBasePath );
         }
 
         if ( image.m_annotationsFileName )
         {
-            image.m_annotationsFileName = fs::relative(
-                        *image.m_annotationsFileName, projectBasePath ).string();
+            image.m_annotationsFileName = fs::relative( *image.m_annotationsFileName, projectBasePath );
         }
 
         for ( serialize::Segmentation& seg : image.m_segmentations )
         {
-            seg.m_segFileName = fs::relative(
-                        seg.m_segFileName, projectBasePath ).string();
+            seg.m_segFileName = fs::relative( seg.m_segFileName, projectBasePath );
         }
 
         for ( serialize::LandmarkGroup& lm : image.m_landmarkGroups )
         {
-            lm.m_csvFileName = fs::relative(
-                        lm.m_csvFileName, projectBasePath ).string();
+            lm.m_csvFileName = fs::relative( lm.m_csvFileName, projectBasePath );
         }
     };
 
@@ -590,7 +560,6 @@ bool save( const EntropyProject& project, const std::string& fileName )
 
         spdlog::debug( "Saved JSON for project (with relative image paths):\n{}", j.dump( 2 ) );
         spdlog::info( "Saved project to file {}", fileName );
-
         return true;
     }
     catch ( const std::exception& e )
@@ -601,7 +570,7 @@ bool save( const EntropyProject& project, const std::string& fileName )
 }
 
 
-bool openAffineTxFile( glm::dmat4& matrix, const std::string& fileName )
+bool openAffineTxFile( glm::dmat4& matrix, const fs::path& fileName )
 {
     std::ifstream inFile;
     inFile.exceptions( inFile.exceptions() | std::ifstream::badbit );
@@ -612,8 +581,7 @@ bool openAffineTxFile( glm::dmat4& matrix, const std::string& fileName )
 
         if ( ! inFile )
         {
-            throw std::system_error( errno, std::system_category(),
-                                     "Failed to open input file " + fileName );
+            throw std::system_error( errno, std::system_category(), "Failed to open input file " + fileName.string() );
         }
 
         std::vector< std::vector<double> > rows;
@@ -623,15 +591,12 @@ bool openAffineTxFile( glm::dmat4& matrix, const std::string& fileName )
         {
             std::istringstream buffer( temp );
 
-            const std::vector<double> row{ ( std::istream_iterator<double>(buffer) ),
-                        std::istream_iterator<double>() };
+            const std::vector<double> row{ ( std::istream_iterator<double>(buffer) ), std::istream_iterator<double>() };
 
             if ( 4 != row.size() )
             {
-                std::ostringstream ss;
-                ss << "4x4 affine matrix row " << rows.size() + 1
-                   << " read with invalid length (" << row.size() << ")" << std::ends;
-                throw std::length_error( ss.str() );
+                throw std::length_error( fmt::format("4x4 affine matrix row {} read with invalid length {}",
+                    rows.size() + 1, row.size()) );
             }
 
             rows.push_back( row );
@@ -639,10 +604,7 @@ bool openAffineTxFile( glm::dmat4& matrix, const std::string& fileName )
 
         if ( 4 != rows.size() )
         {
-            std::ostringstream ss;
-            ss << "4x4 affine matrix read with invalid number of rows ("
-               << rows.size() << ")" << std::ends;
-            throw std::length_error( ss.str() );
+            throw std::length_error( fmt::format( "4x4 affine matrix read with invalid number of rows ({})", rows.size() ) );
         }
 
         for ( uint32_t c = 0; c < 4; ++c )
@@ -660,8 +622,7 @@ bool openAffineTxFile( glm::dmat4& matrix, const std::string& fileName )
 #if HAS_IOS_BASE_FAILURE_DERIVED_FROM_SYSTEM_ERROR
         // e.code() is only available if the lib actually follows ISO §27.5.3.1.1
         // and derives ios_base::failure from system_error
-        spdlog::error( "Error #{} on opening file {}: {}",
-                       e.code().value(), fileName, e.code().message() );
+        spdlog::error( "Error #{} on opening file {}: {}", e.code().value(), fileName, e.code().message() );
 
         if ( std::make_error_condition( std::io_errc::stream ) == e.code() )
         {
@@ -675,20 +636,18 @@ bool openAffineTxFile( glm::dmat4& matrix, const std::string& fileName )
         logStdErrno();
 #endif
 
-        spdlog::error( "Failure while reading affine transformation from file {}: {}",
-                       fileName, e.what() );
+        spdlog::error( "Failure while reading affine transformation from file {}: {}", fileName, e.what() );
         return false;
     }
     catch ( const std::exception& e )
     {
-        spdlog::error( "Invalid 4x4 affine transformation matrix in file {}: {}",
-                       fileName, e.what() );
+        spdlog::error( "Invalid 4x4 affine transformation matrix in file {}: {}", fileName, e.what() );
         return false;
     }
 }
 
 
-bool saveAffineTxFile( const glm::dmat4& matrix, const std::string& fileName )
+bool saveAffineTxFile( const glm::dmat4& matrix, const fs::path& fileName )
 {
     std::ofstream outFile;
     outFile.exceptions( outFile.exceptions() | std::ofstream::badbit | std::ofstream::failbit );
@@ -699,8 +658,7 @@ bool saveAffineTxFile( const glm::dmat4& matrix, const std::string& fileName )
 
         if ( ! outFile )
         {
-            throw std::system_error( errno, std::system_category(),
-                                     "Failed to open output file " + fileName );
+            throw std::system_error( errno, std::system_category(), "Failed to open output file " + fileName.string() );
         }
 
         for ( int r = 0; r < 4; ++r )
@@ -719,8 +677,7 @@ bool saveAffineTxFile( const glm::dmat4& matrix, const std::string& fileName )
 #if HAS_IOS_BASE_FAILURE_DERIVED_FROM_SYSTEM_ERROR
         // e.code() is only available if the lib actually follows ISO §27.5.3.1.1
         // and derives ios_base::failure from system_error
-        spdlog::error( "Error #{} on opening file {}: {}",
-                       e.code().value(), fileName, e.code().message() );
+        spdlog::error( "Error #{} on opening file {}: {}", e.code().value(), fileName, e.code().message() );
 
         if ( std::make_error_condition( std::io_errc::stream ) == e.code() )
         {
@@ -734,22 +691,20 @@ bool saveAffineTxFile( const glm::dmat4& matrix, const std::string& fileName )
         logStdErrno();
 #endif
 
-        spdlog::error( "Failure while writing affine transformation to file {}: {}",
-                       fileName, e.what() );
+        spdlog::error( "Failure while writing affine transformation to file {}: {}", fileName, e.what() );
         return false;
     }
     catch ( const std::exception& e )
     {
-        spdlog::error( "Could not write 4x4 affine transformation matrix to file {}: {}",
-                       fileName, e.what() );
+        spdlog::error( "Could not write 4x4 affine transformation matrix to file {}: {}", fileName, e.what() );
         return false;
     }
 }
 
 
 bool openLandmarkGroupCsvFile(
-        std::map< size_t, PointRecord<glm::vec3> >& landmarks,
-        const std::string& csvFileName )
+    std::map< std::size_t, PointRecord<glm::vec3> >& landmarks,
+    const fs::path& csvFileName )
 {
     std::ifstream inFile;
     inFile.exceptions( inFile.exceptions() | std::ifstream::badbit );
@@ -762,8 +717,7 @@ bool openLandmarkGroupCsvFile(
         if ( ! inFile || ! inFile.good() )
         {
             spdlog::error( "Error opening landmarks CSV file {}", csvFileName );
-            throw std::system_error( errno, std::system_category(),
-                                     "Failed to open CSV file " + csvFileName );
+            throw std::system_error( errno, std::system_category(), "Failed to open CSV file " + csvFileName.string() );
         }
 
         int lineNum = 1;
@@ -791,8 +745,7 @@ bool openLandmarkGroupCsvFile(
         // index ,X ,Y ,Z [,name]
         if ( numCols < 4 )
         {
-            spdlog::error( "Expected at least four columns (id, x, y, z) "
-                           "when reading landmarks CSV file {}, "
+            spdlog::error( "Expected at least four columns (id, x, y, z) when reading landmarks CSV file {}, "
                            "but only read {} columns", csvFileName, numCols );
             return false;
         }
@@ -847,15 +800,13 @@ bool openLandmarkGroupCsvFile(
             if ( nameProvided && ( col < numCols - 1 ) )
             {
                 // The name is optional, so only check col against numCols - 1
-                spdlog::error( "Line {} of landmarks CSV file {} has {} entries, "
-                               "which is less than the expected {} entries",
+                spdlog::error( "Line {} of landmarks CSV file {} has {} entries, which is less than the expected {} entries",
                                lineNum, csvFileName, col, numCols - 1 );
                 return false;
             }
             else if ( ! nameProvided && ( col < numCols ) )
             {
-                spdlog::error( "Line {} of landmarks CSV file {} has {} entries, "
-                               "which is less than the expected {} entries",
+                spdlog::error( "Line {} of landmarks CSV file {} has {} entries, which is less than the expected {} entries",
                                lineNum, csvFileName, col, numCols );
                 return false;
             }
@@ -870,19 +821,15 @@ bool openLandmarkGroupCsvFile(
 
             if ( landmarkIndex < 0 )
             {
-                spdlog::error( "Invalid negative landmark index ({}) on line {} "
-                               "of landmarks CSV file {}",
+                spdlog::error( "Invalid negative landmark index ({}) on line {} of landmarks CSV file {}",
                                landmarkIndex, lineNum, csvFileName );
                 return false;
             }
 
-            const auto r = landmarks.try_emplace(
-                        static_cast<uint32_t>( landmarkIndex ), landmarkPos, *landmarkName );
-
+            const auto r = landmarks.try_emplace( static_cast<uint32_t>( landmarkIndex ), landmarkPos, *landmarkName );
             if ( ! r.second )
             {
-                spdlog::warn( "Unable to insert landmark '{}', because index {} is already used",
-                              *landmarkName, landmarkIndex );
+                spdlog::warn( "Unable to insert landmark '{}', because index {} is already used", *landmarkName, landmarkIndex );
             }
 
             ++lineNum;
@@ -895,8 +842,7 @@ bool openLandmarkGroupCsvFile(
 #if HAS_IOS_BASE_FAILURE_DERIVED_FROM_SYSTEM_ERROR
         // e.code() is only available if the lib actually follows ISO §27.5.3.1.1
         // and derives ios_base::failure from system_error
-        spdlog::error( "Error #{} on opening CSV file {}: {}",
-                       e.code().value(), csvFileName, e.code().message() );
+        spdlog::error( "Error #{} on opening CSV file {}: {}", e.code().value(), csvFileName, e.code().message() );
 
         if ( std::make_error_condition( std::io_errc::stream ) == e.code() )
         {
@@ -910,8 +856,7 @@ bool openLandmarkGroupCsvFile(
         logStdErrno();
 #endif
 
-        spdlog::error( "Failure while reading landmark CSV file {}: {}",
-                       csvFileName, e.what() );
+        spdlog::error( "Failure while reading landmark CSV file {}: {}", csvFileName, e.what() );
         return false;
     }
     catch ( const std::exception& e )
@@ -923,8 +868,8 @@ bool openLandmarkGroupCsvFile(
 
 
 bool saveLandmarkGroupCsvFile(
-        const std::map< size_t, PointRecord<glm::vec3> >& landmarks,
-        const std::string& csvFileName )
+    const std::map< std::size_t, PointRecord<glm::vec3> >& landmarks,
+    const fs::path& csvFileName )
 {
     std::ofstream outFile;
     outFile.exceptions( outFile.exceptions() | std::ofstream::badbit | std::ofstream::failbit );
@@ -935,9 +880,7 @@ bool saveLandmarkGroupCsvFile(
 
         if ( ! outFile )
         {
-            throw std::system_error(
-                        errno, std::system_category(),
-                        "Failed to open output CSV file " + csvFileName );
+            throw std::system_error( errno, std::system_category(), "Failed to open output CSV file " + csvFileName.string() );
         }
 
         static const std::string sk_header( "ID,X,Y,Z,Name" );
@@ -950,8 +893,7 @@ bool saveLandmarkGroupCsvFile(
             const auto pos = lm.second.getPosition();
             const auto name = lm.second.getName();
 
-            outFile << id << "," << pos.x << "," << pos.y
-                    << "," << pos.z << "," << name << "\n";
+            outFile << id << "," << pos.x << "," << pos.y << "," << pos.z << "," << name << "\n";
         }
 
         return true;
@@ -961,8 +903,7 @@ bool saveLandmarkGroupCsvFile(
 #if HAS_IOS_BASE_FAILURE_DERIVED_FROM_SYSTEM_ERROR
         // e.code() is only available if the lib actually follows ISO §27.5.3.1.1
         // and derives ios_base::failure from system_error
-        spdlog::error( "Error #{} on opening CSV file {}: {}",
-                       e.code().value(), csvFileName, e.code().message() );
+        spdlog::error( "Error #{} on opening CSV file {}: {}", e.code().value(), csvFileName, e.code().message() );
 
         if ( std::make_error_condition( std::io_errc::stream ) == e.code() )
         {
@@ -976,21 +917,17 @@ bool saveLandmarkGroupCsvFile(
         logStdErrno();
 #endif
 
-        spdlog::error( "Failure while writing landmarks to CSV file {}: {}",
-                       csvFileName, e.what() );
+        spdlog::error( "Failure while writing landmarks to CSV file {}: {}", csvFileName, e.what() );
         return false;
     }
     catch ( const std::exception& e )
     {
-        spdlog::error( "Could not write landmarks to CSV file {}: {}",
-                       csvFileName, e.what() );
+        spdlog::error( "Could not write landmarks to CSV file {}: {}", csvFileName, e.what() );
         return false;
     }
 }
 
-bool openAnnotationsFromJsonFile(
-        std::vector<Annotation>& annots,
-        const std::string& jsonFileName )
+bool openAnnotationsFromJsonFile( std::vector<Annotation>& annots, const fs::path& jsonFileName )
 {
     std::ifstream inFile;
     inFile.exceptions( inFile.exceptions() | std::ifstream::badbit );
@@ -1003,18 +940,14 @@ bool openAnnotationsFromJsonFile(
         if ( ! inFile || ! inFile.good() )
         {
             spdlog::error( "Error opening annotations JSON file {}", jsonFileName );
-            throw std::system_error(
-                        errno, std::system_category(),
-                        "Failed to open JSON file " + jsonFileName );
+            throw std::system_error( errno, std::system_category(), "Failed to open JSON file " + jsonFileName.string() );
         }
 
         json j;
         inFile >> j;
 
         annots = j.get< std::vector<Annotation> >();
-
         spdlog::debug( "Parsed {} annotation(s) from JSON:\n{}", annots.size(), j.dump( 2 ) );
-
         return true;
     }
     catch ( const std::ios_base::failure& e )
@@ -1037,8 +970,7 @@ bool openAnnotationsFromJsonFile(
         logStdErrno();
 #endif
 
-        spdlog::error( "Failure while reading annotations JSON file {}: {}",
-                       jsonFileName, e.what() );
+        spdlog::error( "Failure while reading annotations JSON file {}: {}", jsonFileName, e.what() );
         return false;
     }
     catch ( const std::exception& e )
@@ -1053,9 +985,7 @@ void appendAnnotationToJson( const Annotation& annot, json& j )
     j.emplace_back( annot );
 }
 
-bool saveToJsonFile(
-        const nlohmann::json& j,
-        const std::string& jsonFileName )
+bool saveToJsonFile( const nlohmann::json& j, const fs::path& jsonFileName )
 {
     std::ofstream outFile;
     outFile.exceptions( outFile.exceptions() | std::ofstream::badbit | std::ofstream::failbit );
@@ -1066,9 +996,7 @@ bool saveToJsonFile(
 
         if ( ! outFile )
         {
-            throw std::system_error(
-                        errno, std::system_category(),
-                        "Failed to open output JSON file " + jsonFileName );
+            throw std::system_error( errno, std::system_category(), "Failed to open output JSON file " + jsonFileName.string() );
         }
 
         outFile << j.dump( 2 );
@@ -1083,8 +1011,7 @@ bool saveToJsonFile(
 #if HAS_IOS_BASE_FAILURE_DERIVED_FROM_SYSTEM_ERROR
         // e.code() is only available if the lib actually follows ISO §27.5.3.1.1
         // and derives ios_base::failure from system_error
-        spdlog::error( "Error #{} on opening JSON file {}: {}",
-                       e.code().value(), jsonFileName, e.code().message() );
+        spdlog::error( "Error #{} on opening JSON file {}: {}", e.code().value(), jsonFileName, e.code().message() );
 
         if ( std::make_error_condition( std::io_errc::stream ) == e.code() )
         {
@@ -1098,14 +1025,12 @@ bool saveToJsonFile(
         logStdErrno();
 #endif
 
-        spdlog::error( "Failure while writing to JSON file {}: {}",
-                       jsonFileName, e.what() );
+        spdlog::error( "Failure while writing to JSON file {}: {}", jsonFileName, e.what() );
         return false;
     }
     catch ( const std::exception& e )
     {
-        spdlog::error( "Could not write to JSON file {}: {}",
-                       jsonFileName, e.what() );
+        spdlog::error( "Could not write to JSON file {}: {}", jsonFileName, e.what() );
         return false;
     }
 }

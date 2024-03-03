@@ -1,6 +1,7 @@
 #ifndef ANNOTATION_H
 #define ANNOTATION_H
 
+#include "common/filesystem.h"
 #include "logic/annotation/AnnotPolygon.tpp"
 
 #include <glm/vec2.hpp>
@@ -46,8 +47,8 @@ public:
     const std::string& getDisplayName() const;
 
     /// @brief Set/get the annotation file name
-    void setFileName( std::string fileName );
-    const std::string& getFileName() const;
+    void setFileName( fs::path fileName );
+    const fs::path& getFileName() const;
 
 
     /// @brief Get the annotation's polygon as a const/non-const reference
@@ -190,7 +191,7 @@ public:
 private:
 
     std::string m_displayName; //!< Annotation display name
-    std::string m_fileName; //!< Annotation file name
+    fs::path m_fileName; //!< Annotation file name
 
     /// Annotation polygon, which can include holes
     AnnotPolygon<float, 2> m_polygon;

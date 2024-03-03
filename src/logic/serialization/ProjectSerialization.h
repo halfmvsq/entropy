@@ -1,6 +1,7 @@
 #ifndef PARSE_ARGUMENTS_H
 #define PARSE_ARGUMENTS_H
 
+#include "common/filesystem.h"
 #include "common/InputParams.h"
 #include "logic/annotation/Annotation.h"
 #include "logic/annotation/PointRecord.h"
@@ -55,7 +56,7 @@ struct SegSettings
 struct Segmentation
 {
     /// Segmentation image file
-    std::string m_segFileName;
+    fs::path m_segFileName;
 
     /// Segmentation settings
     serialize::SegSettings m_settings;
@@ -78,16 +79,16 @@ struct LandmarkGroup
 struct Image
 {
     /// Image file name
-    std::string m_imageFileName;
+    fs::path m_imageFileName;
 
     /// Optional 4x4 affine transformation text file name
-    std::optional<std::string> m_affineTxFileName = std::nullopt;
+    std::optional<fs::path> m_affineTxFileName = std::nullopt;
 
     /// Optional deformable transformation image file name
-    std::optional<std::string> m_deformationFileName = std::nullopt;
+    std::optional<fs::path> m_deformationFileName = std::nullopt;
 
     /// Optional annotations JSON file name
-    std::optional<std::string> m_annotationsFileName = std::nullopt;
+    std::optional<fs::path> m_annotationsFileName = std::nullopt;
 
     /// Segmentation image file names (each image can have multiple segmentations)
     std::vector<serialize::Segmentation> m_segmentations;
@@ -124,13 +125,13 @@ serialize::EntropyProject createProjectFromInputParams( const InputParams& param
  * @param[in] fileName
  * @return True iff a valid project file was successfully opened and parsed
  */
-bool open( EntropyProject& project, const std::string& fileName );
+bool open( EntropyProject& project, const fs::path& fileName );
 
 /// Save a project to a file
-bool save( const EntropyProject& project, const std::string& fileName );
+bool save( const EntropyProject& project, const fs::path& fileName );
 
-bool openAffineTxFile( glm::dmat4& matrix, const std::string& fileName );
-bool saveAffineTxFile( const glm::dmat4& matrix, const std::string& fileName );
+bool openAffineTxFile( glm::dmat4& matrix, const fs::path& fileName );
+bool saveAffineTxFile( const glm::dmat4& matrix, const fs::path& fileName );
 
 /**
  * @brief openLandmarkGroupCsvFile
@@ -139,8 +140,8 @@ bool saveAffineTxFile( const glm::dmat4& matrix, const std::string& fileName );
  * @return
  */
 bool openLandmarkGroupCsvFile(
-        std::map< size_t, PointRecord<glm::vec3> >& landmarks,
-        const std::string& csvFileName );
+    std::map< std::size_t, PointRecord<glm::vec3> >& landmarks,
+    const fs::path& csvFileName );
 
 /**
  * @brief saveLandmarkGroupCsvFile
@@ -149,8 +150,8 @@ bool openLandmarkGroupCsvFile(
  * @return
  */
 bool saveLandmarkGroupCsvFile(
-        const std::map< size_t, PointRecord<glm::vec3> >& landmarks,
-        const std::string& csvFileName );
+    const std::map< std::size_t, PointRecord<glm::vec3> >& landmarks,
+    const fs::path& csvFileName );
 
 /**
  * @brief Open annotations from a JSON file
@@ -158,9 +159,7 @@ bool saveLandmarkGroupCsvFile(
  * @param jsonFileName Name of JSON file containing annotations
  * @return True iff annotations were loaded from JSON file
  */
-bool openAnnotationsFromJsonFile(
-        std::vector<Annotation>& annots,
-        const std::string& jsonFileName );
+bool openAnnotationsFromJsonFile( std::vector<Annotation>& annots, const fs::path& jsonFileName );
 
 /**
  * @brief Append an annotation to a JSON structure
@@ -175,7 +174,7 @@ void appendAnnotationToJson( const Annotation& annot, nlohmann::json& j );
  * @param[in] jsonFileName File name
  * @return True iff the JSON structure was saved to the file on disk
  */
-bool saveToJsonFile( const nlohmann::json& j, const std::string& jsonFileName );
+bool saveToJsonFile( const nlohmann::json& j, const fs::path& jsonFileName );
 
 } // namespace serialize
 

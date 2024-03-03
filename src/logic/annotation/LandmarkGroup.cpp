@@ -30,12 +30,12 @@ LandmarkGroup::LandmarkGroup()
 {
 }
 
-void LandmarkGroup::setFileName( std::string fileName )
+void LandmarkGroup::setFileName( const fs::path& fileName )
 {
-    m_fileName = std::move( fileName );
+    m_fileName = fileName;
 }
 
-const std::string& LandmarkGroup::getFileName() const
+const fs::path& LandmarkGroup::getFileName() const
 {
     return m_fileName;
 }

@@ -1,6 +1,8 @@
 #ifndef IMAGE_IO_INFO_H
 #define IMAGE_IO_INFO_H
 
+#include "common/filesystem.h"
+
 #include <itkCommonEnums.h>
 #include <itkImageBase.h>
 #include <itkImageIOBase.h>
@@ -9,7 +11,6 @@
 #include <unordered_map>
 #include <variant>
 #include <vector>
-
 
 class FileInfo
 {
@@ -21,7 +22,7 @@ public:
     bool set( const ::itk::ImageIOBase::Pointer imageIo );
     bool validate() const;
 
-    std::string m_fileName;
+    fs::path m_fileName;
 
     itk::IOByteOrderEnum m_byteOrder;
     std::string m_byteOrderString;

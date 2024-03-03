@@ -1,6 +1,7 @@
 #ifndef IMAGE_HEADER_H
 #define IMAGE_HEADER_H
 
+#include "common/filesystem.h"
 #include "common/Types.h"
 #include "image/ImageIoInfo.h"
 #include "image/ImageHeaderOverrides.h"
@@ -12,7 +13,6 @@
 #include <ostream>
 #include <string>
 #include <utility>
-
 
 /**
  * @brief Image header with data set upon creation or loading of image.
@@ -45,8 +45,8 @@ public:
     bool existsOnDisk() const;
     void setExistsOnDisk( bool );
 
-    const std::string& fileName() const; //!< File name
-    void setFileName( std::string fileName );
+    const fs::path& fileName() const; //!< File name
+    void setFileName( fs::path fileName );
 
     uint32_t numComponentsPerPixel() const; //!< Number of components per pixel
     uint64_t numPixels() const; //!< Number of pixels in the image
@@ -114,7 +114,7 @@ private:
     bool m_interleavedComponents = false;
 
     bool m_existsOnDisk = true; //!< Flag that the image exists on disk
-    std::string m_fileName; //!< File name
+    fs::path m_fileName; //!< File name
 
     uint32_t m_numComponentsPerPixel; //!< Number of components per pixel
     uint64_t m_numPixels; //!< Number of pixels in the image

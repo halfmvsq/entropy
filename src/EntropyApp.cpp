@@ -315,7 +315,7 @@ void EntropyApp::logPreamble()
 
 
 std::pair< std::optional<uuids::uuid>, bool >
-EntropyApp::loadImage( const std::string& fileName, bool ignoreIfAlreadyLoaded )
+EntropyApp::loadImage( const fs::path& fileName, bool ignoreIfAlreadyLoaded )
 {
     if ( ignoreIfAlreadyLoaded )
     {
@@ -352,7 +352,7 @@ EntropyApp::loadImage( const std::string& fileName, bool ignoreIfAlreadyLoaded )
 
 std::pair< std::optional<uuids::uuid>, bool >
 EntropyApp::loadSegmentation(
-    const std::string& fileName,
+    const fs::path& fileName,
     const std::optional<uuids::uuid>& matchingImageUid )
 {
     // Setting indicating that the same segmentation image file can be loaded twice:
@@ -370,7 +370,7 @@ EntropyApp::loadSegmentation(
         const Image* seg = m_data.seg( segUid );
         if ( seg && seg->header().fileName() == fileName )
         {
-            spdlog::info( "Segmentation from file \"{}\" has already been loaded as {}", fileName, segUid );
+            spdlog::info( "Segmentation from file {} has already been loaded as {}", fileName, segUid );
 
             if ( ! sk_canLoadSameSegFileTwice )
             {
@@ -424,7 +424,7 @@ EntropyApp::loadSegmentation(
     if ( ! math::areMatricesEqual( imgTx.subject_T_texture(), segTx.subject_T_texture() ) )
     {
         spdlog::warn( "The subject_T_texture transformations for image {} "
-                      "and segmentation from file \"{}\" do not match:",
+                      "and segmentation from file {} do not match:",
                       *matchingImageUid, fileName );
 
         spdlog::info( "subject_T_texture matrix for image:\n{}", glm::to_string( imgTx.subject_T_texture() ) );
@@ -468,12 +468,12 @@ EntropyApp::loadSegmentation(
         {
             if ( 'n' == type || 'N' == type )
             {
-                spdlog::info( "The segmentation from file \"{}\" will be loaded", fileName );
+                spdlog::info( "The segmentation from file {} will be loaded", fileName );
                 return sk_noSegLoaded;
             }
             else if ( 'y' == type || 'Y' == type )
             {
-                spdlog::info( "The segmentation from file \"{}\" will not be loaded due to "
+                spdlog::info( "The segmentation from file {} will not be loaded due to "
                               "subject_T_texture mismatch", fileName );
                 break;
             }
@@ -484,7 +484,7 @@ EntropyApp::loadSegmentation(
 
     if ( ! isComponentUnsignedInt( seg.header().memoryComponentType() ) )
     {
-        spdlog::error( "The segmentation from file \"{}\" does not have unsigned integer pixel "
+        spdlog::error( "The segmentation from file {} does not have unsigned integer pixel "
                        "component type and so will not be loaded.", fileName );
         return sk_noSegLoaded;
     }
@@ -494,7 +494,7 @@ EntropyApp::loadSegmentation(
 
     if ( const auto segUid = m_data.addSeg( std::move(seg) ) )
     {
-        spdlog::info( "Loaded segmentation from file \"{}\"", fileName );
+        spdlog::info( "Loaded segmentation from file {}", fileName );
         return { *segUid, true };
     }
 
@@ -503,7 +503,7 @@ EntropyApp::loadSegmentation(
 
 
 std::pair< std::optional<uuids::uuid>, bool >
-EntropyApp::loadDeformationField( const std::string& fileName )
+EntropyApp::loadDeformationField( const fs::path& fileName )
 {
     // Return value indicating that deformation field was not loaded:
     static const std::pair< std::optional<uuids::uuid>, bool >
@@ -516,8 +516,7 @@ EntropyApp::loadDeformationField( const std::string& fileName )
         {
             if ( def->header().fileName() == fileName )
             {
-                spdlog::info( "Deformation field from \"{}\" has already been loaded as {}",
-                              fileName, defUid );
+                spdlog::info( "Deformation field from {} has already been loaded as {}", fileName, defUid );
                 return { defUid, false };
             }
         }
@@ -527,7 +526,7 @@ EntropyApp::loadDeformationField( const std::string& fileName )
     Image def( fileName, Image::ImageRepresentation::Image,
                Image::MultiComponentBufferType::InterleavedImage );
 
-    spdlog::info( "Read deformation field image from file \"{}\"", fileName );
+    spdlog::info( "Read deformation field image from file {}", fileName );
 
     std::ostringstream ss;
     def.metaData( ss );
@@ -541,15 +540,14 @@ EntropyApp::loadDeformationField( const std::string& fileName )
 
     if ( def.header().numComponentsPerPixel() < 3 )
     {
-        spdlog::error( "The deformation field from file \"{}\" has fewer than three components per pixel "
+        spdlog::error( "The deformation field from file {} has fewer than three components per pixel "
                        "and so will not be loaded.", fileName );
         return sk_noDefLoaded;
     }
 
     if ( const auto defUid = m_data.addDef( std::move(def) ) )
     {
-        spdlog::info( "Loaded deformation field image from file {} as {}",
-                      fileName, *defUid );
+        spdlog::info( "Loaded deformation field image from file {} as {}", fileName, *defUid );
         return { *defUid, true };
     }
 
@@ -573,26 +571,25 @@ bool EntropyApp::loadSerializedImage(
 
     try
     {
-        spdlog::debug( "Attempting to load image from \"{}\"", serializedImage.m_imageFileName );
+        spdlog::debug( "Attempting to load image from {}", serializedImage.m_imageFileName );
 
         std::tie( imageUid, isNewImage ) = loadImage( serializedImage.m_imageFileName, sk_ignoreImageIfAlreadyLoaded );
     }
     catch ( const std::exception& e )
     {
-        spdlog::error( "Exception loading image from \"{}\": {}", serializedImage.m_imageFileName, e.what() );
+        spdlog::error( "Exception loading image from {}: {}", serializedImage.m_imageFileName, e.what() );
         return false;
     }
 
     if ( ! imageUid )
     {
-        spdlog::error( "Unable to load image from \"{}\"", serializedImage.m_imageFileName );
+        spdlog::error( "Unable to load image from {}", serializedImage.m_imageFileName );
         return false;
     }
 
     if ( ! isNewImage )
     {
-        spdlog::info( "Image from \"{}\" already exists in this project as {}",
-                      serializedImage.m_imageFileName, *imageUid );
+        spdlog::info( "Image from {} already exists in this project as {}", serializedImage.m_imageFileName, *imageUid );
 
         if ( sk_ignoreImageIfAlreadyLoaded )
         {
@@ -608,8 +605,7 @@ bool EntropyApp::loadSerializedImage(
         return false;
     }
 
-    spdlog::info( "Loaded image from \"{}\" as {}", serializedImage.m_imageFileName, *imageUid );
-
+    spdlog::info( "Loaded image from {} as {}", serializedImage.m_imageFileName, *imageUid );
 
 
     // Disable the initial affine and manual transformations for the reference image:
@@ -626,7 +622,7 @@ bool EntropyApp::loadSerializedImage(
 
         if ( isReferenceImage )
         {
-            spdlog::warn( "An affine transformation file (\"{}\") was provided for the reference image. "
+            spdlog::warn( "An affine transformation file ({}) was provided for the reference image. "
                           "It will be ignored, since the reference image defines the World coordinate "
                           "space, which cannot be transformed.", *serializedImage.m_affineTxFileName );
 
@@ -638,7 +634,7 @@ bool EntropyApp::loadSerializedImage(
             {
                 image->transformations().set_affine_T_subject_fileName( std::nullopt );
 
-                spdlog::error( "Unable to read affine transformation from \"{}\" for image {}",
+                spdlog::error( "Unable to read affine transformation from {} for image {}",
                                *serializedImage.m_affineTxFileName, *imageUid );
             }
 
@@ -655,7 +651,7 @@ bool EntropyApp::loadSerializedImage(
 
 //    if ( serializedImage.m_deformationFileName && isReferenceImage )
 //    {
-//        spdlog::warn( "A deformable transformation file (\"{}\") was provided for the reference image. "
+//        spdlog::warn( "A deformable transformation file ({}) was provided for the reference image. "
 //                      "It will be ignored, since the reference image defines the World coordinate "
 //                      "space, which cannot be transformed.", *serializedImage.m_deformationFileName );
 //    }
@@ -667,7 +663,7 @@ bool EntropyApp::loadSerializedImage(
 
         try
         {
-            spdlog::debug( "Attempting to load deformation field image from \"{}\"",
+            spdlog::debug( "Attempting to load deformation field image from {}",
                            *serializedImage.m_deformationFileName );
 
             std::tie( deformationUid, isDeformationNewImage ) =
@@ -675,7 +671,7 @@ bool EntropyApp::loadSerializedImage(
         }
         catch ( const std::exception& e )
         {
-            spdlog::error( "Exception loading deformation field from \"{}\": {}",
+            spdlog::error( "Exception loading deformation field from {}: {}",
                            *serializedImage.m_deformationFileName, e.what() );
         }
 
@@ -683,14 +679,14 @@ bool EntropyApp::loadSerializedImage(
         {
             if ( ! deformationUid )
             {
-                spdlog::error( "Unable to load deformation field from \"{}\" for image {}",
+                spdlog::error( "Unable to load deformation field from {} for image {}",
                                *serializedImage.m_deformationFileName, *imageUid );
                 break;
             }
 
             if ( ! isDeformationNewImage )
             {
-                spdlog::info( "Deformation field from \"{}\" already exists in this project as image {}",
+                spdlog::info( "Deformation field from {} already exists in this project as image {}",
                               *serializedImage.m_deformationFileName, *deformationUid );
                 break;
             }
@@ -744,7 +740,7 @@ bool EntropyApp::loadSerializedImage(
 
         if ( serialize::openAnnotationsFromJsonFile( annots, *serializedImage.m_annotationsFileName ) )
         {
-            spdlog::info( "Loaded annotations from JSON file \"{}\" for image {}",
+            spdlog::info( "Loaded annotations from JSON file {} for image {}",
                           *serializedImage.m_annotationsFileName, *imageUid );
 
             for ( auto& annot : annots )
@@ -765,7 +761,7 @@ bool EntropyApp::loadSerializedImage(
         }
         else
         {
-            spdlog::error( "Unable to open annotations from JSON file \"{}\" for image {}",
+            spdlog::error( "Unable to open annotations from JSON file {} for image {}",
                            *serializedImage.m_annotationsFileName, *imageUid );
         }
     }
@@ -782,7 +778,7 @@ bool EntropyApp::loadSerializedImage(
 
         if ( serialize::openLandmarkGroupCsvFile( landmarks, lm.m_csvFileName ) )
         {
-            spdlog::info( "Loaded landmarks from CSV file \"{}\" for image {}", lm.m_csvFileName, *imageUid );
+            spdlog::info( "Loaded landmarks from CSV file {} for image {}", lm.m_csvFileName, *imageUid );
 
             // Assign random colors to the landmarks. Make sure that landmarks with the same index
             // in different groups have the same color. This is done by seeding the random number
@@ -801,7 +797,6 @@ bool EntropyApp::loadSerializedImage(
 
 
             LandmarkGroup lmGroup;
-
             lmGroup.setFileName( lm.m_csvFileName );
             lmGroup.setName( getFileName( lm.m_csvFileName, false ) );
             lmGroup.setPoints( landmarks );
@@ -834,8 +829,7 @@ bool EntropyApp::loadSerializedImage(
         }
         else
         {
-            spdlog::error( "Unable to open landmarks from CSV file \"{}\" for image {}",
-                           lm.m_csvFileName, *imageUid );
+            spdlog::error( "Unable to open landmarks from CSV file {} for image {}", lm.m_csvFileName, *imageUid );
         }
     }
 
@@ -963,15 +957,13 @@ bool EntropyApp::loadSerializedImage(
 
         try
         {
-            spdlog::debug( "Attempting to load segmentation image from \"{}\"",
-                           serializedSeg.m_segFileName );
+            spdlog::debug( "Attempting to load segmentation image from {}", serializedSeg.m_segFileName );
 
             std::tie( segInfo.uid, segInfo.isNewSeg ) = loadSegmentation( serializedSeg.m_segFileName, *imageUid );
         }
         catch ( const std::exception& e )
         {
-            spdlog::error( "Exception loading segmentation from \"{}\": {}",
-                           serializedSeg.m_segFileName, e.what() );
+            spdlog::error( "Exception loading segmentation from {}: {}", serializedSeg.m_segFileName, e.what() );
             continue; // Skip this segmentation
         }
 
@@ -979,7 +971,7 @@ bool EntropyApp::loadSerializedImage(
         {
             if ( segInfo.isNewSeg )
             {
-                spdlog::info( "Loaded segmentation from file \"{}\" for image {} as {}",
+                spdlog::info( "Loaded segmentation from file {} for image {} as {}",
                               serializedSeg.m_segFileName, *imageUid, *segInfo.uid );
 
                 // New segmentation needs a new table
@@ -987,7 +979,7 @@ bool EntropyApp::loadSerializedImage(
             }
             else
             {
-                spdlog::info( "Segmentation from \"{}\" already exists as {}, so it was not loaded again. "
+                spdlog::info( "Segmentation from {} already exists as {}, so it was not loaded again. "
                               "This segmentation will be shared across all images that reference it.",
                               serializedSeg.m_segFileName, *segInfo.uid );
 
@@ -1129,7 +1121,7 @@ void EntropyApp::loadImagesFromParams( const InputParams& params )
 
         if ( ! loadSerializedImage( project.m_referenceImage, true ) )
         {
-            spdlog::critical( "Could not load reference image from \"{}\"",
+            spdlog::critical( "Could not load reference image from {}",
                               project.m_referenceImage.m_imageFileName );
             onProjectLoadingDone( false );
         }
@@ -1140,7 +1132,7 @@ void EntropyApp::loadImagesFromParams( const InputParams& params )
         {
             if ( ! loadSerializedImage( additionalImage, false ) )
             {
-                spdlog::error( "Could not load additional image from \"{}\"; skipping it",
+                spdlog::error( "Could not load additional image from {}; skipping it",
                                additionalImage.m_imageFileName );
             }
 
