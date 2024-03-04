@@ -88,7 +88,7 @@ typename itk::Image<T, 3>::Pointer makeScalarImage(
         return nullptr;
     }
 
-    typename  ImportFilterType::RegionType region;
+    typename ImportFilterType::RegionType region;
     region.SetIndex( start );
     region.SetSize( size );
 
@@ -120,7 +120,68 @@ typename itk::Image<itk::Vector<T, VectorDim>, 3>::Pointer makeVectorImage(
     const std::array< std::array<double, 3>, 3 >&  imageDirection,
     const T* imageData )
 {
-    using ImportFilterType = itk::ImportImageFilter<itk::Vector<T, 3>, 3>;
+    /*
+    // This works just as well!
+    using PixelType = itk::Vector<T, VectorDim>;
+    using ImageType = itk::Image<PixelType, 3>;
+
+    const typename ImageType::IndexType start = { {0, 0, 0} };
+    const typename ImageType::SizeType size = { {imageDims[0], imageDims[1], imageDims[2]} };
+
+    typename ImageType::RegionType region;
+    region.SetSize( size );
+    region.SetIndex( start );
+
+    typename ImageType::DirectionType direction;
+    itk::SpacePrecisionType origin[3];
+    itk::SpacePrecisionType spacing[3];
+
+    for ( uint32_t i = 0; i < 3; ++i )
+    {
+        origin[i] = imageOrigin[i];
+        spacing[i] = imageSpacing[i];
+
+        for ( uint32_t j = 0; j < 3; ++j )
+        {
+            direction[i][j] = imageDirection[j][i];
+        }
+    }
+
+    typename ImageType::PixelType initialValue;
+    initialValue.Fill( 0 );
+
+    typename ImageType::Pointer image = ImageType::New();
+    image->SetOrigin( origin );
+    image->SetSpacing( spacing );
+    image->SetDirection( direction );
+    image->SetRegions( region );
+    image->Allocate();
+    image->FillBuffer( initialValue );
+
+    for (uint32_t k = 0; k < imageDims[2]; ++k)
+    {
+        for (uint32_t j = 0; j < imageDims[1]; ++j)
+        {
+            for (uint32_t i = 0; i < imageDims[0]; ++i)
+            {
+                const typename ImageType::IndexType pixelIndex{i, j, k};
+                const uint32_t linearIndex = 3 * ( (k * imageDims[1] + j) * imageDims[0] + i );
+
+                typename ImageType::PixelType pixelValue;
+                pixelValue[0] = imageData[linearIndex + 0];
+                pixelValue[1] = imageData[linearIndex + 1];
+                pixelValue[2] = imageData[linearIndex + 2];
+
+                image->SetPixel( pixelIndex, pixelValue );
+            }
+        }
+    }
+
+    return image;
+    */
+
+    using PixelType = itk::Vector<T, VectorDim>;
+    using ImportFilterType = itk::ImportImageFilter<PixelType, 3>;
 
     if ( ! imageData )
     {
@@ -171,8 +232,7 @@ typename itk::Image<itk::Vector<T, VectorDim>, 3>::Pointer makeVectorImage(
         importer->SetOrigin( origin );
         importer->SetSpacing( spacing );
         importer->SetDirection( direction );
-        importer->SetImportPointer( reinterpret_cast<itk::Vector<T, VectorDim>*>(
-            const_cast<T*>(imageData) ), numPixels, filterOwnsBuffer );
+        importer->SetImportPointer( reinterpret_cast<PixelType*>( const_cast<T*>(imageData) ), numPixels, filterOwnsBuffer );
         importer->Update();
 
         return importer->GetOutput();
