@@ -56,6 +56,8 @@ typename itk::Image<T, 3>::Pointer makeScalarImage(
         return nullptr;
     }
 
+    // This filter will not free the memory in its destructor and the application providing the
+    // buffer retains the responsibility of freeing the memory for this image data
     constexpr bool filterOwnsBuffer = false;
 
     typename ImportFilterType::IndexType start;
@@ -105,6 +107,79 @@ typename itk::Image<T, 3>::Pointer makeScalarImage(
     catch ( const std::exception& e )
     {
         spdlog::error( "Exception creating new ITK scalar image from data array: {}", e.what() );
+        return nullptr;
+    }
+}
+
+
+template< class T, uint32_t VectorDim >
+typename itk::Image<itk::Vector<T, VectorDim>, 3>::Pointer makeVectorImage(
+    const std::array<uint32_t, 3>& imageDims,
+    const std::array<double, 3>& imageOrigin,
+    const std::array<double, 3>& imageSpacing,
+    const std::array< std::array<double, 3>, 3 >&  imageDirection,
+    const T* imageData )
+{
+    using ImportFilterType = itk::ImportImageFilter<itk::Vector<T, 3>, 3>;
+
+    if ( ! imageData )
+    {
+        spdlog::error( "Null data array provided when creating new vector image" );
+        return nullptr;
+    }
+
+    // This filter will not free the memory in its destructor and the application providing the
+    // buffer retains the responsibility of freeing the memory for this image data
+    constexpr bool filterOwnsBuffer = false;
+
+    typename ImportFilterType::IndexType start;
+    typename ImportFilterType::SizeType size;
+    typename ImportFilterType::DirectionType direction;
+
+    itk::SpacePrecisionType origin[3];
+    itk::SpacePrecisionType spacing[3];
+
+    for ( uint32_t i = 0; i < 3; ++i )
+    {
+        start[i] = 0.0;
+        size[i] = imageDims[i];
+        origin[i] = imageOrigin[i];
+        spacing[i] = imageSpacing[i];
+
+        for ( uint32_t j = 0; j < 3; ++j )
+        {
+            direction[i][j] = imageDirection[j][i];
+        }
+    }
+
+    const std::size_t numPixels = size[0] * size[1] * size[2];
+
+    if ( 0 == numPixels )
+    {
+        spdlog::error( "Cannot create new vector image with size zero" );
+        return nullptr;
+    }
+
+    typename ImportFilterType::RegionType region;
+    region.SetIndex( start );
+    region.SetSize( size );
+
+    try
+    {
+        typename ImportFilterType::Pointer importer = ImportFilterType::New();
+        importer->SetRegion( region );
+        importer->SetOrigin( origin );
+        importer->SetSpacing( spacing );
+        importer->SetDirection( direction );
+        importer->SetImportPointer( reinterpret_cast<itk::Vector<T, VectorDim>*>(
+            const_cast<T*>(imageData) ), numPixels, filterOwnsBuffer );
+        importer->Update();
+
+        return importer->GetOutput();
+    }
+    catch ( const std::exception& e )
+    {
+        spdlog::error( "Exception creating new ITK vector image from data array: {}", e.what() );
         return nullptr;
     }
 }
@@ -624,6 +699,7 @@ bool writeImage( typename itk::Image<T, NDim>::Pointer image, const fs::path& fi
 
         writer->SetFileName( fileName.c_str() );
         writer->SetInput( image );
+        writer->SetUseCompression(true);
         writer->Update();
         return true;
     }

@@ -528,7 +528,7 @@ EntropyApp::loadDeformationField( const fs::path& fileName )
     if ( def.header().numComponentsPerPixel() < 3 )
     {
         spdlog::error( "The deformation field from file {} has fewer than three components per pixel "
-                      "and so will not be loaded.", fileName );
+                       "and so will not be loaded.", fileName );
         return sk_noDefLoaded;
     }
 
