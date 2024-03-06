@@ -746,21 +746,25 @@ void CallbackHandler::recenterViews(
 
     if ( recenterCrosshairs )
     {
-        glm::vec3 worldPos = math::computeAABBoxCenter( worldBox );
-        worldPos = data::snapWorldPointToImageVoxels( m_appData, worldPos, forceSnapping );
-        m_appData.state().setWorldCrosshairsPos( worldPos );
+        // Crosshairs always snap to voxels
+        const glm::vec3 worldPos = math::computeAABBoxCenter( worldBox );
+        const glm::vec3 worldPosSnapped = data::snapWorldPointToImageVoxels( m_appData, worldPos, forceSnapping );
+
+        m_appData.state().setWorldCrosshairsPos( worldPosSnapped );
     }
 
-    glm::vec3 worldCenter = ( recenterOnCurrentCrosshairsPos )
+    const glm::vec3 worldCenter = ( recenterOnCurrentCrosshairsPos )
             ? m_appData.state().worldCrosshairs().worldOrigin()
             : math::computeAABBoxCenter( worldBox );
 
-    worldCenter = data::snapWorldPointToImageVoxels( m_appData, worldCenter, forceSnapping );
+    // const glm::vec3 worldCenterSnapped = data::snapWorldPointToImageVoxels( m_appData, worldCenter, forceSnapping );
+
+    const bool _resetZoom = resetZoom ? *resetZoom : ! recenterOnCurrentCrosshairsPos;
 
     m_appData.windowData().recenterAllViews(
                 worldCenter,
                 sk_viewAABBoxScaleFactor * math::computeAABBoxSize( worldBox ),
-                ( resetZoom ? *resetZoom : ! recenterOnCurrentCrosshairsPos ),
+                _resetZoom,
                 resetObliqueOrientation );
 }
 
@@ -772,30 +776,25 @@ void CallbackHandler::recenterView(
     // On view recenter, force the crosshairs and views to snap to the center of the
     // reference image voxels. This is so that crosshairs/views don't land on a voxel
     // boundary (which causes jitter on view zoom).
-    static constexpr CrosshairsSnapping forceSnapping =
-            CrosshairsSnapping::ReferenceImage;
-
+    static constexpr CrosshairsSnapping forceSnapping = CrosshairsSnapping::ReferenceImage;
     static constexpr bool sk_resetZoom = false;
     static constexpr bool sk_resetObliqueOrientation = true;
 
     if ( 0 == m_appData.numImages() )
     {
-        spdlog::warn( "No images loaded: recentering view {} using default bounds", viewUid );
+        spdlog::warn( "No images loaded, so recentering view {} using default bounds", viewUid );
     }
 
     // Size and position the views based on the enclosing AABB of the image selection:
     const auto worldBox = data::computeWorldAABBoxEnclosingImages( m_appData, imageSelection );
     const auto worldBoxSize = math::computeAABBoxSize( worldBox );
 
-    glm::vec3 worldPos = m_appData.state().worldCrosshairs().worldOrigin();
-    worldPos = data::snapWorldPointToImageVoxels( m_appData, worldPos, forceSnapping );
+    const glm::vec3 worldPos = m_appData.state().worldCrosshairs().worldOrigin();
+    const glm::vec3 worldPosSnapped = data::snapWorldPointToImageVoxels( m_appData, worldPos, forceSnapping );
 
-    m_appData.windowData().recenterView(
-                viewUid,
-                worldPos,
-                sk_viewAABBoxScaleFactor * worldBoxSize,
-                sk_resetZoom,
-                sk_resetObliqueOrientation );
+    m_appData.windowData().recenterView( viewUid, worldPosSnapped,
+        sk_viewAABBoxScaleFactor * worldBoxSize,
+        sk_resetZoom, sk_resetObliqueOrientation );
 }
 
 

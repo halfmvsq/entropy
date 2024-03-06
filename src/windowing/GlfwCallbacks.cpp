@@ -602,7 +602,21 @@ void keyCallback( GLFWwindow* window, int key, int /*scancode*/, int action, int
 
     case GLFW_KEY_C:
     {
-        H.recenterViews( app->appData().state().recenteringMode(), true, false, true, std::nullopt );
+        // Shift does a "hard" reset of the crosshairs, oblique orientations, and zoom
+        const bool hardReset = ( s_modifierState.shift );
+        const bool recenterCrosshairs = hardReset;
+        const bool resetObliqueOrientation = hardReset;
+        const bool recenterOnCurrentCrosshairsPosition = true;
+
+        std::optional<bool> resetZoom = std::nullopt;
+
+        if (hardReset)
+        {
+            resetZoom = true;
+        }
+
+        H.recenterViews( app->appData().state().recenteringMode(),
+            recenterCrosshairs, recenterOnCurrentCrosshairsPosition, resetObliqueOrientation, resetZoom );
         break;
     }
 

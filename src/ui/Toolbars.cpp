@@ -94,11 +94,6 @@ void renderModeToolbar(
     const std::function< size_t (void) >& getActiveImageIndex,
     const std::function< void (size_t) >& setActiveImageIndex )
 {
-    static constexpr bool sk_recenterCrosshairs = true;
-    static constexpr bool sk_doNotRecenterOnCurrentCrosshairsPosition = false;
-    static constexpr bool sk_doNotResetObliqueViews = false;
-    static constexpr bool sk_resetZoom = true;
-
     GuiData& guiData = appData.guiData();
 
     const auto buttonSize = scaledToolbarButtonSize( appData.windowData().getContentScaleRatios() );
@@ -442,10 +437,22 @@ void renderModeToolbar(
             {
                 if ( ImGui::Button( ICON_FK_CROSSHAIRS, buttonSize) )
                 {
-                    recenterAllViews( sk_recenterCrosshairs,
-                                      sk_doNotRecenterOnCurrentCrosshairsPosition,
-                                      sk_doNotResetObliqueViews,
-                                      sk_resetZoom );
+                    // Shift does a "hard" reset of the crosshairs, oblique orientations, and zoom
+                    const bool hardReset = ImGui::IsKeyDown( ImGuiKey_LeftShift ) || ImGui::IsKeyDown( ImGuiKey_RightShift );
+                    const bool recenterCrosshairs = hardReset;
+                    const bool resetObliqueOrientation = hardReset;
+                    static constexpr bool recenterOnCurrentCrosshairsPosition = true;
+
+                    std::optional<bool> resetZoom = std::nullopt;
+                    if (hardReset)
+                    {
+                        resetZoom = true;
+                    }
+
+                    recenterAllViews( recenterCrosshairs,
+                                      recenterOnCurrentCrosshairsPosition,
+                                      resetObliqueOrientation,
+                                      resetZoom );
                 }
                 if ( ImGui::IsItemHovered() ) {
                     ImGui::SetTooltip( "%s", "Recenter views (C)" );
@@ -613,15 +620,27 @@ void renderModeToolbar(
 
     ImGui::PopID();
 
+    // Shift does a "hard" reset of the crosshairs, oblique orientations, and zoom
+    const bool hardReset = ImGui::IsKeyDown( ImGuiKey_LeftShift ) || ImGui::IsKeyDown( ImGuiKey_RightShift );
+    const bool recenterCrosshairs = hardReset;
+    const bool resetObliqueOrientation = hardReset;
+    static constexpr bool recenterOnCurrentCrosshairsPosition = true;
+
+    std::optional<bool> resetZoom = std::nullopt;
+    if (hardReset)
+    {
+        resetZoom = true;
+    }
+
     renderAddLayoutModalPopup(
                 appData,
                 openAddLayoutPopup,
-                [&recenterAllViews] ()
+                [&recenterAllViews, &recenterCrosshairs, &resetObliqueOrientation, &resetZoom] ()
                 {
-                    recenterAllViews( true,
-                                      sk_doNotRecenterOnCurrentCrosshairsPosition,
-                                      sk_doNotResetObliqueViews,
-                                      sk_resetZoom );
+                    recenterAllViews( recenterCrosshairs,
+                                      recenterOnCurrentCrosshairsPosition,
+                                      resetObliqueOrientation,
+                                      resetZoom );
                 } );
 
     renderAboutDialogModalPopup( openAboutDialogPopup );
