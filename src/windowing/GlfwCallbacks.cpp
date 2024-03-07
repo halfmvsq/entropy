@@ -519,7 +519,8 @@ void scrollCallback( GLFWwindow* window, double scrollOffsetX, double scrollOffs
     case MouseMode::ImageScale:
     case MouseMode::WindowLevel:
     {
-        H.doCrosshairsScroll( *hit_invalidOutsideView, { scrollOffsetX, scrollOffsetY } );
+        const bool fineScroll = ( s_modifierState.shift );
+        H.doCrosshairsScroll( *hit_invalidOutsideView, { scrollOffsetX, scrollOffsetY }, fineScroll );
         break;
     }
     case MouseMode::CameraZoom:
@@ -532,7 +533,8 @@ void scrollCallback( GLFWwindow* window, double scrollOffsetX, double scrollOffs
     {
         if ( state::isInStateWhereViewsCanScroll() )
         {
-            H.doCrosshairsScroll( *hit_invalidOutsideView, { scrollOffsetX, scrollOffsetY } );
+            const bool fineScroll = ( s_modifierState.shift );
+            H.doCrosshairsScroll( *hit_invalidOutsideView, { scrollOffsetX, scrollOffsetY }, fineScroll );
         }
 
         break;

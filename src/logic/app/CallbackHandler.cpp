@@ -808,17 +808,20 @@ void CallbackHandler::doCrosshairsMove( const ViewHit& hit )
 
 void CallbackHandler::doCrosshairsScroll(
     const ViewHit& hit,
-    const glm::vec2& scrollOffset )
+    const glm::vec2& scrollOffset,
+    bool fineScroll )
 {
-    const float scrollDistance = data::sliceScrollDistance(
+    const float multiplier = fineScroll ? 0.1f : 1.0f;
+
+    const float scrollDistance = multiplier * data::sliceScrollDistance(
         m_appData, hit.worldFrontAxis,
         ImageSelection::VisibleImagesInView, hit.view );
 
-    glm::vec3 worldPos = m_appData.state().worldCrosshairs().worldOrigin() +
-                scrollOffset.y * scrollDistance * hit.worldFrontAxis;
+    const glm::vec3 worldPos = m_appData.state().worldCrosshairs().worldOrigin() +
+        scrollOffset.y * scrollDistance * hit.worldFrontAxis;
 
-    worldPos = data::snapWorldPointToImageVoxels( m_appData, worldPos );
-    m_appData.state().setWorldCrosshairsPos( worldPos );
+    const glm::vec3 worldPosSnapped = data::snapWorldPointToImageVoxels( m_appData, worldPos );
+    m_appData.state().setWorldCrosshairsPos( worldPosSnapped );
 }
 
 

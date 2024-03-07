@@ -80,7 +80,7 @@ public:
      * @param windowCurrPos
      * @param scrollOffset
      */
-    void doCrosshairsScroll( const ViewHit& hit, const glm::vec2& scrollOffset );
+    void doCrosshairsScroll( const ViewHit& hit, const glm::vec2& scrollOffset, bool fineScroll );
 
     /**
      * @brief Segment the image
