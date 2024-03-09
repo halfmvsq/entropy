@@ -30,7 +30,6 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtc/type_ptr.hpp>
-
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/color_space.hpp>
 
@@ -42,7 +41,6 @@
 
 #undef min
 #undef max
-
 
 namespace
 {
@@ -58,10 +56,10 @@ ImVec2 scaledToolbarButtonSize( const glm::vec2& contentScale )
 }
 
 
-static const std::string sk_referenceAndActiveImageMessage( "This is the reference and active image" );
-static const std::string sk_referenceImageMessage( "This is the reference image" );
-static const std::string sk_activeImageMessage( "This is the active image" );
-static const std::string sk_nonActiveImageMessage( "This is not the active image" );
+const std::string sk_referenceAndActiveImageMessage( "This is the reference and active image" );
+const std::string sk_referenceImageMessage( "This is the reference image" );
+const std::string sk_activeImageMessage( "This is the active image" );
+const std::string sk_nonActiveImageMessage( "This is not the active image" );
 
 static const ImGuiColorEditFlags sk_colorEditFlags =
     ImGuiColorEditFlags_NoInputs |
@@ -83,8 +81,6 @@ std::pair< ImVec4, ImVec4 > computeHeaderBgAndTextColors( const glm::vec3& color
 
     return { headerColor, headerTextColor };
 }
-
-
 
 double RandomGauss() {
     static double V1, V2, S;
@@ -285,12 +281,12 @@ void renderImageHeaderInformation(
 
     glm::mat4 s_T_p = glm::transpose( imgTx.subject_T_pixel() );
 
-    ImGui::PushItemWidth( -1 );
+    // ImGui::PushItemWidth( -1 );
     ImGui::InputFloat4( "##v2s_col0", glm::value_ptr( s_T_p[0] ), txFormat, ImGuiInputTextFlags_ReadOnly );
     ImGui::InputFloat4( "##v2s_col1", glm::value_ptr( s_T_p[1] ), txFormat, ImGuiInputTextFlags_ReadOnly );
     ImGui::InputFloat4( "##v2s_col2", glm::value_ptr( s_T_p[2] ), txFormat, ImGuiInputTextFlags_ReadOnly );
     ImGui::InputFloat4( "##v2s_col3", glm::value_ptr( s_T_p[3] ), txFormat, ImGuiInputTextFlags_ReadOnly );
-    ImGui::PopItemWidth();
+    // ImGui::PopItemWidth();
 
     ImGui::Spacing();
 
@@ -914,7 +910,7 @@ void renderImageHeader(
             ImGui::SameLine(); helpMarker( "Show/hide the segmentation on all views (S)" );
         }
 
-//        if ( visible )
+       // if ( visible )
         {
             // Image opacity slider:
             double imageOpacity = imgSettings.opacity();
@@ -954,11 +950,8 @@ void renderImageHeader(
             // Speed of range slider is based on the range
             const float speed = static_cast<float>( threshMax - threshMin ) / 1000.0f;
 
-            if ( ImGui::DragFloatRange2(
-                    "Threshold", &threshLow, &threshHigh,
-                    speed, threshMin, threshMax,
-                    minValuesFormat, maxValuesFormat,
-                    ImGuiSliderFlags_AlwaysClamp ) )
+            if (ImGui::DragFloatRange2("Threshold", &threshLow, &threshHigh, speed, threshMin, threshMax,
+                    minValuesFormat, maxValuesFormat, ImGuiSliderFlags_AlwaysClamp ))
             {
                 imgSettings.setThresholdLow( static_cast<double>( threshLow ) );
                 imgSettings.setThresholdHigh( static_cast<double>( threshHigh ) );
@@ -981,9 +974,8 @@ void renderImageHeader(
             float windowLow = static_cast<float>( imgSettings.windowLowHigh().first );
             float windowHigh = static_cast<float>( imgSettings.windowLowHigh().second );
 
-            if ( ImGui::DragFloatRange2(
-                "Window", &windowLow, &windowHigh, speed, windowMin, windowMax,
-                minValuesFormat, maxValuesFormat, ImGuiSliderFlags_AlwaysClamp ) )
+            if (ImGui::DragFloatRange2("Window", &windowLow, &windowHigh, speed, windowMin, windowMax,
+                minValuesFormat, maxValuesFormat, ImGuiSliderFlags_AlwaysClamp))
             {
                 imgSettings.setWindowLow( windowLow );
                 imgSettings.setWindowHigh( windowHigh );
@@ -992,62 +984,22 @@ void renderImageHeader(
             ImGui::SameLine(); helpMarker( "Set the minimum and maximum of the window range" );
 
 
-            float windowWidth = static_cast<float>( imgSettings.windowWidth() );
-            float windowCenter = static_cast<float>( imgSettings.windowCenter() );
+            double windowWidth = imgSettings.windowWidth();
+            double windowCenter = imgSettings.windowCenter();
 
-
-            if ( mySliderF32( "Width", &windowWidth, windowWidthMin, windowWidthMax, valuesFormat ) )
+            if ( mySliderF64( "Width", &windowWidth, windowWidthMin, windowWidthMax, valuesFormat ) )
             {
                 imgSettings.setWindowWidth( windowWidth );
                 updateImageUniforms();
             }
             ImGui::SameLine(); helpMarker( "Window width" );
 
-
-
-            // ImGui::DragFloat( "Width", &windowWidth, speed, windowWidthMin, windowWidthMax, valuesFormat, ImGuiSliderFlags_AlwaysClamp );
-            // ImGui::SameLine();
-
-
-
-            // const std::string levelFormat =
-            //     std::to_string(windowCenterMin) + " <= " +
-            //     std::string(valuesFormat)  + " <= " +
-            //     std::to_string(windowCenterMax);
-
-            if ( mySliderF32( "Level", &windowCenter, windowCenterMin, windowCenterMax, valuesFormat ) )
+            if ( mySliderF64( "Level", &windowCenter, windowCenterMin, windowCenterMax, valuesFormat ) )
             {
                 imgSettings.setWindowCenter( windowCenter );
                 updateImageUniforms();
             }
             ImGui::SameLine(); helpMarker( "Window level (center)" );
-
-
-            /*
-            windowWidth = static_cast<float>( imgSettings.windowWidth() );
-            windowCenter = static_cast<float>( imgSettings.windowCenter() );
-
-            std::array<float, 2> widthCenter{windowWidth, windowCenter};
-            const std::array<float, 2> widthCenterMin{windowWidthMin, windowCenterMin};
-            const std::array<float, 2> widthCenterMax{windowWidthMax, windowCenterMax};
-
-            if ( ImGui::SliderScalarN("Width/center", ImGuiDataType_Float, widthCenter.data(), 2, widthCenterMin.data(), widthCenterMax.data(), valuesFormat) )
-            {
-                imgSettings.setWindowWidth( widthCenter[0] );
-                imgSettings.setWindowCenter( widthCenter[1] );
-                updateImageUniforms();
-            }
-
-            widthCenter[0] = windowWidth;
-            widthCenter[1] = windowCenter;
-
-            if ( ImGui::DragScalarN("Width/center", ImGuiDataType_Float, widthCenter.data(), 2, 1.0, widthCenterMin.data(), widthCenterMax.data(), valuesFormat) )
-            {
-                imgSettings.setWindowWidth( widthCenter[0] );
-                imgSettings.setWindowCenter( widthCenter[1] );
-                updateImageUniforms();
-            }
-            */
         }
         else
         {
@@ -1059,12 +1011,11 @@ void renderImageHeader(
             int32_t threshHigh = static_cast<int32_t>( imgSettings.thresholds().second );
 
             // Use a speed of 1 for integer images:
-            const float speed = 1.0f;
+            constexpr float speed = 1.0f;
 
             /// Speed of range slider is based on the image range
-            if ( ImGui::DragIntRange2(
-                "Threshold", &threshLow, &threshHigh, speed, threshMin, threshMax,
-                "Min: %d", "Max: %d", ImGuiSliderFlags_AlwaysClamp ) )
+            if (ImGui::DragIntRange2("Threshold", &threshLow, &threshHigh, speed, threshMin, threshMax,
+                    "Min: %d", "Max: %d", ImGuiSliderFlags_AlwaysClamp))
             {
                 imgSettings.setThresholdLow( static_cast<double>( threshLow ) );
                 imgSettings.setThresholdHigh( static_cast<double>( threshHigh ) );
@@ -1087,9 +1038,8 @@ void renderImageHeader(
             int32_t windowLow = static_cast<int32_t>( imgSettings.windowLowHigh().first );
             int32_t windowHigh = static_cast<int32_t>( imgSettings.windowLowHigh().second );
 
-            if ( ImGui::DragIntRange2(
-                "Window", &windowLow, &windowHigh, speed, windowMin, windowMax,
-                "Min: %d", "Max: %d", ImGuiSliderFlags_AlwaysClamp ) )
+            if (ImGui::DragIntRange2("Window", &windowLow, &windowHigh, speed, windowMin, windowMax,
+                                     "Min: %d", "Max: %d", ImGuiSliderFlags_AlwaysClamp))
             {
                 imgSettings.setWindowLow( windowLow );
                 imgSettings.setWindowHigh( windowHigh );
@@ -1098,18 +1048,17 @@ void renderImageHeader(
             ImGui::SameLine(); helpMarker( "Set the minimum and maximum of the window range" );
 
 
-            int32_t windowWidth = static_cast<int32_t>( imgSettings.windowWidth() );
-            int32_t windowCenter = static_cast<int32_t>( imgSettings.windowCenter() );
+            int64_t windowWidth = static_cast<int64_t>( imgSettings.windowWidth() );
+            int64_t windowCenter = static_cast<int64_t>( imgSettings.windowCenter() );
 
-            if ( mySliderS32( "Width", &windowWidth, windowWidthMin, windowWidthMax ) )
+            if ( mySliderS64( "Width", &windowWidth, windowWidthMin, windowWidthMax ) )
             {
                 imgSettings.setWindowWidth( windowWidth );
                 updateImageUniforms();
             }
             ImGui::SameLine(); helpMarker( "Window width" );
 
-
-            if ( mySliderS32( "Level", &windowCenter, windowCenterMin, windowCenterMax ) )
+            if ( mySliderS64( "Level", &windowCenter, windowCenterMin, windowCenterMax ) )
             {
                 imgSettings.setWindowCenter( windowCenter );
                 updateImageUniforms();
@@ -1117,7 +1066,6 @@ void renderImageHeader(
             ImGui::SameLine(); helpMarker( "Window level (center)" );
         }
         ImGui::Spacing();
-
 
 
         ImGui::Text( "Auto window: " ); ImGui::SameLine();
@@ -1167,7 +1115,6 @@ void renderImageHeader(
         ImGui::SameLine(); helpMarker( "Set window based on percentiles of the image histogram" );
 
 
-
         auto getImageInterpMode = [&imgSettings] ()
         {
             return ( imgSettings.displayImageAsColor() )
@@ -1215,7 +1162,7 @@ void renderImageHeader(
             glm::ivec3 hsvModsInt = glm::ivec3{ 360.0f * hsvMods[0], 100.0f * hsvMods[1], 100.0f * hsvMods[2] };
 
             // Colormap preview:
-            const float contentWidth = ImGui::GetContentRegionAvail().x;
+            const float contentWidth = ImGui::CalcItemWidth(); // ImGui::GetContentRegionAvail().x;
             const float height = ( ImGui::GetIO().Fonts->Fonts[0]->FontSize * ImGui::GetIO().FontGlobalScale );
 
             char label[128];
@@ -1227,7 +1174,7 @@ void renderImageHeader(
 //            ImGui::Dummy( ImVec2( 0.0f, 2.0f ) );
             ImGui::Spacing();
 
-            ImGui::Text( "Color map:" );
+            // ImGui::Text( "Color map:" );
 
             *showImageColormapWindow |= ImGui::paletteButton(
                 label,
@@ -1244,7 +1191,7 @@ void renderImageHeader(
 
             ImGui::SetNextItemOpen( false, ImGuiCond_Appearing );
 
-            if ( ImGui::TreeNode( "Color settings" ) )
+            if ( ImGui::TreeNode( "Color map settings" ) )
             {
                 // Image colormap dialog:
                 *showImageColormapWindow |= ImGui::Button( "Select color map" );
@@ -1258,13 +1205,13 @@ void renderImageHeader(
                 }
                 ImGui::SameLine(); helpMarker( "Invert the image color map" );
 
-
                 // If the color map has nearest-neighbor interpolation mode,
                 // then we are forced to use the discrete setting:
                 //                const bool forcedDiscrete = ( ImageColorMap::InterpolationMode::Nearest == cmap->interpolationMode() );
 
                 bool colorMapContinuous = imgSettings.colorMapContinuous();
 
+                ImGui::SameLine();
                 if ( ImGui::RadioButton( "Continuous", colorMapContinuous /*&& ! forcedDiscrete*/ ) )
                 {
                     colorMapContinuous = true;

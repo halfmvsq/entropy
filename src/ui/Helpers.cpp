@@ -30,6 +30,12 @@ bool mySliderS32( const char *label, int32_t* value,
     return ImGui::SliderScalar( label, ImGuiDataType_S32, value, &min, &max, format );
 }
 
+bool mySliderS64( const char *label, int64_t* value,
+                  int64_t min, int64_t max, const char* format )
+{
+    return ImGui::SliderScalar( label, ImGuiDataType_S64, value, &min, &max, format );
+}
+
 bool mySliderF32( const char *label, float* value,
                   float min, float max, const char* format )
 {

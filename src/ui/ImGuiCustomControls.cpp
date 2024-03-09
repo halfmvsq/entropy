@@ -65,7 +65,7 @@ bool paletteButton(
     if ( window->SkipItems ) return false;
     if ( ! GImGui ) return false;
 
-    const ImGuiStyle& style = GImGui->Style;
+    // const ImGuiStyle& style = GImGui->Style;
 
     const ImGuiID id = window->GetID( label );
 
@@ -75,9 +75,9 @@ bool paletteButton(
             : window->DC.PrevLineSize.y )
         : ( window->DC.CurrLineSize.y );
 
-    const ImRect bb( ImVec2( window->DC.CursorPos.x + style.FramePadding.x,
+    const ImRect bb( ImVec2( window->DC.CursorPos.x /*+ style.FramePadding.x*/,
                              window->DC.CursorPos.y ),
-                     ImVec2( window->DC.CursorPos.x + size.x - 2.0f * style.FramePadding.x,
+                     ImVec2( window->DC.CursorPos.x + size.x /*- 2.0f * style.FramePadding.x*/,
                              window->DC.CursorPos.y + lineH ) );
 
     ItemSize( bb );
