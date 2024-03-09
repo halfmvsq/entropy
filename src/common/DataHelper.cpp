@@ -436,7 +436,7 @@ std::optional<glm::ivec3> getImageVoxelCoordsAtCrosshairs(
 
 std::optional<glm::vec3> getImageVoxelCoordsContinuousAtCrosshairs(
     const AppData& appData,
-    size_t imageIndex )
+    std::size_t imageIndex )
 {
     const auto imageUid = appData.imageUid( imageIndex );
     const Image* image = imageUid ? appData.image( *imageUid ) : nullptr;
@@ -444,12 +444,14 @@ std::optional<glm::vec3> getImageVoxelCoordsContinuousAtCrosshairs(
     if ( ! image ) return std::nullopt;
 
     const glm::vec4 pixelPos = image->transformations().pixel_T_worldDef() *
-                               glm::vec4{ appData.state().worldCrosshairs().worldOrigin(), 1 };
+        glm::vec4{ appData.state().worldCrosshairs().worldOrigin(), 1 };
 
     const glm::vec3 pixelPosXYZ = pixelPos / pixelPos.w;
 
-    if ( glm::any( glm::lessThan( pixelPosXYZ, glm::vec3{ 0.0f } ) ) ||
-        glm::any( glm::greaterThanEqual( pixelPosXYZ, glm::vec3{ image->header().pixelDimensions() } ) ) )
+    const glm::vec3 HALF_VOXEL{ 0.5f };
+
+    if ( glm::any( glm::lessThan( pixelPosXYZ, -HALF_VOXEL ) ) ||
+        glm::any( glm::greaterThanEqual( pixelPosXYZ, glm::vec3{ image->header().pixelDimensions() } - HALF_VOXEL ) ) )
     {
         return std::nullopt;
     }

@@ -10,9 +10,12 @@
 #include "image/ImageTransformations.h"
 
 #include <glm/glm.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/string_cast.hpp>
 
 #include <algorithm>
 #include <cmath>
+#include <iostream>
 #include <optional>
 #include <ostream>
 #include <string>
@@ -112,6 +115,11 @@ public:
     template<typename T>
     std::optional<T> value( uint32_t component, std::size_t index ) const
     {
+        if (index >= m_header.numPixels())
+        {
+            return std::nullopt;
+        }
+
         const auto compAndOffset = getComponentAndOffsetForBuffer( component, index );
 
         if ( ! compAndOffset )
@@ -139,56 +147,94 @@ public:
 
     /// @brief Get the value of the buffer at image 3D index (i, j, k)
     template<typename T>
-    std::optional<T> value( uint32_t component, int i, int j, int k ) const
+    std::optional<T> value(uint32_t component, int i, int j, int k) const
     {
-        const glm::u64vec3 dims = m_header.pixelDimensions();
+        const glm::u64vec3& dims = m_header.pixelDimensions();
+
+        if (i < 0 || j < 0 || k < 0 ||
+            i >= static_cast<int64_t>(dims.x) ||
+            j >= static_cast<int64_t>(dims.y) ||
+            k >= static_cast<int64_t>(dims.z))
+        {
+            return std::nullopt;
+        }
 
         const std::size_t index =
             dims.x * dims.y * static_cast<std::size_t>(k) +
             dims.x * static_cast<std::size_t>(j) +
             static_cast<std::size_t>(i);
 
-        return value<T>( component, index );
+        return value<T>(component, index);
     }
 
     /// @brief Get the linearly interpolated value of the buffer at continuous image 3D index (i, j, k)
     template<typename T>
-    std::optional<T> valueLinear( uint32_t component, double i, double j, double k ) const
+    std::optional<T> valueLinear(uint32_t comp, double i, double j, double k) const
     {
         const glm::u64vec3& dims = m_header.pixelDimensions();
 
-        if ( i < 0.0 || j < 0.0 || k < 0.0 || i >= dims.x || j >= dims.y || k >= dims.z )
+        if (i < -0.5 || j < -0.5 || k < -0.5 ||
+            i > dims.x - 0.5 || j > dims.y - 0.5 || k > dims.z - 0.5)
         {
             return std::nullopt;
         }
 
-        const glm::dvec3 c{ i, j, k };
-        const glm::ivec3 f = glm::ivec3{ glm::floor(c) };
-        const glm::dvec3 diff = c - glm::floor(c);
+        // Valid image coordinates are [-0.5, N-0.5]. However, we clamp coordinates to the edge samples,
+        // which are at 0.0 and N - 1:
+        const glm::dvec3 coordClamped = glm::clamp(glm::dvec3{i, j, k}, glm::dvec3{0.0}, glm::dvec3{dims} - glm::dvec3{1.0});
+        const glm::i64vec3 f = glm::i64vec3{ glm::floor(coordClamped) };
+        const glm::dvec3 diff = coordClamped - glm::floor(coordClamped);
 
-        const auto c000 = value<double>( component, f.x + 0, f.y + 0, f.z + 0 );
-        const auto c001 = value<double>( component, f.x + 0, f.y + 0, f.z + 1 );
-        const auto c010 = value<double>( component, f.x + 0, f.y + 1, f.z + 0 );
-        const auto c011 = value<double>( component, f.x + 0, f.y + 1, f.z + 1 );
-        const auto c100 = value<double>( component, f.x + 1, f.y + 0, f.z + 0 );
-        const auto c101 = value<double>( component, f.x + 1, f.y + 0, f.z + 1 );
-        const auto c110 = value<double>( component, f.x + 1, f.y + 1, f.z + 0 );
-        const auto c111 = value<double>( component, f.x + 1, f.y + 1, f.z + 1 );
+        const auto c000 = value<double>(comp, f.x + 0, f.y + 0, f.z + 0);
+        const auto c001 = value<double>(comp, f.x + 0, f.y + 0, f.z + 1);
+        const auto c010 = value<double>(comp, f.x + 0, f.y + 1, f.z + 0);
+        const auto c011 = value<double>(comp, f.x + 0, f.y + 1, f.z + 1);
+        const auto c100 = value<double>(comp, f.x + 1, f.y + 0, f.z + 0);
+        const auto c101 = value<double>(comp, f.x + 1, f.y + 0, f.z + 1);
+        const auto c110 = value<double>(comp, f.x + 1, f.y + 1, f.z + 0);
+        const auto c111 = value<double>(comp, f.x + 1, f.y + 1, f.z + 1);
 
-        if ( ! c000 || ! c001 ||  ! c010 ||  ! c011 ||  ! c100 ||  ! c101 ||  ! c110 ||  ! c111 )
-        {
-            return std::nullopt;
-        }
+        std::optional<double> c00 = std::nullopt;
+        std::optional<double> c01 = std::nullopt;
+        std::optional<double> c10 = std::nullopt;
+        std::optional<double> c11 = std::nullopt;
 
-        const double c00 = c000.value() * (1.0 - diff.x) + c100.value() * diff.x;
-        const double c01 = c001.value() * (1.0 - diff.x) + c101.value() * diff.x;
-        const double c10 = c010.value() * (1.0 - diff.x) + c110.value() * diff.x;
-        const double c11 = c011.value() * (1.0 - diff.x) + c111.value() * diff.x;
+        if ( c000 && c100 ) { c00 = c000.value() * (1.0 - diff.x) + c100.value() * diff.x; }
+        else if ( c000 ) { c00 = c000.value(); }
+        else if ( c100 ) { c00 = c100.value(); }
 
-        const double c0 = c00 * (1.0 - diff.y) + c10 * diff.y;
-        const double c1 = c01 * (1.0 - diff.y) + c11 * diff.y;
+        if ( c001 && c101 ) { c01 = c001.value() * (1.0 - diff.x) + c101.value() * diff.x; }
+        else if ( c001 ) { c01 = c001.value(); }
+        else if ( c101 ) { c01 = c101.value(); }
 
-        return c0 * (1.0 - diff.z) + c1 * diff.z;
+        if ( c010 && c110 ) { c10 = c010.value() * (1.0 - diff.x) + c110.value() * diff.x; }
+        else if ( c010 ) { c10 = c010.value(); }
+        else if ( c110 ) { c10 = c110.value(); }
+
+        if ( c011 && c111 ) { c11 = c011.value() * (1.0 - diff.x) + c111.value() * diff.x; }
+        else if ( c010 ) { c11 = c011.value(); }
+        else if ( c111 ) { c11 = c111.value(); }
+
+        std::optional<double> c0 = std::nullopt;
+        std::optional<double> c1 = std::nullopt;
+
+        if ( c00 && c10 ) { c0 = c00.value() * (1.0 - diff.y) + c10.value() * diff.y; }
+        else if ( c00 ) { c0 = c00.value(); }
+        else if ( c10 ) { c0 = c10.value(); }
+
+        if ( c01 && c11 ) { c1 = c01.value() * (1.0 - diff.y) + c11.value() * diff.y; }
+        else if ( c01 ) { c1 = c01.value(); }
+        else if ( c11 ) { c1 = c11.value(); }
+
+        std::optional<double> c = std::nullopt;
+
+        if ( c0 && c1 ) { c = c0.value() * (1.0 - diff.z) + c1.value() * diff.z; }
+        else if ( c0 ) { c = c0.value(); }
+        else if ( c1 ) { c = c1.value(); }
+
+        // if (c) std::cout << "c = " << *c << std::endl;
+
+        return c;
     }
 
     /// @brief Set the value of the buffer at image index (i, j, k)

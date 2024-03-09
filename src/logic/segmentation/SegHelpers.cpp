@@ -12,8 +12,10 @@ LabelIndexMaps createLabelIndexMaps(
 
     std::size_t labelIndex = 0;
 
-    for ( int z = 0; z < dims.z; ++z ) {
-        for ( int y = 0; y < dims.y; ++y ) {
+    for ( int z = 0; z < dims.z; ++z )
+    {
+        for ( int y = 0; y < dims.y; ++y )
+        {
             for ( int x = 0; x < dims.x; ++x )
             {
                 const LabelType label = getSeedValue(x, y, z);

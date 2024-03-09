@@ -180,8 +180,8 @@ typename itk::Image<itk::Vector<T, VectorDim>, 3>::Pointer makeVectorImage(
     return image;
     */
 
-    using PixelType = itk::Vector<T, VectorDim>;
-    using ImportFilterType = itk::ImportImageFilter<PixelType, 3>;
+    using VectorPixelType = itk::Vector<T, VectorDim>;
+    using ImportFilterType = itk::ImportImageFilter<VectorPixelType, 3>;
 
     if ( ! imageData )
     {
@@ -232,7 +232,8 @@ typename itk::Image<itk::Vector<T, VectorDim>, 3>::Pointer makeVectorImage(
         importer->SetOrigin( origin );
         importer->SetSpacing( spacing );
         importer->SetDirection( direction );
-        importer->SetImportPointer( reinterpret_cast<PixelType*>( const_cast<T*>(imageData) ), numPixels, filterOwnsBuffer );
+        importer->SetImportPointer( reinterpret_cast<VectorPixelType*>(
+            const_cast<T*>(imageData) ), numPixels, filterOwnsBuffer );
         importer->Update();
 
         return importer->GetOutput();

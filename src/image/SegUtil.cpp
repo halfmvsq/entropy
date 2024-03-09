@@ -252,7 +252,7 @@ void updateSeg(
         const glm::uvec3& size, const int64_t* data ) >& updateSegTexture
     )
 {
-    static constexpr size_t sk_comp = 0;
+    static constexpr std::size_t sk_comp = 0;
     static const glm::ivec3 sk_voxelOne{ 1, 1, 1 };
 
     // Create a rectangular block of contiguous voxel value data that will be set in the texture:
@@ -307,10 +307,10 @@ void updateSeg(
     const glm::uvec3 dataSize{ maxVoxel - minVoxel + sk_voxelOne };
 
     // Safety check:
-    const size_t N =
-        static_cast<size_t>( dataSize.x ) *
-        static_cast<size_t>( dataSize.y ) *
-        static_cast<size_t>( dataSize.z );
+    const std::size_t N =
+        static_cast<std::size_t>( dataSize.x ) *
+        static_cast<std::size_t>( dataSize.y ) *
+        static_cast<std::size_t>( dataSize.z );
 
     if ( N != voxelPositions.size() || N != voxelValues.size() )
     {
@@ -319,7 +319,7 @@ void updateSeg(
     }
 
     // Set values in the segmentation image:
-    for ( size_t i = 0; i < voxelPositions.size(); ++i )
+    for ( std::size_t i = 0; i < voxelPositions.size(); ++i )
     {
         seg.setValue( sk_comp, voxelPositions[i].x, voxelPositions[i].y, voxelPositions[i].z, voxelValues[i] );
     }
@@ -417,7 +417,7 @@ void fillSegmentationWithPolygon(
         const glm::uvec3& size, const int64_t* data ) >& updateSegTexture
     )
 {
-    static constexpr size_t OUTER_BOUNDARY = 0;
+    static constexpr std::size_t OUTER_BOUNDARY = 0;
 
     // Fill based on corners of voxels?
     // If true, then the test for whether a voxel is in the polygon is based only the voxel center.
@@ -459,17 +459,12 @@ void fillSegmentationWithPolygon(
    const glm::vec2 annotPlaneAabbMinCorner = aabb->first;
    const glm::vec2 annotPlaneAabbMaxCorner = aabb->second;
 
-   const glm::ivec3 pixelAabbMinCorner =
-       convertPointFromAnnotPlaneToRoundedSegPixelCoords( annotPlaneAabbMinCorner );
-
-   const glm::ivec3 pixelAabbMaxCorner =
-       convertPointFromAnnotPlaneToRoundedSegPixelCoords( annotPlaneAabbMaxCorner );
-
+   const glm::ivec3 pixelAabbMinCorner = convertPointFromAnnotPlaneToRoundedSegPixelCoords( annotPlaneAabbMinCorner );
+   const glm::ivec3 pixelAabbMaxCorner = convertPointFromAnnotPlaneToRoundedSegPixelCoords( annotPlaneAabbMaxCorner );
 
    // Polygon vertices in the space of the annotation plane
    const std::vector<glm::vec2>& annotPlaneVertices = annot->getBoundaryVertices( OUTER_BOUNDARY );
    if ( annotPlaneVertices.empty() ) return;
-
 
    // Subject plane normal vector transformed into Voxel space:
    const glm::vec3 pixelAnnotPlaneNormal = glm::normalize(
@@ -484,8 +479,7 @@ void fillSegmentationWithPolygon(
 
    // Annotation plane in Pixel space:
    const glm::vec4 pixelPlaneEquation = math::makePlane(
-               pixelAnnotPlaneNormal,
-               glm::vec3{ pixelAnnotPlanePoint / pixelAnnotPlanePoint.w } );
+        pixelAnnotPlaneNormal, glm::vec3{ pixelAnnotPlanePoint / pixelAnnotPlanePoint.w } );
 
 
    // Loop over the AABB in Pixel/Voxel space. Note that this is inefficient and tests
@@ -526,22 +520,14 @@ void fillSegmentationWithPolygon(
 
                if ( math::pnpoly( annotPlaneVertices, annotPlanePos ) ||
                     ( sk_fillBasedOnCorners &&
-                      ( math::pnpoly( annotPlaneVertices, convertPointFromSegPixelCoordsToAnnotPlane(
-                                          pixelPos + glm::vec3{ 0.5f, 0.5f, 0.5f } ) ) ||
-                        math::pnpoly( annotPlaneVertices, convertPointFromSegPixelCoordsToAnnotPlane(
-                                          pixelPos + glm::vec3{ 0.5f, 0.5f, -0.5f } ) ) ||
-                        math::pnpoly( annotPlaneVertices, convertPointFromSegPixelCoordsToAnnotPlane(
-                                          pixelPos + glm::vec3{ 0.5f, -0.5f, 0.5f } ) ) ||
-                        math::pnpoly( annotPlaneVertices, convertPointFromSegPixelCoordsToAnnotPlane(
-                                          pixelPos + glm::vec3{ 0.5f, -0.5f, -0.5f } ) ) ||
-                        math::pnpoly( annotPlaneVertices, convertPointFromSegPixelCoordsToAnnotPlane(
-                                          pixelPos + glm::vec3{ -0.5f, 0.5f, 0.5f } ) ) ||
-                        math::pnpoly( annotPlaneVertices, convertPointFromSegPixelCoordsToAnnotPlane(
-                                          pixelPos + glm::vec3{ -0.5f, 0.5f, -0.5f } ) ) ||
-                        math::pnpoly( annotPlaneVertices, convertPointFromSegPixelCoordsToAnnotPlane(
-                                          pixelPos + glm::vec3{ -0.5f, -0.5f, 0.5f } ) ) ||
-                        math::pnpoly( annotPlaneVertices, convertPointFromSegPixelCoordsToAnnotPlane(
-                                          pixelPos + glm::vec3{ -0.5f, -0.5f, -0.5f } ) ) ) ) )
+                      ( math::pnpoly( annotPlaneVertices, convertPointFromSegPixelCoordsToAnnotPlane( pixelPos + glm::vec3{ 0.5f, 0.5f, 0.5f } ) ) ||
+                        math::pnpoly( annotPlaneVertices, convertPointFromSegPixelCoordsToAnnotPlane( pixelPos + glm::vec3{ 0.5f, 0.5f, -0.5f } ) ) ||
+                        math::pnpoly( annotPlaneVertices, convertPointFromSegPixelCoordsToAnnotPlane( pixelPos + glm::vec3{ 0.5f, -0.5f, 0.5f } ) ) ||
+                        math::pnpoly( annotPlaneVertices, convertPointFromSegPixelCoordsToAnnotPlane( pixelPos + glm::vec3{ 0.5f, -0.5f, -0.5f } ) ) ||
+                        math::pnpoly( annotPlaneVertices, convertPointFromSegPixelCoordsToAnnotPlane( pixelPos + glm::vec3{ -0.5f, 0.5f, 0.5f } ) ) ||
+                        math::pnpoly( annotPlaneVertices, convertPointFromSegPixelCoordsToAnnotPlane( pixelPos + glm::vec3{ -0.5f, 0.5f, -0.5f } ) ) ||
+                        math::pnpoly( annotPlaneVertices, convertPointFromSegPixelCoordsToAnnotPlane( pixelPos + glm::vec3{ -0.5f, -0.5f, 0.5f } ) ) ||
+                        math::pnpoly( annotPlaneVertices, convertPointFromSegPixelCoordsToAnnotPlane( pixelPos + glm::vec3{ -0.5f, -0.5f, -0.5f } ) ) ) ) )
                {
                    voxelsToChange.insert( roundedPixelPos );
                    continue;

@@ -14,9 +14,6 @@
 namespace
 {
 
-// Default source component type and value
-using DefaultSrcComponentType = float;
-
 // Statistics per component are stored as double
 using StatsType = double;
 

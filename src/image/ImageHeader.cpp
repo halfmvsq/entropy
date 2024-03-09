@@ -73,22 +73,27 @@ const ImageHeaderOverrides& ImageHeader::getHeaderOverrides() const
 void ImageHeader::setSpace( const SpaceInfo& spaceInfo )
 {
     const uint32_t numDim = spaceInfo.m_numDimensions;
-    std::vector<size_t> dims = spaceInfo.m_dimensions;
+    std::vector<std::size_t> dims = spaceInfo.m_dimensions;
     std::vector<double> orig = spaceInfo.m_origin;
-    std::vector<double> space = spaceInfo.m_spacing;
+    std::vector<double> spacing = spaceInfo.m_spacing;
     std::vector< std::vector<double> > dirs = spaceInfo.m_directions;
 
     // Expect a 3D image
-    if ( numDim != 3 || orig.size() != 3 || space.size() != 3 || dims.size() != 3 || dirs.size() != 3 )
+    if ( numDim != 3 || orig.size() != 3 || spacing.size() != 3 || dims.size() != 3 || dirs.size() != 3 )
     {
         spdlog::debug( "Vector sizes: numDims = {}, origin = {}, spacing = {}, dims = {}, directions = {}",
-                       numDim, orig.size(), space.size(), dims.size(), dirs.size() );
+                       numDim, orig.size(), spacing.size(), dims.size(), dirs.size() );
 
-        if ( numDim == 2 && orig.size() == 2 && space.size() == 2 && dims.size() == 2 && dirs.size() == 4 )
+        if ( numDim == 1 && orig.size() == 1 && spacing.size() == 1 && dims.size() == 1 && dirs.size() == 1 )
         {
-            // The image is 2D: augment to 3D
+            // The image is 1D: augment to 3D
             orig.push_back( 0.0 );
-            space.push_back( 1.0 );
+            orig.push_back( 0.0 );
+
+            spacing.push_back( 1.0 );
+            spacing.push_back( 1.0 );
+
+            dims.push_back( 1 );
             dims.push_back( 1 );
 
             std::vector< std::vector<double> > d3x3( 3 );
@@ -96,11 +101,43 @@ void ImageHeader::setSpace( const SpaceInfo& spaceInfo )
             d3x3[1].resize( 3 );
             d3x3[2].resize( 3 );
 
-            d3x3[0][0] = dirs[0][0];  d3x3[0][1] = dirs[0][1];  d3x3[0][2] = 0.0;
-            d3x3[1][0] = dirs[1][0];  d3x3[1][1] = dirs[1][1];  d3x3[1][2] = 0.0;
-            d3x3[2][0] = 0.0;         d3x3[2][1] = 0.0;         d3x3[2][2] = 1.0;
+            const glm::dvec3 d0 = glm::normalize( glm::dvec3{ dirs[0][0], 0.0, 0.0 } );
+            const glm::dvec3 d1 = glm::normalize( glm::dvec3{ 0.0, 1.0, 0.0 } );
+            const glm::dvec3 d2 = glm::normalize( glm::cross(d0, d1) );
 
-            dirs = std::move( d3x3 );
+            for (uint32_t i = 0; i < 3; ++i)
+            {
+                d3x3[0][i] = d0[i];
+                d3x3[1][i] = d1[i];
+                d3x3[2][i] = d2[i];
+            }
+
+            dirs = std::move(d3x3);
+        }
+        else if ( numDim == 2 && orig.size() == 2 && spacing.size() == 2 && dims.size() == 2 && dirs.size() == 2 )
+        {
+            // The image is 2D: augment to 3D
+            orig.push_back( 0.0 );
+            spacing.push_back( 1.0 );
+            dims.push_back( 1 );
+
+            std::vector< std::vector<double> > d3x3( 3 );
+            d3x3[0].resize( 3 );
+            d3x3[1].resize( 3 );
+            d3x3[2].resize( 3 );
+
+            const glm::dvec3 d0 = glm::normalize( glm::dvec3{ dirs[0][0], dirs[0][1], 0.0 } );
+            const glm::dvec3 d1 = glm::normalize( glm::dvec3{ dirs[1][0], dirs[1][1], 0.0 } );
+            const glm::dvec3 d2 = glm::normalize( glm::cross(d0, d1) );
+
+            for (uint32_t i = 0; i < 3; ++i)
+            {
+                d3x3[0][i] = d0[i];
+                d3x3[1][i] = d1[i];
+                d3x3[2][i] = d2[i];
+            }
+
+            dirs = std::move(d3x3);
         }
         else
         {
@@ -112,7 +149,7 @@ void ImageHeader::setSpace( const SpaceInfo& spaceInfo )
 
     m_spacing = m_headerOverrides.m_useIdentityPixelSpacings
         ? glm::vec3( 1.0f )
-        : glm::vec3{ space[0], space[1], space[2] };
+        : glm::vec3{ spacing[0], spacing[1], spacing[2] };
 
     m_origin = m_headerOverrides.m_useZeroPixelOrigin
         ? glm::vec3( 0.0f )
