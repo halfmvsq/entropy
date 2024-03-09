@@ -10,8 +10,6 @@
 #include "image/ImageTransformations.h"
 
 #include <glm/glm.hpp>
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/gtx/string_cast.hpp>
 
 #include <algorithm>
 #include <cmath>
@@ -65,12 +63,10 @@ public:
      * @param imageDataComponents Must match the format specified in \c bufferType
      * If the components are interleaved, then component 0 holds all buffers
      */
-    Image(
-        const ImageHeader& header,
-        std::string displayName,
-        ImageRepresentation imageRep,
-        MultiComponentBufferType bufferType,
-        const std::vector<const void*> imageDataComponents );
+    Image( const ImageHeader& header, std::string displayName,
+           ImageRepresentation imageRep,
+           MultiComponentBufferType bufferType,
+           const std::vector<const void*> imageDataComponents );
 
     Image( const Image& ) = default;
     Image& operator=( const Image& ) = default;
@@ -181,7 +177,9 @@ public:
 
         // Valid image coordinates are [-0.5, N-0.5]. However, we clamp coordinates to the edge samples,
         // which are at 0.0 and N - 1:
-        const glm::dvec3 coordClamped = glm::clamp(glm::dvec3{i, j, k}, glm::dvec3{0.0}, glm::dvec3{dims} - glm::dvec3{1.0});
+        const glm::dvec3 coordClamped = glm::clamp(glm::dvec3{i, j, k},
+            glm::dvec3{0.0}, glm::dvec3{dims} - glm::dvec3{1.0});
+
         const glm::i64vec3 f = glm::i64vec3{ glm::floor(coordClamped) };
         const glm::dvec3 diff = coordClamped - glm::floor(coordClamped);
 
@@ -194,10 +192,8 @@ public:
         const auto c110 = value<double>(comp, f.x + 1, f.y + 1, f.z + 0);
         const auto c111 = value<double>(comp, f.x + 1, f.y + 1, f.z + 1);
 
-        std::optional<double> c00 = std::nullopt;
-        std::optional<double> c01 = std::nullopt;
-        std::optional<double> c10 = std::nullopt;
-        std::optional<double> c11 = std::nullopt;
+        // Interpolate along x:
+        std::optional<double> c00, c01, c10, c11;
 
         if ( c000 && c100 ) { c00 = c000.value() * (1.0 - diff.x) + c100.value() * diff.x; }
         else if ( c000 ) { c00 = c000.value(); }
@@ -215,8 +211,8 @@ public:
         else if ( c010 ) { c11 = c011.value(); }
         else if ( c111 ) { c11 = c111.value(); }
 
-        std::optional<double> c0 = std::nullopt;
-        std::optional<double> c1 = std::nullopt;
+        // Interpolate along y:
+        std::optional<double> c0, c1;
 
         if ( c00 && c10 ) { c0 = c00.value() * (1.0 - diff.y) + c10.value() * diff.y; }
         else if ( c00 ) { c0 = c00.value(); }
@@ -226,13 +222,12 @@ public:
         else if ( c01 ) { c1 = c01.value(); }
         else if ( c11 ) { c1 = c11.value(); }
 
-        std::optional<double> c = std::nullopt;
+        // Interpolate along z:
+        std::optional<double> c;
 
         if ( c0 && c1 ) { c = c0.value() * (1.0 - diff.z) + c1.value() * diff.z; }
         else if ( c0 ) { c = c0.value(); }
         else if ( c1 ) { c = c1.value(); }
-
-        // if (c) std::cout << "c = " << *c << std::endl;
 
         return c;
     }
@@ -241,6 +236,16 @@ public:
     template<typename T>
     bool setValue( uint32_t component, int i, int j, int k, T value )
     {
+        const glm::u64vec3& dims = m_header.pixelDimensions();
+
+        if (i < 0 || j < 0 || k < 0 ||
+            i >= static_cast<int64_t>(dims.x) ||
+            j >= static_cast<int64_t>(dims.y) ||
+            k >= static_cast<int64_t>(dims.z))
+        {
+            return false;
+        }
+
         const auto compAndOffset = getComponentAndOffsetForBuffer( component, i, j, k );
 
         if ( ! compAndOffset )
