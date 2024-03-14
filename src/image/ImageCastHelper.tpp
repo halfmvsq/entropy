@@ -21,17 +21,14 @@ template< typename SrcCompType, typename DstCompType >
 std::vector<DstCompType> createBuffer_dispatch( const void* buffer, std::size_t numElements )
 {
     // Lowest and max values of destination component type, cast to source component type
-    static const SrcCompType k_lowestValue =
-        static_cast<SrcCompType>( std::numeric_limits<DstCompType>::lowest() );
-
-    static const SrcCompType k_maximumValue =
-        static_cast<SrcCompType>( std::numeric_limits<DstCompType>::max() );
+    static const SrcCompType k_lowestValue = static_cast<SrcCompType>( std::numeric_limits<DstCompType>::lowest() );
+    static const SrcCompType k_maximumValue = static_cast<SrcCompType>( std::numeric_limits<DstCompType>::max() );
 
     std::vector<DstCompType> data( numElements, 0 );
 
     if ( ! buffer )
     {
-        spdlog::error( "Null buffer when creating buffer" );
+        spdlog::error( "Null buffer when creating buffer: returning zero data" );
         return data;
     }
 

@@ -25,113 +25,134 @@ static constexpr uint32_t MAX_INTERLEAVED_COMPS = 4;
 
 Image::Image(
     const fs::path& fileName,
-    ImageRepresentation imageRep,
-    MultiComponentBufferType bufferType )
+    const ImageRepresentation& imageRep,
+    const MultiComponentBufferType& bufferType)
     :
-      m_data_int8(),
-      m_data_uint8(),
-      m_data_int16(),
-      m_data_uint16(),
-      m_data_int32(),
-      m_data_uint32(),
-      m_data_float32(),
+    m_data_int8(),
+    m_data_uint8(),
+    m_data_int16(),
+    m_data_uint16(),
+    m_data_int32(),
+    m_data_uint32(),
+    m_data_float32(),
 
-      m_imageRep( std::move(imageRep) ),
-      m_bufferType( std::move(bufferType) ),
+    m_imageRep(imageRep),
+    m_bufferType(bufferType),
 
-      m_ioInfoOnDisk(),
-      m_ioInfoInMemory()
+    m_ioInfoOnDisk(),
+    m_ioInfoInMemory()
 {
-    // Read all data from disk to an ITK image with 32-bit floating point pixel components
-    using ReadComponentType = float;
-    using ComponentImageType = ::itk::Image<ReadComponentType, 3>;
+    // Read image with floating point components from disk to an ITK image with 32-bit float point pixel components
+    using ReadFloatComponentType = float;
+    using FloatComponentImageType = ::itk::Image<ReadFloatComponentType, 3>;
 
-    const itk::ImageIOBase::Pointer imageIo = createStandardImageIo( fileName.c_str() );
+    // Read image with integer components from disk to an ITK image with 32-bit signed integer pixel components
+    // using ReadIntegerComponentType = int32_t;
+    // using IntegerComponentImageType = ::itk::Image<ReadIntegerComponentType, 3>;
 
-    if ( ! imageIo || imageIo.IsNull() )
+    const itk::ImageIOBase::Pointer imageIo = createStandardImageIo(fileName.c_str());
+
+    if (! imageIo || imageIo.IsNull())
     {
-        spdlog::error( "Error creating ImageIOBase for image from file {}", fileName );
-        throw_debug( "Error creating ImageIOBase" )
+        spdlog::error("Error creating itk::ImageIOBase for image from file {}", fileName);
+        throw_debug("Error creating itk::ImageIOBase")
     }
 
-    if ( ! m_ioInfoOnDisk.set( imageIo ) )
+    if (! m_ioInfoOnDisk.set(imageIo))
     {
-        spdlog::error( "Error setting image IO information for image from file {}", fileName );
-        throw_debug( "Error setting image IO information" )
+        spdlog::error("Error setting image IO information for image from file {}", fileName);
+        throw_debug("Error setting image IO information")
     }
 
     // The image information in memory may not match the information on disk
     m_ioInfoInMemory = m_ioInfoOnDisk;
 
+    const bool isComponentFloatingPoint =
+        m_ioInfoOnDisk.m_componentInfo.m_componentType == ::itk::IOComponentEnum::FLOAT ||
+        m_ioInfoOnDisk.m_componentInfo.m_componentType == ::itk::IOComponentEnum::DOUBLE ||
+        m_ioInfoOnDisk.m_componentInfo.m_componentType == ::itk::IOComponentEnum::LDOUBLE;
+
     // Source and destination component ITK types
-    static constexpr ::itk::IOComponentEnum srcItkCompType = ::itk::IOComponentEnum::FLOAT;
+    const ::itk::IOComponentEnum srcItkCompType = isComponentFloatingPoint
+        ? ::itk::IOComponentEnum::FLOAT
+        : ::itk::IOComponentEnum::INT;
+
     const ::itk::IOComponentEnum dstItkCompType = m_ioInfoInMemory.m_componentInfo.m_componentType;
 
     const std::size_t numPixels = m_ioInfoOnDisk.m_sizeInfo.m_imageSizeInPixels;
     const uint32_t numComps = m_ioInfoOnDisk.m_pixelInfo.m_numComponents;
-    const bool isVectorImage = ( numComps > 1 );
+    const bool isVectorImage = (numComps > 1);
 
-    spdlog::info( "Attempting to load image from {} with {} pixels and {} components per pixel",
-                  fileName, numPixels, numComps );
+    spdlog::info("Attempting to load image from {} with {} pixels and {} components per pixel", fileName, numPixels, numComps );
 
-    if ( isVectorImage )
+    if (isComponentFloatingPoint)
+    {
+        // run templated version of all code below on ReadFloatComponentType
+    }
+    else
+    {
+        // run templated version of all code below on ReadIntComponentType
+    }
+
+    if (isVectorImage)
     {
         // Load multi-component image
-        typename itk::ImageBase<3>::Pointer baseImage = readImage<ReadComponentType, 3, true>( fileName );
+        constexpr bool pixelIsVector = true;
+        typename itk::ImageBase<3>::Pointer baseImage = readImage<ReadFloatComponentType, 3, pixelIsVector>(fileName);
 
-        if ( ! baseImage )
+        if (! baseImage)
         {
-            spdlog::error( "Unable to read vector ImageBase from file {}", fileName );
-            throw_debug( "Unable to read vector image" )
+            spdlog::error("Unable to read vector ImageBase from file {}", fileName);
+            throw_debug("Unable to read vector image")
         }
 
         // Split the base image into component images. Load a maximum of MAX_COMPS components
         // for an image with interleaved component buffers.
         uint32_t numCompsToLoad = numComps;
 
-        if ( MultiComponentBufferType::InterleavedImage == m_bufferType )
+        if (MultiComponentBufferType::InterleavedImage == m_bufferType)
         {
-            numCompsToLoad = std::min( numCompsToLoad, MAX_INTERLEAVED_COMPS );
+            numCompsToLoad = std::min(numCompsToLoad, MAX_INTERLEAVED_COMPS);
 
-            if ( numComps > MAX_INTERLEAVED_COMPS )
+            if (numComps > MAX_INTERLEAVED_COMPS)
             {
-                spdlog::warn( "The number of image components ({}) exceeds that maximum that will be loaded ({}) "
-                              "because this image uses interleaved buffer format", numComps, MAX_INTERLEAVED_COMPS );
+                spdlog::warn("The number of image components is {}, which exceeds the maximum that is supported for the "
+                             "interleaved buffer format. Only {} components will be loaded.", numComps, MAX_INTERLEAVED_COMPS);
             }
         }
 
-        std::vector< typename ComponentImageType::Pointer > componentImages =
-            splitImageIntoComponents<ReadComponentType, 3>( baseImage );
+        std::vector<typename FloatComponentImageType::Pointer> componentImages =
+            splitImageIntoComponents<ReadFloatComponentType, 3>(baseImage);
 
-        if ( componentImages.size() < numCompsToLoad )
+        if (componentImages.size() < numCompsToLoad)
         {
-            spdlog::error( "Only {} component images were loaded, but {} components were expected",
-                           componentImages.size(), numCompsToLoad );
+            spdlog::error("Only {} component images were loaded, but {} components were expected",
+                          componentImages.size(), numCompsToLoad);
             numCompsToLoad = componentImages.size();
         }
 
-        if ( ImageRepresentation::Segmentation == m_imageRep )
+        if (ImageRepresentation::Segmentation == m_imageRep)
         {
-            spdlog::warn( "Loading a segmentation image from {} with {} components. "
-                          "Only the first component of the segmentation will be used", fileName, numComps );
+            spdlog::warn("Loading a segmentation image from {} with {} components. "
+                         "Only the first component of the segmentation will be used", fileName, numComps);
             numCompsToLoad = 1;
         }
 
         // Adjust the number of components in the image header
-        m_header.setNumComponentsPerPixel( numCompsToLoad );
+        m_header.setNumComponentsPerPixel(numCompsToLoad);
 
-        if ( 0 == numCompsToLoad )
+        if (0 == numCompsToLoad)
         {
-            spdlog::error( "No components to load for image from file {}", fileName );
-            throw_debug( "No components to load for image" )
+            spdlog::error("No components to load for image from file {}", fileName);
+            throw_debug("No components to load for image")
         }
 
         // If interleaving vector components, then create a single buffer
-        std::unique_ptr<ReadComponentType[]> allComponentBuffers = nullptr;
+        std::unique_ptr<ReadFloatComponentType[]> allComponentBuffers = nullptr;
 
         if ( MultiComponentBufferType::InterleavedImage == m_bufferType )
         {
-            allComponentBuffers = std::make_unique<ReadComponentType[]>( numPixels * numCompsToLoad );
+            allComponentBuffers = std::make_unique<ReadFloatComponentType[]>( numPixels * numCompsToLoad );
 
             if ( ! allComponentBuffers )
             {
@@ -149,7 +170,7 @@ Image::Image(
                 throw_debug( "Null vector component for image" )
             }
 
-            const ReadComponentType* buffer = componentImages[i]->GetBufferPointer();
+            const ReadFloatComponentType* buffer = componentImages[i]->GetBufferPointer();
 
             if ( ! buffer )
             {
@@ -161,6 +182,7 @@ Image::Image(
             {
             case MultiComponentBufferType::SeparateImages:
             {
+                // switch
                 if ( ImageRepresentation::Segmentation == m_imageRep )
                 {
                     if ( ! loadSegBuffer( static_cast<const void*>( buffer ), numPixels, srcItkCompType, dstItkCompType ) )
@@ -195,6 +217,7 @@ Image::Image(
         {
             const std::size_t numElements = numPixels * numComps;
 
+            // switch
             if ( ImageRepresentation::Segmentation == m_imageRep )
             {
                 if ( ! loadSegBuffer( static_cast<const void*>( allComponentBuffers.get() ),
@@ -218,7 +241,8 @@ Image::Image(
     else
     {
         // Load scalar, single-component image
-        typename itk::ImageBase<3>::Pointer baseImage = readImage<ReadComponentType, 3, false>( fileName );
+        constexpr bool pixelIsVector = false;
+        typename itk::ImageBase<3>::Pointer baseImage = readImage<ReadFloatComponentType, 3, pixelIsVector>( fileName );
 
         if ( ! baseImage )
         {
@@ -226,7 +250,7 @@ Image::Image(
             throw_debug( "Unable to read image" )
         }
 
-        typename ComponentImageType::Pointer image = downcastImageBaseToImage<ReadComponentType, 3>( baseImage );
+        typename FloatComponentImageType::Pointer image = downcastImageBaseToImage<ReadFloatComponentType, 3>( baseImage );
 
         if ( ! image )
         {
@@ -234,7 +258,7 @@ Image::Image(
             throw_debug( "Null image" )
         }
 
-        const ReadComponentType* buffer = image->GetBufferPointer();
+        const ReadFloatComponentType* buffer = image->GetBufferPointer();
 
         if ( ! buffer )
         {
@@ -242,6 +266,7 @@ Image::Image(
             throw_debug( "Null buffer of scalar image" )
         }
 
+        // switch
         if ( ImageRepresentation::Segmentation == m_imageRep )
         {
             if ( ! loadSegBuffer( static_cast<const void*>( buffer ), numPixels, srcItkCompType, dstItkCompType ) )
@@ -277,10 +302,10 @@ Image::Image(
 
 Image::Image(
     const ImageHeader& header,
-    std::string displayName,
-    ImageRepresentation imageRep,
-    MultiComponentBufferType bufferType,
-    const std::vector<const void*> imageDataComponents )
+    const std::string& displayName,
+    const ImageRepresentation& imageRep,
+    const MultiComponentBufferType& bufferType,
+    const std::vector<const void*>& imageDataComponents )
     :
     m_data_int8(),
     m_data_uint8(),
@@ -290,8 +315,8 @@ Image::Image(
     m_data_uint32(),
     m_data_float32(),
 
-    m_imageRep( std::move(imageRep) ),
-    m_bufferType( std::move(bufferType) ),
+    m_imageRep(imageRep),
+    m_bufferType(bufferType),
 
     m_ioInfoOnDisk(),
     m_ioInfoInMemory(),
@@ -393,6 +418,7 @@ Image::Image(
 
             for ( std::size_t c = 0; c < m_header.numComponentsPerPixel(); ++c )
             {
+                // turn into switch
                 if ( ImageRepresentation::Segmentation == m_imageRep )
                 {
                     if ( ! loadSegBuffer( imageDataComponents[c], numPixels, srcItkCompType, dstItkCompType ) )
@@ -415,6 +441,7 @@ Image::Image(
             // Load a single buffer with interleaved components:
             const std::size_t N = numPixels * numComps;
 
+            // turn into switch
             if ( ImageRepresentation::Segmentation == m_imageRep )
             {
                 if ( ! loadSegBuffer( imageDataComponents[0], N, srcItkCompType, dstItkCompType ) )
@@ -435,6 +462,7 @@ Image::Image(
     }
     else
     {
+        // turn into switch
         if ( ImageRepresentation::Segmentation == m_imageRep )
         {
             if ( ! loadSegBuffer( imageDataComponents[0], numPixels, srcItkCompType, dstItkCompType ) )

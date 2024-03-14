@@ -56,10 +56,10 @@ ImVec2 scaledToolbarButtonSize( const glm::vec2& contentScale )
 }
 
 
-const std::string sk_referenceAndActiveImageMessage( "This is the reference and active image" );
-const std::string sk_referenceImageMessage( "This is the reference image" );
-const std::string sk_activeImageMessage( "This is the active image" );
-const std::string sk_nonActiveImageMessage( "This is not the active image" );
+const char* sk_referenceAndActiveImageMessage = "This is the reference and active image";
+const char* sk_referenceImageMessage = "This is the reference image";
+const char* sk_activeImageMessage = "This is the active image";
+const char* sk_nonActiveImageMessage = "This is not the active image";
 
 static const ImGuiColorEditFlags sk_colorEditFlags =
     ImGuiColorEditFlags_NoInputs |
@@ -82,6 +82,7 @@ std::pair< ImVec4, ImVec4 > computeHeaderBgAndTextColors( const glm::vec3& color
     return { headerColor, headerTextColor };
 }
 
+/*
 double RandomGauss() {
     static double V1, V2, S;
     static int phase = 0;
@@ -115,63 +116,178 @@ struct NormalDistribution {
 void Demo_Histogram()
 {
     static ImPlotHistogramFlags hist_flags = ImPlotHistogramFlags_Density;
+
     static int  bins       = 50;
     static double mu       = 5;
     static double sigma    = 2;
+
     ImGui::SetNextItemWidth(200);
+
     if (ImGui::RadioButton("Sqrt",bins==ImPlotBin_Sqrt))       { bins = ImPlotBin_Sqrt;    } ImGui::SameLine();
     if (ImGui::RadioButton("Sturges",bins==ImPlotBin_Sturges)) { bins = ImPlotBin_Sturges; } ImGui::SameLine();
     if (ImGui::RadioButton("Rice",bins==ImPlotBin_Rice))       { bins = ImPlotBin_Rice;    } ImGui::SameLine();
     if (ImGui::RadioButton("Scott",bins==ImPlotBin_Scott))     { bins = ImPlotBin_Scott;   } ImGui::SameLine();
     if (ImGui::RadioButton("N Bins",bins>=0))                  { bins = 50;                }
-    if (bins>=0) {
+
+    if (bins>=0)
+    {
         ImGui::SameLine();
         ImGui::SetNextItemWidth(200);
-        ImGui::SliderInt("##Bins", &bins, 1, 100);
+        ImGui::SliderInt("##Bins", &bins, 1, 1000);
     }
-    ImGui::CheckboxFlags("Horizontal", (unsigned int*)&hist_flags, ImPlotHistogramFlags_Horizontal);
-    ImGui::SameLine();
-    ImGui::CheckboxFlags("Density", (unsigned int*)&hist_flags, ImPlotHistogramFlags_Density);
-    ImGui::SameLine();
+
+    ImGui::CheckboxFlags("Horizontal", (unsigned int*)&hist_flags, ImPlotHistogramFlags_Horizontal); ImGui::SameLine();
+    ImGui::CheckboxFlags("Density", (unsigned int*)&hist_flags, ImPlotHistogramFlags_Density); ImGui::SameLine();
     ImGui::CheckboxFlags("Cumulative", (unsigned int*)&hist_flags, ImPlotHistogramFlags_Cumulative);
 
     static bool range = false;
     ImGui::Checkbox("Range", &range);
-    static float rmin = -3;
-    static float rmax = 13;
-    if (range) {
+
+    static std::array<float, 2> rminmax = { -3, 13 };
+
+    if (range)
+    {
         ImGui::SameLine();
         ImGui::SetNextItemWidth(200);
-        ImGui::DragFloat2("##Range",&rmin,0.1f,-3,13);
+        ImGui::DragFloat2("##Range", rminmax.data(), 0.1f, -3, 13);
         ImGui::SameLine();
         ImGui::CheckboxFlags("Exclude Outliers", (unsigned int*)&hist_flags, ImPlotHistogramFlags_NoOutliers);
     }
-    static NormalDistribution<100000> dist(mu, sigma);
+
+    static NormalDistribution<1000000> dist(mu, sigma);
     static double x[100];
     static double y[100];
-    if (hist_flags & ImPlotHistogramFlags_Density) {
-        for (int i = 0; i < 100; ++i) {
+
+    if (hist_flags & ImPlotHistogramFlags_Density)
+    {
+        for (int i = 0; i < 100; ++i)
+        {
             x[i] = -3 + 16 * (double)i/99.0;
             y[i] = exp( - (x[i]-mu)*(x[i]-mu) / (2*sigma*sigma)) / (sigma * sqrt(2*3.141592653589793238));
         }
-        if (hist_flags & ImPlotHistogramFlags_Cumulative) {
+
+        if (hist_flags & ImPlotHistogramFlags_Cumulative)
+        {
             for (int i = 1; i < 100; ++i)
                 y[i] += y[i-1];
+
             for (int i = 0; i < 100; ++i)
                 y[i] /= y[99];
         }
     }
 
-    if (ImPlot::BeginPlot("##Histograms")) {
-        ImPlot::SetupAxes(nullptr,nullptr,ImPlotAxisFlags_AutoFit,ImPlotAxisFlags_AutoFit);
-        ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL,0.5f);
-        ImPlot::PlotHistogram("Empirical", dist.Data, 100000, bins, 1.0, range ? ImPlotRange(rmin,rmax) : ImPlotRange(), hist_flags);
-        if ((hist_flags & ImPlotHistogramFlags_Density) && !(hist_flags & ImPlotHistogramFlags_NoOutliers)) {
+    if (ImPlot::BeginPlot("Histograms"))
+    {
+        ImPlot::SetupAxes("Intensity", "Count", ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
+        ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL, 0.5f);
+
+        ImPlot::PlotHistogram("Image1", dist.Data, 1000000, bins, 1.0,
+                              range ? ImPlotRange(rminmax[0], rminmax[1]) : ImPlotRange(), hist_flags);
+
+        if ((hist_flags & ImPlotHistogramFlags_Density) && !(hist_flags & ImPlotHistogramFlags_NoOutliers))
+        {
             if (hist_flags & ImPlotHistogramFlags_Horizontal)
+            {
                 ImPlot::PlotLine("Theoretical",y,x,100);
+            }
             else
+            {
                 ImPlot::PlotLine("Theoretical",x,y,100);
+            }
         }
+        ImPlot::EndPlot();
+    }
+}
+*/
+
+template<typename T>
+void ImageHistogram(const T* data, int dataSize)
+{
+    static ImPlotHistogramFlags hist_flags = ImPlotHistogramFlags_Density;
+
+    static int  bins       = 50;
+    // static double mu       = 5;
+    // static double sigma    = 2;
+
+    ImGui::SetNextItemWidth(200);
+
+    if (ImGui::RadioButton("Sqrt",bins==ImPlotBin_Sqrt))       { bins = ImPlotBin_Sqrt;    } ImGui::SameLine();
+    if (ImGui::RadioButton("Sturges",bins==ImPlotBin_Sturges)) { bins = ImPlotBin_Sturges; } ImGui::SameLine();
+    if (ImGui::RadioButton("Rice",bins==ImPlotBin_Rice))       { bins = ImPlotBin_Rice;    } ImGui::SameLine();
+    if (ImGui::RadioButton("Scott",bins==ImPlotBin_Scott))     { bins = ImPlotBin_Scott;   } ImGui::SameLine();
+    if (ImGui::RadioButton("N Bins",bins>=0))                  { bins = 50;                }
+
+    if (bins>=0)
+    {
+        ImGui::SameLine();
+        ImGui::SetNextItemWidth(200);
+        ImGui::SliderInt("##Bins", &bins, 1, 1000);
+    }
+
+    ImGui::CheckboxFlags("Horizontal", (unsigned int*)&hist_flags, ImPlotHistogramFlags_Horizontal); ImGui::SameLine();
+    ImGui::CheckboxFlags("Density", (unsigned int*)&hist_flags, ImPlotHistogramFlags_Density); ImGui::SameLine();
+    ImGui::CheckboxFlags("Cumulative", (unsigned int*)&hist_flags, ImPlotHistogramFlags_Cumulative);
+
+
+    static bool range = false;
+    ImGui::Checkbox("Range", &range);
+
+    static std::array<float, 2> rminmax = { 0, 10 };
+
+    if (range)
+    {
+        ImGui::SameLine();
+        ImGui::SetNextItemWidth(200);
+        ImGui::DragFloat2("##Range", rminmax.data(), 0.1f, -3, 13);
+        ImGui::SameLine();
+        ImGui::CheckboxFlags("Exclude Outliers", (unsigned int*)&hist_flags, ImPlotHistogramFlags_NoOutliers);
+    }
+
+    /*
+    static NormalDistribution<1000000> dist(mu, sigma);
+    static double x[100];
+    static double y[100];
+
+    if (hist_flags & ImPlotHistogramFlags_Density)
+    {
+        for (int i = 0; i < 100; ++i)
+        {
+            x[i] = -3 + 16 * (double)i/99.0;
+            y[i] = exp( - (x[i]-mu)*(x[i]-mu) / (2*sigma*sigma)) / (sigma * sqrt(2*3.141592653589793238));
+        }
+
+        if (hist_flags & ImPlotHistogramFlags_Cumulative)
+        {
+            for (int i = 1; i < 100; ++i)
+                y[i] += y[i-1];
+
+            for (int i = 0; i < 100; ++i)
+                y[i] /= y[99];
+        }
+    }
+*/
+
+    if (ImPlot::BeginPlot("Histograms"))
+    {
+        ImPlot::SetupAxes("Intensity", "Count", ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
+        ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL, 0.5f);
+
+        ImPlot::PlotHistogram("Image1", data, dataSize, bins, 1.0,
+                              range ? ImPlotRange(rminmax[0], rminmax[1]) : ImPlotRange(), hist_flags);
+
+        /*
+        if ((hist_flags & ImPlotHistogramFlags_Density) && !(hist_flags & ImPlotHistogramFlags_NoOutliers))
+        {
+            if (hist_flags & ImPlotHistogramFlags_Horizontal)
+            {
+                ImPlot::PlotLine("Theoretical",y,x,100);
+            }
+            else
+            {
+                ImPlot::PlotLine("Theoretical",x,y,100);
+            }
+        }
+        */
         ImPlot::EndPlot();
     }
 }
@@ -418,24 +534,6 @@ void renderImageHeaderInformation(
     ImGui::SameLine(); helpMarker( "Image size in mebibytes (MiB)" );
 
     ImGui::Spacing();
-
-
-    if ( ImGui::TreeNode( "Intensity histogram" ) )
-    {
-
-//        auto f = [&imgSettings] (int idx) -> f
-//        static float arr[] = { 0.6f, 0.1f, 1.0f, 0.5f, 0.92f, 0.1f, 0.2f };
-//        ImGui::PlotHistogram( "##histogram", imgSettings.componentStatistics( 0 ).m_histogram.data(), IM_ARRAYSIZE(arr), 0, NULL, 0.0f, 1.0f, ImVec2( 0, 80.0f ) );
-
-//        IMGUI_API void          PlotHistogram(const char* label, float(*values_getter)(void* data, int idx), void* data, int values_count, int values_offset = 0, const char* overlay_text = NULL, float scale_min = FLT_MAX, float scale_max = FLT_MAX, ImVec2 graph_size = ImVec2(0, 0));
-//        ImGui::PlotHistogram("Histogram", func, NULL, display_count, 0, NULL, -1.0f, 1.0f, ImVec2(0, 80));
-
-//        ImGui::PlotLines("Lines", values, IM_ARRAYSIZE(values), values_offset, overlay, -1.0f, 1.0f, ImVec2(0, 80.0f));
-
-        Demo_Histogram();
-
-        ImGui::TreePop();
-    }
 }
 
 
@@ -622,19 +720,19 @@ void renderImageHeader(
 
     if ( isRef && isActiveImage )
     {
-        ImGui::Text( "%s", sk_referenceAndActiveImageMessage.c_str() );
+        ImGui::Text( "%s", sk_referenceAndActiveImageMessage );
     }
     else if ( isRef )
     {
-        ImGui::Text( "%s", sk_referenceImageMessage.c_str() );
+        ImGui::Text( "%s", sk_referenceImageMessage );
     }
     else if ( isActiveImage )
     {
-        ImGui::Text( "%s", sk_activeImageMessage.c_str() );
+        ImGui::Text( "%s", sk_activeImageMessage );
     }
     else
     {
-        ImGui::Text( "%s", sk_nonActiveImageMessage.c_str() );
+        ImGui::Text( "%s", sk_nonActiveImageMessage );
     }
 
 
@@ -781,8 +879,7 @@ void renderImageHeader(
                 ImGui::SameLine(); helpMarker( "Display multi-component image with color" );
 
 
-                if ( imgSettings.displayImageAsColor() &&
-                     4 == imgHeader.numComponentsPerPixel() )
+                if ( imgSettings.displayImageAsColor() && 4 == imgHeader.numComponentsPerPixel() )
                 {
                     bool ignoreAlpha = imgSettings.ignoreAlpha();
 
@@ -1748,9 +1845,41 @@ void renderImageHeader(
         ImGui::TreePop();
     }
 
-    if ( ImGui::TreeNode( "Header Information" ) )
+    if ( ImGui::TreeNode("Header Information") )
     {
-        renderImageHeaderInformation( appData, imageUid, *image, updateImageUniforms, recenterAllViews );
+        renderImageHeaderInformation(appData, imageUid, *image, updateImageUniforms, recenterAllViews);
+        ImGui::TreePop();
+    }
+
+    if ( ImGui::TreeNode("Histogram") )
+    {
+        if (Image::MultiComponentBufferType::SeparateImages == image->bufferType())
+        {
+            const void* buffer = image->bufferAsVoid( imgSettings.activeComponent() );
+            const int bufferSize = static_cast<int>(image->header().numPixels());
+
+            if (image->header().numPixels() > std::numeric_limits<int32_t>::max())
+            {
+                spdlog::warn("Number of pixels in image ({}) exceeds maximum supported by image histogram", bufferSize);
+            }
+
+            switch (image->header().memoryComponentType())
+            {
+            case ComponentType::Int8: { ImageHistogram(static_cast<const int8_t*>(buffer), bufferSize); break; }
+            case ComponentType::UInt8: { ImageHistogram(static_cast<const uint8_t*>(buffer), bufferSize); break; }
+            case ComponentType::Int16: { ImageHistogram(static_cast<const int16_t*>(buffer), bufferSize); break; }
+            case ComponentType::UInt16: { ImageHistogram(static_cast<const uint16_t*>(buffer), bufferSize); break; }
+            case ComponentType::Int32: { ImageHistogram(static_cast<const int32_t*>(buffer), bufferSize); break; }
+            case ComponentType::UInt32: { ImageHistogram(static_cast<const uint32_t*>(buffer), bufferSize); break; }
+            case ComponentType::Float32: { ImageHistogram(static_cast<const float*>(buffer), bufferSize); break; }
+            default: { break; }
+            }
+        }
+        else
+        {
+            spdlog::warn("Histograms for interleaved images are not yet supported.");
+        }
+
         ImGui::TreePop();
     }
 
@@ -1847,19 +1976,19 @@ void renderSegmentationHeader(
 
     if ( isRef && isActiveImage )
     {
-        ImGui::Text( "%s", sk_referenceAndActiveImageMessage.c_str() );
+        ImGui::Text( "%s", sk_referenceAndActiveImageMessage );
     }
     else if ( isRef )
     {
-        ImGui::Text( "%s", sk_referenceImageMessage.c_str() );
+        ImGui::Text( "%s", sk_referenceImageMessage );
     }
     else if ( isActiveImage )
     {
-        ImGui::Text( "%s", sk_activeImageMessage.c_str() );
+        ImGui::Text( "%s", sk_activeImageMessage );
     }
     else
     {
-        ImGui::Text( "%s", sk_nonActiveImageMessage.c_str() );
+        ImGui::Text( "%s", sk_nonActiveImageMessage );
     }
 
 

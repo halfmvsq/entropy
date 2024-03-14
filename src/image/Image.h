@@ -13,7 +13,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <iostream>
 #include <optional>
 #include <ostream>
 #include <string>
@@ -27,10 +26,10 @@ class Image
 {
 public:
 
-    /// What does the Image represent?
+    /// What does the image represent?
     enum class ImageRepresentation
     {
-        Image, //!< An image
+        Image, //!< A scalar or vector image
         Segmentation //!< A segmentation
     };
 
@@ -46,13 +45,13 @@ public:
      * @brief Construct Image from a file on disk
      *
      * @param[in] fileName Path to image file
-     * @param[in] imageType Indicates whether this is an image or a segmentation
+     * @param[in] imageRep Indicates whether this is an image or a segmentation
      * @param[in] bufferType Indicates whether multi-component images are loaded as
      * multiple buffers or as a single buffer with interleaved pixel components
      */
-    Image( const fs::path& fileName,
-           ImageRepresentation imageRep,
-           MultiComponentBufferType bufferType );
+    Image(const fs::path& fileName,
+          const ImageRepresentation& imageRep,
+          const MultiComponentBufferType& bufferType);
 
     /**
      * @brief Construct Image from a header and raw data
@@ -63,10 +62,11 @@ public:
      * @param imageDataComponents Must match the format specified in \c bufferType
      * If the components are interleaved, then component 0 holds all buffers
      */
-    Image( const ImageHeader& header, std::string displayName,
-           ImageRepresentation imageRep,
-           MultiComponentBufferType bufferType,
-           const std::vector<const void*> imageDataComponents );
+    Image(const ImageHeader& header,
+          const std::string& displayName,
+          const ImageRepresentation& imageRep,
+          const MultiComponentBufferType& bufferType,
+          const std::vector<const void*>& imageDataComponents );
 
     Image( const Image& ) = default;
     Image& operator=( const Image& ) = default;
@@ -107,17 +107,23 @@ public:
     void* bufferAsVoid( uint32_t component );
 
 
+    /// @brief Get a const void pointer to the sorted buffer data of an image component.
+    const void* bufferSortedAsVoid( uint32_t component ) const;
+
+    /// @brief Get a non-const void pointer to the sorted buffer data of an image component.
+    void* bufferSortedAsVoid( uint32_t component );
+
+
     /// @brief Get the value of the buffer at image 1D index
     template<typename T>
-    std::optional<T> value( uint32_t component, std::size_t index ) const
+    std::optional<T> value(uint32_t component, std::size_t index) const
     {
         if (index >= m_header.numPixels())
         {
             return std::nullopt;
         }
 
-        const auto compAndOffset = getComponentAndOffsetForBuffer( component, index );
-
+        const auto compAndOffset = getComponentAndOffsetForBuffer(component, index);
         if ( ! compAndOffset )
         {
             return std::nullopt;
@@ -128,12 +134,12 @@ public:
 
         switch ( m_header.memoryComponentType() )
         {
-        case ComponentType::Int8:    return static_cast<T>( m_data_int8.at(c)[offset] );
-        case ComponentType::UInt8:   return static_cast<T>( m_data_uint8.at(c)[offset] );
-        case ComponentType::Int16:   return static_cast<T>( m_data_int16.at(c)[offset] );
-        case ComponentType::UInt16:  return static_cast<T>( m_data_uint16.at(c)[offset] );
-        case ComponentType::Int32:   return static_cast<T>( m_data_int32.at(c)[offset] );
-        case ComponentType::UInt32:  return static_cast<T>( m_data_uint32.at(c)[offset] );
+        case ComponentType::Int8: return static_cast<T>( m_data_int8.at(c)[offset] );
+        case ComponentType::UInt8: return static_cast<T>( m_data_uint8.at(c)[offset] );
+        case ComponentType::Int16: return static_cast<T>( m_data_int16.at(c)[offset] );
+        case ComponentType::UInt16: return static_cast<T>( m_data_uint16.at(c)[offset] );
+        case ComponentType::Int32: return static_cast<T>( m_data_int32.at(c)[offset] );
+        case ComponentType::UInt32: return static_cast<T>( m_data_uint32.at(c)[offset] );
         case ComponentType::Float32: return static_cast<T>( m_data_float32.at(c)[offset] );
         default: return std::nullopt;
         }
@@ -176,13 +182,14 @@ public:
         }
 
         // Valid image coordinates are [-0.5, N-0.5]. However, we clamp coordinates to the edge samples,
-        // which are at 0.0 and N - 1:
+        // which are at 0 and N - 1:
         const glm::dvec3 coordClamped = glm::clamp(glm::dvec3{i, j, k},
             glm::dvec3{0.0}, glm::dvec3{dims} - glm::dvec3{1.0});
 
         const glm::i64vec3 f = glm::i64vec3{ glm::floor(coordClamped) };
-        const glm::dvec3 diff = coordClamped - glm::floor(coordClamped);
 
+        // Get values of all 8 neighboring pixels. If a pixel outside the image is requested,
+        // then its sampling location was outside the image and its returned value is std::none
         const auto c000 = value<double>(comp, f.x + 0, f.y + 0, f.z + 0);
         const auto c001 = value<double>(comp, f.x + 0, f.y + 0, f.z + 1);
         const auto c010 = value<double>(comp, f.x + 0, f.y + 1, f.z + 0);
@@ -192,7 +199,9 @@ public:
         const auto c110 = value<double>(comp, f.x + 1, f.y + 1, f.z + 0);
         const auto c111 = value<double>(comp, f.x + 1, f.y + 1, f.z + 1);
 
-        // Interpolate along x:
+        const glm::dvec3 diff = coordClamped - glm::floor(coordClamped);
+
+        // Interpolate along x, ignoring invalid samples:
         std::optional<double> c00, c01, c10, c11;
 
         if ( c000 && c100 ) { c00 = c000.value() * (1.0 - diff.x) + c100.value() * diff.x; }
@@ -211,7 +220,7 @@ public:
         else if ( c010 ) { c11 = c011.value(); }
         else if ( c111 ) { c11 = c111.value(); }
 
-        // Interpolate along y:
+        // Interpolate along y, ignoring invalid samples:
         std::optional<double> c0, c1;
 
         if ( c00 && c10 ) { c0 = c00.value() * (1.0 - diff.y) + c10.value() * diff.y; }
@@ -222,7 +231,7 @@ public:
         else if ( c01 ) { c1 = c01.value(); }
         else if ( c11 ) { c1 = c11.value(); }
 
-        // Interpolate along z:
+        // Interpolate along z, ignoring invalid samples:
         std::optional<double> c;
 
         if ( c0 && c1 ) { c = c0.value() * (1.0 - diff.z) + c1.value() * diff.z; }
@@ -234,7 +243,7 @@ public:
 
     /// @brief Set the value of the buffer at image index (i, j, k)
     template<typename T>
-    bool setValue( uint32_t component, int i, int j, int k, T value )
+    bool setValue(uint32_t component, int i, int j, int k, T value)
     {
         const glm::u64vec3& dims = m_header.pixelDimensions();
 
@@ -247,7 +256,6 @@ public:
         }
 
         const auto compAndOffset = getComponentAndOffsetForBuffer( component, i, j, k );
-
         if ( ! compAndOffset )
         {
             return false;
@@ -272,7 +280,7 @@ public:
     }
 
     template<typename T>
-    void setAllValues( T v )
+    void setAllValues(T v)
     {
         switch ( m_header.memoryComponentType() )
         {
@@ -365,8 +373,18 @@ private:
     std::vector< std::vector<uint32_t> > m_data_uint32;
     std::vector< std::vector<float> > m_data_float32;
 
+    // Todo: fill these and don't do duplicate work compuing the histogram
+    // These should separate out interleaved pixels into separate vectors for multi-component images!!
+    std::vector< std::vector<int8_t> > m_dataSorted_int8;
+    std::vector< std::vector<uint8_t> > m_dataSorted_uint8;
+    std::vector< std::vector<int16_t> > m_dataSorted_int16;
+    std::vector< std::vector<uint16_t> > m_dataSorted_uint16;
+    std::vector< std::vector<int32_t> > m_dataSorted_int32;
+    std::vector< std::vector<uint32_t> > m_dataSorted_uint32;
+    std::vector< std::vector<float> > m_dataSorted_float32;
+
     ImageRepresentation m_imageRep; //!< Is this an image or a segmentation?
-    MultiComponentBufferType m_bufferType; //!< How to represent multi-component images?
+    MultiComponentBufferType m_bufferType; //!< How are multi-component images represented?
 
     ImageIoInfo m_ioInfoOnDisk; //!< Info about image as stored on disk
     ImageIoInfo m_ioInfoInMemory; //!< Info about image as loaded into memory

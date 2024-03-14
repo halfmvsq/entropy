@@ -204,7 +204,7 @@ sniffComponentType( const char* fileName )
 
 
 typename itk::ImageIOBase::Pointer createStandardImageIo( const char* fileName )
-{
+{    
     try
     {
         const itk::ImageIOBase::Pointer imageIo =
