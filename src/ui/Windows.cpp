@@ -2594,7 +2594,8 @@ void renderInspectionWindowWithTable(
 
                 if ( ! imageValuesLinear.empty() )
                 {
-                    if ( isComponentFloatingPoint( image->header().memoryComponentType() ) )
+                    // Display linearly interpolated image values using doubles for both floating point and integer images
+                    //if ( isComponentFloatingPoint( image->header().memoryComponentType() ) )
                     {
                         if ( image->header().numComponentsPerPixel() > 1 )
                         {
@@ -2621,6 +2622,7 @@ void renderInspectionWindowWithTable(
                             ImGui::PopItemWidth();
                         }
                     }
+                    /*
                     else
                     {
                         if ( image->header().numComponentsPerPixel() > 1 )
@@ -2653,6 +2655,7 @@ void renderInspectionWindowWithTable(
                             ImGui::PopItemWidth();
                         }
                     }
+                    */
                 }
                 else
                 {
