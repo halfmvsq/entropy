@@ -838,9 +838,11 @@ bool EntropyApp::loadSerializedImage(
 //        }
 
     // Compute the distance transformation map for the foreground of image component:
+    /// @todo Put this in separate function, so that the distance map can be calculated upon user request.
 
     // To conserve GPU memory, the map is downsampled by a factor of 0.5 relative to the
     // original image size. Also, the map is stored with uint8_t components.
+    /// @todo make configurable
     static constexpr float sk_downsamplingFactor = 0.5f;
 
     // The isosurface threshold for separating foreground and background is set at the

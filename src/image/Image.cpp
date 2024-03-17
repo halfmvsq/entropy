@@ -144,8 +144,10 @@ Image::Image(
     m_header = ImageHeader(m_ioInfoOnDisk, m_ioInfoInMemory, (MultiComponentBufferType::InterleavedImage == m_bufferType));
     m_headerOverrides = ImageHeaderOverrides(m_header.pixelDimensions(), m_header.spacing(), m_header.origin(), m_header.directions());
     m_tx = ImageTransformations(m_header.pixelDimensions(), m_header.spacing(), m_header.origin(), m_header.directions());
+
+    std::vector<ComponentStats<StatsType>> componentStats = computeImageStatistics<StatsType>(*this);
     m_settings = ImageSettings(getFileName(fileName, false), m_header.numComponentsPerPixel(),
-                               m_header.memoryComponentType(), computeImageStatistics<StatsType>(*this));
+                               m_header.memoryComponentType(), std::move(componentStats));
 }
 
 
@@ -335,8 +337,10 @@ Image::Image(
 
     m_tx = ImageTransformations(m_header.pixelDimensions(), m_header.spacing(), m_header.origin(), m_header.directions());
     m_headerOverrides = ImageHeaderOverrides(m_header.pixelDimensions(), m_header.spacing(), m_header.origin(), m_header.directions());
+
+    std::vector<ComponentStats<StatsType>> componentStats = computeImageStatistics<StatsType>(*this);
     m_settings = ImageSettings(std::move(displayName), m_header.numComponentsPerPixel(),
-        m_header.memoryComponentType(), computeImageStatistics<StatsType>(*this));
+                               m_header.memoryComponentType(), std::move(componentStats));
 }
 
 

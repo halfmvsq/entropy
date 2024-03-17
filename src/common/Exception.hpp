@@ -39,6 +39,7 @@ private:
     std::string m_msg;
 };
 
+/// @todo use https://en.cppreference.com/w/cpp/utility/source_location
 #define throw_debug(msg) throw Exception( msg, __FILE__, __FUNCTION__, __LINE__ );
 
 #endif // ENTROPY_EXCEPTION

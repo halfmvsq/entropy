@@ -5,9 +5,14 @@
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/ostr.h>
 
+#include <glm/glm.hpp>
+
+#include "test.h"
 
 int main( int argc, char* argv[] )
 {
+    // test();
+
     auto logFailure = []()
     {
         spdlog::debug( "------------------------ END SESSION (FAILURE) ------------------------" );
@@ -63,18 +68,21 @@ int main( int argc, char* argv[] )
     catch ( const std::runtime_error& e )
     {
         spdlog::critical( "Runtime error: {}", e.what() );
+        /// @todo use https://en.cppreference.com/w/cpp/utility/basic_stacktrace
         logFailure();
         return EXIT_FAILURE;
     }
     catch ( const std::exception& e )
     {
         spdlog::critical( "Exception: {}", e.what() );
+        /// @todo use https://en.cppreference.com/w/cpp/utility/basic_stacktrace
         logFailure();
         return EXIT_FAILURE;
     }
     catch ( ... )
     {
         spdlog::critical( "Unknown exception" );
+        /// @todo use https://en.cppreference.com/w/cpp/utility/basic_stacktrace
         logFailure();
         return EXIT_FAILURE;
     }
