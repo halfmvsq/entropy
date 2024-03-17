@@ -1855,7 +1855,7 @@ void renderImageHeader(
     {
         if (Image::MultiComponentBufferType::SeparateImages == image->bufferType())
         {
-            const void* buffer = image->bufferAsVoid( imgSettings.activeComponent() );
+            const void* buffer = image->bufferSortedAsVoid( imgSettings.activeComponent() );
             const int bufferSize = static_cast<int>(image->header().numPixels());
 
             if (image->header().numPixels() > std::numeric_limits<int32_t>::max())

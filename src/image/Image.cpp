@@ -59,9 +59,8 @@ Image::Image(
         m_ioInfoOnDisk.m_componentInfo.m_componentType == itk::IOComponentEnum::DOUBLE ||
         m_ioInfoOnDisk.m_componentInfo.m_componentType == itk::IOComponentEnum::LDOUBLE;
 
-    // Source (disk) and destination (memory) component ITK types:
-    // Floating point images are loaded with 32-bit float components and integer images are loaded with
-    // 64-bit signed integer components.
+    // Source and destination component ITK types: Floating point images are loaded with 32-bit float
+    // components and integer images are loaded with 64-bit signed integer components.
     const itk::IOComponentEnum srcItkCompType = isComponentFloatingPoint
         ? itk::IOComponentEnum::FLOAT
         : itk::IOComponentEnum::LONG;
@@ -444,18 +443,71 @@ bool Image::loadImageBuffer(
 
     switch (dstComponentType)
     {
-    case CType::UCHAR: m_data_uint8.emplace_back(createBuffer<uint8_t>(buffer, numElements, srcComponentType)); break;
-    case CType::CHAR: m_data_int8.emplace_back(createBuffer<int8_t>(buffer, numElements, srcComponentType)); break;
-    case CType::USHORT: m_data_uint16.emplace_back(createBuffer<uint16_t>(buffer, numElements, srcComponentType)); break;
-    case CType::SHORT: m_data_int16.emplace_back(createBuffer<int16_t>(buffer, numElements, srcComponentType)); break;
-    case CType::UINT: m_data_uint32.emplace_back(createBuffer<uint32_t>(buffer, numElements, srcComponentType)); break;
-    case CType::INT: m_data_int32.emplace_back(createBuffer<int32_t>(buffer, numElements, srcComponentType)); break;
-    case CType::FLOAT: m_data_float32.emplace_back(createBuffer<float>(buffer, numElements, srcComponentType)); break;
+    case CType::UCHAR:
+    {
+        m_data_uint8.emplace_back(createBuffer<uint8_t>(buffer, numElements, srcComponentType));
+        m_dataSorted_uint8.emplace_back( std::vector<uint8_t>(m_data_uint8.back().size()) );
+        std::partial_sort_copy(std::begin(m_data_uint8.back()), std::end(m_data_uint8.back()),
+                               std::begin(m_dataSorted_uint8.back()), std::end(m_dataSorted_uint8.back()));
+        break;
+    }
+    case CType::CHAR:
+    {
+        m_data_int8.emplace_back(createBuffer<int8_t>(buffer, numElements, srcComponentType));
+        m_dataSorted_int8.emplace_back( std::vector<int8_t>(m_data_int8.back().size()) );
+        std::partial_sort_copy(std::begin(m_data_int8.back()), std::end(m_data_int8.back()),
+                               std::begin(m_dataSorted_int8.back()), std::end(m_dataSorted_int8.back()));
+        break;
+    }
+    case CType::USHORT:
+    {
+        m_data_uint16.emplace_back(createBuffer<uint16_t>(buffer, numElements, srcComponentType));
+        m_dataSorted_uint16.emplace_back( std::vector<uint16_t>(m_data_uint16.back().size()) );
+        std::partial_sort_copy(std::begin(m_data_uint16.back()), std::end(m_data_uint16.back()),
+                               std::begin(m_dataSorted_uint16.back()), std::end(m_dataSorted_uint16.back()));
+        break;
+    }
+    case CType::SHORT:
+    {
+        m_data_int16.emplace_back(createBuffer<int16_t>(buffer, numElements, srcComponentType));
+        m_dataSorted_int16.emplace_back( std::vector<int16_t>(m_data_int16.back().size()) );
+        std::partial_sort_copy(std::begin(m_data_int16.back()), std::end(m_data_int16.back()),
+                               std::begin(m_dataSorted_int16.back()), std::end(m_dataSorted_int16.back()));
+        break;
+    }
+    case CType::UINT:
+    {
+        m_data_uint32.emplace_back(createBuffer<uint32_t>(buffer, numElements, srcComponentType));
+        m_dataSorted_uint32.emplace_back( std::vector<uint32_t>(m_data_uint32.back().size()) );
+        std::partial_sort_copy(std::begin(m_data_uint32.back()), std::end(m_data_uint32.back()),
+                               std::begin(m_dataSorted_uint32.back()), std::end(m_dataSorted_uint32.back()));
+        break;
+    }
+    case CType::INT:
+    {
+        m_data_int32.emplace_back(createBuffer<int32_t>(buffer, numElements, srcComponentType));
+        m_dataSorted_int32.emplace_back( std::vector<int32_t>(m_data_int32.back().size()) );
+        std::partial_sort_copy(std::begin(m_data_int32.back()), std::end(m_data_int32.back()),
+                               std::begin(m_dataSorted_int32.back()), std::end(m_dataSorted_int32.back()));
+        break;
+    }
+    case CType::FLOAT:
+    {
+        m_data_float32.emplace_back(createBuffer<float>(buffer, numElements, srcComponentType));
+        m_dataSorted_float32.emplace_back( std::vector<float>(m_data_float32.back().size()) );
+        std::partial_sort_copy(std::begin(m_data_float32.back()), std::end(m_data_float32.back()),
+                               std::begin(m_dataSorted_float32.back()), std::end(m_dataSorted_float32.back()));
+        break;
+    }
 
     case CType::ULONG:
     case CType::ULONGLONG:
     {
         m_data_uint32.emplace_back(createBuffer<uint32_t>(buffer, numElements, srcComponentType));
+        m_dataSorted_uint32.emplace_back( std::vector<uint32_t>(m_data_uint32.back().size()) );
+        std::partial_sort_copy(std::begin(m_data_uint32.back()), std::end(m_data_uint32.back()),
+                               std::begin(m_dataSorted_uint32.back()), std::end(m_dataSorted_uint32.back()));
+
         m_ioInfoInMemory.m_componentInfo.m_componentType = CType::UINT;
         m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes = 4;
 
@@ -468,6 +520,10 @@ bool Image::loadImageBuffer(
     case CType::LONGLONG:
     {
         m_data_int32.emplace_back(createBuffer<int32_t>(buffer, numElements, srcComponentType));
+        m_dataSorted_int32.emplace_back( std::vector<int32_t>(m_data_int32.back().size()) );
+        std::partial_sort_copy(std::begin(m_data_int32.back()), std::end(m_data_int32.back()),
+                               std::begin(m_dataSorted_int32.back()), std::end(m_dataSorted_int32.back()));
+
         m_ioInfoInMemory.m_componentInfo.m_componentType = CType::INT;
         m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes = 4;
 
@@ -480,6 +536,10 @@ bool Image::loadImageBuffer(
     case CType::LDOUBLE:
     {
         m_data_float32.emplace_back(createBuffer<float>(buffer, numElements, srcComponentType));
+        m_dataSorted_float32.emplace_back( std::vector<float>(m_data_float32.back().size()) );
+        std::partial_sort_copy(std::begin(m_data_float32.back()), std::end(m_data_float32.back()),
+                               std::begin(m_dataSorted_float32.back()), std::end(m_dataSorted_float32.back()));
+
         m_ioInfoInMemory.m_componentInfo.m_componentType = CType::FLOAT;
         m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes = 4;
 
@@ -727,10 +787,54 @@ const void* Image::bufferAsVoid(uint32_t comp) const
     return nullptr;
 }
 
-
 void* Image::bufferAsVoid(uint32_t comp)
 {
     return const_cast<void*>(const_cast<const Image*>(this)->bufferAsVoid(comp));
+}
+
+const void* Image::bufferSortedAsVoid(uint32_t comp) const
+{
+    auto F = [this] (uint32_t i) -> const void*
+    {
+        switch (m_header.memoryComponentType())
+        {
+        case ComponentType::Int8: return static_cast<const void*>(m_dataSorted_int8.at(i).data());
+        case ComponentType::UInt8: return static_cast<const void*>(m_dataSorted_uint8.at(i).data());
+        case ComponentType::Int16: return static_cast<const void*>(m_dataSorted_int16.at(i).data());
+        case ComponentType::UInt16: return static_cast<const void*>(m_dataSorted_uint16.at(i).data());
+        case ComponentType::Int32: return static_cast<const void*>(m_dataSorted_int32.at(i).data());
+        case ComponentType::UInt32: return static_cast<const void*>(m_dataSorted_uint32.at(i).data());
+        case ComponentType::Float32: return static_cast<const void*>(m_dataSorted_float32.at(i).data());
+        default: return static_cast<const void*>(nullptr);
+        }
+    };
+
+    switch (m_bufferType)
+    {
+    case MultiComponentBufferType::SeparateImages:
+    {
+        if (m_header.numComponentsPerPixel() <= comp)
+        {
+            return nullptr;
+        }
+        return F(comp);
+    }
+    case MultiComponentBufferType::InterleavedImage:
+    {
+        if (1 <= comp)
+        {
+            return nullptr;
+        }
+        return F(0);
+    }
+    }
+
+    return nullptr;
+}
+
+void* Image::bufferSortedAsVoid(uint32_t comp)
+{
+    return const_cast<void*>(const_cast<const Image*>(this)->bufferSortedAsVoid(comp));
 }
 
 std::optional< std::pair<std::size_t, std::size_t> >

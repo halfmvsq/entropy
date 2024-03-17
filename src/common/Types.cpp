@@ -97,9 +97,9 @@ std::string typeString( const InterpolationMode& mode )
 {
     static const std::unordered_map< InterpolationMode, std::string > s_modeToString
     {
-        { InterpolationMode::NearestNeighbor, "Nearest Neighbor" },
-        { InterpolationMode::Trilinear, "Trilinear" },
-        { InterpolationMode::Tricubic, "Tricubic" }
+        { InterpolationMode::NearestNeighbor, "Nearest" },
+        { InterpolationMode::Trilinear, "Linear" },
+        { InterpolationMode::Tricubic, "Cubic" }
     };
 
     return s_modeToString.at( mode );

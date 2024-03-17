@@ -1164,7 +1164,7 @@ bool loadImage(
             {
                 if (! loadBuffer(static_cast<const void*>(buffer), numPixels))
                 {
-                    spdlog::error("Error loading separated component buffers for image file {}", fileName);
+                    spdlog::error("Error loading separated image component buffer {} for image file {}", i, fileName);
                     return false;
                 }
                 break;

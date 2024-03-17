@@ -373,8 +373,8 @@ private:
     std::vector< std::vector<uint32_t> > m_data_uint32;
     std::vector< std::vector<float> > m_data_float32;
 
-    // Todo: fill these and don't do duplicate work compuing the histogram
-    // These should separate out interleaved pixels into separate vectors for multi-component images!!
+    // TODO: fill these and don't do duplicate work compuing the histogram
+    // These DO NOT separate out interleaved pixels into separate vectors for multi-component images!!
     std::vector< std::vector<int8_t> > m_dataSorted_int8;
     std::vector< std::vector<uint8_t> > m_dataSorted_uint8;
     std::vector< std::vector<int16_t> > m_dataSorted_int16;
