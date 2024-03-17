@@ -34,7 +34,6 @@
 #include <chrono>
 #include <memory>
 
-
 namespace
 {
 

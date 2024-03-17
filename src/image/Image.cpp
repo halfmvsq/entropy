@@ -584,7 +584,7 @@ bool Image::loadSegBuffer(
     const itk::IOComponentEnum& srcComponentType,
     const itk::IOComponentEnum& dstComponentType)
 {
-    using CType = ::itk::ImageIOBase::IOComponentType;
+    using CType = itk::ImageIOBase::IOComponentType;
 
     bool didCast = false;
     bool warnFloatConversion = false;
@@ -597,23 +597,40 @@ bool Image::loadSegBuffer(
     case CType::UCHAR:
     {
         m_data_uint8.emplace_back(createBuffer<uint8_t>(buffer, numElements, srcComponentType));
+
+        m_dataSorted_uint8.emplace_back( std::vector<uint8_t>(m_data_uint8.back().size()) );
+        std::partial_sort_copy(std::begin(m_data_uint8.back()), std::end(m_data_uint8.back()),
+                               std::begin(m_dataSorted_uint8.back()), std::end(m_dataSorted_uint8.back()));
         break;
     }
     case CType::USHORT:
     {
         m_data_uint16.emplace_back(createBuffer<uint16_t>(buffer, numElements, srcComponentType));
+
+        m_dataSorted_uint16.emplace_back( std::vector<uint16_t>(m_data_uint16.back().size()) );
+        std::partial_sort_copy(std::begin(m_data_uint16.back()), std::end(m_data_uint16.back()),
+                               std::begin(m_dataSorted_uint16.back()), std::end(m_dataSorted_uint16.back()));
         break;
     }
     case CType::UINT:
     {
         m_data_uint32.emplace_back(createBuffer<uint32_t>(buffer, numElements, srcComponentType));
+
+        m_dataSorted_uint32.emplace_back( std::vector<uint32_t>(m_data_uint32.back().size()) );
+        std::partial_sort_copy(std::begin(m_data_uint32.back()), std::end(m_data_uint32.back()),
+                               std::begin(m_dataSorted_uint32.back()), std::end(m_dataSorted_uint32.back()));
         break;
     }
 
-        // Signed 8-, 16-, and 32-bit integers are cast to unsigned 8-, 16-, and 32-bit integers:
+    // Signed 8-, 16-, and 32-bit integers are cast to unsigned 8-, 16-, and 32-bit integers:
     case CType::CHAR:
     {
         m_data_uint8.emplace_back(createBuffer<uint8_t>(buffer, numElements, srcComponentType));
+
+        m_dataSorted_uint8.emplace_back( std::vector<uint8_t>(m_data_uint8.back().size()) );
+        std::partial_sort_copy(std::begin(m_data_uint8.back()), std::end(m_data_uint8.back()),
+                               std::begin(m_dataSorted_uint8.back()), std::end(m_dataSorted_uint8.back()));
+
         m_ioInfoInMemory.m_componentInfo.m_componentType = CType::UCHAR;
         m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes = 1;
 
@@ -624,6 +641,11 @@ bool Image::loadSegBuffer(
     case CType::SHORT:
     {
         m_data_uint16.emplace_back(createBuffer<uint16_t>(buffer, numElements, srcComponentType));
+
+        m_dataSorted_uint16.emplace_back( std::vector<uint16_t>(m_data_uint16.back().size()) );
+        std::partial_sort_copy(std::begin(m_data_uint16.back()), std::end(m_data_uint16.back()),
+                               std::begin(m_dataSorted_uint16.back()), std::end(m_dataSorted_uint16.back()));
+
         m_ioInfoInMemory.m_componentInfo.m_componentType = CType::USHORT;
         m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes = 2;
 
@@ -634,6 +656,11 @@ bool Image::loadSegBuffer(
     case CType::INT:
     {
         m_data_uint32.emplace_back(createBuffer<uint32_t>(buffer, numElements, srcComponentType));
+
+        m_dataSorted_uint32.emplace_back( std::vector<uint32_t>(m_data_uint32.back().size()) );
+        std::partial_sort_copy(std::begin(m_data_uint32.back()), std::end(m_data_uint32.back()),
+                               std::begin(m_dataSorted_uint32.back()), std::end(m_dataSorted_uint32.back()));
+
         m_ioInfoInMemory.m_componentInfo.m_componentType = CType::UINT;
         m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes = 4;
 
@@ -642,11 +669,16 @@ bool Image::loadSegBuffer(
         break;
     }
 
-        // Unsigned long (64-bit) and long long (128-bit) integers are cast to unsigned 32-bit integers:
+    // Unsigned long (64-bit) and long long (128-bit) integers are cast to unsigned 32-bit integers:
     case CType::ULONG:
     case CType::ULONGLONG:
     {
         m_data_uint32.emplace_back(createBuffer<uint32_t>(buffer, numElements, srcComponentType));
+
+        m_dataSorted_uint32.emplace_back( std::vector<uint32_t>(m_data_uint32.back().size()) );
+        std::partial_sort_copy(std::begin(m_data_uint32.back()), std::end(m_data_uint32.back()),
+                               std::begin(m_dataSorted_uint32.back()), std::end(m_dataSorted_uint32.back()));
+
         m_ioInfoInMemory.m_componentInfo.m_componentType = CType::UINT;
         m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes = 4;
 
@@ -655,11 +687,16 @@ bool Image::loadSegBuffer(
         break;
     }
 
-        // Signed long (64-bit) and long long (128-bit) integers are cast to unsigned 32-bit integers:
+    // Signed long (64-bit) and long long (128-bit) integers are cast to unsigned 32-bit integers:
     case CType::LONG:
     case CType::LONGLONG:
     {
         m_data_uint32.emplace_back(createBuffer<uint32_t>(buffer, numElements, srcComponentType));
+
+        m_dataSorted_uint32.emplace_back( std::vector<uint32_t>(m_data_uint32.back().size()) );
+        std::partial_sort_copy(std::begin(m_data_uint32.back()), std::end(m_data_uint32.back()),
+                               std::begin(m_dataSorted_uint32.back()), std::end(m_dataSorted_uint32.back()));
+
         m_ioInfoInMemory.m_componentInfo.m_componentType = CType::UINT;
         m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes = 4;
 
@@ -669,12 +706,17 @@ bool Image::loadSegBuffer(
         break;
     }
 
-        // Floating-points are cast to unsigned 32-bit integers:
+    // Floating-points are cast to unsigned 32-bit integers:
     case CType::FLOAT:
     case CType::DOUBLE:
     case CType::LDOUBLE:
     {
         m_data_uint32.emplace_back(createBuffer<uint32_t>(buffer, numElements, srcComponentType));
+
+        m_dataSorted_uint32.emplace_back( std::vector<uint32_t>(m_data_uint32.back().size()) );
+        std::partial_sort_copy(std::begin(m_data_uint32.back()), std::end(m_data_uint32.back()),
+                               std::begin(m_dataSorted_uint32.back()), std::end(m_dataSorted_uint32.back()));
+
         m_ioInfoInMemory.m_componentInfo.m_componentType = CType::UINT;
         m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes = 4;
 
@@ -697,37 +739,28 @@ bool Image::loadSegBuffer(
             m_ioInfoInMemory.m_componentInfo.m_componentType);
 
         m_ioInfoInMemory.m_componentInfo.m_componentTypeString = newTypeString;
+        m_ioInfoInMemory.m_sizeInfo.m_imageSizeInBytes = numElements * m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes;
 
-        m_ioInfoInMemory.m_sizeInfo.m_imageSizeInBytes =
-            numElements * m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes;
-
-        spdlog::info(
-            "Casted segmentation '{}' pixel component from type {} to {}",
-            m_ioInfoOnDisk.m_fileInfo.m_fileName,
-            m_ioInfoOnDisk.m_componentInfo.m_componentTypeString, newTypeString);
+        spdlog::info("Casted segmentation '{}' pixel component from type {} to {}",
+                     m_ioInfoOnDisk.m_fileInfo.m_fileName, m_ioInfoOnDisk.m_componentInfo.m_componentTypeString, newTypeString);
 
         if (warnFloatConversion)
         {
-            spdlog::warn(
-                "Floating point to integer conversion: "
-                "Possible loss of precision and information when casting segmentation pixel component from type {} to {}",
-                m_ioInfoOnDisk.m_componentInfo.m_componentTypeString, newTypeString);
+            spdlog::warn("Floating point to integer conversion: Possible loss of precision and information when casting "
+                         "segmentation pixel component from type {} to {}",
+                         m_ioInfoOnDisk.m_componentInfo.m_componentTypeString, newTypeString);
         }
 
         if (warnSizeConversion)
         {
-            spdlog::warn(
-                "Size conversion: "
-                "Possible loss of information when casting segmentation pixel component from type {} to {}",
-                m_ioInfoOnDisk.m_componentInfo.m_componentTypeString, newTypeString);
+            spdlog::warn("Size conversion: Possible loss of information when casting segmentation pixel component from type "
+                         "{} to {}", m_ioInfoOnDisk.m_componentInfo.m_componentTypeString, newTypeString);
         }
 
         if (warnSignConversion)
         {
-            spdlog::warn(
-                "Signed to unsigned integer conversion: "
-                "Possible loss of information when casting segmentation pixel component from type {} to {}",
-                m_ioInfoOnDisk.m_componentInfo.m_componentTypeString, newTypeString);
+            spdlog::warn("Signed to unsigned integer conversion: Possible loss of information when casting segmentation pixel "
+                         "component from type {} to {}", m_ioInfoOnDisk.m_componentInfo.m_componentTypeString, newTypeString);
         }
     }
 

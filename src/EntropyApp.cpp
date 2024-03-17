@@ -830,14 +830,12 @@ bool EntropyApp::loadSerializedImage(
         }
     }
 
-
 //        spdlog::info( "Quantiles..." );
 //        int qq = 0;
 //        for ( const auto& x : image->settings().componentStatistics(0).m_quantiles )
 //        {
 //            std::cout << qq++ << " " << x << std::endl;
 //        }
-
 
     // Compute the distance transformation map for the foreground of image component:
 
@@ -855,8 +853,12 @@ bool EntropyApp::loadSerializedImage(
     // calculations on images with interleaved components.
     if ( image->header().interleavedComponents() )
     {
-        spdlog::info( "Image {} has multiple, interleaved components, "
-                      "so the distance and noise estimate maps will not be computed", *imageUid );
+        spdlog::info("Image {} has multiple, interleaved components, "
+                     "so the distance and noise estimate maps will not be computed", *imageUid);
+    }
+    else if (! image->settings().useDistanceMapForRaycasting())
+    {
+        spdlog::info("Image {} has disabled using the distance map for raycasting", *imageUid);
     }
     else
     {
@@ -879,9 +881,7 @@ bool EntropyApp::loadSerializedImage(
             /// functions that we use require an ITK image as input.
 
             const ImageType::Pointer compImage = createItkImageFromImageComponent<ItkImageCompType>( *image, comp );
-
-            const NoiseImageType::Pointer noiseEstimateItkImage =
-                computeNoiseEstimate<ItkImageCompType>( compImage, radius );
+            const NoiseImageType::Pointer noiseEstimateItkImage = computeNoiseEstimate<ItkImageCompType>( compImage, radius );
 
             if ( noiseEstimateItkImage )
             {

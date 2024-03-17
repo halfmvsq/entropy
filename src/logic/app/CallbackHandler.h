@@ -3,22 +3,16 @@
 
 #include "common/SegmentationTypes.h"
 #include "common/Types.h"
-
 #include "logic/interaction/ViewHit.h"
 
 #include <uuid.h>
-
 #include <glm/fwd.hpp>
-
 #include <optional>
-#include <vector>
-
 
 class AppData;
 class GlfwWrapper;
 class Rendering;
 class View;
-
 
 /**
  * @brief Handles UI callbacks to the application
@@ -65,8 +59,6 @@ public:
         const uuids::uuid& imageUid,
         const uuids::uuid& seedSegUid,
         const SeedSegmentationType& segType );
-
-
 
     /**
      * @brief Move the crosshairs

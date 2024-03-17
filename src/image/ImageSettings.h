@@ -11,7 +11,6 @@
 #include <utility>
 #include <vector>
 
-
 class ImageSettings
 {
 public:
@@ -25,408 +24,376 @@ public:
      * @param componentType Component type
      * @param componentStats Vector of pixel statistics, one per image component
      */
-    ImageSettings( std::string displayName,
-                   uint32_t numComponents,
-                   ComponentType componentType,
-                   std::vector< ComponentStats<double> > componentStats );
+    ImageSettings(
+        std::string displayName,
+        uint32_t numComponents,
+        ComponentType componentType,
+        std::vector< ComponentStats<double> > componentStats);
 
-    ImageSettings( const ImageSettings& ) = default;
-    ImageSettings& operator=( const ImageSettings& ) = default;
+    ImageSettings(const ImageSettings&) = default;
+    ImageSettings& operator=(const ImageSettings&) = default;
 
-    ImageSettings( ImageSettings&& ) = default;
-    ImageSettings& operator=( ImageSettings&& ) = default;
+    ImageSettings(ImageSettings&&) = default;
+    ImageSettings& operator=(ImageSettings&&) = default;
 
     ~ImageSettings() = default;
 
-
     /// Set the short display name of the image
-    void setDisplayName( std::string name );
+    void setDisplayName(std::string name);
 
     /// Get the short display name of the image
     const std::string& displayName() const;
 
-
     /// Set the border color
-    void setBorderColor( glm::vec3 borderColor );
+    void setBorderColor(glm::vec3 borderColor);
 
     /// Get the border color
     const glm::vec3& borderColor() const;
 
-
     /// Set whether the image transformation is locked to the reference image
-    void setLockedToReference( bool locked );
+    void setLockedToReference(bool locked);
 
     /// Get whether the image transformation is locked to the reference image
     bool isLockedToReference() const;
 
-
     /// Set whether to display a 3- or 4-component image as color
-    void setDisplayImageAsColor( bool doColor );
+    void setDisplayImageAsColor(bool doColor);
 
     /// Get whether to display a 3- or 4-component image as color
     bool displayImageAsColor() const;
 
-
     /// Set whether to ignore the alpha component of color images
-    void setIgnoreAlpha( bool ignore );
+    void setIgnoreAlpha(bool ignore);
 
     /// Get whether to ignore the alpha component of color images
     bool ignoreAlpha() const;
 
-
     /// Set the interpolation mode for a color image
-    void setColorInterpolationMode( InterpolationMode mode );
+    void setColorInterpolationMode(InterpolationMode mode);
 
     /// Get the interpolation mode of a color image
     InterpolationMode colorInterpolationMode() const;
 
-
     /// Set whether the image boundary distance map is used to accelerate raycasting rendering of the image
-    void setUseDistanceMapForRaycasting( bool use );
+    void setUseDistanceMapForRaycasting(bool use);
 
     /// Get whether the image boundary distance map is used to accelerate raycasting rendering of the image
     bool useDistanceMapForRaycasting() const;
 
-
     /// Set whether the image isosurfaces are visible (global setting for all surfaces)
-    void setIsosurfacesVisible( bool visible );
+    void setIsosurfacesVisible(bool visible);
 
     /// Get whether the image isosurfaces are visible (global setting for all surfaces)
     bool isosurfacesVisible() const;
 
-
     /// Set whether to color the image isosurfaces using the image colormap (global setting for all surfaces)
-    void setApplyImageColormapToIsosurfaces( bool visible );
+    void setApplyImageColormapToIsosurfaces(bool visible);
 
     /// Get whether to color the image isosurfaces using the image colormap (global setting for all surfaces)
     bool applyImageColormapToIsosurfaces() const;
 
-
     /// Set whether the image isosurfaces are visible in 2D slices (global setting for all surfaces)
-    void setShowIsosurfacesIn2d( bool show );
+    void setShowIsosurfacesIn2d(bool show);
 
     /// Get whether the image isosurfaces are visible in 2D slices (global setting for all surfaces)
     bool showIsosurfacesIn2d() const;
 
-
     /// Set isosurface line width in 2D, as a percentage of the image threshold range (global setting for all surfaces)
-    void setIsosurfaceWidthIn2d( double width );
+    void setIsosurfaceWidthIn2d(double width);
 
     /// Get isosurface line width in 2D, as a percentage of the image threshold range (global setting for all surfaces)
     double isosurfaceWidthIn2d() const;
 
-
     /// Set opacity modulator for all image isosurfaces (global setting for all surfaces)
-    void setIsosurfaceOpacityModulator( float opacityMod );
+    void setIsosurfaceOpacityModulator(float opacityMod);
 
     /// Get opacity modulator for all image isosurfaces (global setting for all surfaces)
     float isosurfaceOpacityModulator() const;
 
-
     /// Get the min/max image intensities for a given component
-    std::pair<double, double> minMaxImageRange( uint32_t component ) const;
+    std::pair<double, double> minMaxImageRange(uint32_t component) const;
     std::pair<double, double> minMaxImageRange() const;
 
     /// Get the min/max window width range (in image intensity units) for a given component
-    std::pair<double, double> minMaxWindowWidthRange( uint32_t component ) const;
+    std::pair<double, double> minMaxWindowWidthRange(uint32_t component) const;
     std::pair<double, double> minMaxWindowWidthRange() const;
 
     /// Get the min/max window center range (in image intensity units) for a given component
-    std::pair<double, double> minMaxWindowCenterRange( uint32_t component ) const;
+    std::pair<double, double> minMaxWindowCenterRange(uint32_t component) const;
     std::pair<double, double> minMaxWindowCenterRange() const;
 
-    std::pair<double, double> minMaxWindowRange( uint32_t component ) const;
+    std::pair<double, double> minMaxWindowRange(uint32_t component) const;
     std::pair<double, double> minMaxWindowRange() const;
 
     /// Get the min/max threshold range (in image intensity units) for a given component
-    std::pair<double, double> minMaxThresholdRange( uint32_t component ) const;
+    std::pair<double, double> minMaxThresholdRange(uint32_t component) const;
     std::pair<double, double> minMaxThresholdRange() const;
 
-
     /// Set lower window value (in image intensity units) for a given component.
-    void setWindowLow( uint32_t component, double wLow, bool clampValues = true );
-    void setWindowLow( double wLow, bool clampValues = false );
+    void setWindowLow(uint32_t component, double wLow, bool clampValues = true);
+    void setWindowLow(double wLow, bool clampValues = false);
 
     /// Set upper window value (in image intensity units) for a given component.
-    void setWindowHigh( uint32_t component, double wHigh, bool clampValues = true );
-    void setWindowHigh( double wHigh, bool clampValues = false );
+    void setWindowHigh(uint32_t component, double wHigh, bool clampValues = true);
+    void setWindowHigh(double wHigh, bool clampValues = false);
 
     /// Get window limits (in image intensity units) for a given component
-    std::pair<double, double> windowLowHigh( uint32_t component ) const;
+    std::pair<double, double> windowLowHigh(uint32_t component) const;
     std::pair<double, double> windowLowHigh() const;
 
     /// Get window width (in image intensity units) for a given component
-    double windowWidth( uint32_t component ) const;
+    double windowWidth(uint32_t component) const;
     double windowWidth() const;
 
     /// Get window center (aka level) (in image intensity units) for a given component
-    double windowCenter( uint32_t component ) const;
+    double windowCenter(uint32_t component) const;
     double windowCenter() const;
 
-    void setWindowWidth( uint32_t component, double width );
-    void setWindowWidth( double width );
+    void setWindowWidth(uint32_t component, double width);
+    void setWindowWidth(double width);
 
-    void setWindowCenter( uint32_t component, double center );
-    void setWindowCenter( double center );
+    void setWindowCenter(uint32_t component, double center);
+    void setWindowCenter(double center);
 
     /// Set low threshold (in image intensity units) for a given component
-    void setThresholdLow( uint32_t component, double thresh );
-    void setThresholdLow( double thresh );
+    void setThresholdLow(uint32_t component, double thresh);
+    void setThresholdLow(double thresh);
 
     /// Set high threshold (in image intensity units) for a given component
-    void setThresholdHigh( uint32_t component, double thresh );
-    void setThresholdHigh( double thresh );
+    void setThresholdHigh(uint32_t component, double thresh);
+    void setThresholdHigh(double thresh);
 
     /// Get thresholds as GLM vector
-    std::pair<double, double> thresholds( uint32_t component ) const;
+    std::pair<double, double> thresholds(uint32_t component) const;
     std::pair<double, double> thresholds() const;
 
     /// Get whether the thresholds are active for a given component
-    bool thresholdsActive( uint32_t component ) const;
+    bool thresholdsActive(uint32_t component) const;
     bool thresholdsActive() const;
 
-
     /// Set the image opacity (in [0, 1] range) for a given component
-    void setOpacity( uint32_t component, double opacity );
-    void setOpacity( double opacity );
+    void setOpacity(uint32_t component, double opacity);
+    void setOpacity(double opacity);
 
     /// Get the image opacity (in [0, 1] range) of a given component
-    double opacity( uint32_t component ) const;
+    double opacity(uint32_t component) const;
     double opacity() const;
 
-
     /// Set the visibility for a given component
-    void setVisibility( uint32_t component, bool visible );
-    void setVisibility( bool visible );
+    void setVisibility(uint32_t component, bool visible);
+    void setVisibility(bool visible);
 
     /// Get the visibility of a given component
-    bool visibility( uint32_t component ) const;
+    bool visibility(uint32_t component) const;
     bool visibility() const;
 
-
     /// Set the global visibility for all components
-    void setGlobalVisibility( bool visible );
+    void setGlobalVisibility(bool visible);
 
     /// Get the global visibility for all components
     bool globalVisibility() const;
 
-
     /// Set the global image opacity (in [0, 1] range)
-    void setGlobalOpacity( double opacity );
+    void setGlobalOpacity(double opacity);
 
     /// Get the global image opacity (in [0, 1] range)
     double globalOpacity() const;
 
-
     /// Set whether edges are shown for a given component
-    void setShowEdges( uint32_t component, bool show );
-    void setShowEdges( bool show );
+    void setShowEdges(uint32_t component, bool show);
+    void setShowEdges(bool show);
 
     /// Get whether edges are shown for a given component
-    bool showEdges( uint32_t component ) const;
+    bool showEdges(uint32_t component) const;
     bool showEdges() const;
 
     /// Set whether edges are thresholded for a given component
-    void setThresholdEdges( uint32_t component, bool threshold );
-    void setThresholdEdges( bool threshold );
+    void setThresholdEdges(uint32_t component, bool threshold);
+    void setThresholdEdges(bool threshold);
 
     /// Get whether edges are thresholded for a given component
-    bool thresholdEdges( uint32_t component ) const;
+    bool thresholdEdges(uint32_t component) const;
     bool thresholdEdges() const;
 
     /// Set whether edges are computed using Frei-Chen for a given component
-    void setUseFreiChen( uint32_t component, bool use );
-    void setUseFreiChen( bool use );
+    void setUseFreiChen(uint32_t component, bool use);
+    void setUseFreiChen(bool use);
 
     /// Get whether edges are thresholded for a given component
-    bool useFreiChen( uint32_t component ) const;
+    bool useFreiChen(uint32_t component) const;
     bool useFreiChen() const;
 
     /// Set edge magnitude for a given component
-    void setEdgeMagnitude( uint32_t component, double mag );
-    void setEdgeMagnitude( double mag );
+    void setEdgeMagnitude(uint32_t component, double mag);
+    void setEdgeMagnitude(double mag);
 
     /// Get edge matnidue for a given component
-    double edgeMagnitude( uint32_t component ) const;
+    double edgeMagnitude(uint32_t component) const;
     double edgeMagnitude() const;
 
     /// Set whether edges are computed after applying windowing (width/level) for a given component
-    void setWindowedEdges( uint32_t component, bool windowed );
-    void setWindowedEdges( bool overlay );
+    void setWindowedEdges(uint32_t component, bool windowed);
+    void setWindowedEdges(bool overlay);
 
     /// Get whether edges are computed after applying windowing (width/level) for a given component
-    bool windowedEdges( uint32_t component ) const;
+    bool windowedEdges(uint32_t component) const;
     bool windowedEdges() const;
 
     /// Set whether edges are shown as an overlay on the image for a given component
-    void setOverlayEdges( uint32_t component, bool overlay );
-    void setOverlayEdges( bool overlay );
+    void setOverlayEdges(uint32_t component, bool overlay);
+    void setOverlayEdges(bool overlay);
 
     /// Get whether edges are shown as an overlay on the image for a given component
-    bool overlayEdges( uint32_t component ) const;
+    bool overlayEdges(uint32_t component) const;
     bool overlayEdges() const;
 
     /// Set whether edges are colormapped for a given component
-    void setColormapEdges( uint32_t component, bool showEdges );
-    void setColormapEdges( bool showEdges );
+    void setColormapEdges(uint32_t component, bool showEdges);
+    void setColormapEdges(bool showEdges);
 
     /// Get whether edges are colormapped for a given component
-    bool colormapEdges( uint32_t component ) const;
+    bool colormapEdges(uint32_t component) const;
     bool colormapEdges() const;
 
     /// Set edge color a given component
-    void setEdgeColor( uint32_t component, glm::vec3 color );
-    void setEdgeColor( glm::vec3 color );
+    void setEdgeColor(uint32_t component, glm::vec3 color);
+    void setEdgeColor(glm::vec3 color);
 
     /// Get whether edges are shown for a given component
-    glm::vec3 edgeColor( uint32_t component ) const;
+    glm::vec3 edgeColor(uint32_t component) const;
     glm::vec3 edgeColor() const;
 
     /// Set edge opacity a given component
-    void setEdgeOpacity( uint32_t component, double opacity );
-    void setEdgeOpacity( double opacity );
+    void setEdgeOpacity(uint32_t component, double opacity);
+    void setEdgeOpacity(double opacity);
 
     /// Get edge opacity for a given component
-    double edgeOpacity( uint32_t component ) const;
+    double edgeOpacity(uint32_t component) const;
     double edgeOpacity() const;
 
-
     /// Set the color map index
-    void setColorMapIndex( uint32_t component, std::size_t index );
-    void setColorMapIndex( std::size_t index );
+    void setColorMapIndex(uint32_t component, std::size_t index);
+    void setColorMapIndex(std::size_t index);
 
     /// Get the color map index
-    std::size_t colorMapIndex( uint32_t component ) const;
+    std::size_t colorMapIndex(uint32_t component) const;
     std::size_t colorMapIndex() const;
 
-
     // Set whether the color map is inverted
-    void setColorMapInverted( uint32_t component, bool inverted );
-    void setColorMapInverted( bool inverted );
+    void setColorMapInverted(uint32_t component, bool inverted);
+    void setColorMapInverted(bool inverted);
 
     // Get whether the color map is inverted
-    bool isColorMapInverted( uint32_t component ) const;
+    bool isColorMapInverted(uint32_t component) const;
     bool isColorMapInverted() const;
 
-
     /// Set the number of color map quantization levels
-    void setColorMapQuantization( uint32_t component, uint32_t levels );
-    void setColorMapQuantizationLevels( uint32_t levels );
+    void setColorMapQuantization(uint32_t component, uint32_t levels);
+    void setColorMapQuantizationLevels(uint32_t levels);
 
     /// Get the number of color map quantization levels
-    std::size_t colorMapQuantizationLevels( uint32_t component ) const;
+    std::size_t colorMapQuantizationLevels(uint32_t component) const;
     std::size_t colorMapQuantizationLevels() const;
 
-
     /// Set whether the color map is discrete or continuous
-    void setColorMapContinuous( uint32_t component, bool continuous );
-    void setColorMapContinuous( bool continuous );
+    void setColorMapContinuous(uint32_t component, bool continuous);
+    void setColorMapContinuous(bool continuous);
 
     /// Get whether the color map is discrete or continuous
-    bool colorMapContinuous( uint32_t component ) const;
+    bool colorMapContinuous(uint32_t component) const;
     bool colorMapContinuous() const;
 
-
     /// Set the hue, saturation, and value modification factors
-    void setColorMapHueModFactor( uint32_t component, double hueMod );
-    void setColorMapSatModFactor( uint32_t component, double satMod );
-    void setColorMapValModFactor( uint32_t component, double valMod );
+    void setColorMapHueModFactor(uint32_t component, double hueMod);
+    void setColorMapSatModFactor(uint32_t component, double satMod);
+    void setColorMapValModFactor(uint32_t component, double valMod);
 
-    void setColorMapHueModFactor( double hueMod );
-    void setColorMapSatModFactor( double satMod );
-    void setColorMapValModFactor( double valMod );
+    void setColorMapHueModFactor(double hueMod);
+    void setColorMapSatModFactor(double satMod);
+    void setColorMapValModFactor(double valMod);
 
-    void setColormapHsvModfactors( uint32_t component, const glm::vec3& hsvMods );
-    void setColormapHsvModfactors( const glm::vec3& hsvMods );
+    void setColormapHsvModfactors(uint32_t component, const glm::vec3& hsvMods);
+    void setColormapHsvModfactors(const glm::vec3& hsvMods);
 
     /// Get the hue, saturation, and value modification factors
-    const glm::vec3& colorMapHsvModFactors( uint32_t component ) const;
+    const glm::vec3& colorMapHsvModFactors(uint32_t component) const;
     const glm::vec3& colorMapHsvModFactors() const;
 
+    /// Get the label table index
+    void setLabelTableIndex(uint32_t component, std::size_t index);
+    void setLabelTableIndex(std::size_t index);
 
     /// Get the label table index
-    void setLabelTableIndex( uint32_t component, std::size_t index );
-    void setLabelTableIndex( std::size_t index );
-
-    /// Get the label table index
-    std::size_t labelTableIndex( uint32_t component ) const;
+    std::size_t labelTableIndex(uint32_t component) const;
     std::size_t labelTableIndex() const;
 
-
     /// Set the interpolation mode for a given component
-    void setInterpolationMode( uint32_t component, InterpolationMode mode );
-    void setInterpolationMode( InterpolationMode mode );
+    void setInterpolationMode(uint32_t component, InterpolationMode mode);
+    void setInterpolationMode(InterpolationMode mode);
 
     /// Get the interpolation mode of a given component
-    InterpolationMode interpolationMode( uint32_t component ) const;
+    InterpolationMode interpolationMode(uint32_t component) const;
     InterpolationMode interpolationMode() const;
-
 
     /// Get window/level slope 'm' and intercept 'b' for a given component.
     /// These are used to map NATIVE (raw) image intensity units 'x' to NORMALIZED units 'y' in the
     /// range [0, 1]: y = m*x + b
     /// after window/level have been applied
-    std::pair<double, double> slopeIntercept_normalized_T_native( uint32_t component ) const;
+    std::pair<double, double> slopeIntercept_normalized_T_native(uint32_t component) const;
     std::pair<double, double> slopeIntercept_normalized_T_native() const;
 
     /// Get the slope/intercept mapping from NATIVE intensity to OpenGL TEXTURE intensity
     // std::pair<double, double> slopeIntercept_texture_T_native() const;
 
-
     /// Get normalized window/level slope 'm' and intercept 'b' for a given component.
     /// These are used to map image TEXTURE intensity units 'x' to NORMALIZED units 'y' in the
     /// normalized range [0, 1]: y = m*x + b
     /// after window/level have been applied
-    std::pair<double, double> slopeIntercept_normalized_T_texture( uint32_t component ) const;
+    std::pair<double, double> slopeIntercept_normalized_T_texture(uint32_t component) const;
     std::pair<double, double> slopeIntercept_normalized_T_texture() const;
-
 
     /// Slope to map TEXTURE intensity to NATIVE intensity, without accounting for window/level.
     float slope_native_T_texture() const;
 
-
-    glm::dvec2 slopeInterceptVec2_normalized_T_texture( uint32_t component ) const;
+    glm::dvec2 slopeInterceptVec2_normalized_T_texture(uint32_t component) const;
     glm::dvec2 slopeInterceptVec2_normalized_T_texture() const;
 
-    glm::dvec2 largestSlopeInterceptTextureVec2( uint32_t component ) const;
+    glm::dvec2 largestSlopeInterceptTextureVec2(uint32_t component) const;
     glm::dvec2 largestSlopeInterceptTextureVec2() const;
 
     /// Get threshold range (in image intensity units) for a given component
-    std::pair<double, double> thresholdRange( uint32_t component ) const;
+    std::pair<double, double> thresholdRange(uint32_t component) const;
     std::pair<double, double> thresholdRange() const;
 
-
     /// Set foreground low threshold (in native image intensity units) for a given component.
-    void setForegroundThresholdLow( uint32_t component, double background );
-    void setForegroundThresholdLow( double background );
+    void setForegroundThresholdLow(uint32_t component, double background);
+    void setForegroundThresholdLow(double background);
 
     /// Get foreground low threshold (in native image intensity units) for a given component
-    double foregroundThresholdLow( uint32_t component ) const;
+    double foregroundThresholdLow(uint32_t component) const;
     double foregroundThresholdLow() const;
 
-
     /// Set foreground high threshold (in native image intensity units) for a given component.
-    void setForegroundThresholdHigh( uint32_t component, double background );
-    void setForegroundThresholdHigh( double background );
+    void setForegroundThresholdHigh(uint32_t component, double background);
+    void setForegroundThresholdHigh(double background);
 
     /// Get foreground thresholds (in native image intensity units) for a given component
-    std::pair<double, double> foregroundThresholds( uint32_t component ) const;
+    std::pair<double, double> foregroundThresholds(uint32_t component) const;
     std::pair<double, double> foregroundThresholds() const;
-
 
     uint32_t numComponents() const; //!< Number of components per pixel
 
     /// Get statistics for an image component
     /// The component must be in the range [0, numComponents() - 1].
-    const ComponentStats<double>& componentStatistics( uint32_t component ) const;
+    const ComponentStats<double>& componentStatistics(uint32_t component) const;
     const ComponentStats<double>& componentStatistics() const;
 
     void updateWithNewComponentStatistics(
-        std::vector< ComponentStats<double> > componentStats,
-        bool setDefaultVisibilitySettings );
+        std::vector<ComponentStats<double>> componentStats,
+        bool setDefaultVisibilitySettings);
 
     /// Set the active component
-    void setActiveComponent( uint32_t component );
+    void setActiveComponent(uint32_t component);
 
     /// Get the active component
     uint32_t activeComponent() const;
@@ -434,9 +401,9 @@ public:
     /// Map a native image value to its representation as an OpenGL texture.
     /// This mappings accounts for component type.
     /// @see https://www.khronos.org/opengl/wiki/Normalized_Integer
-    double mapNativeIntensityToTexture( double nativeImageValue ) const;
+    double mapNativeIntensityToTexture(double nativeImageValue) const;
 
-    friend std::ostream& operator<< ( std::ostream&, const ImageSettings& );
+    friend std::ostream& operator<< (std::ostream&, const ImageSettings&);
 
 
 private:
@@ -458,12 +425,12 @@ private:
         double m_windowWidth = 0.0;
 
         /// Low and high threshold values in native image intensity units
-        std::pair<double, double> m_thresholds{ 0.0, 0.0 };
+        std::pair<double, double> m_thresholds{0.0, 0.0};
 
         /// Native image intensity value thresholds for the image foreground. A Euclidean distance
         /// map is generated from the foreground. This distance map is used to accelerate raycasting
         /// of the image's isosurfaces.
-        std::pair<double, double> m_foregroundThresholds{ 0.0, 0.0 };
+        std::pair<double, double> m_foregroundThresholds{0.0, 0.0};
 
         /// @note The following slope (m) and intercept (b) are used to map NATIVE image intensity
         /// values (x) into the range [0.0, 1.0], via m*x + b
@@ -497,7 +464,6 @@ private:
         std::size_t m_colorMapIndex = 0; //!< Color map index
         bool m_colorMapInverted = false; //!< Whether the color map is inverted
 
-
         bool m_colorMapContinuous = true; //!< Whether the color map is continuous or discrete
         uint32_t m_numColorMapLevels = 8; //!< Number of quantization levels
 
@@ -508,7 +474,6 @@ private:
         /// Interpolation mode
         InterpolationMode m_interpolationMode = InterpolationMode::NearestNeighbor;
     };
-
 
     /*** Start settings for all components ***/
     std::string m_displayName; //!< Display name of the image in the UI
@@ -531,7 +496,6 @@ private:
     float m_isosurfaceOpacityModulator; //!< Modality of surface opacity for the image
     /*** End settings for all components ***/
 
-
     uint32_t m_numComponents; //!< Number of components per pixel
     ComponentType m_componentType; //!< Component type
     std::vector< ComponentStats<double> > m_componentStats; //!< Per-component statistics
@@ -540,7 +504,6 @@ private:
     uint32_t m_activeComponent; //!< Active component
 };
 
-
-std::ostream& operator<< ( std::ostream&, const ImageSettings& );
+std::ostream& operator<< (std::ostream&, const ImageSettings&);
 
 #endif // IMAGE_SETTINGS_H
