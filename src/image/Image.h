@@ -15,6 +15,7 @@
 #include <optional>
 #include <ostream>
 #include <string>
+#include <utility>
 #include <vector>
 
 
@@ -216,7 +217,7 @@ public:
         else if (c110) { c10 = c110.value(); }
 
         if (c011 && c111) { c11 = c011.value() * (1.0 - diff.x) + c111.value() * diff.x; }
-        else if (c010) { c11 = c011.value(); }
+        else if (c011) { c11 = c011.value(); }
         else if (c111) { c11 = c111.value(); }
 
         // Interpolate along y, ignoring invalid samples:
@@ -346,13 +347,13 @@ private:
     /// For a given image component and 3D pixel indices, return a pair consisting of:
     /// 1) component buffer to index
     /// 2) offset into that buffer
-    std::optional< std::pair< std::size_t, std::size_t > >
+    std::optional< std::pair<std::size_t, std::size_t> >
     getComponentAndOffsetForBuffer(uint32_t comp, int i, int j, int k) const;
 
     /// For a given image component and 1D pixel index, return a pair consisting of:
     /// 1) component buffer to index
     /// 2) offset into that buffer
-    std::optional< std::pair< std::size_t, std::size_t > >
+    std::optional< std::pair<std::size_t, std::size_t> >
     getComponentAndOffsetForBuffer(uint32_t comp, std::size_t index) const;
 
     /**
