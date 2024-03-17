@@ -1094,4 +1094,138 @@ vtkSmartPointer< vtkImageData > convertItkImageToVtkImageData(
 }
 
 
+template<typename ReadComponentType>
+bool loadImage(
+    const fs::path& fileName,
+    std::size_t numPixels,
+    uint32_t numComps,
+    uint32_t numCompsToLoad,
+    bool isVectorImage,
+    const Image::MultiComponentBufferType bufferType,
+    std::function<bool (const void* buffer, std::size_t numElements)> loadBuffer)
+{
+    using ReadImageType = itk::Image<ReadComponentType, 3>;
+
+    if (isVectorImage)
+    {
+        // Load multi-component image
+        constexpr bool pixelIsVector = true;
+        typename itk::ImageBase<3>::Pointer baseImage = readImage<ReadComponentType, 3, pixelIsVector>(fileName);
+        if (! baseImage)
+        {
+            spdlog::error("Unable to read vector ImageBase for image {}", fileName);
+            return false;
+        }
+
+        // Split the base image into component images. Load a maximum of MAX_COMPS components
+        // for an image with interleaved component buffers.
+        std::vector<typename ReadImageType::Pointer> componentImages =
+            splitImageIntoComponents<ReadComponentType, 3>(baseImage);
+
+        if (componentImages.size() < numCompsToLoad)
+        {
+            spdlog::error("Only {} image components were loaded, but {} components were expected",
+                          componentImages.size(), numCompsToLoad);
+            return false;
+        }
+
+        // If interleaving vector components, then create a single buffer
+        std::unique_ptr<ReadComponentType[]> allComponentBuffers = nullptr;
+
+        if (Image::MultiComponentBufferType::InterleavedImage == bufferType)
+        {
+            allComponentBuffers = std::make_unique<ReadComponentType[]>(numPixels * numCompsToLoad);
+            if (! allComponentBuffers)
+            {
+                spdlog::error("Null buffer holding all components of image file {}", fileName);
+                return false;
+            }
+        }
+
+        // Load the buffers from the component images
+        for (uint32_t i = 0; i < numCompsToLoad; ++i)
+        {
+            if (! componentImages[i])
+            {
+                spdlog::error("Null vector image component {} for image file {}", i, fileName);
+                return false;
+            }
+
+            const ReadComponentType* buffer = componentImages[i]->GetBufferPointer();
+            if (! buffer)
+            {
+                spdlog::error("Null buffer of vector image component {} for image file {}", i, fileName);
+                return false;
+            }
+
+            switch (bufferType)
+            {
+            case Image::MultiComponentBufferType::SeparateImages:
+            {
+                if (! loadBuffer(static_cast<const void*>(buffer), numPixels))
+                {
+                    spdlog::error("Error loading separated component buffers for image file {}", fileName);
+                    return false;
+                }
+                break;
+            }
+            case Image::MultiComponentBufferType::InterleavedImage:
+            {
+                // Fill the interleaved buffer
+                for (std::size_t p = 0; p < numPixels; ++p)
+                {
+                    allComponentBuffers[numComps*p + i] = buffer[p];
+                }
+                break;
+            }
+            }
+        }
+
+        if (Image::MultiComponentBufferType::InterleavedImage == bufferType)
+        {
+            const std::size_t numElements = numPixels * numComps;
+
+            if (! loadBuffer(static_cast<const void*>(allComponentBuffers.get()), numElements))
+            {
+                spdlog::error("Error loading interleaved buffer for image file {}", fileName);
+                return false;
+            }
+        }
+    }
+    else
+    {
+        // Load scalar, single-component image
+        constexpr bool pixelIsVector = false;
+
+        typename itk::ImageBase<3>::Pointer baseImage = readImage<ReadComponentType, 3, pixelIsVector>(fileName);
+        if (! baseImage)
+        {
+            spdlog::error("Unable to read ImageBase from file {}", fileName);
+            return false;
+        }
+
+        typename ReadImageType::Pointer image = downcastImageBaseToImage<ReadComponentType, 3>(baseImage);
+        if (! image)
+        {
+            spdlog::error("Null image for file {} following downcast from ImageBase", fileName);
+            return false;
+        }
+
+        const ReadComponentType* buffer = image->GetBufferPointer();
+        if (! buffer)
+        {
+            spdlog::error("Null buffer of scalar image file {}", fileName);
+            return false;
+        }
+
+        if (! loadBuffer(static_cast<const void*>(buffer), numPixels))
+        {
+            spdlog::error("Error loading buffer for image file {}", fileName);
+            return false;
+        }
+    }
+
+    return true;
+}
+
 #endif // IMAGE_UTILITY_TPP
