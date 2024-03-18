@@ -2258,7 +2258,6 @@ void Rendering::createShaderPrograms()
 
 bool Rendering::createImageProgram( GLShaderProgram& program )
 {
-    spdlog::info("START {}", __PRETTY_FUNCTION__ );
     static const std::string vsFileName{ "src/rendering/shaders/Image.vs" };
     static const std::string fsFileName{ "src/rendering/shaders/Image.fs" };
 

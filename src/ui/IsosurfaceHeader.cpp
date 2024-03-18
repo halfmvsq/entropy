@@ -178,7 +178,7 @@ std::optional<uuids::uuid> addNewSurface(
     std::function< void ( const uuids::uuid& taskUid, std::future<AsyncTaskDetails> future ) > storeFuture,
     std::function< void ( const uuids::uuid& taskUid ) > addTaskToIsosurfaceGpuMeshGenerationQueue )
 {
-    static constexpr uint32_t sk_defaultIsovalueQuantile = 750;
+    static constexpr uint32_t sk_defaultIsovalueQuantile = 75;
 
     if ( ! image )
     {

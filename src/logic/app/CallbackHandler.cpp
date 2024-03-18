@@ -407,8 +407,8 @@ bool CallbackHandler::executeGraphCutsSegmentation(
 
     const VoxelDistances voxelDists = computeVoxelDistances( image->header().spacing(), true );
 
-    const double imLow = image->settings().componentStatistics(imComp).m_quantiles[10];
-    const double imHigh = image->settings().componentStatistics(imComp).m_quantiles[990];
+    const double imLow = image->settings().componentStatistics(imComp).m_quantiles[1];
+    const double imHigh = image->settings().componentStatistics(imComp).m_quantiles[99];
 
     auto weight = [this, &imLow, &imHigh] (double diff) -> double
     {

@@ -2,7 +2,6 @@
 #define IMAGE_UTILITY_H
 
 #include "common/Types.h"
-
 #include "image/Image.h"
 
 #include <glm/vec3.hpp>
@@ -18,17 +17,17 @@
 /**
  * @brief Get file name from a path with or without extension
  */
-std::string getFileName( const std::string& filePath, bool withExtension = false );
+std::string getFileName(const std::string& filePath, bool withExtension = false);
 
-PixelType fromItkPixelType( const ::itk::IOPixelEnum& pixelType );
+PixelType fromItkPixelType(const itk::IOPixelEnum& pixelType);
 
-ComponentType fromItkComponentType( const ::itk::IOComponentEnum& componentType );
+ComponentType fromItkComponentType(const itk::IOComponentEnum& componentType);
 
-::itk::IOComponentEnum toItkComponentType( const ComponentType& componentType );
+itk::IOComponentEnum toItkComponentType(const ComponentType& componentType);
 
-std::pair< itk::CommonEnums::IOComponent, std::string > sniffComponentType( const char* fileName );
+std::pair<itk::CommonEnums::IOComponent, std::string> sniffComponentType(const char* fileName);
 
-typename itk::ImageIOBase::Pointer createStandardImageIo( const char* fileName );
+typename itk::ImageIOBase::Pointer createStandardImageIo(const char* fileName);
 
 /**
  * @brief Get the range of values that can be held in components of a given type.
@@ -37,8 +36,10 @@ typename itk::ImageIOBase::Pointer createStandardImageIo( const char* fileName )
  * @param componentType
  * @return
  */
-std::pair< double, double > componentRange( const ComponentType& componentType );
+std::pair< double, double > componentRange(const ComponentType& componentType);
 
-std::pair<glm::vec3, glm::vec3> computeWorldMinMaxCornersOfImage( const Image& image );
+std::pair<glm::vec3, glm::vec3> computeWorldMinMaxCornersOfImage(const Image& image);
+
+std::vector<ComponentStats<double>> computeImageStatistics(const Image& image);
 
 #endif // IMAGE_UTILITY_H

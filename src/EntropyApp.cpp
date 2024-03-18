@@ -848,7 +848,7 @@ bool EntropyApp::loadSerializedImage(
     // The isosurface threshold for separating foreground and background is set at the
     // 50th quantile image value. This seems to do a pretty good job for CT, T1, and T2 images.
     /// @todo Eventually, we should do a proper foreground/background segmentation.
-    static constexpr uint32_t sk_thresholdQuantile = 500; // 50th percentile
+    static constexpr uint32_t sk_thresholdQuantile = 50; // 50th percentile
 
     // If the image has multiple, interleaved components, then do not compute the distance map
     // for the components, since we have not yet written functions to perform distance map

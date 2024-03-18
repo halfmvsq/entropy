@@ -84,14 +84,12 @@ struct ComponentStats
 {
     T m_minimum = 0;
     T m_maximum = 0;
+    std::array<T, 101> m_quantiles;
 
-    T m_mean = 0;
-    T m_stdDeviation = 0;
-    T m_variance = 0;
-    T m_sum = 0;
-
-    std::vector<double> m_histogram;
-    std::array<T, 1001> m_quantiles;
+    double m_mean = 0;
+    double m_stdDeviation = 0;
+    double m_variance = 0;
+    double m_sum = 0;
 };
 
 

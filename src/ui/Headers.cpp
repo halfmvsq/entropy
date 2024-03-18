@@ -1181,32 +1181,32 @@ void renderImageHeader(
         /// Or separate buttons for low, high window
         if ( ImGui::Button( "99\%" ) )
         {
-            imgSettings.setWindowLow( stats.m_quantiles[10] );
-            imgSettings.setWindowHigh( stats.m_quantiles[990] );
+            imgSettings.setWindowLow( stats.m_quantiles[1] );
+            imgSettings.setWindowHigh( stats.m_quantiles[99] );
             updateImageUniforms();
         }
         ImGui::SameLine();
 
         if ( ImGui::Button( "98\%" ) )
         {
-            imgSettings.setWindowLow( stats.m_quantiles[20] );
-            imgSettings.setWindowHigh( stats.m_quantiles[980] );
+            imgSettings.setWindowLow( stats.m_quantiles[2] );
+            imgSettings.setWindowHigh( stats.m_quantiles[98] );
             updateImageUniforms();
         }
         ImGui::SameLine();
 
         if ( ImGui::Button( "95\%" ) )
         {
-            imgSettings.setWindowLow( stats.m_quantiles[50] );
-            imgSettings.setWindowHigh( stats.m_quantiles[950] );
+            imgSettings.setWindowLow( stats.m_quantiles[5] );
+            imgSettings.setWindowHigh( stats.m_quantiles[95] );
             updateImageUniforms();
         }
         ImGui::SameLine();
 
         if ( ImGui::Button( "90\%" ) )
         {
-            imgSettings.setWindowLow( stats.m_quantiles[100] );
-            imgSettings.setWindowHigh( stats.m_quantiles[900] );
+            imgSettings.setWindowLow( stats.m_quantiles[10] );
+            imgSettings.setWindowHigh( stats.m_quantiles[90] );
             updateImageUniforms();
         }
         ImGui::SameLine(); helpMarker( "Set window based on percentiles of the image histogram" );

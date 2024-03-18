@@ -4,7 +4,6 @@
 #include "common/Exception.hpp"
 #include "common/filesystem.h"
 #include "common/Types.h"
-
 #include "image/Image.h"
 
 #include <itkBinaryThresholdImageFilter.h>
@@ -27,8 +26,12 @@
 
 #include <spdlog/spdlog.h>
 
+#include <algorithm>
 #include <array>
 #include <chrono>
+#include <cmath>
+#include <numeric>
+#include <span>
 #include <string>
 #include <type_traits>
 #include <vector>
@@ -301,7 +304,7 @@ typename itk::Image<T, 3>::Pointer createItkImageFromImageComponent(
 
         InputImageType::Pointer compImage = makeScalarImage(
             dims, origin, spacing, directions,
-            reinterpret_cast<const S*>(image.bufferAsVoid(component)));
+            static_cast<const S*>(image.bufferAsVoid(component)));
 
         if (! compImage) return nullptr;
         caster->SetInput(compImage);
@@ -317,7 +320,7 @@ typename itk::Image<T, 3>::Pointer createItkImageFromImageComponent(
 
         InputImageType::Pointer compImage = makeScalarImage(
             dims, origin, spacing, directions,
-            reinterpret_cast<const S*>(image.bufferAsVoid(component)));
+            static_cast<const S*>(image.bufferAsVoid(component)));
 
         if (! compImage) return nullptr;
         caster->SetInput(compImage);
@@ -333,7 +336,7 @@ typename itk::Image<T, 3>::Pointer createItkImageFromImageComponent(
 
         InputImageType::Pointer compImage = makeScalarImage(
             dims, origin, spacing, directions,
-            reinterpret_cast<const S*>(image.bufferAsVoid(component)));
+            static_cast<const S*>(image.bufferAsVoid(component)));
 
         if (! compImage) return nullptr;
         caster->SetInput(compImage);
@@ -349,7 +352,7 @@ typename itk::Image<T, 3>::Pointer createItkImageFromImageComponent(
 
         InputImageType::Pointer compImage = makeScalarImage(
             dims, origin, spacing, directions,
-            reinterpret_cast<const S*>(image.bufferAsVoid(component)));
+            static_cast<const S*>(image.bufferAsVoid(component)));
 
         if (! compImage) return nullptr;
         caster->SetInput(compImage);
@@ -365,7 +368,7 @@ typename itk::Image<T, 3>::Pointer createItkImageFromImageComponent(
 
         InputImageType::Pointer compImage = makeScalarImage(
             dims, origin, spacing, directions,
-            reinterpret_cast<const S*>(image.bufferAsVoid(component)));
+            static_cast<const S*>(image.bufferAsVoid(component)));
 
         if (! compImage) return nullptr;
         caster->SetInput(compImage);
@@ -381,7 +384,7 @@ typename itk::Image<T, 3>::Pointer createItkImageFromImageComponent(
 
         InputImageType::Pointer compImage = makeScalarImage(
             dims, origin, spacing, directions,
-            reinterpret_cast<const S*>(image.bufferAsVoid(component)));
+            static_cast<const S*>(image.bufferAsVoid(component)));
 
         if (! compImage) return nullptr;
         caster->SetInput(compImage);
@@ -397,7 +400,7 @@ typename itk::Image<T, 3>::Pointer createItkImageFromImageComponent(
 
         InputImageType::Pointer compImage = makeScalarImage(
             dims, origin, spacing, directions,
-            reinterpret_cast<const S*>(image.bufferAsVoid(component)));
+            static_cast<const S*>(image.bufferAsVoid(component)));
 
         if (! compImage) return nullptr;
         caster->SetInput(compImage);
@@ -437,7 +440,7 @@ ComponentStats<U> computeImageStatistics(const typename itk::Image<T, NDim>::Poi
     statsFilter->Update();
 
     static constexpr std::size_t sk_numComponents = 1;
-    static constexpr std::size_t sk_numBins = 1001;
+    static constexpr std::size_t sk_numBins = 101;
 
     typename HistogramType::SizeType size(sk_numComponents);
     size.Fill(sk_numBins);
@@ -474,16 +477,15 @@ ComponentStats<U> computeImageStatistics(const typename itk::Image<T, NDim>::Poi
         throw_debug("Unexpected error computing image histogram")
     }
 
-    auto itr = histogram->Begin();
-    const auto end = histogram->End();
+    // auto itr = histogram->Begin();
+    // const auto end = histogram->End();
+    // stats.m_histogram.reserve(sk_numBins);
 
-    stats.m_histogram.reserve(sk_numBins);
-
-    while (itr != end)
-    {
-        stats.m_histogram.push_back(static_cast<double>(itr.GetFrequency()));
-        ++itr;
-    }
+    // while (itr != end)
+    // {
+    //     stats.m_histogram.push_back(static_cast<double>(itr.GetFrequency()));
+    //     ++itr;
+    // }
 
     const double B = static_cast<double>(sk_numBins - 1);
 
@@ -495,7 +497,72 @@ ComponentStats<U> computeImageStatistics(const typename itk::Image<T, NDim>::Poi
     return stats;
 }
 
+template<typename T>
+double lerp(T a, T b, T t)
+{
+    return (1 - t)*a + t*b;
+}
 
+template<typename T>
+std::optional<T> computeQuantile(const std::span<T> dataSorted, double quantile)
+{
+    const std::size_t N = dataSorted.size();
+
+    if (0 == N)
+    {
+        return std::nullopt;
+    }
+
+    if (1 == N)
+    {
+        return dataSorted.front();
+    }
+
+    constexpr int64_t indexMin = 0;
+    const int64_t indexMax = N - 1;
+
+    // Interpolated index corresponding to quantile
+    const double index = lerp<double>(-0.5, N - 0.5, quantile);
+    const std::size_t indexLeft = std::max(static_cast<int64_t>(std::floor(index)), indexMin);
+    const std::size_t indexRight = std::min(static_cast<int64_t>(std::ceil(index)), indexMax);
+
+    const T dataLeft = dataSorted[indexLeft];
+    const T dataRight = dataSorted[indexRight];
+    return lerp<T>(dataLeft, dataRight, index - static_cast<double>(indexLeft));;
+}
+
+template<typename T>
+ComponentStats<double> computeImageStatistics(const std::span<const T> dataSorted)
+{
+    ComponentStats<double> stats;
+    stats.m_minimum = static_cast<double>(dataSorted.front());
+    stats.m_maximum = static_cast<double>(dataSorted.back());
+
+    for (std::size_t i = 0; i <= 100; ++i)
+    {
+        const double quantile = static_cast<double>(i) / 100.0;
+        if (const std::optional<T> value = computeQuantile(dataSorted, quantile))
+        {
+            stats.m_quantiles[i] = static_cast<double>(*value);
+        }
+    }
+
+    const std::size_t N = dataSorted.size();
+    stats.m_sum = std::accumulate(std::begin(dataSorted), std::end(dataSorted), 0.0);
+    stats.m_mean = stats.m_sum / N;
+
+    std::vector<double> diff(N);
+    std::transform(std::begin(dataSorted), std::end(dataSorted), std::begin(diff),
+                   [&stats](double x) { return x - stats.m_mean; });
+
+    const double squaredSum = std::inner_product(std::begin(diff), std::end(diff), std::begin(diff), 0.0);
+    stats.m_variance = squaredSum / N;
+    stats.m_stdDeviation = std::sqrt(stats.m_variance);
+
+    return stats;
+}
+
+/*
 template<typename T>
 std::vector<ComponentStats<T>> computeImageStatistics(const Image& image)
 {
@@ -550,30 +617,7 @@ std::vector<ComponentStats<T>> computeImageStatistics(const Image& image)
 
     return componentStats;
 }
-
-
-template< typename T, typename U >
-ComponentStats<U> createDefaultImageStatistics(T defaultValue, std::size_t numPixels)
-{
-    static constexpr std::size_t sk_numBins = 101;
-
-    ComponentStats<U> stats;
-    stats.m_minimum = static_cast<U>(defaultValue);
-    stats.m_maximum = static_cast<U>(defaultValue);
-    stats.m_mean = static_cast<U>(defaultValue);
-    stats.m_stdDeviation = static_cast<U>(0);
-    stats.m_variance = static_cast<U>(0);
-    stats.m_sum = static_cast<U>(defaultValue * numPixels);
-    stats.m_histogram.resize(sk_numBins, 0.0);
-
-    for (std::size_t i = 0; i < sk_numBins; ++i)
-    {
-        stats.m_quantiles[i] = defaultValue;
-    }
-
-    return stats;
-}
-
+*/
 
 template< class ComponentType, uint32_t NDim >
 typename ::itk::Image< ComponentType, NDim >::Pointer

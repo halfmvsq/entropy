@@ -513,9 +513,9 @@ void ImageSettings::updateWithNewComponentStatistics(
 {
     // Default window covers 1st to 99th quantile intensity range of the first pixel component.
     // Recall that the histogram has 1001 bins.
-    static constexpr int qLow = 10; // 1% level
-    static constexpr int qHigh = 990; // 99% level
-    static constexpr int qMax = 1000; // 100% level
+    static constexpr int qLow = 1; // 1% level
+    static constexpr int qHigh = 99; // 99% level
+    static constexpr int qMax = 100; // 100% level
 
     if (componentStats.size() != m_numComponents)
     {
@@ -774,11 +774,11 @@ std::ostream& operator<< (std::ostream& os, const ImageSettings& settings)
 
         os << "\nStatistics (component " << i << "):"
            << "\n\tMin: " << t.m_minimum
-           << "\n\tQ01: " << t.m_quantiles[10]
-           << "\n\tQ25: " << t.m_quantiles[250]
-           << "\n\tMed: " << t.m_quantiles[500]
-           << "\n\tQ75: " << t.m_quantiles[750]
-           << "\n\tQ99: " << t.m_quantiles[990]
+           << "\n\tQ01: " << t.m_quantiles[1]
+           << "\n\tQ25: " << t.m_quantiles[25]
+           << "\n\tMed: " << t.m_quantiles[50]
+           << "\n\tQ75: " << t.m_quantiles[75]
+           << "\n\tQ99: " << t.m_quantiles[99]
            << "\n\tMax: " << t.m_maximum
            << "\n\tAvg: " << t.m_mean
            << "\n\tStd: " << t.m_stdDeviation;

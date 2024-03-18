@@ -1,6 +1,7 @@
 #include "image/Image.h"
 #include "image/ImageUtility.h"
 #include "image/ImageCastHelper.tpp"
+#include "image/ImageUtility.h"
 #include "image/ImageUtility.tpp"
 
 #include <spdlog/spdlog.h>
@@ -145,7 +146,7 @@ Image::Image(
     m_headerOverrides = ImageHeaderOverrides(m_header.pixelDimensions(), m_header.spacing(), m_header.origin(), m_header.directions());
     m_tx = ImageTransformations(m_header.pixelDimensions(), m_header.spacing(), m_header.origin(), m_header.directions());
 
-    std::vector<ComponentStats<StatsType>> componentStats = computeImageStatistics<StatsType>(*this);
+    std::vector<ComponentStats<StatsType>> componentStats = computeImageStatistics(*this);
     m_settings = ImageSettings(getFileName(fileName, false), m_header.numComponentsPerPixel(),
                                m_header.memoryComponentType(), std::move(componentStats));
 }
@@ -338,7 +339,7 @@ Image::Image(
     m_tx = ImageTransformations(m_header.pixelDimensions(), m_header.spacing(), m_header.origin(), m_header.directions());
     m_headerOverrides = ImageHeaderOverrides(m_header.pixelDimensions(), m_header.spacing(), m_header.origin(), m_header.directions());
 
-    std::vector<ComponentStats<StatsType>> componentStats = computeImageStatistics<StatsType>(*this);
+    std::vector<ComponentStats<StatsType>> componentStats = computeImageStatistics(*this);
     m_settings = ImageSettings(std::move(displayName), m_header.numComponentsPerPixel(),
                                m_header.memoryComponentType(), std::move(componentStats));
 }
@@ -1003,5 +1004,5 @@ std::ostream& Image::metaData(std::ostream& os) const
 
 void Image::updateComponentStats()
 {
-    m_settings.updateWithNewComponentStatistics(computeImageStatistics<StatsType>(*this), false);
+    m_settings.updateWithNewComponentStatistics(computeImageStatistics(*this), false);
 }
