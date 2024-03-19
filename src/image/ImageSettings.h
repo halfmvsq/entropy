@@ -129,17 +129,32 @@ public:
     std::pair<double, double> minMaxThresholdRange(uint32_t component) const;
     std::pair<double, double> minMaxThresholdRange() const;
 
+
     /// Set lower window value (in image intensity units) for a given component.
-    void setWindowLow(uint32_t component, double wLow, bool clampValues = true);
-    void setWindowLow(double wLow, bool clampValues = false);
+    void setWindowValueLow(uint32_t component, double wLow, bool clampValues = true);
+    void setWindowValueLow(double wLow, bool clampValues = false);
 
     /// Set upper window value (in image intensity units) for a given component.
-    void setWindowHigh(uint32_t component, double wHigh, bool clampValues = true);
-    void setWindowHigh(double wHigh, bool clampValues = false);
+    void setWindowValueHigh(uint32_t component, double wHigh, bool clampValues = true);
+    void setWindowValueHigh(double wHigh, bool clampValues = false);
 
     /// Get window limits (in image intensity units) for a given component
-    std::pair<double, double> windowLowHigh(uint32_t component) const;
-    std::pair<double, double> windowLowHigh() const;
+    std::pair<double, double> windowValuesLowHigh(uint32_t component) const;
+    std::pair<double, double> windowValuesLowHigh() const;
+
+
+    /// Set lower window percentile in [0, 1] for a given component.
+    void setWindowQuantileLow(uint32_t component, double pLow, bool clampValues = true);
+    void setWindowQuantileLow(double pLow, bool clampValues = false);
+
+    /// Set upper window percentile in [0, 1] for a given component.
+    void setWindowQuantileHigh(uint32_t component, double pHigh, bool clampValues = true);
+    void setWindowQuantileHigh(double pHigh, bool clampValues = false);
+
+    /// Get window lower and upper percentiles in [0, 1] for a given component
+    std::pair<double, double> windowQuantilesLowHigh(uint32_t component) const;
+    std::pair<double, double> windowQuantilesLowHigh() const;
+
 
     /// Get window width (in image intensity units) for a given component
     double windowWidth(uint32_t component) const;
@@ -415,14 +430,16 @@ private:
     {
         ComponentSettings() {}
 
-        std::pair<double, double> m_minMaxImageRange{ 0.0, 0.0 }; //!< Min/max image value range
-        std::pair<double, double> m_minMaxWindowWidthRange{ 0.0, 0.0 }; //!< Valid window width range
-        std::pair<double, double> m_minMaxWindowCenterRange{ 0.0, 0.0 }; //!< Valid window center range
-        std::pair<double, double> m_minMaxThresholdRange{ 0.0, 0.0 }; //!< Valid threshold range
+        std::pair<double, double> m_minMaxImageRange{0.0, 0.0}; //!< Min/max image value range
+        std::pair<double, double> m_minMaxWindowWidthRange{0.0, 0.0}; //!< Valid window width range
+        std::pair<double, double> m_minMaxWindowCenterRange{0.0, 0.0}; //!< Valid window center range
+        std::pair<double, double> m_minMaxThresholdRange{0.0, 0.0}; //!< Valid threshold range
 
         /// Window center and width in native image intensity units
         double m_windowCenter = 0.0;
         double m_windowWidth = 0.0;
+
+        std::pair<double, double> m_windowQuantilesLowHigh{0.0, 0.0};
 
         /// Low and high threshold values in native image intensity units
         std::pair<double, double> m_thresholds{0.0, 0.0};
@@ -467,7 +484,7 @@ private:
         bool m_colorMapContinuous = true; //!< Whether the color map is continuous or discrete
         uint32_t m_numColorMapLevels = 8; //!< Number of quantization levels
 
-        glm::vec3 m_hsvModFactors{ 0.0f, 1.0f, 1.0f }; //!< HSV modification factors
+        glm::vec3 m_hsvModFactors{0.0f, 1.0f, 1.0f}; //!< HSV modification factors
 
         std::size_t m_labelTableIndex = 0; //!< Label table index (for segmentation images only)
 

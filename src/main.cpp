@@ -5,13 +5,11 @@
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/ostr.h>
 
-#include <glm/glm.hpp>
-
 #include "test.h"
 
 int main( int argc, char* argv[] )
 {
-    // test();
+    test();
 
     auto logFailure = []()
     {

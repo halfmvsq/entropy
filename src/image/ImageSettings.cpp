@@ -1,4 +1,5 @@
 #include "image/ImageSettings.h"
+#include "image/ImageUtility.tpp"
 
 #include "common/Exception.hpp"
 #include "common/Types.h"
@@ -90,10 +91,8 @@ std::pair<double, double> ImageSettings::minMaxWindowCenterRange() const { retur
 
 std::pair<double, double> ImageSettings::minMaxWindowRange(uint32_t i) const
 {
-    return {
-        minMaxWindowCenterRange(i).first - 0.5 * minMaxWindowWidthRange(i).second,
-        minMaxWindowCenterRange(i).second + 0.5 * minMaxWindowWidthRange(i).second
-    };
+    return {minMaxWindowCenterRange(i).first - 0.5 * minMaxWindowWidthRange(i).second,
+            minMaxWindowCenterRange(i).second + 0.5 * minMaxWindowWidthRange(i).second};
 }
 
 std::pair<double, double> ImageSettings::minMaxWindowRange() const { return minMaxWindowRange(m_activeComponent); }
@@ -101,99 +100,100 @@ std::pair<double, double> ImageSettings::minMaxWindowRange() const { return minM
 std::pair<double, double> ImageSettings::minMaxThresholdRange(uint32_t i) const { return m_componentSettings[i].m_minMaxThresholdRange; }
 std::pair<double, double> ImageSettings::minMaxThresholdRange() const { return minMaxThresholdRange(m_activeComponent); }
 
-void ImageSettings::setWindowLow(uint32_t i, double wLow, bool clampValues)
+void ImageSettings::setWindowValueLow(uint32_t i, double wLow, bool clampValues)
 {
-    if (wLow > (windowLowHigh(i).second - minMaxWindowWidthRange(i).first))
+    const double wHigh = windowValuesLowHigh(i).second;
+    const double narrowestWidth = minMaxWindowWidthRange(i).first;
+    const double wMin = minMaxWindowRange(i).first;
+    const double wMax = minMaxWindowRange(i).second;
+    double wLowAdjusted = wLow;
+
+    if (! clampValues)
     {
-        if (clampValues) {
-            wLow = windowLowHigh(i).second - minMaxWindowWidthRange(i).first;
-        }
-        else {
+        if (wLow > (wHigh - narrowestWidth) || wLow < wMin || wMax < wLow)
+        {
             return;
         }
     }
-
-    if (wLow < minMaxWindowRange(i).first)
+    else
     {
-        if (clampValues) {
-            wLow = minMaxWindowRange(i).first;
-        }
-        else {
-            return;
-        }
-    }
-    
-    if (minMaxWindowRange(i).second < wLow)
-    {
-        if (clampValues) {
-            wLow = minMaxWindowRange(i).second;
-        }
-        else {
-            return;
-        }
+        wLowAdjusted = std::clamp(std::min(wLowAdjusted, wHigh - narrowestWidth), wMin, wMax);
     }
 
-    const double center = 0.5 * (wLow + windowLowHigh(i).second);
-    const double width = windowLowHigh(i).second - wLow;
+    const double center = 0.5 * (wLowAdjusted + wHigh);
+    const double width = wHigh - wLowAdjusted;
 
-    setWindowCenter(center);
-    setWindowWidth(width);
+    setWindowCenter(i, center);
+    setWindowWidth(i, width);
+
+    // Get the newly set window low/high values and convert to percentiles:
+    // const std::pair<double, double> newWindowLowHigh = windowValuesLowHigh(i);
 }
 
-void ImageSettings::setWindowHigh(uint32_t i, double wHigh, bool clampValues)
+void ImageSettings::setWindowValueHigh(uint32_t i, double wHigh, bool clampValues)
 {
-    if (wHigh < (windowLowHigh(i).first + minMaxWindowWidthRange(i).first))
+    const double wLow = windowValuesLowHigh(i).first;
+    const double wMin = minMaxWindowRange(i).first;
+    const double wMax = minMaxWindowRange(i).second;
+    const double narrowestWidth = minMaxWindowWidthRange(i).first;
+    double wHighAdjusted = wHigh;
+
+    if (! clampValues)
     {
-        if (clampValues)
-        {
-            wHigh = windowLowHigh(i).first + minMaxWindowWidthRange(i).first;
-        }
-        else
+        if (wHigh < (wLow + narrowestWidth) || wHigh < wMin || wMax < wHigh)
         {
             return;
         }
     }
-
-    if (wHigh < minMaxWindowRange(i).first)
+    else
     {
-        if (clampValues)
-        {
-            wHigh = minMaxWindowRange(i).first;
-        }
-        else
-        {
-            return;
-        }
+        wHighAdjusted = std::clamp(std::max(wHighAdjusted, wLow + narrowestWidth), wMin, wMax);
     }
 
-    if (minMaxWindowRange(i).second < wHigh)
-    {
-        if (clampValues)
-        {
-            wHigh = minMaxWindowRange(i).second;
-        }
-        else
-        {
-            return;
-        }
-    }
+    const double center = 0.5 * (wLow + wHighAdjusted);
+    const double width = wHighAdjusted - wLow;
 
-    const double center = 0.5 * (windowLowHigh(i).first + wHigh);
-    const double width = wHigh - windowLowHigh(i).first;
+    setWindowCenter(i, center);
+    setWindowWidth(i, width);
 
-    setWindowCenter(center);
-    setWindowWidth(width);
+    // Get the newly set window low/high values and convert to percentiles:
+    // const std::pair<double, double> newWindowLowHigh = windowValuesLowHigh(i);
 }
 
-void ImageSettings::setWindowLow(double wLow, bool clampValues) { setWindowLow(m_activeComponent, wLow, clampValues); }
-void ImageSettings::setWindowHigh(double wHigh, bool clampValues) { setWindowHigh(m_activeComponent, wHigh, clampValues); }
+void ImageSettings::setWindowValueLow(double wLow, bool clampValues) { setWindowValueLow(m_activeComponent, wLow, clampValues); }
+void ImageSettings::setWindowValueHigh(double wHigh, bool clampValues) { setWindowValueHigh(m_activeComponent, wHigh, clampValues); }
 
-std::pair<double, double> ImageSettings::windowLowHigh(uint32_t i) const
+std::pair<double, double> ImageSettings::windowValuesLowHigh(uint32_t i) const
 {
-    return { windowCenter(i) - 0.5 * windowWidth(i), windowCenter(i) + 0.5 * windowWidth(i) };
+    return {windowCenter(i) - 0.5 * windowWidth(i), windowCenter(i) + 0.5 * windowWidth(i)};
 }
 
-std::pair<double, double> ImageSettings::windowLowHigh() const { return windowLowHigh(m_activeComponent); }
+std::pair<double, double> ImageSettings::windowValuesLowHigh() const { return windowValuesLowHigh(m_activeComponent); }
+
+
+void ImageSettings::setWindowQuantileLow(uint32_t i, double pLow, bool clampValues)
+{
+    std::ignore = i;
+    std::ignore = pLow;
+    std::ignore = clampValues;
+}
+
+void ImageSettings::setWindowQuantileHigh(uint32_t i, double pHigh, bool clampValues)
+{
+    std::ignore = i;
+    std::ignore = pHigh;
+    std::ignore = clampValues;
+}
+
+void ImageSettings::setWindowQuantileLow(double pLow, bool clampValues) { setWindowQuantileLow(m_activeComponent, pLow, clampValues); }
+void ImageSettings::setWindowQuantileHigh(double pHigh, bool clampValues) { setWindowQuantileHigh(m_activeComponent, pHigh, clampValues); }
+
+std::pair<double, double> ImageSettings::windowQuantilesLowHigh(uint32_t i) const
+{
+    return m_componentSettings[i].m_windowQuantilesLowHigh;
+}
+
+std::pair<double, double> ImageSettings::windowQuantilesLowHigh() const { return windowQuantilesLowHigh(m_activeComponent); }
 
 
 double ImageSettings::windowWidth(uint32_t i) const { return m_componentSettings[i].m_windowWidth; }
@@ -204,19 +204,7 @@ double ImageSettings::windowCenter() const { return windowCenter(m_activeCompone
 
 void ImageSettings::setWindowWidth(uint32_t i, double width)
 {
-    double w = width;
-
-    if (w < minMaxWindowWidthRange(i).first)
-    {
-        w = minMaxWindowWidthRange(i).first;
-    }
-
-    if (minMaxWindowWidthRange(i).second < w)
-    {
-        w = minMaxWindowWidthRange(i).second;
-    }
-
-    m_componentSettings[i].m_windowWidth = w;
+    m_componentSettings[i].m_windowWidth = std::clamp(width, minMaxWindowWidthRange(i).first, minMaxWindowWidthRange(i).second);
     updateInternals();
 }
 
@@ -224,19 +212,7 @@ void ImageSettings::setWindowWidth(double width) { setWindowWidth(m_activeCompon
 
 void ImageSettings::setWindowCenter(uint32_t i, double center)
 {
-    double c = center;
-
-    if (c < minMaxWindowCenterRange(i).first)
-    {
-        c = minMaxWindowCenterRange(i).first;
-    }
-
-    if (minMaxWindowCenterRange(i).second < c)
-    {
-        c = minMaxWindowCenterRange(i).second;
-    }
-
-    m_componentSettings[i].m_windowCenter = c;
+    m_componentSettings[i].m_windowCenter = std::clamp(center, minMaxWindowCenterRange(i).first, minMaxWindowCenterRange(i).second);
     updateInternals();
 }
 
@@ -247,8 +223,7 @@ void ImageSettings::setThresholdLow(uint32_t i, double tLow)
 {
     if (tLow <= m_componentSettings[i].m_thresholds.second)
     {
-        m_componentSettings[i].m_thresholds.first =
-            std::max(tLow, m_componentSettings[i].m_minMaxThresholdRange.first);
+        m_componentSettings[i].m_thresholds.first = std::max(tLow, m_componentSettings[i].m_minMaxThresholdRange.first);
     }
 }
 
@@ -256,8 +231,7 @@ void ImageSettings::setThresholdHigh(uint32_t i, double tHigh)
 {
     if (m_componentSettings[i].m_thresholds.first <= tHigh)
     {
-        m_componentSettings[i].m_thresholds.second =
-            std::min(tHigh, m_componentSettings[i].m_minMaxThresholdRange.second);
+        m_componentSettings[i].m_thresholds.second = std::min(tHigh, m_componentSettings[i].m_minMaxThresholdRange.second);
     }
 }
 
@@ -271,8 +245,7 @@ bool ImageSettings::thresholdsActive(uint32_t i) const
 {
     const auto& S = m_componentSettings[i];
 
-    return (S.m_minMaxThresholdRange.first < S.m_thresholds.first ||
-        S.m_thresholds.second < S.m_minMaxThresholdRange.second);
+    return (S.m_minMaxThresholdRange.first < S.m_thresholds.first || S.m_thresholds.second < S.m_minMaxThresholdRange.second);
 }
 
 bool ImageSettings::thresholdsActive() const { return thresholdsActive(m_activeComponent); }
@@ -654,7 +627,6 @@ void ImageSettings::updateInternals()
         default: break;
         }
 
-
         switch (m_componentType)
         {
         case ComponentType::Int8:
@@ -783,8 +755,7 @@ std::ostream& operator<< (std::ostream& os, const ImageSettings& settings)
            << "\n\tAvg: " << t.m_mean
            << "\n\tStd: " << t.m_stdDeviation;
 
-        os << "\n\n\tWindow: [" << s.m_windowCenter - 0.5 * s.m_windowWidth << ", "
-           << s.m_windowCenter + 0.5 * s.m_windowWidth << "]"
+        os << "\n\n\tWindow: [" << s.m_windowCenter - 0.5 * s.m_windowWidth << ", " << s.m_windowCenter + 0.5 * s.m_windowWidth << "]"
            << "\n\tThreshold: [" << s.m_thresholds.first << ", " << s.m_thresholds.second << "]";
     }
 

@@ -1068,15 +1068,21 @@ void renderImageHeader(
             const float windowMin = static_cast<float>( imgSettings.minMaxWindowRange().first );
             const float windowMax = static_cast<float>( imgSettings.minMaxWindowRange().second );
 
-            float windowLow = static_cast<float>( imgSettings.windowLowHigh().first );
-            float windowHigh = static_cast<float>( imgSettings.windowLowHigh().second );
+            float windowLow = static_cast<float>( imgSettings.windowValuesLowHigh().first );
+            float windowHigh = static_cast<float>( imgSettings.windowValuesLowHigh().second );
 
             if (ImGui::DragFloatRange2("Window", &windowLow, &windowHigh, speed, windowMin, windowMax,
                 minValuesFormat, maxValuesFormat, ImGuiSliderFlags_AlwaysClamp))
             {
-                imgSettings.setWindowLow( windowLow );
-                imgSettings.setWindowHigh( windowHigh );
+                imgSettings.setWindowValueLow( windowLow );
+                imgSettings.setWindowValueHigh( windowHigh );
                 updateImageUniforms();
+
+                const auto qLow = image->imageValueToQuantile(0, windowLow);
+                const auto qHigh = image->imageValueToQuantile(0, windowHigh);
+
+                spdlog::trace("window = [{}, {}], quantiles = [{} to {}, {} to {}]", windowLow, windowHigh,
+                              qLow ? qLow->first : -1, qLow ? qLow->second : -1, qHigh ? qHigh->first : -1, qHigh ? qHigh->second : -1);
             }
             ImGui::SameLine(); helpMarker( "Set the minimum and maximum of the window range" );
 
@@ -1132,15 +1138,21 @@ void renderImageHeader(
             const int32_t windowMin = static_cast<int32_t>( std::floor( imgSettings.minMaxWindowRange().first ) );
             const int32_t windowMax = static_cast<int32_t>( std::ceil( imgSettings.minMaxWindowRange().second ) );
 
-            int32_t windowLow = static_cast<int32_t>( imgSettings.windowLowHigh().first );
-            int32_t windowHigh = static_cast<int32_t>( imgSettings.windowLowHigh().second );
+            int32_t windowLow = static_cast<int32_t>( imgSettings.windowValuesLowHigh().first );
+            int32_t windowHigh = static_cast<int32_t>( imgSettings.windowValuesLowHigh().second );
 
             if (ImGui::DragIntRange2("Window", &windowLow, &windowHigh, speed, windowMin, windowMax,
                                      "Min: %d", "Max: %d", ImGuiSliderFlags_AlwaysClamp))
             {
-                imgSettings.setWindowLow( windowLow );
-                imgSettings.setWindowHigh( windowHigh );
+                imgSettings.setWindowValueLow( windowLow );
+                imgSettings.setWindowValueHigh( windowHigh );
                 updateImageUniforms();
+
+                const auto qLow = image->imageValueToQuantile(0, static_cast<int64_t>(windowLow));
+                const auto qHigh = image->imageValueToQuantile(0, static_cast<int64_t>(windowHigh));
+
+                spdlog::trace("window = [{}, {}], quantiles = [{} to {}, {} to {}]", windowLow, windowHigh,
+                              qLow ? qLow->first : -1, qLow ? qLow->second : -1, qHigh ? qHigh->first : -1, qHigh ? qHigh->second : -1);
             }
             ImGui::SameLine(); helpMarker( "Set the minimum and maximum of the window range" );
 
@@ -1171,8 +1183,8 @@ void renderImageHeader(
 
         if ( ImGui::Button( "Max" ) )
         {
-            imgSettings.setWindowLow( stats.m_minimum );
-            imgSettings.setWindowHigh( stats.m_maximum );
+            imgSettings.setWindowValueLow( stats.m_minimum );
+            imgSettings.setWindowValueHigh( stats.m_maximum );
             updateImageUniforms();
         }
         ImGui::SameLine();
@@ -1181,32 +1193,32 @@ void renderImageHeader(
         /// Or separate buttons for low, high window
         if ( ImGui::Button( "99\%" ) )
         {
-            imgSettings.setWindowLow( stats.m_quantiles[1] );
-            imgSettings.setWindowHigh( stats.m_quantiles[99] );
+            imgSettings.setWindowValueLow( stats.m_quantiles[1] );
+            imgSettings.setWindowValueHigh( stats.m_quantiles[99] );
             updateImageUniforms();
         }
         ImGui::SameLine();
 
         if ( ImGui::Button( "98\%" ) )
         {
-            imgSettings.setWindowLow( stats.m_quantiles[2] );
-            imgSettings.setWindowHigh( stats.m_quantiles[98] );
+            imgSettings.setWindowValueLow( stats.m_quantiles[2] );
+            imgSettings.setWindowValueHigh( stats.m_quantiles[98] );
             updateImageUniforms();
         }
         ImGui::SameLine();
 
         if ( ImGui::Button( "95\%" ) )
         {
-            imgSettings.setWindowLow( stats.m_quantiles[5] );
-            imgSettings.setWindowHigh( stats.m_quantiles[95] );
+            imgSettings.setWindowValueLow( stats.m_quantiles[5] );
+            imgSettings.setWindowValueHigh( stats.m_quantiles[95] );
             updateImageUniforms();
         }
         ImGui::SameLine();
 
         if ( ImGui::Button( "90\%" ) )
         {
-            imgSettings.setWindowLow( stats.m_quantiles[10] );
-            imgSettings.setWindowHigh( stats.m_quantiles[90] );
+            imgSettings.setWindowValueLow( stats.m_quantiles[10] );
+            imgSettings.setWindowValueHigh( stats.m_quantiles[90] );
             updateImageUniforms();
         }
         ImGui::SameLine(); helpMarker( "Set window based on percentiles of the image histogram" );

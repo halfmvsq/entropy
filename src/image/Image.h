@@ -295,6 +295,9 @@ public:
         }
     }
 
+    std::optional<std::pair<double, double>> imageValueToQuantile(uint32_t component, int64_t value);
+    std::optional<std::pair<double, double>> imageValueToQuantile(uint32_t component, double value);
+
 
     void setUseIdentityPixelSpacings(bool identitySpacings);
     bool getUseIdentityPixelSpacings() const;
@@ -373,7 +376,6 @@ private:
     std::vector< std::vector<uint32_t> > m_data_uint32;
     std::vector< std::vector<float> > m_data_float32;
 
-    // TODO: fill these and don't do duplicate work compuing the histogram
     // These DO NOT separate out interleaved pixels into separate vectors for multi-component images!!
     std::vector< std::vector<int8_t> > m_dataSorted_int8;
     std::vector< std::vector<uint8_t> > m_dataSorted_uint8;

@@ -931,6 +931,47 @@ Image::getComponentAndOffsetForBuffer(uint32_t comp, std::size_t index) const
     return ret;
 }
 
+std::optional<std::pair<double, double>>
+Image::imageValueToQuantile(uint32_t comp, int64_t value)
+{
+    // TODO stuff like this to check for component...
+    // const auto ncomps = m_header.numComponentsPerPixel();
+
+    // if (comp > ncomps)
+    // {
+    //     // Invalid image component requested
+    //     return std::nullopt;
+    // }
+
+    switch (m_header.memoryComponentType())
+    {
+    case ComponentType::Int8: { return valueToQuantile(std::span{m_dataSorted_int8[comp]}, static_cast<int8_t>(value)); }
+    case ComponentType::UInt8: { return valueToQuantile(std::span{m_dataSorted_uint8[comp]}, static_cast<uint8_t>(value)); }
+    case ComponentType::Int16: { return valueToQuantile(std::span{m_dataSorted_int16[comp]}, static_cast<int16_t>(value)); }
+    case ComponentType::UInt16: { return valueToQuantile(std::span{m_dataSorted_uint16[comp]}, static_cast<uint16_t>(value)); }
+    case ComponentType::Int32: { return valueToQuantile(std::span{m_dataSorted_int32[comp]}, static_cast<int32_t>(value)); }
+    case ComponentType::UInt32: { return valueToQuantile(std::span{m_dataSorted_uint32[comp]}, static_cast<uint32_t>(value)); }
+    case ComponentType::Float32: { return valueToQuantile(std::span{m_dataSorted_float32[comp]}, static_cast<float>(value)); }
+    default: return std::nullopt;
+    }
+}
+
+std::optional<std::pair<double, double>>
+Image::imageValueToQuantile(uint32_t comp, double value)
+{
+    switch (m_header.memoryComponentType())
+    {
+    case ComponentType::Int8: { return valueToQuantile(std::span{m_dataSorted_int8[comp]}, static_cast<int8_t>(value)); }
+    case ComponentType::UInt8: { return valueToQuantile(std::span{m_dataSorted_uint8[comp]}, static_cast<uint8_t>(value)); }
+    case ComponentType::Int16: { return valueToQuantile(std::span{m_dataSorted_int16[comp]}, static_cast<int16_t>(value)); }
+    case ComponentType::UInt16: { return valueToQuantile(std::span{m_dataSorted_uint16[comp]}, static_cast<uint16_t>(value)); }
+    case ComponentType::Int32: { return valueToQuantile(std::span{m_dataSorted_int32[comp]}, static_cast<int32_t>(value)); }
+    case ComponentType::UInt32: { return valueToQuantile(std::span{m_dataSorted_uint32[comp]}, static_cast<uint32_t>(value)); }
+    case ComponentType::Float32: { return valueToQuantile(std::span{m_dataSorted_float32[comp]}, static_cast<float>(value)); }
+    default: return std::nullopt;
+    }
+}
+
 void Image::setUseIdentityPixelSpacings(bool identitySpacings)
 {
     m_headerOverrides.m_useIdentityPixelSpacings = identitySpacings;
