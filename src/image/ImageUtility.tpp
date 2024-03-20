@@ -810,7 +810,7 @@ bool writeImage(typename itk::Image<T, NDim>::Pointer image, const fs::path& fil
             return false;
         }
 
-        writer->SetFileName(fileName.c_str());
+        writer->SetFileName(fileName.string().c_str());
         writer->SetInput(image);
         writer->SetUseCompression(true);
         writer->Update();
@@ -888,9 +888,9 @@ Image createImageFromItkImage(const typename itk::Image<T, 3>::Pointer itkImage,
     image.header().setFileName("<none>");
     image.settings().setDisplayName(displayName);
     
-    if (! std::remove(filename.c_str()))
+    if (! std::remove(filename.string().c_str()))
     {
-        spdlog::warn("Unable to remove temporary image file '{}'", filename.string());
+        spdlog::warn("Unable to remove temporary image file {}", filename);
     }
 
     return image;
@@ -1146,7 +1146,7 @@ bool loadImage(
     {
         // Load multi-component image
         constexpr bool pixelIsVector = true;
-        typename itk::ImageBase<3>::Pointer baseImage = readImage<ReadComponentType, 3, pixelIsVector>(fileName);
+        typename itk::ImageBase<3>::Pointer baseImage = readImage<ReadComponentType, 3, pixelIsVector>(fileName.string());
         if (! baseImage)
         {
             spdlog::error("Unable to read vector ImageBase for image {}", fileName);
@@ -1233,7 +1233,7 @@ bool loadImage(
         // Load scalar, single-component image
         constexpr bool pixelIsVector = false;
 
-        typename itk::ImageBase<3>::Pointer baseImage = readImage<ReadComponentType, 3, pixelIsVector>(fileName);
+        typename itk::ImageBase<3>::Pointer baseImage = readImage<ReadComponentType, 3, pixelIsVector>(fileName.string());
         if (! baseImage)
         {
             spdlog::error("Unable to read ImageBase from file {}", fileName);
