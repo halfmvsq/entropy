@@ -496,7 +496,7 @@ double lerp(T a, T b, T t)
 }
 
 template<typename T>
-std::optional<T> quantileToValue(const std::span<T> dataSorted, double quantile)
+std::optional<T> convertQuantileToValue(const std::span<T> dataSorted, double quantile)
 {
     const std::size_t N = dataSorted.size();
 
@@ -525,7 +525,7 @@ std::optional<T> quantileToValue(const std::span<T> dataSorted, double quantile)
 }
 
 template<typename T>
-std::optional<std::pair<double, double>> valueToQuantile(const std::span<T> dataSorted, T value)
+std::optional<std::tuple<double, double, bool>> convertValueToQuantile(const std::span<T> dataSorted, T value)
 {
     const std::size_t N = dataSorted.size();
 
@@ -535,21 +535,22 @@ std::optional<std::pair<double, double>> valueToQuantile(const std::span<T> data
     }
 
     auto lower = std::lower_bound(std::begin(dataSorted), std::end(dataSorted), value);
-    auto upper = std::upper_bound(std::begin(dataSorted), std::end(dataSorted), value);
 
     if (std::end(dataSorted) == lower)
     {
-        return std::nullopt;
+        // value is greater than the largest element of dataSorted
+        return std::make_tuple(1.0, 1.0, false);
     }
 
-    // const bool found = (lower != std::end(dataSorted)) && (*lower == value);
+    auto upper = std::upper_bound(std::begin(dataSorted), std::end(dataSorted), value);
+
     const auto distLower = std::distance(std::begin(dataSorted), lower);
     const auto distUpper = std::distance(std::begin(dataSorted), upper);
 
-    const double quantLower = static_cast<double>(distLower) / (N - 1);
-    const double quantUpper = (std::end(dataSorted) == upper) ? 1.0 : static_cast<double>(distUpper) / (N - 1);
+    const double quantLower = static_cast<double>(distLower) / N;
+    const double quantUpper = static_cast<double>(distUpper) / N;
 
-    return std::make_pair(quantLower, quantUpper);
+    return std::make_tuple(quantLower, quantUpper, true);
 }
 
 template<typename T>
@@ -562,7 +563,7 @@ ComponentStats<double> computeImageStatistics(const std::span<const T> dataSorte
     for (std::size_t i = 0; i <= 100; ++i)
     {
         const double quantile = static_cast<double>(i) / 100.0;
-        if (const std::optional<T> value = quantileToValue(dataSorted, quantile))
+        if (const std::optional<T> value = convertQuantileToValue(dataSorted, quantile))
         {
             stats.m_quantiles[i] = static_cast<double>(*value);
         }

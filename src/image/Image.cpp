@@ -931,8 +931,7 @@ Image::getComponentAndOffsetForBuffer(uint32_t comp, std::size_t index) const
     return ret;
 }
 
-std::optional<std::pair<double, double>>
-Image::imageValueToQuantile(uint32_t comp, int64_t value)
+std::optional<std::tuple<double, double, bool>> Image::valueToQuantile(uint32_t comp, int64_t value)
 {
     // TODO stuff like this to check for component...
     // const auto ncomps = m_header.numComponentsPerPixel();
@@ -945,29 +944,43 @@ Image::imageValueToQuantile(uint32_t comp, int64_t value)
 
     switch (m_header.memoryComponentType())
     {
-    case ComponentType::Int8: { return valueToQuantile(std::span{m_dataSorted_int8[comp]}, static_cast<int8_t>(value)); }
-    case ComponentType::UInt8: { return valueToQuantile(std::span{m_dataSorted_uint8[comp]}, static_cast<uint8_t>(value)); }
-    case ComponentType::Int16: { return valueToQuantile(std::span{m_dataSorted_int16[comp]}, static_cast<int16_t>(value)); }
-    case ComponentType::UInt16: { return valueToQuantile(std::span{m_dataSorted_uint16[comp]}, static_cast<uint16_t>(value)); }
-    case ComponentType::Int32: { return valueToQuantile(std::span{m_dataSorted_int32[comp]}, static_cast<int32_t>(value)); }
-    case ComponentType::UInt32: { return valueToQuantile(std::span{m_dataSorted_uint32[comp]}, static_cast<uint32_t>(value)); }
-    case ComponentType::Float32: { return valueToQuantile(std::span{m_dataSorted_float32[comp]}, static_cast<float>(value)); }
+    case ComponentType::Int8: { return convertValueToQuantile(std::span{m_dataSorted_int8[comp]}, static_cast<int8_t>(value)); }
+    case ComponentType::UInt8: { return convertValueToQuantile(std::span{m_dataSorted_uint8[comp]}, static_cast<uint8_t>(value)); }
+    case ComponentType::Int16: { return convertValueToQuantile(std::span{m_dataSorted_int16[comp]}, static_cast<int16_t>(value)); }
+    case ComponentType::UInt16: { return convertValueToQuantile(std::span{m_dataSorted_uint16[comp]}, static_cast<uint16_t>(value)); }
+    case ComponentType::Int32: { return convertValueToQuantile(std::span{m_dataSorted_int32[comp]}, static_cast<int32_t>(value)); }
+    case ComponentType::UInt32: { return convertValueToQuantile(std::span{m_dataSorted_uint32[comp]}, static_cast<uint32_t>(value)); }
+    case ComponentType::Float32: { return convertValueToQuantile(std::span{m_dataSorted_float32[comp]}, static_cast<float>(value)); }
     default: return std::nullopt;
     }
 }
 
-std::optional<std::pair<double, double>>
-Image::imageValueToQuantile(uint32_t comp, double value)
+std::optional<std::tuple<double, double, bool>> Image::valueToQuantile(uint32_t comp, double value)
 {
     switch (m_header.memoryComponentType())
     {
-    case ComponentType::Int8: { return valueToQuantile(std::span{m_dataSorted_int8[comp]}, static_cast<int8_t>(value)); }
-    case ComponentType::UInt8: { return valueToQuantile(std::span{m_dataSorted_uint8[comp]}, static_cast<uint8_t>(value)); }
-    case ComponentType::Int16: { return valueToQuantile(std::span{m_dataSorted_int16[comp]}, static_cast<int16_t>(value)); }
-    case ComponentType::UInt16: { return valueToQuantile(std::span{m_dataSorted_uint16[comp]}, static_cast<uint16_t>(value)); }
-    case ComponentType::Int32: { return valueToQuantile(std::span{m_dataSorted_int32[comp]}, static_cast<int32_t>(value)); }
-    case ComponentType::UInt32: { return valueToQuantile(std::span{m_dataSorted_uint32[comp]}, static_cast<uint32_t>(value)); }
-    case ComponentType::Float32: { return valueToQuantile(std::span{m_dataSorted_float32[comp]}, static_cast<float>(value)); }
+    case ComponentType::Int8: { return convertValueToQuantile(std::span{m_dataSorted_int8[comp]}, static_cast<int8_t>(value)); }
+    case ComponentType::UInt8: { return convertValueToQuantile(std::span{m_dataSorted_uint8[comp]}, static_cast<uint8_t>(value)); }
+    case ComponentType::Int16: { return convertValueToQuantile(std::span{m_dataSorted_int16[comp]}, static_cast<int16_t>(value)); }
+    case ComponentType::UInt16: { return convertValueToQuantile(std::span{m_dataSorted_uint16[comp]}, static_cast<uint16_t>(value)); }
+    case ComponentType::Int32: { return convertValueToQuantile(std::span{m_dataSorted_int32[comp]}, static_cast<int32_t>(value)); }
+    case ComponentType::UInt32: { return convertValueToQuantile(std::span{m_dataSorted_uint32[comp]}, static_cast<uint32_t>(value)); }
+    case ComponentType::Float32: { return convertValueToQuantile(std::span{m_dataSorted_float32[comp]}, static_cast<float>(value)); }
+    default: return std::nullopt;
+    }
+}
+
+std::optional<double> Image::quantileToValue(uint32_t comp, double quantile)
+{
+    switch (m_header.memoryComponentType())
+    {
+    case ComponentType::Int8: { if (const auto v = convertQuantileToValue(std::span{m_dataSorted_int8[comp]}, quantile)) { return static_cast<double>(*v); } else { return std::nullopt; } }
+    case ComponentType::UInt8: { if (const auto v = convertQuantileToValue(std::span{m_dataSorted_uint8[comp]}, quantile)) { return static_cast<double>(*v); } else { return std::nullopt; } }
+    case ComponentType::Int16: { if (const auto v = convertQuantileToValue(std::span{m_dataSorted_int16[comp]}, quantile)) { return static_cast<double>(*v); } else { return std::nullopt; } }
+    case ComponentType::UInt16: { if (const auto v = convertQuantileToValue(std::span{m_dataSorted_uint16[comp]}, quantile)) { return static_cast<double>(*v); } else { return std::nullopt; } }
+    case ComponentType::Int32: { if (const auto v = convertQuantileToValue(std::span{m_dataSorted_int32[comp]}, quantile)) { return static_cast<double>(*v); } else { return std::nullopt; } }
+    case ComponentType::UInt32: { if (const auto v = convertQuantileToValue(std::span{m_dataSorted_uint32[comp]}, quantile)) { return static_cast<double>(*v); } else { return std::nullopt; } }
+    case ComponentType::Float32: { if (const auto v = convertQuantileToValue(std::span{m_dataSorted_float32[comp]}, quantile)) { return static_cast<double>(*v); } else { return std::nullopt; } }
     default: return std::nullopt;
     }
 }

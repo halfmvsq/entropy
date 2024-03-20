@@ -38,6 +38,7 @@
 
 #include <algorithm>
 #include <string>
+#include <tuple>
 
 #undef min
 #undef max
@@ -587,10 +588,18 @@ void renderImageHeader(
     const char* minValuesFormat = minValuesFormatString.c_str();
     const char* maxValuesFormat = maxValuesFormatString.c_str();
 
+    const std::string minPercentileFormatString = std::string( "Min: " ) + appData.guiData().m_percentilePrecisionFormat + "%%";
+    const std::string maxPercentileFormatString = std::string( "Max: " ) + appData.guiData().m_percentilePrecisionFormat + "%%";
+
+    const char* minPercentilesFormat = minPercentileFormatString.c_str();
+    const char* maxPercentilesFormat = maxPercentileFormatString.c_str();
+
     const char* valuesFormat = appData.guiData().m_imageValuePrecisionFormat.c_str();
     const char* txFormat = appData.guiData().m_txPrecisionFormat.c_str();
 
+    const float windowPercentileStep = std::pow(10.0f, -1.0f * appData.guiData().m_percentilePrecision);
 
+    /// @todo ADD visibility control for gamma
     if ( ! image ) return;
 
     const auto& imgHeader = image->header();
@@ -1041,21 +1050,8 @@ void renderImageHeader(
             const float threshMin = static_cast<float>( imgSettings.thresholdRange().first );
             const float threshMax = static_cast<float>( imgSettings.thresholdRange().second );
 
-            float threshLow = static_cast<float>( imgSettings.thresholds().first );
-            float threshHigh = static_cast<float>( imgSettings.thresholds().second );
-
             // Speed of range slider is based on the range
             const float speed = static_cast<float>( threshMax - threshMin ) / 1000.0f;
-
-            if (ImGui::DragFloatRange2("Threshold", &threshLow, &threshHigh, speed, threshMin, threshMax,
-                    minValuesFormat, maxValuesFormat, ImGuiSliderFlags_AlwaysClamp ))
-            {
-                imgSettings.setThresholdLow( static_cast<double>( threshLow ) );
-                imgSettings.setThresholdHigh( static_cast<double>( threshHigh ) );
-                updateImageUniforms();
-            }
-            ImGui::SameLine();
-            helpMarker( "Lower and upper image thresholds" );
 
 
             // Window/level sliders:
@@ -1071,24 +1067,10 @@ void renderImageHeader(
             float windowLow = static_cast<float>( imgSettings.windowValuesLowHigh().first );
             float windowHigh = static_cast<float>( imgSettings.windowValuesLowHigh().second );
 
-            if (ImGui::DragFloatRange2("Window", &windowLow, &windowHigh, speed, windowMin, windowMax,
-                minValuesFormat, maxValuesFormat, ImGuiSliderFlags_AlwaysClamp))
-            {
-                imgSettings.setWindowValueLow( windowLow );
-                imgSettings.setWindowValueHigh( windowHigh );
-                updateImageUniforms();
-
-                const auto qLow = image->imageValueToQuantile(0, windowLow);
-                const auto qHigh = image->imageValueToQuantile(0, windowHigh);
-
-                spdlog::trace("window = [{}, {}], quantiles = [{} to {}, {} to {}]", windowLow, windowHigh,
-                              qLow ? qLow->first : -1, qLow ? qLow->second : -1, qHigh ? qHigh->first : -1, qHigh ? qHigh->second : -1);
-            }
-            ImGui::SameLine(); helpMarker( "Set the minimum and maximum of the window range" );
-
-
             double windowWidth = imgSettings.windowWidth();
             double windowCenter = imgSettings.windowCenter();
+
+            ImGui::Text("Windowing:");
 
             if ( mySliderF64( "Width", &windowWidth, windowWidthMin, windowWidthMax, valuesFormat ) )
             {
@@ -1103,22 +1085,51 @@ void renderImageHeader(
                 updateImageUniforms();
             }
             ImGui::SameLine(); helpMarker( "Window level (center)" );
-        }
-        else
-        {
-            // Threshold range:
-            const int32_t threshMin = static_cast<int32_t>( imgSettings.thresholdRange().first );
-            const int32_t threshMax = static_cast<int32_t>( imgSettings.thresholdRange().second );
 
-            int32_t threshLow = static_cast<int32_t>( imgSettings.thresholds().first );
-            int32_t threshHigh = static_cast<int32_t>( imgSettings.thresholds().second );
 
-            // Use a speed of 1 for integer images:
-            constexpr float speed = 1.0f;
+            if (ImGui::DragFloatRange2("Values", &windowLow, &windowHigh, speed, windowMin, windowMax,
+                minValuesFormat, maxValuesFormat, ImGuiSliderFlags_AlwaysClamp))
+            {
+                imgSettings.setWindowValueLow( windowLow );
+                imgSettings.setWindowValueHigh( windowHigh );
+                updateImageUniforms();
+            }
+            ImGui::SameLine(); helpMarker( "Set the minimum and maximum values of the window range" );
 
-            /// Speed of range slider is based on the image range
-            if (ImGui::DragIntRange2("Threshold", &threshLow, &threshHigh, speed, threshMin, threshMax,
-                    "Min: %d", "Max: %d", ImGuiSliderFlags_AlwaysClamp))
+
+            const auto qLow = image->valueToQuantile(imgSettings.activeComponent(), windowLow);
+            const auto qHigh = image->valueToQuantile(imgSettings.activeComponent(), windowHigh);
+
+            constexpr float windowPercentileMin = 0.0f;
+            constexpr float windowPercentileMax = 100.0f;
+
+            if (qLow && qHigh)
+            {
+                float windowPercentileLow = 100.0f * std::get<0>(*qLow);
+                float windowPercentileHigh = 100.0f * std::get<1>(*qHigh);
+
+                if (ImGui::DragFloatRange2("Percentiles", &windowPercentileLow, &windowPercentileHigh, windowPercentileStep,
+                    windowPercentileMin, windowPercentileMax, minPercentilesFormat, maxPercentilesFormat, ImGuiSliderFlags_AlwaysClamp))
+                {
+                    const auto vLow = image->quantileToValue(imgSettings.activeComponent(), windowPercentileLow / 100.0f);
+                    const auto vHigh = image->quantileToValue(imgSettings.activeComponent(), windowPercentileHigh / 100.0f);
+
+                    if (vLow && vHigh)
+                    {
+                        imgSettings.setWindowValueLow(*vLow);
+                        imgSettings.setWindowValueHigh(*vHigh);
+                        updateImageUniforms();
+                    }
+                }
+                ImGui::SameLine(); helpMarker( "Set the minimum and maximum percentiles of the window range" );
+            }
+
+
+            float threshLow = static_cast<float>( imgSettings.thresholds().first );
+            float threshHigh = static_cast<float>( imgSettings.thresholds().second );
+
+            if (ImGui::DragFloatRange2("Thresholds", &threshLow, &threshHigh, speed, threshMin, threshMax,
+                                       minValuesFormat, maxValuesFormat, ImGuiSliderFlags_AlwaysClamp ))
             {
                 imgSettings.setThresholdLow( static_cast<double>( threshLow ) );
                 imgSettings.setThresholdHigh( static_cast<double>( threshHigh ) );
@@ -1126,7 +1137,11 @@ void renderImageHeader(
             }
             ImGui::SameLine();
             helpMarker( "Lower and upper image thresholds" );
-
+        }
+        else
+        {
+            // Use a speed of 1 for integer images:
+            constexpr float speed = 1.0f;
 
             // Window/level sliders:
             const int32_t windowWidthMin = static_cast<int32_t>( std::floor( imgSettings.minMaxWindowWidthRange().first ) );
@@ -1141,24 +1156,10 @@ void renderImageHeader(
             int32_t windowLow = static_cast<int32_t>( imgSettings.windowValuesLowHigh().first );
             int32_t windowHigh = static_cast<int32_t>( imgSettings.windowValuesLowHigh().second );
 
-            if (ImGui::DragIntRange2("Window", &windowLow, &windowHigh, speed, windowMin, windowMax,
-                                     "Min: %d", "Max: %d", ImGuiSliderFlags_AlwaysClamp))
-            {
-                imgSettings.setWindowValueLow( windowLow );
-                imgSettings.setWindowValueHigh( windowHigh );
-                updateImageUniforms();
-
-                const auto qLow = image->imageValueToQuantile(0, static_cast<int64_t>(windowLow));
-                const auto qHigh = image->imageValueToQuantile(0, static_cast<int64_t>(windowHigh));
-
-                spdlog::trace("window = [{}, {}], quantiles = [{} to {}, {} to {}]", windowLow, windowHigh,
-                              qLow ? qLow->first : -1, qLow ? qLow->second : -1, qHigh ? qHigh->first : -1, qHigh ? qHigh->second : -1);
-            }
-            ImGui::SameLine(); helpMarker( "Set the minimum and maximum of the window range" );
-
-
             int64_t windowWidth = static_cast<int64_t>( imgSettings.windowWidth() );
             int64_t windowCenter = static_cast<int64_t>( imgSettings.windowCenter() );
+
+            ImGui::Text("Windowing:");
 
             if ( mySliderS64( "Width", &windowWidth, windowWidthMin, windowWidthMax ) )
             {
@@ -1173,10 +1174,66 @@ void renderImageHeader(
                 updateImageUniforms();
             }
             ImGui::SameLine(); helpMarker( "Window level (center)" );
+
+            if (ImGui::DragIntRange2("Values", &windowLow, &windowHigh, speed, windowMin, windowMax,
+                                     "Min: %d", "Max: %d", ImGuiSliderFlags_AlwaysClamp))
+            {
+                imgSettings.setWindowValueLow( windowLow );
+                imgSettings.setWindowValueHigh( windowHigh );
+                updateImageUniforms();
+            }
+            ImGui::SameLine(); helpMarker( "Set the minimum and maximum of the window range" );
+
+
+            const auto qLow = image->valueToQuantile(imgSettings.activeComponent(), static_cast<int64_t>(windowLow));
+            const auto qHigh = image->valueToQuantile(imgSettings.activeComponent(), static_cast<int64_t>(windowHigh));
+
+            constexpr float windowPercentileMin = 0.0f;
+            constexpr float windowPercentileMax = 100.0f;
+
+            if (qLow && qHigh)
+            {
+                float windowPercentileLow = 100.0f * std::get<0>(*qLow);
+                float windowPercentileHigh = 100.0f * std::get<1>(*qHigh);
+
+                if (ImGui::DragFloatRange2("Percentiles", &windowPercentileLow, &windowPercentileHigh, windowPercentileStep,
+                    windowPercentileMin, windowPercentileMax, minPercentilesFormat, maxPercentilesFormat, ImGuiSliderFlags_AlwaysClamp))
+                {
+                    const auto vLow = image->quantileToValue(imgSettings.activeComponent(), windowPercentileLow / 100.0f);
+                    const auto vHigh = image->quantileToValue(imgSettings.activeComponent(), windowPercentileHigh / 100.0f);
+
+                    if (vLow && vHigh)
+                    {
+                        imgSettings.setWindowValueLow(*vLow);
+                        imgSettings.setWindowValueHigh(*vHigh);
+                        updateImageUniforms();
+                    }
+                }
+                ImGui::SameLine(); helpMarker( "Set the minimum and maximum percentiles of the window range" );
+            }
+
+
+            // Threshold range:
+            const int32_t threshMin = static_cast<int32_t>( imgSettings.thresholdRange().first );
+            const int32_t threshMax = static_cast<int32_t>( imgSettings.thresholdRange().second );
+
+            int32_t threshLow = static_cast<int32_t>( imgSettings.thresholds().first );
+            int32_t threshHigh = static_cast<int32_t>( imgSettings.thresholds().second );
+
+            /// Speed of range slider is based on the image range
+            if (ImGui::DragIntRange2("Thresholds", &threshLow, &threshHigh, speed, threshMin, threshMax,
+                                     "Min: %d", "Max: %d", ImGuiSliderFlags_AlwaysClamp))
+            {
+                imgSettings.setThresholdLow( static_cast<double>( threshLow ) );
+                imgSettings.setThresholdHigh( static_cast<double>( threshHigh ) );
+                updateImageUniforms();
+            }
+            ImGui::SameLine();
+            helpMarker( "Lower and upper image thresholds" );
         }
         ImGui::Spacing();
 
-
+/*
         ImGui::Text( "Auto window: " ); ImGui::SameLine();
 
         const auto& stats = imgSettings.componentStatistics( imgSettings.activeComponent() );
@@ -1222,7 +1279,7 @@ void renderImageHeader(
             updateImageUniforms();
         }
         ImGui::SameLine(); helpMarker( "Set window based on percentiles of the image histogram" );
-
+*/
 
         auto getImageInterpMode = [&imgSettings] ()
         {

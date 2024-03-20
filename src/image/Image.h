@@ -15,6 +15,7 @@
 #include <optional>
 #include <ostream>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -173,6 +174,9 @@ public:
     template<typename T>
     std::optional<T> valueLinear(uint32_t comp, double i, double j, double k) const
     {
+        static const glm::dvec3 ZERO{0.0};
+        static const glm::dvec3 ONE{1.0};
+
         const glm::u64vec3& dims = m_header.pixelDimensions();
 
         if (i < -0.5 || j < -0.5 || k < -0.5 ||
@@ -183,9 +187,7 @@ public:
 
         // Valid image coordinates are [-0.5, N-0.5]. However, we clamp coordinates to the edge samples,
         // which are at 0 and N - 1:
-        const glm::dvec3 coordClamped = glm::clamp(glm::dvec3{i, j, k},
-            glm::dvec3{0.0}, glm::dvec3{dims} - glm::dvec3{1.0});
-
+        const glm::dvec3 coordClamped = glm::clamp(glm::dvec3{i, j, k}, ZERO, glm::dvec3{dims} - ONE);
         const glm::i64vec3 f = glm::i64vec3{ glm::floor(coordClamped) };
 
         // Get values of all 8 neighboring pixels. If a pixel outside the image is requested,
@@ -295,9 +297,10 @@ public:
         }
     }
 
-    std::optional<std::pair<double, double>> imageValueToQuantile(uint32_t component, int64_t value);
-    std::optional<std::pair<double, double>> imageValueToQuantile(uint32_t component, double value);
+    std::optional<std::tuple<double, double, bool>> valueToQuantile(uint32_t component, int64_t value);
+    std::optional<std::tuple<double, double, bool>> valueToQuantile(uint32_t component, double value);
 
+    std::optional<double> quantileToValue(uint32_t component, double quantile);
 
     void setUseIdentityPixelSpacings(bool identitySpacings);
     bool getUseIdentityPixelSpacings() const;

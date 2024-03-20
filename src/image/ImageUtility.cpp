@@ -283,44 +283,37 @@ std::vector<ComponentStats<double>> computeImageStatistics(const Image& image)
         {
         case ComponentType::Int8:
         {
-            componentStats.emplace_back(computeImageStatistics<int8_t>(
-                std::span(static_cast<const int8_t*>(bufferSorted), N)));
+            componentStats.emplace_back(computeImageStatistics<int8_t>(std::span(static_cast<const int8_t*>(bufferSorted), N)));
             break;
         }
         case ComponentType::UInt8:
         {
-            componentStats.emplace_back(computeImageStatistics<uint8_t>(
-                std::span(static_cast<const uint8_t*>(bufferSorted), N)));
+            componentStats.emplace_back(computeImageStatistics<uint8_t>(std::span(static_cast<const uint8_t*>(bufferSorted), N)));
             break;
         }
         case ComponentType::Int16:
         {
-            componentStats.emplace_back(computeImageStatistics<int16_t>(
-                std::span(static_cast<const int16_t*>(bufferSorted), N)));
+            componentStats.emplace_back(computeImageStatistics<int16_t>(std::span(static_cast<const int16_t*>(bufferSorted), N)));
             break;
         }
         case ComponentType::UInt16:
         {
-            componentStats.emplace_back(computeImageStatistics<uint16_t>(
-                std::span(static_cast<const uint16_t*>(bufferSorted), N)));
+            componentStats.emplace_back(computeImageStatistics<uint16_t>(std::span(static_cast<const uint16_t*>(bufferSorted), N)));
             break;
         }
         case ComponentType::Int32:
         {
-            componentStats.emplace_back(computeImageStatistics<int32_t>(
-                std::span(static_cast<const int32_t*>(bufferSorted), N)));
+            componentStats.emplace_back(computeImageStatistics<int32_t>(std::span(static_cast<const int32_t*>(bufferSorted), N)));
             break;
         }
         case ComponentType::UInt32:
         {
-            componentStats.emplace_back(computeImageStatistics<uint32_t>(
-                std::span(static_cast<const uint32_t*>(bufferSorted), N)));
+            componentStats.emplace_back(computeImageStatistics<uint32_t>(std::span(static_cast<const uint32_t*>(bufferSorted), N)));
             break;
         }
         case ComponentType::Float32:
         {
-            componentStats.emplace_back(computeImageStatistics<float>(
-                std::span(static_cast<const float*>(bufferSorted), N)));
+            componentStats.emplace_back(computeImageStatistics<float>(std::span(static_cast<const float*>(bufferSorted), N)));
             break;
         }
         default:

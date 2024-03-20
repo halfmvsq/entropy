@@ -60,6 +60,10 @@ struct GuiData
     std::string m_imageValuePrecisionFormat = "%0.3f";
     uint32_t m_imageValuePrecision = 3;
 
+    /// Precision format string used for percentiles
+    std::string m_percentilePrecisionFormat = "%0.2f";
+    uint32_t m_percentilePrecision = 2;
+
     // Pointers to fonts allocated by ImGui.
     // Font data uses raw pointers; ImGui takes ownership and deletes them.
     std::unordered_map< std::string, ImFont* > m_fonts;

@@ -1893,6 +1893,7 @@ void renderSettingsWindow(
                 uint32_t valuePrecision = appData.guiData().m_imageValuePrecision;
                 uint32_t coordPrecision = appData.guiData().m_coordsPrecision;
                 uint32_t txPrecision = appData.guiData().m_txPrecision;
+                uint32_t percentilePrecision = appData.guiData().m_percentilePrecision;
 
                 ImGui::Text( "Floating-point precision in user interface:" );
 
@@ -1923,6 +1924,19 @@ void renderSettingsWindow(
                     appData.guiData().setTxPrecisionFormat();
                 }
                 ImGui::SameLine(); helpMarker( "Floating-point precision of image transformation parameters" );
+
+                if ( ImGui::InputScalar( "Pecentiles", ImGuiDataType_U32,
+                                       &percentilePrecision, &sk_stepPrecision, &sk_stepPrecision, "%d" ) )
+                {
+                    appData.guiData().m_percentilePrecision = std::min( std::max( percentilePrecision, sk_minPrecision ), sk_maxPrecision );
+
+                    appData.guiData().m_percentilePrecisionFormat =
+                        std::string( "%0." ) +
+                        std::to_string( appData.guiData().m_percentilePrecision ) +
+                        std::string( "f" );
+                }
+                ImGui::SameLine(); helpMarker( "Floating-point precision of percentiles (e.g. in histogram)" );
+
 
                 ImGui::PopID(); /*** PopID precision ***/
                 ImGui::EndTabItem();
