@@ -38,7 +38,7 @@ Image::Image(
     m_ioInfoOnDisk(),
     m_ioInfoInMemory()
 {
-    const itk::ImageIOBase::Pointer imageIo = createStandardImageIo(fileName.c_str());
+    const itk::ImageIOBase::Pointer imageIo = createStandardImageIo(fileName.string().c_str());
 
     if (! imageIo || imageIo.IsNull())
     {
@@ -147,7 +147,7 @@ Image::Image(
     m_tx = ImageTransformations(m_header.pixelDimensions(), m_header.spacing(), m_header.origin(), m_header.directions());
 
     std::vector<ComponentStats<StatsType>> componentStats = computeImageStatistics(*this);
-    m_settings = ImageSettings(getFileName(fileName, false), m_header.numComponentsPerPixel(),
+    m_settings = ImageSettings(getFileName(fileName.string(), false), m_header.numComponentsPerPixel(),
                                m_header.memoryComponentType(), std::move(componentStats));
 }
 
