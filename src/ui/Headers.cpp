@@ -312,7 +312,7 @@ void renderImageHeaderInformation(
 
     // File name:
     ImGui::Spacing();
-    std::string fileName = imgHeader.fileName();
+    std::string fileName = imgHeader.fileName().string();
     ImGui::InputText( "File name", &fileName, ImGuiInputTextFlags_ReadOnly );
     ImGui::SameLine(); helpMarker( "Image file name" );
 
@@ -2458,7 +2458,7 @@ void renderLandmarkGroupHeader(
 
 
     // Landmark group file name:
-    std::string fileName = activeLmGroup->getFileName();
+    std::string fileName = activeLmGroup->getFileName().string();
     ImGui::InputText( "File", &fileName, ImGuiInputTextFlags_ReadOnly );
     ImGui::SameLine(); helpMarker( "Comma-separated file with the landmarks" );
     ImGui::Spacing();
@@ -3172,7 +3172,7 @@ void renderAnnotationsHeader(
     ImGui::Spacing();
 
     // Annotation file name:
-    std::string fileName = activeAnnot->getFileName();
+    std::string fileName = activeAnnot->getFileName().string();
     ImGui::InputText( "File", &fileName, ImGuiInputTextFlags_ReadOnly );
     ImGui::SameLine();
     helpMarker( "File storing the annotation" );

@@ -491,7 +491,7 @@ std::pair<const char*, const char*> ImGuiWrapper::getImageDisplayAndFileNames( s
     {
         if ( const Image* image = m_appData.image( *imageUid ) )
         {
-            return { image->settings().displayName().c_str(), image->header().fileName().c_str() };
+            return { image->settings().displayName().c_str(), image->header().fileName().string().c_str() };
         }
     }
 

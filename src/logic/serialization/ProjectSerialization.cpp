@@ -3,6 +3,7 @@
 #include "logic/annotation/SerializeAnnot.h"
 
 #include "common/Exception.hpp"
+#include "common/filesystem.h"
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/string_cast.hpp>
@@ -212,13 +213,15 @@ void to_json( json& j, const serialize::Segmentation& seg )
 {
     j = json
     {
-        { "path", seg.m_segFileName }
+        { "path", seg.m_segFileName.string()}
     };
 }
 
 void from_json( const json& j, serialize::Segmentation& seg )
 {
-    j.at( "path" ).get_to( seg.m_segFileName );
+    std::string p;
+    j.at( "path" ).get_to( p );
+    seg.m_segFileName = p;
 }
 
 
@@ -251,22 +254,22 @@ void to_json( json& j, const serialize::Image& image )
 {
     j = json
     {
-        { "image", image.m_imageFileName }
+        { "image", image.m_imageFileName.string() }
     };
 
     if ( image.m_affineTxFileName )
     {
-        j[ "affine" ] = *image.m_affineTxFileName;
+        j[ "affine" ] = image.m_affineTxFileName->string();
     }
 
     if ( image.m_deformationFileName )
     {
-        j[ "deformation" ] = *image.m_deformationFileName;
+        j[ "deformation" ] = image.m_deformationFileName->string();
     }
 
     if ( image.m_annotationsFileName )
     {
-        j[ "annotations" ] = *image.m_annotationsFileName;
+        j[ "annotations" ] = image.m_annotationsFileName->string();
     }
 
     if ( ! image.m_segmentations.empty() )
@@ -282,21 +285,23 @@ void to_json( json& j, const serialize::Image& image )
 
 void from_json( const json& j, serialize::Image& image )
 {
-    j.at( "image" ).get_to( image.m_imageFileName );
+    std::string p;
+    j.at( "image" ).get_to( p );
+    image.m_imageFileName = p;
 
     if ( j.count( "affine" ) )
     {
-        image.m_affineTxFileName = j.at( "affine" ).get<fs::path>();
+        image.m_affineTxFileName = j.at( "affine" ).get<std::string>();
     }
 
     if ( j.count( "deformation" ) )
     {
-        image.m_deformationFileName = j.at( "deformation" ).get<fs::path>();
+        image.m_deformationFileName = j.at( "deformation" ).get<std::string>();
     }
 
     if ( j.count( "annotations" ) )
     {
-        image.m_annotationsFileName = j.at( "annotations" ).get<fs::path>();
+        image.m_annotationsFileName = j.at( "annotations" ).get<std::string>();
     }
 
     if ( j.count( "segmentations" ) )
@@ -426,7 +431,7 @@ bool open( EntropyProject& project, const fs::path& fileName )
 
         for ( LandmarkGroup& lm : image.m_landmarkGroups )
         {
-            lm.m_csvFileName = fs::canonical( lm.m_csvFileName );
+            lm.m_csvFileName = fs::canonical( lm.m_csvFileName ).string();
         }
 
         fs::current_path( saveCurrentPath ); // restore current path
@@ -530,7 +535,7 @@ bool save( const EntropyProject& project, const fs::path& fileName )
 
         for ( serialize::LandmarkGroup& lm : image.m_landmarkGroups )
         {
-            lm.m_csvFileName = fs::relative( lm.m_csvFileName, projectBasePath );
+            lm.m_csvFileName = fs::relative( lm.m_csvFileName, projectBasePath ).string();
         }
     };
 
