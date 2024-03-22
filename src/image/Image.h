@@ -2,6 +2,7 @@
 #define IMAGE_H
 
 #include "common/filesystem.h"
+#include "common/Types.h"
 
 #include "image/ImageHeader.h"
 #include "image/ImageHeaderOverrides.h"
@@ -297,10 +298,10 @@ public:
         }
     }
 
-    std::optional<std::tuple<double, double, bool>> valueToQuantile(uint32_t component, int64_t value);
-    std::optional<std::tuple<double, double, bool>> valueToQuantile(uint32_t component, double value);
+    std::optional<QuantileOfValue> valueToQuantile(uint32_t component, int64_t value) const;
+    std::optional<QuantileOfValue> valueToQuantile(uint32_t component, double value) const;
 
-    std::optional<double> quantileToValue(uint32_t component, double quantile);
+    std::optional<double> quantileToValue(uint32_t comp, double quantile) const;
 
     void setUseIdentityPixelSpacings(bool identitySpacings);
     bool getUseIdentityPixelSpacings() const;

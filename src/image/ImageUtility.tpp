@@ -496,7 +496,7 @@ double lerp(T a, T b, T t)
 }
 
 template<typename T>
-std::optional<T> convertQuantileToValue(const std::span<T> dataSorted, double quantile)
+std::optional<T> convertQuantileToValue(const std::span<const T> dataSorted, double quantile)
 {
     const std::size_t N = dataSorted.size();
 
@@ -525,7 +525,7 @@ std::optional<T> convertQuantileToValue(const std::span<T> dataSorted, double qu
 }
 
 template<typename T>
-std::optional<std::tuple<double, double, bool>> convertValueToQuantile(const std::span<T> dataSorted, T value)
+std::optional<QuantileOfValue> convertValueToQuantile(const std::span<const T> dataSorted, T value)
 {
     const std::size_t N = dataSorted.size();
 
@@ -534,23 +534,26 @@ std::optional<std::tuple<double, double, bool>> convertValueToQuantile(const std
         return std::nullopt;
     }
 
+    QuantileOfValue Q;
+
     auto lower = std::lower_bound(std::begin(dataSorted), std::end(dataSorted), value);
 
     if (std::end(dataSorted) == lower)
     {
         // value is greater than the largest element of dataSorted
-        return std::make_tuple(1.0, 1.0, false);
+        Q.foundValue = false;
+        return Q;
     }
 
     auto upper = std::upper_bound(std::begin(dataSorted), std::end(dataSorted), value);
 
-    const auto distLower = std::distance(std::begin(dataSorted), lower);
-    const auto distUpper = std::distance(std::begin(dataSorted), upper);
+    Q.foundValue = true;
+    Q.lowerIndex = std::distance(std::begin(dataSorted), lower);
+    Q.upperIndex = std::distance(std::begin(dataSorted), upper);
+    Q.lowerQuantile = static_cast<double>(Q.lowerIndex) / N;
+    Q.upperQuantile = static_cast<double>(Q.upperIndex) / N;
 
-    const double quantLower = static_cast<double>(distLower) / N;
-    const double quantUpper = static_cast<double>(distUpper) / N;
-
-    return std::make_tuple(quantLower, quantUpper, true);
+    return Q;
 }
 
 template<typename T>

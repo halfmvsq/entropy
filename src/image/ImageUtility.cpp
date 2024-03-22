@@ -48,6 +48,12 @@ std::vector<std::string> splitPath(const std::string& pathString, const std::set
 
 #endif
 
+template<typename T>
+int sgn(T val)
+{
+    return (T(0) < val) - (val < T(0));
+}
+
 } // anonymous
 
 
@@ -325,4 +331,48 @@ std::vector<ComponentStats<double>> computeImageStatistics(const Image& image)
     }
 
     return componentStats;
+}
+
+
+double bumpQuantile(const Image& image, uint32_t comp, double currentQuantile, double attemptedQuantile)
+{
+    const std::optional<double> currentValue = image.quantileToValue(comp, currentQuantile);
+    if (! currentValue)
+    {
+        // value at current quantile is invalid, so just return the current quantile
+        return currentQuantile;
+    }
+
+    const std::optional<double> attemptedValue = image.quantileToValue(comp, attemptedQuantile);
+
+    if (attemptedValue && (*attemptedValue != *currentValue))
+    {
+        // attempted quantile yields a value different from current value, so return attempted quantile
+        return attemptedQuantile;
+    }
+
+    const std::optional<QuantileOfValue> Q = image.valueToQuantile(comp, *currentValue);
+    if (! Q)
+    {
+        return currentQuantile;
+    }
+
+    const int dir = sgn(attemptedQuantile - currentQuantile);
+
+    const std::size_t N = image.header().numPixels();
+    /// @todo FIX FOR MULTICOMPONENT IMAGES with interleaved pixels!!
+
+    if (dir < 0)
+    {
+        return (0 == Q->lowerIndex) ? 0.0 : static_cast<double>(Q->lowerIndex - 1) / N;
+    }
+    else if (dir > 0)
+    {
+        return (N == Q->upperIndex) ? 1.0 : static_cast<double>(Q->upperIndex + 1) / N;
+    }
+    else // (0 == dir)
+    {
+        // attempted quantile is equal to current quantile
+        return currentQuantile;
+    }
 }

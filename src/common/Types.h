@@ -93,6 +93,16 @@ struct ComponentStats
 };
 
 
+struct QuantileOfValue
+{
+    double lowerQuantile = 0.0;
+    double upperQuantile = 0.0;
+    std::size_t lowerIndex = 0; //!< Ranges [0, N-1]
+    std::size_t upperIndex = 0; //!< Ranges [0, N]
+    bool foundValue = false;
+};
+
+
 /**
  * @brief Image interpolation (resampling) mode for rendering
  */

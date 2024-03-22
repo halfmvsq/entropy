@@ -42,4 +42,6 @@ std::pair<glm::vec3, glm::vec3> computeWorldMinMaxCornersOfImage(const Image& im
 
 std::vector<ComponentStats<double>> computeImageStatistics(const Image& image);
 
+double bumpQuantile(const Image& image, uint32_t comp, double currentQuantile, double attemptedQuantile);
+
 #endif // IMAGE_UTILITY_H

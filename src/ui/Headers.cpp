@@ -14,6 +14,7 @@
 #include "image/ImageHeader.h"
 #include "image/ImageSettings.h"
 #include "image/ImageTransformations.h"
+#include "image/ImageUtility.h"
 
 #include "logic/app/Data.h"
 #include "logic/states/AnnotationStateMachine.h"
@@ -38,7 +39,6 @@
 
 #include <algorithm>
 #include <string>
-#include <tuple>
 
 #undef min
 #undef max
@@ -1105,8 +1105,8 @@ void renderImageHeader(
 
             if (qLow && qHigh)
             {
-                float windowPercentileLow = 100.0f * std::get<0>(*qLow);
-                float windowPercentileHigh = 100.0f * std::get<1>(*qHigh);
+                float windowPercentileLow = 100.0f * qLow->lowerQuantile;
+                float windowPercentileHigh = 100.0f * qHigh->upperQuantile;
 
                 if (ImGui::DragFloatRange2("Percentiles", &windowPercentileLow, &windowPercentileHigh, windowPercentileStep,
                     windowPercentileMin, windowPercentileMax, minPercentilesFormat, maxPercentilesFormat, ImGuiSliderFlags_AlwaysClamp))
@@ -1193,20 +1193,47 @@ void renderImageHeader(
 
             if (qLow && qHigh)
             {
-                float windowPercentileLow = 100.0f * std::get<0>(*qLow);
-                float windowPercentileHigh = 100.0f * std::get<1>(*qHigh);
+                const float windowPercentileLowCurrent = 100.0f * qLow->lowerQuantile;
+                const float windowPercentileHighCurrent = 100.0f * qHigh->upperQuantile;
 
-                if (ImGui::DragFloatRange2("Percentiles", &windowPercentileLow, &windowPercentileHigh, windowPercentileStep,
+                spdlog::info("windowPercentileLowCurrent = {}, windowPercentileHighCurrent = {}", windowPercentileLowCurrent, windowPercentileHighCurrent);
+
+                float windowPercentileLowAttempted = windowPercentileLowCurrent;
+                float windowPercentileHighAttempted = windowPercentileHighCurrent;
+
+                if (ImGui::DragFloatRange2("Percentiles", &windowPercentileLowAttempted, &windowPercentileHighAttempted, windowPercentileStep,
                     windowPercentileMin, windowPercentileMax, minPercentilesFormat, maxPercentilesFormat, ImGuiSliderFlags_AlwaysClamp))
                 {
-                    const auto vLow = image->quantileToValue(imgSettings.activeComponent(), windowPercentileLow / 100.0f);
-                    const auto vHigh = image->quantileToValue(imgSettings.activeComponent(), windowPercentileHigh / 100.0f);
-
-                    if (vLow && vHigh)
+                    if (windowPercentileLowCurrent != windowPercentileLowAttempted)
                     {
-                        imgSettings.setWindowValueLow(*vLow);
-                        imgSettings.setWindowValueHigh(*vHigh);
-                        updateImageUniforms();
+                        spdlog::info("windowPercentileLowAttempted = {}", windowPercentileLowAttempted);
+
+                        windowPercentileLowAttempted = bumpQuantile(*image, imgSettings.activeComponent(), windowPercentileLowCurrent, windowPercentileLowAttempted);
+
+                        spdlog::info("  windowPercentileLowAttempted = {}", windowPercentileLowAttempted);
+
+                        if (const auto newWindowLow = image->quantileToValue(imgSettings.activeComponent(), windowPercentileLowAttempted))
+                        {
+                            spdlog::info("  newWindowLow = {}", *newWindowLow);
+                            imgSettings.setWindowValueLow(*newWindowLow);
+                            updateImageUniforms();
+                        }
+                    }
+
+                    if (windowPercentileHighCurrent != windowPercentileHighAttempted)
+                    {
+                        spdlog::info("windowPercentileHighAttempted = {}", windowPercentileHighAttempted);
+
+                        windowPercentileHighAttempted = bumpQuantile(*image, imgSettings.activeComponent(), windowPercentileHighCurrent, windowPercentileHighAttempted);
+
+                        spdlog::info("  windowPercentileHighAttempted = {}", windowPercentileHighAttempted);
+
+                        if (const auto newWindowHigh = image->quantileToValue(imgSettings.activeComponent(), windowPercentileHighAttempted))
+                        {
+                            spdlog::info("  newWindowHigh = {}", *newWindowHigh);
+                            imgSettings.setWindowValueHigh(*newWindowHigh);
+                            updateImageUniforms();
+                        }
                     }
                 }
                 ImGui::SameLine(); helpMarker( "Set the minimum and maximum percentiles of the window range" );
