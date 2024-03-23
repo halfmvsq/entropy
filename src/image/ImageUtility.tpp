@@ -496,13 +496,14 @@ double lerp(T a, T b, T t)
 }
 
 template<typename T>
-std::optional<T> convertQuantileToValue(const std::span<const T> dataSorted, double quantile)
+T convertQuantileToValue(const std::span<const T> dataSorted, double quantile)
 {
     const std::size_t N = dataSorted.size();
 
     if (0 == N)
     {
-        return std::nullopt;
+        spdlog::error("Sorted data has zero elements");
+        throw_debug("Sorted data is empty")
     }
 
     if (1 == N)
@@ -525,13 +526,14 @@ std::optional<T> convertQuantileToValue(const std::span<const T> dataSorted, dou
 }
 
 template<typename T>
-std::optional<QuantileOfValue> convertValueToQuantile(const std::span<const T> dataSorted, T value)
+QuantileOfValue convertValueToQuantile(const std::span<const T> dataSorted, T value)
 {
     const std::size_t N = dataSorted.size();
 
     if (0 == N)
     {
-        return std::nullopt;
+        spdlog::error("Sorted data has zero elements");
+        throw_debug("Sorted data is empty")
     }
 
     QuantileOfValue Q;
@@ -552,7 +554,8 @@ std::optional<QuantileOfValue> convertValueToQuantile(const std::span<const T> d
     Q.upperIndex = std::distance(std::begin(dataSorted), upper);
     Q.lowerQuantile = static_cast<double>(Q.lowerIndex) / N;
     Q.upperQuantile = static_cast<double>(Q.upperIndex) / N;
-
+    Q.lowerValue = *lower;
+    Q.upperValue = *upper;
     return Q;
 }
 
@@ -566,10 +569,8 @@ ComponentStats<double> computeImageStatistics(const std::span<const T> dataSorte
     for (std::size_t i = 0; i <= 100; ++i)
     {
         const double quantile = static_cast<double>(i) / 100.0;
-        if (const std::optional<T> value = convertQuantileToValue(dataSorted, quantile))
-        {
-            stats.m_quantiles[i] = static_cast<double>(*value);
-        }
+        const T value = convertQuantileToValue(dataSorted, quantile);
+        stats.m_quantiles[i] = static_cast<double>(value);
     }
 
     const std::size_t N = dataSorted.size();

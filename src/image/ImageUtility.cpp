@@ -334,45 +334,42 @@ std::vector<ComponentStats<double>> computeImageStatistics(const Image& image)
 }
 
 
-double bumpQuantile(const Image& image, uint32_t comp, double currentQuantile, double attemptedQuantile)
+double bumpQuantile(const Image& image, uint32_t comp, double currentQuantile, double attemptedQuantile, double currentValue)
 {
-    const std::optional<double> currentValue = image.quantileToValue(comp, currentQuantile);
-    if (! currentValue)
-    {
-        // value at current quantile is invalid, so just return the current quantile
-        return currentQuantile;
-    }
-
-    const std::optional<double> attemptedValue = image.quantileToValue(comp, attemptedQuantile);
-
-    if (attemptedValue && (*attemptedValue != *currentValue))
-    {
-        // attempted quantile yields a value different from current value, so return attempted quantile
-        return attemptedQuantile;
-    }
-
-    const std::optional<QuantileOfValue> Q = image.valueToQuantile(comp, *currentValue);
-    if (! Q)
-    {
-        return currentQuantile;
-    }
-
+    /// @todo FIX FOR MULTICOMPONENT IMAGES with interleaved pixels!!
     const int dir = sgn(attemptedQuantile - currentQuantile);
 
-    const std::size_t N = image.header().numPixels();
-    /// @todo FIX FOR MULTICOMPONENT IMAGES with interleaved pixels!!
-
-    if (dir < 0)
+    if (0 == dir)
     {
-        return (0 == Q->lowerIndex) ? 0.0 : static_cast<double>(Q->lowerIndex - 1) / N;
-    }
-    else if (dir > 0)
-    {
-        return (N == Q->upperIndex) ? 1.0 : static_cast<double>(Q->upperIndex + 1) / N;
-    }
-    else // (0 == dir)
-    {
-        // attempted quantile is equal to current quantile
         return currentQuantile;
     }
+
+    const std::size_t N = image.header().numPixels();
+
+    double newQuant = attemptedQuantile;
+    double oldValue = currentValue;
+    double newValue = image.quantileToValue(comp, newQuant);
+
+    while (newValue == currentValue)
+    {
+        const QuantileOfValue Q = image.valueToQuantile(comp, oldValue);
+        oldValue = newValue;
+
+        if (dir < 0)
+        {
+            newQuant = (0 == Q.lowerIndex) ? 0.0 : static_cast<double>(Q.lowerIndex - 1) / N;
+        }
+        else if (dir > 0)
+        {
+            newQuant = (N == Q.upperIndex) ? 1.0 : static_cast<double>(Q.upperIndex + 1) / N;
+        }
+
+        newValue = image.quantileToValue(comp, newQuant);
+
+        // The loop should theoretically need to run only once.
+        // But more loops may be required if there are some numerical errors.
+        break;
+    }
+
+    return newQuant;
 }

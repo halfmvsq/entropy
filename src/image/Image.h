@@ -298,10 +298,10 @@ public:
         }
     }
 
-    std::optional<QuantileOfValue> valueToQuantile(uint32_t component, int64_t value) const;
-    std::optional<QuantileOfValue> valueToQuantile(uint32_t component, double value) const;
+    QuantileOfValue valueToQuantile(uint32_t component, int64_t value) const;
+    QuantileOfValue valueToQuantile(uint32_t component, double value) const;
 
-    std::optional<double> quantileToValue(uint32_t comp, double quantile) const;
+    double quantileToValue(uint32_t comp, double quantile) const;
 
     void setUseIdentityPixelSpacings(bool identitySpacings);
     bool getUseIdentityPixelSpacings() const;

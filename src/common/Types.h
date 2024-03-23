@@ -99,6 +99,8 @@ struct QuantileOfValue
     double upperQuantile = 0.0;
     std::size_t lowerIndex = 0; //!< Ranges [0, N-1]
     std::size_t upperIndex = 0; //!< Ranges [0, N]
+    double lowerValue = 0.0;
+    double upperValue = 0.0;
     bool foundValue = false;
 };
 
