@@ -771,13 +771,15 @@ target_compile_definitions( ${EXEC_NAME} PRIVATE
 
 target_compile_options( ${EXEC_NAME} PRIVATE
     $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>:
-        -Werror -Wall -Wextra -Wpointer-arith -Winit-self -Wunreachable-code
+        -Werror
+        -Wall -Wextra -Wpointer-arith -Winit-self -Wunreachable-code -Wshadow
+        # -Wconversion -Wsign-conversion
         -Wno-error=array-bounds
         -Wno-error=empty-body
+        -Wno-error=float-conversion
         -Wno-error=maybe-uninitialized
         -Wno-error=stringop-overflow
-        -Wshadow -g -ftrapv
-        #-Wconversion -Wsign-conversion
+        -g -ftrapv
         -O3
     >
     $<$<CXX_COMPILER_ID:AppleClang>:

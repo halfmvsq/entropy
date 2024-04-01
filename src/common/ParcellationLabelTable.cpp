@@ -285,7 +285,7 @@ void ParcellationLabelTable::updateVector( std::size_t index )
     checkLabelIndex( index );
 
     // Modulate opacity by visibility:
-    const uint8_t a = getAlpha( index ) * ( getVisible( index ) ? 1u : 0u );
+    const uint8_t a = getAlpha( index ) * ( getVisible( index ) ? 1 : 0 );
     m_colors_RGBA_U8[index] = glm::u8vec4{ getColor( index ), a };
 }
 

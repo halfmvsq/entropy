@@ -2,7 +2,7 @@
 
 *A cross-platform tool for interactively visualizing, comparing, segmenting, and annotating 3D medical images.*
 
-Copyright 2022-2023 Daniel H. Adler
+Copyright 2022-2024 Daniel H. Adler
 Copyright 2020-2021 Daniel H. Adler and the Penn Image Computing and Science Lab, Department of Radiology, University of Pennsylvania.
 All rights reserved.
 
@@ -14,7 +14,7 @@ Entropy requires C++20 and build generation uses CMake 3.24.0+.
 ### Operating systems
 Entropy builds on Linux, Windows, and macOS. It is currently tested on the following:
 
-* Ubuntu 22.04 (with gcc 12.2.0)
+* Ubuntu 24.04 (with gcc 12.3.0)
 * Windows 8.1, 10, and 11 (with MSVC++ 17.3.4)
 * macOS 13.1, Apple Silicon arm64 architecture (with clang 15.0.4)
 * macOS 10.14.6, Intel x86_64 architecture (with clang 11.0.0)
@@ -22,9 +22,9 @@ Entropy builds on Linux, Windows, and macOS. It is currently tested on the follo
 ### External libraries
 Please download and install these libraries:
 
-* Boost, header libraries only (1.81.0)
-* Insight Toolkit, ITK (5.3.0)
-* Visualization Toolkit, VTK (9.2.6)
+* Boost, header libraries only (1.84.0)
+* Insight Toolkit, ITK (5.3.0), built with Module_ITKVtkGlue
+* Visualization Toolkit, VTK (9.3.0)
 
 More recent versions of ITK and Boost should also work with potentially minor modification to Entropy code. Please note that from Boost, only the header-only libraries (none of the compiled libraries) are required.
 
@@ -60,11 +60,11 @@ The following external sources and libraries have been committed directly to the
 * Local modifications to the ImGui file browser (https://github.com/AirGuanZ/imgui-filebrowser)
 
 
-### Development libraries (Linux)
+### Development libraries for Debian Linux
 
-You may need to install additional development libraries for xrandr, xinerama, xcursor, and xi on Linux. On Debian, this can be done using
+You may need to install additional development libraries for the Mesa 3D Graphics Library, Xrandr, Xinerama, Xcursor, and xi on Linux. On Debian, this can be done using
 
-`sudo apt-get install libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev`
+`sudo apt-get install libgl1-mesa-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev`
 
 
 ### External resources
