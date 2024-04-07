@@ -13,7 +13,6 @@
 #include <string>
 #include <utility>
 
-
 /**
  * @brief Get file name from a path with or without extension
  */

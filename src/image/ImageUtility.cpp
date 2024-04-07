@@ -272,13 +272,6 @@ std::vector<ComponentStats<double>> computeImageStatistics(const Image& image)
 {
     std::vector<ComponentStats<double>> componentStats;
 
-    if (Image::MultiComponentBufferType::InterleavedImage == image.bufferType() &&
-        image.header().numComponentsPerPixel() > 1)
-    {
-        spdlog::error("Image statistics computation not yet supported for interleaved component images");
-        return componentStats;
-    }
-
     const std::size_t N = image.header().numPixels();
 
     for (uint32_t i = 0; i < image.header().numComponentsPerPixel(); ++i)
@@ -336,7 +329,6 @@ std::vector<ComponentStats<double>> computeImageStatistics(const Image& image)
 
 double bumpQuantile(const Image& image, uint32_t comp, double currentQuantile, double attemptedQuantile, double currentValue)
 {
-    /// @todo FIX FOR MULTICOMPONENT IMAGES with interleaved pixels!!
     const int dir = sgn(attemptedQuantile - currentQuantile);
 
     if (0 == dir)

@@ -4,7 +4,6 @@
 #include <sstream>
 #include <stdexcept>
 
-
 /**
  * @brief A friendly wrapper around \c std::runtime_error that prints the file name,
  * function name, and line number on which the exception occurred to stdout.
@@ -14,7 +13,7 @@ class Exception : public std::runtime_error
 {
 public:
 
-    Exception( const char* msg, const char* file, const char* function, int line )
+    Exception(const char* msg, const char* file, const char* function, int line)
         : std::runtime_error( msg )
     {
         std::ostringstream ss;
@@ -22,7 +21,7 @@ public:
         m_msg = ss.str();
     }
 
-    Exception( const std::string& msg, const char* file, const char* function, int line )
+    Exception(const std::string& msg, const char* file, const char* function, int line)
         : Exception( msg.c_str(), file, function, line )
     {}
 
@@ -33,13 +32,12 @@ public:
         return m_msg.c_str();
     }
 
-
 private:
 
     std::string m_msg;
 };
 
 /// @todo use https://en.cppreference.com/w/cpp/utility/source_location
-#define throw_debug(msg) throw Exception( msg, __FILE__, __FUNCTION__, __LINE__ );
+#define throw_debug(msg) throw Exception(msg, __FILE__, __FUNCTION__, __LINE__);
 
 #endif // ENTROPY_EXCEPTION
