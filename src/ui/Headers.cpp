@@ -201,84 +201,136 @@ void Demo_Histogram()
 }
 */
 
-template<typename T>
-void ImageHistogram(const T* data, int dataSize)
+enum class NumBinsChoice
 {
-    static ImPlotHistogramFlags hist_flags = ImPlotHistogramFlags_Density;
+    SquareRoot,
+    Sturges,
+    Rice,
+    Scott,
+    FreedmanDiaconis,
+    Custom
+};
 
-    static int  bins       = 50;
-    // static double mu       = 5;
-    // static double sigma    = 2;
+
+template<typename T>
+void drawImageHistogram(const T* data, int dataSize, const ComponentStats<double>& stats)
+{
+    static ImPlotHistogramFlags flags = ImPlotHistogramFlags_Density;
+    static NumBinsChoice binsChoice = NumBinsChoice::FreedmanDiaconis;
+    static int32_t numBins = 100;
+
+    static bool customIntensityRange = false;
+    static std::array<float, 2> intensityRange{static_cast<float>(stats.m_minimum), static_cast<float>(stats.m_maximum)};
 
     ImGui::SetNextItemWidth(200);
 
-    if (ImGui::RadioButton("Sqrt",bins==ImPlotBin_Sqrt))       { bins = ImPlotBin_Sqrt;    } ImGui::SameLine();
-    if (ImGui::RadioButton("Sturges",bins==ImPlotBin_Sturges)) { bins = ImPlotBin_Sturges; } ImGui::SameLine();
-    if (ImGui::RadioButton("Rice",bins==ImPlotBin_Rice))       { bins = ImPlotBin_Rice;    } ImGui::SameLine();
-    if (ImGui::RadioButton("Scott",bins==ImPlotBin_Scott))     { bins = ImPlotBin_Scott;   } ImGui::SameLine();
-    if (ImGui::RadioButton("N Bins",bins>=0))                  { bins = 50;                }
+    /// @see https://numpy.org/doc/stable/reference/generated/numpy.histogram_bin_edges.html
+    /// @see https://en.wikipedia.org/wiki/Histogram#Number_of_bins_and_width
 
-    if (bins>=0)
+    // need to update num bins before this fn!!
+    // const double binWidth = 2.0 * (stats.m_quantiles[75] - stats.m_quantiles[25]) / std::pow(dataSize, 1.0/3.0);
+    // static int32_t numBins = std::ceil( (stats.m_maximum - stats.m_minimum) / binWidth );
+
+    if (ImGui::RadioButton("Sqrt", NumBinsChoice::SquareRoot == binsChoice))
     {
-        ImGui::SameLine();
-        ImGui::SetNextItemWidth(200);
-        ImGui::SliderInt("##Bins", &bins, 1, 1000);
+        binsChoice = NumBinsChoice::SquareRoot;
+        numBins = std::ceil( std::sqrt(dataSize) );
+    }
+    ImGui::SameLine();
+
+    if (ImGui::RadioButton("Sturges", NumBinsChoice::Sturges == binsChoice))
+    {
+        binsChoice = NumBinsChoice::Sturges;
+        numBins = std::ceil( std::log2(dataSize) ) + 1;
+    }
+    ImGui::SameLine();
+
+    if (ImGui::RadioButton("Rice", NumBinsChoice::Rice == binsChoice))
+    {
+        binsChoice = NumBinsChoice::Rice;
+        numBins = std::ceil( 2 * std::pow(dataSize, 1.0/3.0) );
+    }
+    ImGui::SameLine();
+
+    if (ImGui::RadioButton("Scott", NumBinsChoice::Scott == binsChoice))
+    {
+        binsChoice = NumBinsChoice::Scott;
+        const double binWidth = 3.49 * stats.m_stdDeviation / std::pow(dataSize, 1.0/3.0);
+        numBins = std::ceil( (stats.m_maximum - stats.m_minimum) / binWidth );
+    }
+    ImGui::SameLine();
+
+    if (ImGui::RadioButton("F-D", NumBinsChoice::FreedmanDiaconis == binsChoice))
+    {
+        binsChoice = NumBinsChoice::FreedmanDiaconis;
+        const double binWidth = 2.0 * (stats.m_quantiles[75] - stats.m_quantiles[25]) / std::pow(dataSize, 1.0/3.0);
+        numBins = std::ceil( (stats.m_maximum - stats.m_minimum) / binWidth );
+    }
+    ImGui::SameLine();
+
+    if (ImGui::RadioButton("Custom", NumBinsChoice::Custom == binsChoice))
+    {
+        binsChoice = NumBinsChoice::Custom;
     }
 
-    ImGui::CheckboxFlags("Horizontal", (unsigned int*)&hist_flags, ImPlotHistogramFlags_Horizontal); ImGui::SameLine();
-    ImGui::CheckboxFlags("Density", (unsigned int*)&hist_flags, ImPlotHistogramFlags_Density); ImGui::SameLine();
-    ImGui::CheckboxFlags("Cumulative", (unsigned int*)&hist_flags, ImPlotHistogramFlags_Cumulative);
+    numBins = std::clamp(numBins, 1, dataSize);
+    ImGui::DragInt("Bins", &numBins, 1, 1, dataSize);
 
+    ImGui::CheckboxFlags("Horizontal", (unsigned int*)&flags, ImPlotHistogramFlags_Horizontal); ImGui::SameLine();
+    ImGui::CheckboxFlags("Density", (unsigned int*)&flags, ImPlotHistogramFlags_Density); ImGui::SameLine();
+    ImGui::CheckboxFlags("Cumulative", (unsigned int*)&flags, ImPlotHistogramFlags_Cumulative);
 
-    static bool range = false;
-    ImGui::Checkbox("Range", &range);
+    ImGui::Checkbox("Custom range", &customIntensityRange);
 
-    static std::array<float, 2> rminmax = { 0, 10 };
-
-    if (range)
+    if (customIntensityRange)
     {
-        ImGui::SameLine();
-        ImGui::SetNextItemWidth(200);
-        ImGui::DragFloat2("##Range", rminmax.data(), 0.1f, -3, 13);
-        ImGui::SameLine();
-        ImGui::CheckboxFlags("Exclude Outliers", (unsigned int*)&hist_flags, ImPlotHistogramFlags_NoOutliers);
+        ImGui::DragFloat2("Intensity range", intensityRange.data(), 0.1f,
+                          static_cast<float>(stats.m_minimum), static_cast<float>(stats.m_maximum));
+
+        // ImGui::SameLine();
+        // ImGui::CheckboxFlags("Exclude Outliers", (unsigned int*)&flags, ImPlotHistogramFlags_NoOutliers);
     }
 
-    /*
-    static NormalDistribution<1000000> dist(mu, sigma);
-    static double x[100];
-    static double y[100];
+    std::string title;
 
-    if (hist_flags & ImPlotHistogramFlags_Density)
+    if (flags & ImPlotHistogramFlags_Cumulative)
     {
-        for (int i = 0; i < 100; ++i)
+        title = "Cumulative Histogram";
+        if (flags & ImPlotHistogramFlags_Density)
         {
-            x[i] = -3 + 16 * (double)i/99.0;
-            y[i] = exp(- (x[i]-mu)*(x[i]-mu) / (2*sigma*sigma)) / (sigma * sqrt(2*3.141592653589793238));
+            title += " (CDF)";
+        }
+    }
+    else
+    {
+        title = "Histogram";
+        if (flags & ImPlotHistogramFlags_Density)
+        {
+            title += " (PDF)";
+        }
+    }
+
+    const std::string countLabel = (flags & ImPlotHistogramFlags_Density) ? "Probability" : "Count";
+
+    if (ImPlot::BeginPlot(title.c_str()))
+    {
+        if (flags & ImPlotHistogramFlags_Horizontal)
+        {
+            ImPlot::SetupAxes(countLabel.c_str(), "Intensity", ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
+        }
+        else
+        {
+            ImPlot::SetupAxes("Intensity", countLabel.c_str(), ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
         }
 
-        if (hist_flags & ImPlotHistogramFlags_Cumulative)
-        {
-            for (int i = 1; i < 100; ++i)
-                y[i] += y[i-1];
-
-            for (int i = 0; i < 100; ++i)
-                y[i] /= y[99];
-        }
-    }
-*/
-
-    if (ImPlot::BeginPlot("Histograms"))
-    {
-        ImPlot::SetupAxes("Intensity", "Count", ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
         ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL, 0.5f);
 
-        ImPlot::PlotHistogram("Image1", data, dataSize, bins, 1.0,
-                              range ? ImPlotRange(rminmax[0], rminmax[1]) : ImPlotRange(), hist_flags);
+        ImPlot::PlotHistogram(
+            "##PlotHistogram", data, dataSize, numBins, 1.0,
+            customIntensityRange ? ImPlotRange(intensityRange[0], intensityRange[1]) : ImPlotRange(),
+            flags);
 
         /*
-        if ((hist_flags & ImPlotHistogramFlags_Density) && !(hist_flags & ImPlotHistogramFlags_NoOutliers))
-        {
             if (hist_flags & ImPlotHistogramFlags_Horizontal)
             {
                 ImPlot::PlotLine("Theoretical",y,x,100);
@@ -287,7 +339,6 @@ void ImageHistogram(const T* data, int dataSize)
             {
                 ImPlot::PlotLine("Theoretical",x,y,100);
             }
-        }
         */
         ImPlot::EndPlot();
     }
@@ -1888,31 +1939,26 @@ void renderImageHeader(
 
     if (ImGui::TreeNode("Histogram"))
     {
-        if (Image::MultiComponentBufferType::SeparateImages == image->bufferType())
+        const uint32_t comp = imgSettings.activeComponent();
+        const void *buffer = image->bufferSortedAsVoid(comp);
+        const int bufferSize = static_cast<int>(image->header().numPixels());
+        const ComponentStats<double>& stats = image->settings().componentStatistics(comp);
+
+        if (image->header().numPixels() > std::numeric_limits<int32_t>::max())
         {
-            const void* buffer = image->bufferSortedAsVoid(imgSettings.activeComponent());
-            const int bufferSize = static_cast<int>(image->header().numPixels());
-
-            if (image->header().numPixels() > std::numeric_limits<int32_t>::max())
-            {
-                spdlog::warn("Number of pixels in image ({}) exceeds maximum supported by image histogram", bufferSize);
-            }
-
-            switch (image->header().memoryComponentType())
-            {
-            case ComponentType::Int8: { ImageHistogram(static_cast<const int8_t*>(buffer), bufferSize); break; }
-            case ComponentType::UInt8: { ImageHistogram(static_cast<const uint8_t*>(buffer), bufferSize); break; }
-            case ComponentType::Int16: { ImageHistogram(static_cast<const int16_t*>(buffer), bufferSize); break; }
-            case ComponentType::UInt16: { ImageHistogram(static_cast<const uint16_t*>(buffer), bufferSize); break; }
-            case ComponentType::Int32: { ImageHistogram(static_cast<const int32_t*>(buffer), bufferSize); break; }
-            case ComponentType::UInt32: { ImageHistogram(static_cast<const uint32_t*>(buffer), bufferSize); break; }
-            case ComponentType::Float32: { ImageHistogram(static_cast<const float*>(buffer), bufferSize); break; }
-            default: { break; }
-            }
+            spdlog::warn("Number of pixels in image ({}) exceeds maximum supported by image histogram", bufferSize);
         }
-        else
+
+        switch (image->header().memoryComponentType())
         {
-            spdlog::warn("Histograms for interleaved images are not yet supported.");
+        case ComponentType::Int8: { drawImageHistogram(static_cast<const int8_t*>(buffer), bufferSize, stats); break; }
+        case ComponentType::UInt8: { drawImageHistogram(static_cast<const uint8_t*>(buffer), bufferSize, stats); break; }
+        case ComponentType::Int16: { drawImageHistogram(static_cast<const int16_t*>(buffer), bufferSize, stats); break; }
+        case ComponentType::UInt16: { drawImageHistogram(static_cast<const uint16_t*>(buffer), bufferSize, stats); break; }
+        case ComponentType::Int32: { drawImageHistogram(static_cast<const int32_t*>(buffer), bufferSize, stats); break; }
+        case ComponentType::UInt32: { drawImageHistogram(static_cast<const uint32_t*>(buffer), bufferSize, stats); break; }
+        case ComponentType::Float32: { drawImageHistogram(static_cast<const float*>(buffer), bufferSize, stats); break; }
+        default: { break; }
         }
 
         ImGui::TreePop();
