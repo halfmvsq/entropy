@@ -268,9 +268,9 @@ std::pair<glm::vec3, glm::vec3> computeWorldMinMaxCornersOfImage(const Image& im
     return math::computeMinMaxCornersOfAABBox(worldCorners);
 }
 
-std::vector<ComponentStats<double>> computeImageStatistics(const Image& image)
+std::vector<ComponentStats> computeImageStatistics(const Image& image)
 {
-    std::vector<ComponentStats<double>> componentStats;
+    std::vector<ComponentStats> componentStats;
 
     const std::size_t N = image.header().numPixels();
 

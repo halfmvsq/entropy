@@ -1,6 +1,7 @@
 #ifndef IMAGE_SETTINGS_H
 #define IMAGE_SETTINGS_H
 
+#include "common/HistogramSettings.h"
 #include "common/Types.h"
 
 #include <glm/vec2.hpp>
@@ -19,6 +20,7 @@ public:
 
     /**
      * @brief ImageSettings
+     * @param numPixels
      * @param displayName Image display name
      * @param numComponents Number of components per pixel
      * @param componentType Component type
@@ -26,9 +28,10 @@ public:
      */
     ImageSettings(
         std::string displayName,
+        std::size_t numPixels,
         uint32_t numComponents,
         ComponentType componentType,
-        std::vector< ComponentStats<double> > componentStats);
+        std::vector<ComponentStats> componentStats);
 
     ImageSettings(const ImageSettings&) = default;
     ImageSettings& operator=(const ImageSettings&) = default;
@@ -400,11 +403,18 @@ public:
 
     /// Get statistics for an image component
     /// The component must be in the range [0, numComponents() - 1].
-    const ComponentStats<double>& componentStatistics(uint32_t component) const;
-    const ComponentStats<double>& componentStatistics() const;
+    const ComponentStats& componentStatistics(uint32_t component) const;
+    const ComponentStats& componentStatistics() const;
+
+    /// Get histogram settings for an image component
+    const HistogramSettings& histogramSettings(uint32_t component) const;
+    HistogramSettings& histogramSettings(uint32_t component);
+
+    const HistogramSettings& histogramSettings() const;
+    HistogramSettings& histogramSettings();
 
     void updateWithNewComponentStatistics(
-        std::vector<ComponentStats<double>> componentStats,
+        std::vector<ComponentStats> componentStats,
         bool setDefaultVisibilitySettings);
 
     /// Set the active component
@@ -428,8 +438,6 @@ private:
     /// @brief Settings for one image component
     struct ComponentSettings
     {
-        ComponentSettings() {}
-
         std::pair<double, double> m_minMaxImageRange{0.0, 0.0}; //!< Min/max image value range
         std::pair<double, double> m_minMaxWindowWidthRange{0.0, 0.0}; //!< Valid window width range
         std::pair<double, double> m_minMaxWindowCenterRange{0.0, 0.0}; //!< Valid window center range
@@ -490,6 +498,8 @@ private:
 
         /// Interpolation mode
         InterpolationMode m_interpolationMode = InterpolationMode::NearestNeighbor;
+
+        HistogramSettings m_histogramSettings; //!< Histogram calculation and display settings
     };
 
     /*** Start settings for all components ***/
@@ -511,11 +521,14 @@ private:
     bool m_showIsosurfacesIn2d; //!< Visibility of isosurface edges in 2D image slices
     double m_isosurfaceWidthIn2d; //!< Width of isovalue lines in 2D as a percentage of the image intensity range
     float m_isosurfaceOpacityModulator; //!< Modality of surface opacity for the image
+
+
     /*** End settings for all components ***/
 
+    std::size_t m_numPixels; //!< Number of pixels in the image (and hence in each component)
     uint32_t m_numComponents; //!< Number of components per pixel
     ComponentType m_componentType; //!< Component type
-    std::vector< ComponentStats<double> > m_componentStats; //!< Per-component statistics
+    std::vector<ComponentStats> m_componentStats; //!< Per-component statistics
     std::vector<ComponentSettings> m_componentSettings; //!< Per-component settings
 
     uint32_t m_activeComponent; //!< Active component

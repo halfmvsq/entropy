@@ -560,9 +560,9 @@ QuantileOfValue convertValueToQuantile(const std::span<const T> dataSorted, T va
 }
 
 template<typename T>
-ComponentStats<double> computeImageStatistics(const std::span<const T> dataSorted)
+ComponentStats computeImageStatistics(const std::span<const T> dataSorted)
 {
-    ComponentStats<double> stats;
+    ComponentStats stats;
     stats.m_minimum = static_cast<double>(dataSorted.front());
     stats.m_maximum = static_cast<double>(dataSorted.back());
 

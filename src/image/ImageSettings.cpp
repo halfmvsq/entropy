@@ -11,9 +11,10 @@
 
 ImageSettings::ImageSettings(
     std::string displayName,
+    std::size_t numPixels,
     uint32_t numComponents,
     ComponentType componentType,
-    std::vector< ComponentStats<double> > componentStats)
+    std::vector<ComponentStats> componentStats)
     :
     m_displayName(std::move(displayName)),
     m_globalVisibility(true),
@@ -29,11 +30,18 @@ ImageSettings::ImageSettings(
     m_showIsosurfacesIn2d{true},
     m_isosurfaceWidthIn2d{2.5},
     m_isosurfaceOpacityModulator{1.0f},
+    m_numPixels(numPixels),
     m_numComponents(numComponents),
     m_componentType(std::move(componentType)),
     m_componentSettings(numComponents),
     m_activeComponent(0)
 {
+    if (0 == m_numPixels)
+    {
+        spdlog::error("Zero pixels is invalid when constructing settings for image {}", displayName);
+        throw_debug("Invalid number of pixels provided to construct settings for image")
+    }
+
     if (componentStats.size() != m_numComponents)
     {
         spdlog::error("Invalid number of components ({}) provided to construct settings for image {}", numComponents, displayName);
@@ -454,7 +462,7 @@ glm::dvec2 ImageSettings::largestSlopeInterceptTextureVec2() const { return larg
 
 uint32_t ImageSettings::numComponents() const { return m_numComponents; }
 
-const ComponentStats<double>& ImageSettings::componentStatistics(uint32_t i) const
+const ComponentStats& ImageSettings::componentStatistics(uint32_t i) const
 {
     if (m_componentStats.size() <= i)
     {
@@ -465,7 +473,13 @@ const ComponentStats<double>& ImageSettings::componentStatistics(uint32_t i) con
     return m_componentStats.at(i);
 }
 
-const ComponentStats<double>& ImageSettings::componentStatistics() const { return componentStatistics(m_activeComponent); }
+const ComponentStats& ImageSettings::componentStatistics() const { return componentStatistics(m_activeComponent); }
+
+const HistogramSettings& ImageSettings::histogramSettings(uint32_t comp) const { return m_componentSettings.at(comp).m_histogramSettings; }
+const HistogramSettings& ImageSettings::histogramSettings() const { return histogramSettings(m_activeComponent); }
+
+HistogramSettings& ImageSettings::histogramSettings(uint32_t comp) { return m_componentSettings.at(comp).m_histogramSettings; }
+HistogramSettings& ImageSettings::histogramSettings() { return histogramSettings(m_activeComponent); }
 
 void ImageSettings::setActiveComponent(uint32_t component)
 {
@@ -481,7 +495,7 @@ void ImageSettings::setActiveComponent(uint32_t component)
 }
 
 void ImageSettings::updateWithNewComponentStatistics(
-    std::vector< ComponentStats<double> > componentStats,
+    std::vector<ComponentStats> componentStats,
     bool setDefaultVisibilitySettings)
 {
     // Default window covers 1st to 99th quantile intensity range of the first pixel component.
@@ -492,38 +506,51 @@ void ImageSettings::updateWithNewComponentStatistics(
 
     if (componentStats.size() != m_numComponents)
     {
-        spdlog::error("Component statistics has {} components, where {} are expected", componentStats.size(), m_numComponents);
+        spdlog::error("Component statistics has {} components, where {} are expected",
+                      componentStats.size(), m_numComponents);
         return;
     }
 
     m_componentStats = std::move(componentStats);
 
-    for (std::size_t i = 0; i < m_componentStats.size(); ++i)
+    for (std::size_t i = 0; i < m_numComponents; ++i)
     {
-        const auto& stat = m_componentStats[i];
-
+        const auto& stats = m_componentStats[i];
         ComponentSettings& setting = m_componentSettings[i];
 
         // Min/max window width/center and threshold ranges are based on min/max component values:
-        setting.m_minMaxImageRange = std::make_pair(stat.m_minimum, stat.m_maximum);
-        setting.m_minMaxThresholdRange = std::make_pair(stat.m_minimum, stat.m_maximum);
+        setting.m_minMaxImageRange = std::make_pair(stats.m_minimum, stats.m_maximum);
+        setting.m_minMaxThresholdRange = std::make_pair(stats.m_minimum, stats.m_maximum);
 
-        setting.m_minMaxWindowCenterRange = std::make_pair(stat.m_minimum, stat.m_maximum);
-        setting.m_minMaxWindowWidthRange = std::make_pair(0.0, stat.m_maximum - stat.m_minimum);
+        setting.m_minMaxWindowCenterRange = std::make_pair(stats.m_minimum, stats.m_maximum);
+        setting.m_minMaxWindowWidthRange = std::make_pair(0.0, stats.m_maximum - stats.m_minimum);
 
         // Default thresholds are min/max values:
-        setting.m_thresholds = std::make_pair(stat.m_minimum, stat.m_maximum);
+        setting.m_thresholds = std::make_pair(stats.m_minimum, stats.m_maximum);
 
         // Default window limits are the low and high quantiles:
-        const double winLow = stat.m_quantiles[qLow];
-        const double winHigh = stat.m_quantiles[qHigh];
+        const double winLow = stats.m_quantiles[qLow];
+        const double winHigh = stats.m_quantiles[qHigh];
 
         setting.m_windowCenter = 0.5 * (winLow + winHigh);
         setting.m_windowWidth = winHigh - winLow;
 
         // Use the [1%, 100%] intensity range to define foreground
         // (until we have an algorithm to compute a foreground mask)
-        setting.m_foregroundThresholds = std::make_pair(stat.m_quantiles[qLow], stat.m_quantiles[qMax]);
+        setting.m_foregroundThresholds = std::make_pair(stats.m_quantiles[qLow], stats.m_quantiles[qMax]);
+
+        // Update histogram settings
+        setting.m_histogramSettings.m_numBinsMethod = NumBinsComputationMethod::FreedmanDiaconis;
+        setting.m_histogramSettings.m_isCumulative = false;
+        setting.m_histogramSettings.m_isDensity = false;
+        setting.m_histogramSettings.m_isHorizontal = false;
+        setting.m_histogramSettings.m_isLogScale = false;
+
+        const double binWidth = 2.0 * (stats.m_quantiles[75] - stats.m_quantiles[25]) / std::pow(m_numPixels, 1.0/3.0);
+        setting.m_histogramSettings.m_numBins = std::ceil( (stats.m_maximum - stats.m_minimum) / binWidth );
+        setting.m_histogramSettings.m_useCustomIntensityRange = false;
+        setting.m_histogramSettings.m_intensityRange = std::array<float, 2>{
+            static_cast<float>(stats.m_minimum), static_cast<float>(stats.m_maximum)};
 
         if (setDefaultVisibilitySettings)
         {

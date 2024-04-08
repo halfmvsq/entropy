@@ -83,153 +83,14 @@ std::pair<ImVec4, ImVec4> computeHeaderBgAndTextColors(const glm::vec3& color)
     return { headerColor, headerTextColor };
 }
 
-/*
-double RandomGauss() {
-    static double V1, V2, S;
-    static int phase = 0;
-    double X;
-    if(phase == 0) {
-        do {
-            double U1 = (double)rand() / RAND_MAX;
-            double U2 = (double)rand() / RAND_MAX;
-            V1 = 2 * U1 - 1;
-            V2 = 2 * U2 - 1;
-            S = V1 * V1 + V2 * V2;
-        } while(S >= 1 || S == 0);
-
-        X = V1 * sqrt(-2 * log(S) / S);
-    } else
-        X = V2 * sqrt(-2 * log(S) / S);
-    phase = 1 - phase;
-    return X;
-}
-
-
-template <int N>
-struct NormalDistribution {
-    NormalDistribution(double mean, double sd) {
-        for (int i = 0; i < N; ++i)
-            Data[i] = RandomGauss()*sd + mean;
-    }
-    double Data[N];
-};
-
-void Demo_Histogram()
-{
-    static ImPlotHistogramFlags hist_flags = ImPlotHistogramFlags_Density;
-
-    static int  bins       = 50;
-    static double mu       = 5;
-    static double sigma    = 2;
-
-    ImGui::SetNextItemWidth(200);
-
-    if (ImGui::RadioButton("Sqrt",bins==ImPlotBin_Sqrt))       { bins = ImPlotBin_Sqrt;    } ImGui::SameLine();
-    if (ImGui::RadioButton("Sturges",bins==ImPlotBin_Sturges)) { bins = ImPlotBin_Sturges; } ImGui::SameLine();
-    if (ImGui::RadioButton("Rice",bins==ImPlotBin_Rice))       { bins = ImPlotBin_Rice;    } ImGui::SameLine();
-    if (ImGui::RadioButton("Scott",bins==ImPlotBin_Scott))     { bins = ImPlotBin_Scott;   } ImGui::SameLine();
-    if (ImGui::RadioButton("N Bins",bins>=0))                  { bins = 50;                }
-
-    if (bins>=0)
-    {
-        ImGui::SameLine();
-        ImGui::SetNextItemWidth(200);
-        ImGui::SliderInt("##Bins", &bins, 1, 1000);
-    }
-
-    ImGui::CheckboxFlags("Horizontal", (unsigned int*)&hist_flags, ImPlotHistogramFlags_Horizontal); ImGui::SameLine();
-    ImGui::CheckboxFlags("Density", (unsigned int*)&hist_flags, ImPlotHistogramFlags_Density); ImGui::SameLine();
-    ImGui::CheckboxFlags("Cumulative", (unsigned int*)&hist_flags, ImPlotHistogramFlags_Cumulative);
-
-    static bool range = false;
-    ImGui::Checkbox("Range", &range);
-
-    static std::array<float, 2> rminmax = { -3, 13 };
-
-    if (range)
-    {
-        ImGui::SameLine();
-        ImGui::SetNextItemWidth(200);
-        ImGui::DragFloat2("##Range", rminmax.data(), 0.1f, -3, 13);
-        ImGui::SameLine();
-        ImGui::CheckboxFlags("Exclude Outliers", (unsigned int*)&hist_flags, ImPlotHistogramFlags_NoOutliers);
-    }
-
-    static NormalDistribution<1000000> dist(mu, sigma);
-    static double x[100];
-    static double y[100];
-
-    if (hist_flags & ImPlotHistogramFlags_Density)
-    {
-        for (int i = 0; i < 100; ++i)
-        {
-            x[i] = -3 + 16 * (double)i/99.0;
-            y[i] = exp(- (x[i]-mu)*(x[i]-mu) / (2*sigma*sigma)) / (sigma * sqrt(2*3.141592653589793238));
-        }
-
-        if (hist_flags & ImPlotHistogramFlags_Cumulative)
-        {
-            for (int i = 1; i < 100; ++i)
-                y[i] += y[i-1];
-
-            for (int i = 0; i < 100; ++i)
-                y[i] /= y[99];
-        }
-    }
-
-    if (ImPlot::BeginPlot("Histograms"))
-    {
-        ImPlot::SetupAxes("Intensity", "Count", ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
-        ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL, 0.5f);
-
-        ImPlot::PlotHistogram("Image1", dist.Data, 1000000, bins, 1.0,
-                              range ? ImPlotRange(rminmax[0], rminmax[1]) : ImPlotRange(), hist_flags);
-
-        if ((hist_flags & ImPlotHistogramFlags_Density) && !(hist_flags & ImPlotHistogramFlags_NoOutliers))
-        {
-            if (hist_flags & ImPlotHistogramFlags_Horizontal)
-            {
-                ImPlot::PlotLine("Theoretical",y,x,100);
-            }
-            else
-            {
-                ImPlot::PlotLine("Theoretical",x,y,100);
-            }
-        }
-        ImPlot::EndPlot();
-    }
-}
-*/
-
-enum class NumBinsChoice
-{
-    SquareRoot,
-    Sturges,
-    Rice,
-    Scott,
-    FreedmanDiaconis,
-    Custom
-};
-
-
 template<typename T>
-void drawImageHistogram(const T* data, int dataSize, const ComponentStats<double>& stats)
+void drawImageHistogram(const T* data, int dataSize, ImageSettings& settings)
 {
-    static ImPlotHistogramFlags flags = ImPlotHistogramFlags_Density;
-    static NumBinsChoice binsChoice = NumBinsChoice::FreedmanDiaconis;
-    static int32_t numBins = 100;
+    HistogramSettings& histoSettings = settings.histogramSettings();
 
-    static bool customIntensityRange = false;
-    static std::array<float, 2> intensityRange{static_cast<float>(stats.m_minimum), static_cast<float>(stats.m_maximum)};
-
+    /*
+    bool customIntensityRange = false;
     ImGui::SetNextItemWidth(200);
-
-    /// @see https://numpy.org/doc/stable/reference/generated/numpy.histogram_bin_edges.html
-    /// @see https://en.wikipedia.org/wiki/Histogram#Number_of_bins_and_width
-
-    // need to update num bins before this fn!!
-    // const double binWidth = 2.0 * (stats.m_quantiles[75] - stats.m_quantiles[25]) / std::pow(dataSize, 1.0/3.0);
-    // static int32_t numBins = std::ceil( (stats.m_maximum - stats.m_minimum) / binWidth );
 
     if (ImGui::RadioButton("Sqrt", NumBinsChoice::SquareRoot == binsChoice))
     {
@@ -272,63 +133,70 @@ void drawImageHistogram(const T* data, int dataSize, const ComponentStats<double
     {
         binsChoice = NumBinsChoice::Custom;
     }
+*/
 
-    numBins = std::clamp(numBins, 1, dataSize);
-    ImGui::DragInt("Bins", &numBins, 1, 1, dataSize);
-
-    ImGui::CheckboxFlags("Horizontal", (unsigned int*)&flags, ImPlotHistogramFlags_Horizontal); ImGui::SameLine();
-    ImGui::CheckboxFlags("Density", (unsigned int*)&flags, ImPlotHistogramFlags_Density); ImGui::SameLine();
-    ImGui::CheckboxFlags("Cumulative", (unsigned int*)&flags, ImPlotHistogramFlags_Cumulative);
-
-    ImGui::Checkbox("Custom range", &customIntensityRange);
-
-    if (customIntensityRange)
-    {
-        ImGui::DragFloat2("Intensity range", intensityRange.data(), 0.1f,
-                          static_cast<float>(stats.m_minimum), static_cast<float>(stats.m_maximum));
-
-        // ImGui::SameLine();
-        // ImGui::CheckboxFlags("Exclude Outliers", (unsigned int*)&flags, ImPlotHistogramFlags_NoOutliers);
-    }
+    ImPlotHistogramFlags flags = 0;
+    flags |= (histoSettings.m_isCumulative) ? ImPlotHistogramFlags_Cumulative : 0;
+    flags |= (histoSettings.m_isDensity) ? ImPlotHistogramFlags_Density : 0;
+    flags |= (histoSettings.m_isHorizontal) ? ImPlotHistogramFlags_Horizontal : 0;
 
     std::string title;
 
-    if (flags & ImPlotHistogramFlags_Cumulative)
+    if (histoSettings.m_isCumulative)
     {
         title = "Cumulative Histogram";
-        if (flags & ImPlotHistogramFlags_Density)
+        if (histoSettings.m_isDensity)
         {
-            title += " (CDF)";
+            title += " Density";
         }
     }
     else
     {
         title = "Histogram";
-        if (flags & ImPlotHistogramFlags_Density)
+        if (histoSettings.m_isDensity)
         {
-            title += " (PDF)";
+            title += " Density";
         }
     }
 
-    const std::string countLabel = (flags & ImPlotHistogramFlags_Density) ? "Probability" : "Count";
+    std::string countLabel;
+
+    if (histoSettings.m_isLogScale)
+    {
+        countLabel = (histoSettings.m_isDensity) ? "log(Probability)" : "log(Count)";
+    }
+    else
+    {
+        countLabel = (histoSettings.m_isDensity) ? "Probability" : "Count";
+    }
+
+    const ImPlotRange range = (histoSettings.m_useCustomIntensityRange)
+        ? ImPlotRange(histoSettings.m_intensityRange[0], histoSettings.m_intensityRange[1])
+        : ImPlotRange();
 
     if (ImPlot::BeginPlot(title.c_str()))
     {
-        if (flags & ImPlotHistogramFlags_Horizontal)
+        if (histoSettings.m_isHorizontal)
         {
             ImPlot::SetupAxes(countLabel.c_str(), "Intensity", ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
+
+            if (histoSettings.m_isLogScale)
+            {
+                ImPlot::SetupAxisScale(ImAxis_X1, ImPlotScale_Log10);
+            }
         }
         else
         {
             ImPlot::SetupAxes("Intensity", countLabel.c_str(), ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
+
+            if (histoSettings.m_isLogScale)
+            {
+                ImPlot::SetupAxisScale(ImAxis_Y1, ImPlotScale_Log10);
+            }
         }
 
         ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL, 0.5f);
-
-        ImPlot::PlotHistogram(
-            "##PlotHistogram", data, dataSize, numBins, 1.0,
-            customIntensityRange ? ImPlotRange(intensityRange[0], intensityRange[1]) : ImPlotRange(),
-            flags);
+        ImPlot::PlotHistogram("##PlotHistogram", data, dataSize, histoSettings.m_numBins, 1.0, range, flags);
 
         /*
             if (hist_flags & ImPlotHistogramFlags_Horizontal)
@@ -341,6 +209,24 @@ void drawImageHistogram(const T* data, int dataSize, const ComponentStats<double
             }
         */
         ImPlot::EndPlot();
+    }
+
+    ImGui::DragInt("Bin count", &histoSettings.m_numBins, 1, 1, dataSize);
+    ImGui::Checkbox("Cumulative", &histoSettings.m_isCumulative); ImGui::SameLine();
+    ImGui::Checkbox("Density", &histoSettings.m_isDensity); ImGui::SameLine();
+    ImGui::Checkbox("Horizontal", &histoSettings.m_isHorizontal); ImGui::SameLine();
+    ImGui::Checkbox("Log scale", &histoSettings.m_isLogScale);
+
+    ImGui::Checkbox("Custom range", &histoSettings.m_useCustomIntensityRange);
+
+    if (histoSettings.m_useCustomIntensityRange)
+    {
+        ImGui::DragFloat2("Intensity range", histoSettings.m_intensityRange.data(), 0.1f,
+                          static_cast<float>(settings.componentStatistics().m_minimum),
+                          static_cast<float>(settings.componentStatistics().m_maximum));
+
+        // ImGui::SameLine();
+        // ImGui::CheckboxFlags("Exclude Outliers", (unsigned int*)&flags, ImPlotHistogramFlags_NoOutliers);
     }
 }
 
@@ -1939,25 +1825,24 @@ void renderImageHeader(
 
     if (ImGui::TreeNode("Histogram"))
     {
+        if (image->header().numPixels() > std::numeric_limits<int32_t>::max())
+        {
+            spdlog::warn("Number of pixels in image ({}) exceeds maximum supported by image histogram", image->header().numPixels());
+        }
+
         const uint32_t comp = imgSettings.activeComponent();
         const void *buffer = image->bufferSortedAsVoid(comp);
         const int bufferSize = static_cast<int>(image->header().numPixels());
-        const ComponentStats<double>& stats = image->settings().componentStatistics(comp);
-
-        if (image->header().numPixels() > std::numeric_limits<int32_t>::max())
-        {
-            spdlog::warn("Number of pixels in image ({}) exceeds maximum supported by image histogram", bufferSize);
-        }
 
         switch (image->header().memoryComponentType())
         {
-        case ComponentType::Int8: { drawImageHistogram(static_cast<const int8_t*>(buffer), bufferSize, stats); break; }
-        case ComponentType::UInt8: { drawImageHistogram(static_cast<const uint8_t*>(buffer), bufferSize, stats); break; }
-        case ComponentType::Int16: { drawImageHistogram(static_cast<const int16_t*>(buffer), bufferSize, stats); break; }
-        case ComponentType::UInt16: { drawImageHistogram(static_cast<const uint16_t*>(buffer), bufferSize, stats); break; }
-        case ComponentType::Int32: { drawImageHistogram(static_cast<const int32_t*>(buffer), bufferSize, stats); break; }
-        case ComponentType::UInt32: { drawImageHistogram(static_cast<const uint32_t*>(buffer), bufferSize, stats); break; }
-        case ComponentType::Float32: { drawImageHistogram(static_cast<const float*>(buffer), bufferSize, stats); break; }
+        case ComponentType::Int8: { drawImageHistogram(static_cast<const int8_t*>(buffer), bufferSize, imgSettings); break; }
+        case ComponentType::UInt8: { drawImageHistogram(static_cast<const uint8_t*>(buffer), bufferSize, imgSettings); break; }
+        case ComponentType::Int16: { drawImageHistogram(static_cast<const int16_t*>(buffer), bufferSize, imgSettings); break; }
+        case ComponentType::UInt16: { drawImageHistogram(static_cast<const uint16_t*>(buffer), bufferSize, imgSettings); break; }
+        case ComponentType::Int32: { drawImageHistogram(static_cast<const int32_t*>(buffer), bufferSize, imgSettings); break; }
+        case ComponentType::UInt32: { drawImageHistogram(static_cast<const uint32_t*>(buffer), bufferSize, imgSettings); break; }
+        case ComponentType::Float32: { drawImageHistogram(static_cast<const float*>(buffer), bufferSize, imgSettings); break; }
         default: { break; }
         }
 

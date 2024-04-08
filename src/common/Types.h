@@ -79,12 +79,11 @@ enum class PixelType
 /**
  * @brief Statistics of a single image component
  */
-template< typename T >
 struct ComponentStats
 {
-    T m_minimum = 0;
-    T m_maximum = 0;
-    std::array<T, 101> m_quantiles;
+    double m_minimum = 0;
+    double m_maximum = 0;
+    std::array<double, 101> m_quantiles;
 
     double m_mean = 0;
     double m_stdDeviation = 0;

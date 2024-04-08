@@ -11,9 +11,6 @@
 
 namespace
 {
-// Statistics per component are stored as double
-using StatsType = double;
-
 // Maximum number of components to load for images with interleaved buffer components
 static constexpr uint32_t MAX_INTERLEAVED_COMPS = 4;
 }
@@ -159,9 +156,12 @@ Image::Image(
         throw_debug("Error generating sorted image component buffers")
     }
 
-    std::vector<ComponentStats<StatsType>> componentStats = computeImageStatistics(*this);
-    m_settings = ImageSettings(getFileName(fileName.string(), false), m_header.numComponentsPerPixel(),
-                               m_header.memoryComponentType(), std::move(componentStats));
+    std::vector<ComponentStats> componentStats = computeImageStatistics(*this);
+    m_settings = ImageSettings(
+        getFileName(fileName.string(), false), m_header.numPixels(), m_header.numComponentsPerPixel(),
+        m_header.memoryComponentType(), std::move(componentStats));
+
+    m_settings.histogramSettings();
 }
 
 Image::Image(
@@ -365,9 +365,10 @@ Image::Image(
         throw_debug("Error generating sorted image component buffers")
     }
 
-    std::vector<ComponentStats<StatsType>> componentStats = computeImageStatistics(*this);
-    m_settings = ImageSettings(std::move(displayName), m_header.numComponentsPerPixel(),
-                               m_header.memoryComponentType(), std::move(componentStats));
+    std::vector<ComponentStats> componentStats = computeImageStatistics(*this);
+    m_settings = ImageSettings(
+        std::move(displayName), m_header.numPixels(), m_header.numComponentsPerPixel(),
+        m_header.memoryComponentType(), std::move(componentStats));
 }
 
 bool Image::saveComponentToDisk(uint32_t component, const std::optional<fs::path>& newFileName)
