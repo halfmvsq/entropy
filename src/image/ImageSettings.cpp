@@ -572,6 +572,9 @@ void ImageSettings::updateWithNewComponentStatistics(
             }
 
             setting.m_histogramSettings.m_numBins = numBins.value_or(1);
+
+            setting.m_histogramSettings.m_binWidth =
+                (m_componentStats[i].m_maximum - m_componentStats[i].m_minimum) / setting.m_histogramSettings.m_numBins;
         }
 
         if (setDefaultVisibilitySettings)

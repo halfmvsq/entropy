@@ -125,6 +125,18 @@ void drawImageHistogram(
         countLabel = (histoSettings.m_isDensity) ? "Probability" : "Count";
     }
 
+    const double xMin = (histoSettings.m_useCustomIntensityRange)
+                            ? histoSettings.m_intensityRange[0]
+                            : settings.componentStatistics().m_minimum;
+
+    const double xMax = (histoSettings.m_useCustomIntensityRange)
+                            ? histoSettings.m_intensityRange[1]
+                            : settings.componentStatistics().m_maximum;
+
+    const float floatRangeMin = static_cast<float>(settings.componentStatistics().m_minimum);
+    const float floatRangeMax = static_cast<float>(settings.componentStatistics().m_maximum);
+    const float floatSpeed = (floatRangeMax - floatRangeMin) / 1000.0f;
+
     const ImPlotRange range = (histoSettings.m_useCustomIntensityRange)
         ? ImPlotRange(histoSettings.m_intensityRange[0], histoSettings.m_intensityRange[1])
         : ImPlotRange();
@@ -153,14 +165,6 @@ void drawImageHistogram(
         ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL, 0.5f);
         ImPlot::PlotHistogram("##PlotHistogram", data, dataSize, histoSettings.m_numBins, 1.0, range, flags);
 
-        const double xMin = (histoSettings.m_useCustomIntensityRange)
-            ? histoSettings.m_intensityRange[0]
-            : settings.componentStatistics().m_minimum;
-
-        const double xMax = (histoSettings.m_useCustomIntensityRange)
-            ? histoSettings.m_intensityRange[1]
-            : settings.componentStatistics().m_maximum;
-
         const auto windowLowHigh = settings.windowValuesLowHigh();
         const ImPlotInfLinesFlags infLineFlags = histoSettings.m_isHorizontal ? ImPlotInfLinesFlags_Horizontal : 0;
 
@@ -177,7 +181,20 @@ void drawImageHistogram(
         ImPlot::EndPlot();
     }
 
-    ImGui::DragInt("Bin count", &histoSettings.m_numBins, 1, 1, dataSize);
+    if (ImGui::DragInt("Bin count", &histoSettings.m_numBins, 1, 1, dataSize))
+    {
+        histoSettings.m_binWidth = glm::clamp((xMax - xMin) / histoSettings.m_numBins,
+            0.0, settings.componentStatistics().m_maximum);
+    }
+
+    float width = histoSettings.m_binWidth;
+    //if (ImGui::DragFloat("Bin width", &width, floatSpeed, 0.0f, floatRangeMax))
+    if (ImGui::DragFloat("Bin width", &width, 1.0, 0.0f, floatRangeMax))
+    {
+        histoSettings.m_binWidth = width;
+        histoSettings.m_numBins = static_cast<int>( std::ceil((xMax - xMin) / width) );
+    }
+
 
     ImGui::Checkbox("Cumulative", &histoSettings.m_isCumulative); ImGui::SameLine();
     ImGui::Checkbox("Density", &histoSettings.m_isDensity); ImGui::SameLine();
@@ -192,7 +209,6 @@ void drawImageHistogram(
         {
             const float rangeMin = static_cast<float>(settings.componentStatistics().m_minimum);
             const float rangeMax = static_cast<float>(settings.componentStatistics().m_maximum);
-            const float speed = (rangeMax - rangeMin) / 1000.0f;
 
             const std::string minValuesFormatString = std::string("Min: ") + imagePrecisionFormat;
             const std::string maxValuesFormatString = std::string("Max: ") + imagePrecisionFormat;
@@ -200,7 +216,7 @@ void drawImageHistogram(
             float rangeLow = histoSettings.m_intensityRange[0];
             float rangeHigh = histoSettings.m_intensityRange[1];
 
-            if (ImGui::DragFloatRange2("Intensity range", &rangeLow, &rangeHigh, speed, rangeMin, rangeMax,
+            if (ImGui::DragFloatRange2("Intensity range", &rangeLow, &rangeHigh, floatSpeed, rangeMin, rangeMax,
                                        minValuesFormatString.c_str(), maxValuesFormatString.c_str(), ImGuiSliderFlags_AlwaysClamp))
             {
                 histoSettings.m_intensityRange[0] = rangeLow;
