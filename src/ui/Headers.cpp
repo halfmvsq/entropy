@@ -1,5 +1,4 @@
 #include "ui/Headers.h"
-
 #include "ui/GuiData.h"
 #include "ui/Helpers.h"
 #include "ui/ImGuiCustomControls.h"
@@ -84,56 +83,12 @@ std::pair<ImVec4, ImVec4> computeHeaderBgAndTextColors(const glm::vec3& color)
 }
 
 template<typename T>
-void drawImageHistogram(const T* data, int dataSize, ImageSettings& settings)
+void drawImageHistogram(
+    const T* data, int dataSize, ImageSettings& settings,
+    bool imageHasFloatComponents,
+    const std::string& imagePrecisionFormat)
 {
     HistogramSettings& histoSettings = settings.histogramSettings();
-
-    /*
-    bool customIntensityRange = false;
-    ImGui::SetNextItemWidth(200);
-
-    if (ImGui::RadioButton("Sqrt", NumBinsChoice::SquareRoot == binsChoice))
-    {
-        binsChoice = NumBinsChoice::SquareRoot;
-        numBins = std::ceil( std::sqrt(dataSize) );
-    }
-    ImGui::SameLine();
-
-    if (ImGui::RadioButton("Sturges", NumBinsChoice::Sturges == binsChoice))
-    {
-        binsChoice = NumBinsChoice::Sturges;
-        numBins = std::ceil( std::log2(dataSize) ) + 1;
-    }
-    ImGui::SameLine();
-
-    if (ImGui::RadioButton("Rice", NumBinsChoice::Rice == binsChoice))
-    {
-        binsChoice = NumBinsChoice::Rice;
-        numBins = std::ceil( 2 * std::pow(dataSize, 1.0/3.0) );
-    }
-    ImGui::SameLine();
-
-    if (ImGui::RadioButton("Scott", NumBinsChoice::Scott == binsChoice))
-    {
-        binsChoice = NumBinsChoice::Scott;
-        const double binWidth = 3.49 * stats.m_stdDeviation / std::pow(dataSize, 1.0/3.0);
-        numBins = std::ceil( (stats.m_maximum - stats.m_minimum) / binWidth );
-    }
-    ImGui::SameLine();
-
-    if (ImGui::RadioButton("F-D", NumBinsChoice::FreedmanDiaconis == binsChoice))
-    {
-        binsChoice = NumBinsChoice::FreedmanDiaconis;
-        const double binWidth = 2.0 * (stats.m_quantiles[75] - stats.m_quantiles[25]) / std::pow(dataSize, 1.0/3.0);
-        numBins = std::ceil( (stats.m_maximum - stats.m_minimum) / binWidth );
-    }
-    ImGui::SameLine();
-
-    if (ImGui::RadioButton("Custom", NumBinsChoice::Custom == binsChoice))
-    {
-        binsChoice = NumBinsChoice::Custom;
-    }
-*/
 
     ImPlotHistogramFlags flags = 0;
     flags |= (histoSettings.m_isCumulative) ? ImPlotHistogramFlags_Cumulative : 0;
@@ -198,35 +153,76 @@ void drawImageHistogram(const T* data, int dataSize, ImageSettings& settings)
         ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL, 0.5f);
         ImPlot::PlotHistogram("##PlotHistogram", data, dataSize, histoSettings.m_numBins, 1.0, range, flags);
 
-        /*
-            if (hist_flags & ImPlotHistogramFlags_Horizontal)
-            {
-                ImPlot::PlotLine("Theoretical",y,x,100);
-            }
-            else
-            {
-                ImPlot::PlotLine("Theoretical",x,y,100);
-            }
-        */
+        const double xMin = (histoSettings.m_useCustomIntensityRange)
+            ? histoSettings.m_intensityRange[0]
+            : settings.componentStatistics().m_minimum;
+
+        const double xMax = (histoSettings.m_useCustomIntensityRange)
+            ? histoSettings.m_intensityRange[1]
+            : settings.componentStatistics().m_maximum;
+
+        const auto windowLowHigh = settings.windowValuesLowHigh();
+        const ImPlotInfLinesFlags infLineFlags = histoSettings.m_isHorizontal ? ImPlotInfLinesFlags_Horizontal : 0;
+
+        if (xMin <= windowLowHigh.first)
+        {
+            ImPlot::PlotInfLines("##WindowInfLine1", &windowLowHigh.first, 1, infLineFlags);
+        }
+
+        if (windowLowHigh.second <= xMax)
+        {
+            ImPlot::PlotInfLines("##WindowInfLine2", &windowLowHigh.second, 1, infLineFlags);
+        }
+
         ImPlot::EndPlot();
     }
 
     ImGui::DragInt("Bin count", &histoSettings.m_numBins, 1, 1, dataSize);
+
     ImGui::Checkbox("Cumulative", &histoSettings.m_isCumulative); ImGui::SameLine();
     ImGui::Checkbox("Density", &histoSettings.m_isDensity); ImGui::SameLine();
     ImGui::Checkbox("Horizontal", &histoSettings.m_isHorizontal); ImGui::SameLine();
     ImGui::Checkbox("Log scale", &histoSettings.m_isLogScale);
 
-    ImGui::Checkbox("Custom range", &histoSettings.m_useCustomIntensityRange);
+    ImGui::Checkbox("Set intensity range", &histoSettings.m_useCustomIntensityRange);
 
     if (histoSettings.m_useCustomIntensityRange)
     {
-        ImGui::DragFloat2("Intensity range", histoSettings.m_intensityRange.data(), 0.1f,
-                          static_cast<float>(settings.componentStatistics().m_minimum),
-                          static_cast<float>(settings.componentStatistics().m_maximum));
+        if (imageHasFloatComponents)
+        {
+            const float rangeMin = static_cast<float>(settings.componentStatistics().m_minimum);
+            const float rangeMax = static_cast<float>(settings.componentStatistics().m_maximum);
+            const float speed = (rangeMax - rangeMin) / 1000.0f;
 
-        // ImGui::SameLine();
-        // ImGui::CheckboxFlags("Exclude Outliers", (unsigned int*)&flags, ImPlotHistogramFlags_NoOutliers);
+            const std::string minValuesFormatString = std::string("Min: ") + imagePrecisionFormat;
+            const std::string maxValuesFormatString = std::string("Max: ") + imagePrecisionFormat;
+
+            float rangeLow = histoSettings.m_intensityRange[0];
+            float rangeHigh = histoSettings.m_intensityRange[1];
+
+            if (ImGui::DragFloatRange2("Intensity range", &rangeLow, &rangeHigh, speed, rangeMin, rangeMax,
+                                       minValuesFormatString.c_str(), maxValuesFormatString.c_str(), ImGuiSliderFlags_AlwaysClamp))
+            {
+                histoSettings.m_intensityRange[0] = rangeLow;
+                histoSettings.m_intensityRange[1] = rangeHigh;
+            }
+        }
+        else
+        {
+            const int rangeMin = static_cast<int>(settings.componentStatistics().m_minimum);
+            const int rangeMax = static_cast<int>(settings.componentStatistics().m_maximum);
+            const float speed = 1.0f;
+
+            int rangeLow = static_cast<int>(histoSettings.m_intensityRange[0]);
+            int rangeHigh = static_cast<int>(histoSettings.m_intensityRange[1]);
+
+            if (ImGui::DragIntRange2("Intensity range", &rangeLow, &rangeHigh, speed, rangeMin, rangeMax,
+                "Min: %d", "Max: %d", ImGuiSliderFlags_AlwaysClamp))
+            {
+                histoSettings.m_intensityRange[0] = static_cast<double>(rangeLow);
+                histoSettings.m_intensityRange[1] = static_cast<double>(rangeHigh);;
+            }
+        }
     }
 }
 
@@ -245,7 +241,6 @@ void renderImageHeaderInformation(
 
     const ImageHeader& imgHeader = image.header();
     ImageTransformations& imgTx = image.transformations();
-
 
     // File name:
     ImGui::Spacing();
@@ -943,9 +938,11 @@ void renderImageHeader(
             ImGui::Dummy(ImVec2(0.0f, 1.0f));
         }
 
+        const bool imageHasFloatComponents =
+            (ComponentType::Float32 == imgHeader.memoryComponentType() ||
+             ComponentType::Float64 == imgHeader.memoryComponentType());
 
-        if (ComponentType::Float32 == imgHeader.memoryComponentType() ||
-             ComponentType::Float64 == imgHeader.memoryComponentType())
+        if (imageHasFloatComponents)
         {
             // Threshold range:
             const float threshMin = static_cast<float>(imgSettings.thresholdRange().first);
@@ -1833,16 +1830,21 @@ void renderImageHeader(
         const uint32_t comp = imgSettings.activeComponent();
         const void *buffer = image->bufferSortedAsVoid(comp);
         const int bufferSize = static_cast<int>(image->header().numPixels());
+        const std::string& format = appData.guiData().m_imageValuePrecisionFormat;
+
+        const bool imageHasFloatComponents =
+            (ComponentType::Float32 == image->header().memoryComponentType() ||
+             ComponentType::Float64 == image->header().memoryComponentType());
 
         switch (image->header().memoryComponentType())
         {
-        case ComponentType::Int8: { drawImageHistogram(static_cast<const int8_t*>(buffer), bufferSize, imgSettings); break; }
-        case ComponentType::UInt8: { drawImageHistogram(static_cast<const uint8_t*>(buffer), bufferSize, imgSettings); break; }
-        case ComponentType::Int16: { drawImageHistogram(static_cast<const int16_t*>(buffer), bufferSize, imgSettings); break; }
-        case ComponentType::UInt16: { drawImageHistogram(static_cast<const uint16_t*>(buffer), bufferSize, imgSettings); break; }
-        case ComponentType::Int32: { drawImageHistogram(static_cast<const int32_t*>(buffer), bufferSize, imgSettings); break; }
-        case ComponentType::UInt32: { drawImageHistogram(static_cast<const uint32_t*>(buffer), bufferSize, imgSettings); break; }
-        case ComponentType::Float32: { drawImageHistogram(static_cast<const float*>(buffer), bufferSize, imgSettings); break; }
+        case ComponentType::Int8: { drawImageHistogram(static_cast<const int8_t*>(buffer), bufferSize, imgSettings, imageHasFloatComponents, format); break; }
+        case ComponentType::UInt8: { drawImageHistogram(static_cast<const uint8_t*>(buffer), bufferSize, imgSettings, imageHasFloatComponents, format); break; }
+        case ComponentType::Int16: { drawImageHistogram(static_cast<const int16_t*>(buffer), bufferSize, imgSettings, imageHasFloatComponents, format); break; }
+        case ComponentType::UInt16: { drawImageHistogram(static_cast<const uint16_t*>(buffer), bufferSize, imgSettings, imageHasFloatComponents, format); break; }
+        case ComponentType::Int32: { drawImageHistogram(static_cast<const int32_t*>(buffer), bufferSize, imgSettings, imageHasFloatComponents, format); break; }
+        case ComponentType::UInt32: { drawImageHistogram(static_cast<const uint32_t*>(buffer), bufferSize, imgSettings, imageHasFloatComponents, format); break; }
+        case ComponentType::Float32: { drawImageHistogram(static_cast<const float*>(buffer), bufferSize, imgSettings, imageHasFloatComponents, format); break; }
         default: { break; }
         }
 

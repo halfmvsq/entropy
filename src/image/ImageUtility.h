@@ -43,4 +43,8 @@ std::vector<ComponentStats> computeImageStatistics(const Image& image);
 
 double bumpQuantile(const Image& image, uint32_t comp, double currentQuantile, double attemptedQuantile, double currentValue);
 
+std::optional<std::size_t> computeNumHistogramBins(
+    const NumBinsComputationMethod& method,
+    std::size_t numPixels, ComponentStats stats);
+
 #endif // IMAGE_UTILITY_H

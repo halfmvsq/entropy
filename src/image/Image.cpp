@@ -837,7 +837,7 @@ bool Image::loadSegBuffer(
         m_ioInfoInMemory.m_componentInfo.m_componentTypeString = newTypeString;
         m_ioInfoInMemory.m_sizeInfo.m_imageSizeInBytes = numElements * m_ioInfoInMemory.m_componentInfo.m_componentSizeInBytes;
 
-        spdlog::info("Casted segmentation '{}' pixel component from type {} to {}",
+        spdlog::info("Casted segmentation {} pixel component from type {} to {}",
                      m_ioInfoOnDisk.m_fileInfo.m_fileName, m_ioInfoOnDisk.m_componentInfo.m_componentTypeString, newTypeString);
 
         if (warnFloatConversion)

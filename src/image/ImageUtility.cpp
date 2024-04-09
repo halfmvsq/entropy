@@ -4,10 +4,11 @@
 #include "common/filesystem.h"
 #include "common/MathFuncs.h"
 
+#include <glm/gtc/epsilon.hpp>
 #include <spdlog/spdlog.h>
-
 #include <itkImageIOFactory.h>
 
+#include <cmath>
 #include <limits>
 #include <vector>
 
@@ -364,4 +365,54 @@ double bumpQuantile(const Image& image, uint32_t comp, double currentQuantile, d
     }
 
     return newQuant;
+}
+
+std::optional<std::size_t> computeNumHistogramBins(
+    const NumBinsComputationMethod& method,
+    std::size_t numPixels, ComponentStats stats)
+{
+    if (0 == numPixels)
+    {
+        spdlog::warn("Cannot compute number of histogram bins for image component with zero pixels");
+        return std::nullopt;
+    }
+
+    switch (method)
+    {
+    case NumBinsComputationMethod::SquareRoot:
+    {
+        return static_cast<std::size_t>( std::ceil(std::sqrt(numPixels)) );
+    }
+    case NumBinsComputationMethod::Sturges:
+    {
+        return static_cast<std::size_t>( std::ceil(std::log2(numPixels)) + 1 );
+    }
+    case NumBinsComputationMethod::Rice:
+    {
+        return static_cast<std::size_t>( std::ceil(2.0 * std::pow(numPixels, 1.0/3.0)) );
+    }
+    case NumBinsComputationMethod::Scott:
+    {
+        if (glm::epsilonEqual(stats.m_stdDeviation, 0.0, glm::epsilon<double>()))
+        {
+            spdlog::warn("Image component has zero standard deviation");
+            return std::nullopt;
+        }
+
+        const double binWidth = 3.49 * stats.m_stdDeviation / std::pow(numPixels, 1.0/3.0);
+        return static_cast<std::size_t>( std::ceil((stats.m_maximum - stats.m_minimum) / binWidth) );
+    }
+    case NumBinsComputationMethod::FreedmanDiaconis:
+    {
+        const double IQR = (stats.m_quantiles[75] - stats.m_quantiles[25]);
+        if (glm::epsilonEqual(IQR, 0.0, glm::epsilon<double>()))
+        {
+            spdlog::warn("Image component has zero interquartile range");
+            return std::nullopt;
+        }
+
+        const double binWidth = 2.0 * IQR / std::pow(numPixels, 1.0/3.0);
+        return static_cast<std::size_t>( std::ceil((stats.m_maximum - stats.m_minimum) / binWidth) );
+    }
+    }
 }

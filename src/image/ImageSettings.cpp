@@ -1,10 +1,13 @@
 #include "image/ImageSettings.h"
+#include "image/ImageUtility.h"
 #include "image/ImageUtility.tpp"
 
 #include "common/Exception.hpp"
 #include "common/Types.h"
 
 #include <spdlog/spdlog.h>
+
+#include <limits>
 
 #undef min
 #undef max
@@ -545,12 +548,31 @@ void ImageSettings::updateWithNewComponentStatistics(
         setting.m_histogramSettings.m_isDensity = false;
         setting.m_histogramSettings.m_isHorizontal = false;
         setting.m_histogramSettings.m_isLogScale = false;
-
-        const double binWidth = 2.0 * (stats.m_quantiles[75] - stats.m_quantiles[25]) / std::pow(m_numPixels, 1.0/3.0);
-        setting.m_histogramSettings.m_numBins = std::ceil( (stats.m_maximum - stats.m_minimum) / binWidth );
         setting.m_histogramSettings.m_useCustomIntensityRange = false;
-        setting.m_histogramSettings.m_intensityRange = std::array<float, 2>{
-            static_cast<float>(stats.m_minimum), static_cast<float>(stats.m_maximum)};
+        setting.m_histogramSettings.m_intensityRange[0] = stats.m_minimum;
+        setting.m_histogramSettings.m_intensityRange[1] = stats.m_maximum;
+
+        if (0 == m_numPixels)
+        {
+            spdlog::warn("Component {} of image {} has zero pixels, so setting number of histogram bins to one", i, m_displayName);
+            setting.m_histogramSettings.m_numBins = 1;
+        }
+        else
+        {
+            std::optional<std::size_t> numBins = computeNumHistogramBins(
+                setting.m_histogramSettings.m_numBinsMethod, m_numPixels, m_componentStats[i]);
+
+            if (! numBins)
+            {
+                spdlog::warn("Could not compute number of histogram for component {} of image {}", i, m_displayName);
+                spdlog::info("Falling back to Sturge's method for computing number of histogram bins");
+
+                setting.m_histogramSettings.m_numBinsMethod = NumBinsComputationMethod::Sturges;
+                numBins = computeNumHistogramBins(setting.m_histogramSettings.m_numBinsMethod, m_numPixels, m_componentStats[i]);
+            }
+
+            setting.m_histogramSettings.m_numBins = numBins.value_or(1);
+        }
 
         if (setDefaultVisibilitySettings)
         {
