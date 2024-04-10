@@ -58,6 +58,8 @@ ImageSettings::ImageSettings(
 void ImageSettings::setDisplayName(std::string name) { m_displayName = std::move(name); }
 const std::string& ImageSettings::displayName() const { return m_displayName; }
 
+ComponentType ImageSettings::componentType() const { return m_componentType; }
+
 void ImageSettings::setBorderColor(glm::vec3 borderColor) { m_borderColor = std::move(borderColor); }
 const glm::vec3& ImageSettings::borderColor() const { return m_borderColor; }
 

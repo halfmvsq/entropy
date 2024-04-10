@@ -47,6 +47,9 @@ public:
     /// Get the short display name of the image
     const std::string& displayName() const;
 
+    /// Get the image component type
+    ComponentType componentType() const;
+
     /// Set the border color
     void setBorderColor(glm::vec3 borderColor);
 
