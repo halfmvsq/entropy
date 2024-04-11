@@ -157,10 +157,13 @@ void drawImageHistogram(
         }
         ;
         ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL, 0.5f);
-        ImPlot::PlotHistogram("##PlotHistogram", data, dataSize, histoSettings.m_numBins, 1.0, ImPlotRange(xMin, xMax), flags);
+
+        ImPlot::PlotHistogram("##PlotHistogram", data, dataSize, histoSettings.m_numBins,
+                              1.0, ImPlotRange(xMin, xMax), flags);
 
         const auto windowLowHigh = settings.windowValuesLowHigh();
-        const ImPlotInfLinesFlags infLineFlags = histoSettings.m_isHorizontal ? ImPlotInfLinesFlags_Horizontal : 0;
+        const ImPlotInfLinesFlags infLineFlags = (histoSettings.m_isHorizontal)
+            ? ImPlotInfLinesFlags_Horizontal : 0;
 
         ImPlot::PushColormap(ImPlotColormap_Deep);
 
@@ -212,11 +215,11 @@ void drawImageHistogram(
             float rangeHigh = histoSettings.m_intensityRange[1];
             const float floatSpeed = (rangeHigh - rangeLow) / 1000.0f;
 
-            if (ImGui::DragFloatRange2("Intensity range", &rangeLow, &rangeHigh, floatSpeed, rangeMin, rangeMax,
+            if (ImGui::DragFloatRange2("Range", &rangeLow, &rangeHigh, floatSpeed, rangeMin, rangeMax,
                     minValuesFormatString.c_str(), maxValuesFormatString.c_str(), ImGuiSliderFlags_AlwaysClamp))
             {
-                histoSettings.m_intensityRange[0] = rangeLow;
-                histoSettings.m_intensityRange[1] = rangeHigh;
+                histoSettings.m_intensityRange[0] = static_cast<double>(rangeLow);
+                histoSettings.m_intensityRange[1] = static_cast<double>(rangeHigh);
             }
         }
         else
@@ -232,7 +235,7 @@ void drawImageHistogram(
                 "Min: %d", "Max: %d", ImGuiSliderFlags_AlwaysClamp))
             {
                 histoSettings.m_intensityRange[0] = static_cast<double>(rangeLow);
-                histoSettings.m_intensityRange[1] = static_cast<double>(rangeHigh);;
+                histoSettings.m_intensityRange[1] = static_cast<double>(rangeHigh);
             }
         }
     }
