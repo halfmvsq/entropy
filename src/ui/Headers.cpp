@@ -231,7 +231,7 @@ void drawImageHistogram(
             int rangeLow = static_cast<int>(histoSettings.m_intensityRange[0]);
             int rangeHigh = static_cast<int>(histoSettings.m_intensityRange[1]);
 
-            if (ImGui::DragIntRange2("Intensity range", &rangeLow, &rangeHigh, speed, rangeMin, rangeMax,
+            if (ImGui::DragIntRange2("Range", &rangeLow, &rangeHigh, speed, rangeMin, rangeMax,
                 "Min: %d", "Max: %d", ImGuiSliderFlags_AlwaysClamp))
             {
                 histoSettings.m_intensityRange[0] = static_cast<double>(rangeLow);

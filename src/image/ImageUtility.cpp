@@ -415,4 +415,6 @@ std::optional<std::size_t> computeNumHistogramBins(
         return static_cast<std::size_t>( std::ceil((stats.m_maximum - stats.m_minimum) / binWidth) );
     }
     }
+
+    return std::nullopt;
 }
