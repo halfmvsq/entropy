@@ -620,6 +620,8 @@ bool Image::generateSortedBuffers()
         return true;
     }
     }
+
+    return false;
 }
 
 bool Image::loadImageBuffer(
@@ -981,6 +983,8 @@ Image::getComponentAndOffsetForBuffer(uint32_t comp, std::size_t index) const
         return std::make_pair(0, static_cast<std::size_t>(comp + 1) * index);
     }
     }
+
+    return std::nullopt;
 }
 
 QuantileOfValue Image::valueToQuantile(uint32_t comp, int64_t value) const
