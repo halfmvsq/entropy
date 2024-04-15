@@ -4,9 +4,7 @@
 #include "common/PublicTypes.h"
 
 #include <glm/fwd.hpp>
-
 #include <uuid.h>
-
 #include <functional>
 #include <utility>
 
@@ -15,7 +13,6 @@ class ImageColorMap;
 class ImageTransformations;
 class LandmarkGroup;
 class ParcellationLabelTable;
-
 
 void renderActiveImageSelectionCombo(
     size_t numImages,
@@ -36,7 +33,6 @@ void renderSegLabelsChildWindow(
     const std::function< void ( size_t tableIndex ) >& updateLabelColorTableTexture,
     const std::function< void ( size_t labelIndex ) >& moveCrosshairsToSegLabelCentroid );
 
-
 /**
  * @brief renderLandmarkChildWindow
  * @param imageTransformations
@@ -52,7 +48,6 @@ void renderLandmarkChildWindow(
     const glm::vec3& worldCrosshairsPos,
     const std::function< void ( const glm::vec3& worldCrosshairsPos ) >& setWorldCrosshairsPos,
     const AllViewsRecenterType& recenterAllViews );
-
 
 /**
  * @brief renderPaletteWindow

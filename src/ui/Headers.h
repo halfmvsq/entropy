@@ -3,12 +3,9 @@
 
 #include "common/PublicTypes.h"
 
-#include <uuid.h>
-
 #include <glm/fwd.hpp>
-
+#include <uuid.h>
 #include <functional>
-
 
 class AppData;
 struct GuiData;
@@ -19,7 +16,6 @@ class ImageHeader;
 class ImageSettings;
 class ImageTransformations;
 class ParcellationLabelTable;
-
 
 /**
  * @brief Render UI for image header information, including data for pixel and component types
@@ -35,7 +31,6 @@ void renderImageHeaderInformation(
     const Image& image,
     const std::function< void(void) >& updateImageUniforms,
     const std::function< void ( void ) >& recenterAllViews );
-
 
 /**
  * @brief renderImageHeader
@@ -79,7 +74,6 @@ void renderImageHeader(
     const std::function< bool ( const uuids::uuid& imageUid, bool locked ) >& setLockManualImageTransformation,
     const AllViewsRecenterType& recenterAllViews );
 
-
 /**
  * @brief Render UI for an image segmentation header.
  * @param[in,out] appData
@@ -109,7 +103,6 @@ void renderSegmentationHeader(
     const std::function< bool ( const uuids::uuid& segUid ) >& removeSeg,
     const AllViewsRecenterType& recenterAllViews );
 
-
 /**
  * @brief Render UI for image's landmarks
  * @param[in,out] appData
@@ -125,7 +118,16 @@ void renderLandmarkGroupHeader(
     bool isActiveImage,
     const AllViewsRecenterType& recenterAllViews );
 
-
+/**
+ * @brief renderAnnotationsHeader
+ * @param appData
+ * @param imageUid
+ * @param imageIndex
+ * @param isActiveImage
+ * @param setViewCameraDirection
+ * @param paintActiveSegmentationWithActivePolygon
+ * @param recenterAllViews
+ */
 void renderAnnotationsHeader(
     AppData& appData,
     const uuids::uuid& imageUid,
