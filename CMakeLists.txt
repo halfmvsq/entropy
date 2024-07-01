@@ -373,7 +373,7 @@ message( STATUS "   -Hash: ${ENTROPY_GIT_COMMIT_SHA1}" )
 message( STATUS "   -Date: ${ENTROPY_GIT_COMMIT_TIMESTAMP}" )
 message( STATUS "   -Branch: ${ENTROPY_GIT_BRANCH}" )
 
-string( TIMESTAMP BUILD_TIMESTAMP "%Y-%m-%d %H:%M:%S" UTC )
+string( TIMESTAMP BUILD_TIMESTAMP "%Y-%m-%d %H:%M:%SZ" UTC )
 
 
 #--------------------------------------------------------------------------------
@@ -779,13 +779,13 @@ target_compile_options( ${EXEC_NAME} PRIVATE
         -Wno-error=float-conversion
         -Wno-error=maybe-uninitialized
         -Wno-error=stringop-overflow
-        -g -ftrapv
+        -ftrapv
         -O3
     >
     $<$<CXX_COMPILER_ID:AppleClang>:
         -Werror -Wall -Wextra -Wpointer-arith -Winit-self -Wunreachable-code
         -Wno-error=array-bounds
-        -Wshadow -g -ftrapv
+        -Wshadow -ftrapv
         -O3
     >
     $<$<CXX_COMPILER_ID:MSVC>:
@@ -796,4 +796,4 @@ target_compile_options( ${EXEC_NAME} PRIVATE
 set_target_properties( ${EXEC_NAME} PROPERTIES
     CXX_STANDARD 20
     CXX_STANDARD_REQUIRED ON
-    CXX_EXTENSIONS ON )
+    CXX_EXTENSIONS OFF )
