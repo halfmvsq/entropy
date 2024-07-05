@@ -997,11 +997,14 @@ void CallbackHandler::paintActiveSegmentationWithAnnotation()
 void CallbackHandler::doWindowLevel(
     const ViewHit& startHit,
     const ViewHit& prevHit,
-    const ViewHit& currHit )
+    const ViewHit& currHit,
+    bool fineAdjustment )
 {
     View* viewToWL = startHit.view;
 
     if ( ! viewToWL ) return;
+
+    const float multipler = fineAdjustment ? 0.1f : 1.0f;
 
     if ( camera::IntensityProjectionMode::Xray == viewToWL->intensityProjectionMode() )
     {
@@ -1016,10 +1019,10 @@ void CallbackHandler::doWindowLevel(
         float oldLevel = m_appData.renderData().m_xrayIntensityLevel;
         float oldWindow = m_appData.renderData().m_xrayIntensityWindow;
 
-        const float levelDelta = ( levelMax - levelMin ) *
+        const float levelDelta = multipler * ( levelMax - levelMin ) *
                 ( currHit.windowClipPos.y - prevHit.windowClipPos.y ) / 2.0f;
 
-        const float winDelta = ( winMax - winMin ) *
+        const float winDelta = multipler * ( winMax - winMin ) *
                 ( currHit.windowClipPos.x - prevHit.windowClipPos.x ) / 2.0f;
 
         const float newLevel = std::min( std::max( oldLevel + levelDelta, levelMin ), levelMax );
@@ -1045,11 +1048,11 @@ void CallbackHandler::doWindowLevel(
 
         auto& S = activeImage->settings();
 
-        const double centerDelta =
+        const double centerDelta = multipler *
             ( S.minMaxWindowCenterRange().second - S.minMaxWindowCenterRange().first ) *
             static_cast<double>( currHit.windowClipPos.y - prevHit.windowClipPos.y ) / 2.0;
 
-        const double windowDelta =
+        const double windowDelta = multipler *
             ( S.minMaxWindowWidthRange().second - S.minMaxWindowWidthRange().first ) *
             static_cast<double>( currHit.windowClipPos.x - prevHit.windowClipPos.x ) / 2.0;
 

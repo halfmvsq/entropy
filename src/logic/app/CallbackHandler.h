@@ -96,7 +96,8 @@ public:
     void doWindowLevel(
         const ViewHit& startHit,
         const ViewHit& prevHit,
-        const ViewHit& currHit );
+        const ViewHit& currHit,
+        bool fineAdjustment );
 
     /**
      * @brief Adjust image opacity
