@@ -1,6 +1,5 @@
 #include "image/ImageSettings.h"
 #include "image/ImageUtility.h"
-#include "image/ImageUtility.tpp"
 
 #include "common/Exception.hpp"
 #include "common/Types.h"

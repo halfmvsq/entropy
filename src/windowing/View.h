@@ -14,9 +14,7 @@
 #include <uuid.h>
 
 #include <functional>
-#include <list>
 #include <optional>
-#include <set>
 
 class Image;
 

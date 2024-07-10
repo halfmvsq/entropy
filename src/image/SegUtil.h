@@ -8,7 +8,6 @@
 #include <glm/fwd.hpp>
 
 #include <functional>
-#include <optional>
 
 class Annotation;
 class Image;

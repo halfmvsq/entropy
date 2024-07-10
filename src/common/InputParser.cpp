@@ -1,6 +1,5 @@
 #include "defines.h"
 #include "common/InputParser.h"
-#include "common/Exception.hpp"
 
 #undef max
 

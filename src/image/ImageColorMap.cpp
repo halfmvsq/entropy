@@ -9,7 +9,6 @@
 #include <boost/tokenizer.hpp>
 
 #include <algorithm>
-#include <cmath>
 #include <set>
 
 

@@ -10,7 +10,6 @@
 #include <vnl/vnl_matrix_fixed.h>
 
 #include <array>
-#include <cmath>
 #include <map>
 #include <optional>
 #include <string>

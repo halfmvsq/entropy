@@ -2,7 +2,6 @@
 
 #include "common/DataHelper.h"
 #include "common/DirectionMaps.h"
-#include "common/MathFuncs.h"
 #include "common/Viewport.h"
 
 #include "image/Image.h"
@@ -29,7 +28,6 @@
 
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/ostr.h>
-
 
 namespace
 {

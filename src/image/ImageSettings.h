@@ -539,4 +539,9 @@ private:
 
 std::ostream& operator<< (std::ostream&, const ImageSettings&);
 
+#include <spdlog/fmt/ostr.h>
+#if FMT_VERSION >= 90000
+template <> struct fmt::formatter<ImageSettings> : ostream_formatter{};
+#endif
+
 #endif // IMAGE_SETTINGS_H

@@ -367,7 +367,7 @@ Image::Image(
 
     std::vector<ComponentStats> componentStats = computeImageStatistics(*this);
     m_settings = ImageSettings(
-        std::move(displayName), m_header.numPixels(), m_header.numComponentsPerPixel(),
+        displayName, m_header.numPixels(), m_header.numComponentsPerPixel(),
         m_header.memoryComponentType(), std::move(componentStats));
 }
 

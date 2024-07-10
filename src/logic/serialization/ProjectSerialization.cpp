@@ -2,9 +2,6 @@
 #include "logic/serialization/JsonSerializers.h"
 #include "logic/annotation/SerializeAnnot.h"
 
-#include "common/Exception.hpp"
-#include "common/filesystem.h"
-
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/string_cast.hpp>
 
@@ -12,6 +9,7 @@
 #include <spdlog/fmt/ostr.h>
 
 #include <exception>
+#include <format>
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -600,7 +598,7 @@ bool openAffineTxFile( glm::dmat4& matrix, const fs::path& fileName )
 
             if ( 4 != row.size() )
             {
-                throw std::length_error( fmt::format("4x4 affine matrix row {} read with invalid length {}",
+                throw std::length_error( std::format("4x4 affine matrix row {} read with invalid length {}",
                     rows.size() + 1, row.size()) );
             }
 

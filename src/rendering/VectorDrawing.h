@@ -9,7 +9,6 @@
 #include <uuid.h>
 
 #include <array>
-#include <functional>
 #include <optional>
 #include <utility>
 #include <vector>

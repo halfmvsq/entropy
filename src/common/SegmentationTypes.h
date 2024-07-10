@@ -1,8 +1,7 @@
 #ifndef SEGMENTATION_TYPES_H
 #define SEGMENTATION_TYPES_H
 
-#include <stdint.h>
-
+#include <cstdint>
 #include <map>
 
 

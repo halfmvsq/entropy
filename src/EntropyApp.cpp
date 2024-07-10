@@ -5,6 +5,7 @@
 #include "common/DirectionMaps.h"
 #include "common/Exception.hpp"
 #include "common/MathFuncs.h"
+#include "common/UuidUtility.h"
 
 #include "image/ImageUtility.h"
 #include "image/ImageUtility.tpp"
@@ -25,19 +26,15 @@
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/ostr.h>
 
-#include <algorithm>
-#include <chrono>
 #include <cstdlib>
 #include <functional>
 #include <iostream>
 #include <sstream>
 #include <string>
-#include <unordered_set>
 
 // Without undefining min and max, there are some errors compiling in Visual Studio
 #undef min
 #undef max
-
 
 namespace
 {

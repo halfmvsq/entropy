@@ -16,8 +16,6 @@
 #include <glm/gtc/matrix_inverse.hpp>
 
 #include <iostream>
-#include <numeric>
-#include <unordered_map>
 #include <utility>
 
 

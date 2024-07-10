@@ -1,8 +1,6 @@
 #pragma once
 
 #include <array>
-#include <cstdint>
-#include <optional>
 
 /**
  * @brief Method used to compute number of histogram bins in a scalar (single component) image

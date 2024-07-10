@@ -7,7 +7,6 @@
 
 #include <glm/fwd.hpp>
 
-#include <functional>
 #include <memory>
 #include <optional>
 

@@ -2,6 +2,7 @@
 
 #include "common/Exception.hpp"
 #include "common/Types.h"
+#include "common/UuidUtility.h"
 
 #include "image/ImageColorMap.h"
 #include "image/SurfaceUtility.h"
@@ -11,7 +12,6 @@
 #include "logic/camera/MathUtility.h"
 #include "logic/states/AnnotationStateHelpers.h"
 #include "logic/states/FsmList.hpp"
-
 
 #include "rendering/ImageDrawing.h"
 #include "rendering/TextureSetup.h"
@@ -48,7 +48,6 @@
 #include <nanovg_gl.h>
 
 #include <algorithm>
-#include <chrono>
 #include <functional>
 #include <list>
 #include <memory>

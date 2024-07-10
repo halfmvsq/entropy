@@ -1,6 +1,5 @@
 #include "logic/states/AnnotationStateMachine.h"
 #include "logic/states/AnnotationStates.h"
-#include "logic/states/FsmList.hpp"
 
 #include "common/DataHelper.h"
 #include "common/MathFuncs.h"
@@ -1134,7 +1133,7 @@ void AnnotationStateMachine::flipSelectedAnnotation( const FlipDirection& flipDi
     {
         const glm::vec3 clipVertex = transformFromAnnotPlaneToViewClip( annotVertex );
 
-        glm::vec4 clipVertexFlipped;
+        glm::vec4 clipVertexFlipped{0};
 
         switch ( flipDirection )
         {

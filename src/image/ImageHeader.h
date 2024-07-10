@@ -12,7 +12,6 @@
 #include <array>
 #include <ostream>
 #include <string>
-#include <utility>
 
 /**
  * @brief Image header with data set upon creation or loading of image.
@@ -165,5 +164,10 @@ private:
 
 
 std::ostream& operator<< ( std::ostream&, const ImageHeader& );
+
+#include <spdlog/fmt/ostr.h>
+#if FMT_VERSION >= 90000
+template <> struct fmt::formatter<ImageHeader> : ostream_formatter{};
+#endif
 
 #endif // IMAGE_HEADER_H

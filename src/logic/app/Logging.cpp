@@ -1,10 +1,7 @@
 #include "logic/app/Logging.h"
 #include "common/Exception.hpp"
 
-#include <spdlog/fmt/ostr.h>
-
 #include <sstream>
-
 
 void Logging::setup()
 {
@@ -60,7 +57,6 @@ void Logging::setConsoleSinkLevel( spdlog::level::level_enum level )
     if ( m_console_sink )
     {
         m_console_sink->set_level( level );
-        spdlog::debug( "Set console log level to {}", level );
     }
     else
     {
@@ -74,7 +70,6 @@ void Logging::setDailyFileSinkLevel( spdlog::level::level_enum level )
     if ( m_daily_sink )
     {
         m_daily_sink->set_level( level );
-        spdlog::debug( "Set daily file log level to {}", level );
     }
     else
     {

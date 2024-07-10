@@ -26,6 +26,8 @@ Please download and install these libraries:
 * Insight Toolkit, ITK (5.3.0), built with Module_ITKVtkGlue
 * Visualization Toolkit, VTK (9.3.0)
 
+Note: build Boost (headers only) with `./bootstrap.sh && ./b2 headers`
+
 More recent versions of ITK and Boost should also work with potentially minor modification to Entropy code. Please note that from Boost, only the header-only libraries (none of the compiled libraries) are required.
 
 The following libraries and dependencies are brought in as Git submodules to the Entropy repository:
@@ -47,10 +49,8 @@ The following libraries and dependencies are brought in as Git submodules to the
 * stduuid (https://github.com/mariusbancila/stduuid)
 * TinyFSM (https://github.com/digint/tinyfsm)
 
-After cloning the Entropy repository, run the folllowing command to clone the submodules:
-
+Clone Entropy with `--recurse-submodules` or run the folllowing command to clone the submodules:
 `git submodule update --init --recursive`
-
 
 The following external sources and libraries have been committed directly to the Entropy repository:
 

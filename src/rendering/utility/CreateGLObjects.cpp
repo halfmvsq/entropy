@@ -3,6 +3,8 @@
 #include "rendering/utility/vtk/PolyDataGenerator.h"
 
 #include "common/Exception.hpp"
+#include "common/UuidUtility.h"
+
 #include "logic_old/annotation/PlanarPolygon.h"
 
 #include <glm/glm.hpp>

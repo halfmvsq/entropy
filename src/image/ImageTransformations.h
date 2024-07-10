@@ -206,4 +206,9 @@ private:
 
 std::ostream& operator<< ( std::ostream&, const ImageTransformations& );
 
+#include <spdlog/fmt/ostr.h>
+#if FMT_VERSION >= 90000
+template <> struct fmt::formatter<ImageTransformations> : ostream_formatter{};
+#endif
+
 #endif // IMAGE_TX_H

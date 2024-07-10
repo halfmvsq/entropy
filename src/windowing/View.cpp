@@ -1,7 +1,6 @@
 #include "windowing/View.h"
 
 #include "common/DataHelper.h"
-#include "common/Exception.hpp"
 
 #include "image/Image.h"
 
@@ -13,7 +12,6 @@
 #include "logic/camera/PerspectiveProjection.h"
 
 #include "rendering/utility/math/SliceIntersector.h"
-#include "rendering/utility/UnderlyingEnumType.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_inverse.hpp>

@@ -5,7 +5,6 @@
 
 #include <atomic>
 #include <functional>
-#include <optional>
 #include <unordered_map>
 
 class EntropyApp;

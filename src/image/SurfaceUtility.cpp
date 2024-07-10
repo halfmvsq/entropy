@@ -1,6 +1,8 @@
 #include "image/SurfaceUtility.h"
 
 #include <glm/glm.hpp>
+#include <uuid.h>
+#include <optional>
 
 glm::vec4 getIsosurfaceColor(
         const AppData& appData,

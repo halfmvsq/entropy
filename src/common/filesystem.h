@@ -16,3 +16,8 @@ namespace fs = std::filesystem;
 #include <ghc/filesystem.hpp>
 namespace fs = ghc::filesystem;
 #endif
+
+#include <spdlog/fmt/ostr.h>
+#if FMT_VERSION >= 90000
+template <> struct fmt::formatter<fs::path> : ostream_formatter{};
+#endif

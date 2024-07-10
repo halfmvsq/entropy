@@ -31,9 +31,6 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/transform.hpp>
 
-#include <chrono>
-#include <memory>
-
 namespace
 {
 

@@ -1,7 +1,5 @@
 #include "logic/camera/Projection.h"
 
-#include "logic/camera/MathUtility.h"
-
 #include <glm/glm.hpp>
 #define GLM_FORCE_RADIANS
 

@@ -7,10 +7,8 @@
 #include <glm/vec4.hpp>
 
 #include <array>
-#include <cstdint>
 #include <optional>
 #include <string>
-#include <vector>
 
 
 /**

@@ -79,7 +79,10 @@ set( Boost_USE_STATIC_LIBS ON )  # only find static libs
 # spdlog (included as Git submodule):
 # Very fast, header-only/compiled, C++ logging library
 #--------------------------------------------------------------------------------
-set( SPDLOG_INCLUDE_DIR ${EXT_DIR}/spdlog/include )
+find_package(spdlog REQUIRED)
+#set(SPDLOG_BUILD_SHARED ON)
+#set(SPDLOG_FMT_EXTERNAL OFF)
+#set(SPDLOG_USE_STD_FORMAT ON)
 
 
 #--------------------------------------------------------------------------------
@@ -157,7 +160,10 @@ target_include_directories( imgui PRIVATE
     ${IMGUI_INCLUDE_DIR}
     ${SRC_DIR} # needed for IMGUI_USER_CONFIG file
     ${EXT_DIR}/glfw/include
-    ${SPDLOG_INCLUDE_DIR} # needed for spdlog.h included in IMGUI_USER_CONFIG
+)
+
+target_link_libraries( imgui PRIVATE
+    spdlog::spdlog # used in IMGUI_USER_CONFIG
 )
 
 target_compile_options( imgui PRIVATE
@@ -221,8 +227,11 @@ target_include_directories( implot PRIVATE
     ${IMPLOT_INCLUDE_DIR}
     ${IMGUI_INCLUDE_DIR}
     ${SRC_DIR} # needed for IMGUI_USER_CONFIG file
-    ${SPDLOG_INCLUDE_DIR} # needed for spdlog.h included in IMGUI_USER_CONFIG
-    )
+)
+
+target_link_libraries( implot PRIVATE
+    spdlog::spdlog # used in IMGUI_USER_CONFIG
+)
 
 target_compile_options( implot PRIVATE
      $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>:
@@ -733,6 +742,7 @@ target_link_libraries( ${EXEC_NAME} PRIVATE
     imgui
     implot
     nanovg
+    spdlog::spdlog
     ${EXEC_NAME}::colormaps
     ${EXEC_NAME}::fonts
     ${EXEC_NAME}::shaders )
@@ -764,7 +774,7 @@ target_include_directories( ${EXEC_NAME} SYSTEM PRIVATE
     ${GLM_INCLUDE_DIR}
     ${GRIDCUT_INCLUDE_DIRS}
     ${NANOVG_SRC_DIR}
-    ${SPDLOG_INCLUDE_DIR} )
+)
 
 target_compile_definitions( ${EXEC_NAME} PRIVATE
     ${VTK_DEFINITIONS} )

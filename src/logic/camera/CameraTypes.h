@@ -2,7 +2,6 @@
 #define CAMERA_TYPES_H
 
 #include <array>
-#include <cstdint>
 #include <string>
 #include <vector>
 
