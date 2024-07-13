@@ -1,8 +1,8 @@
 #include "rendering_old/records/SlideGpuRecord.h"
 #include "rendering/utility/gl/GLTexture.h"
 
-SlideGpuRecord::SlideGpuRecord( std::shared_ptr<GLTexture> texture )
-    : m_texture( texture )
+SlideGpuRecord::SlideGpuRecord(std::shared_ptr<GLTexture> texture)
+  : m_texture(texture)
 //    ,
 //      m_activeLevel( 0 )
 {
@@ -10,5 +10,5 @@ SlideGpuRecord::SlideGpuRecord( std::shared_ptr<GLTexture> texture )
 
 std::weak_ptr<GLTexture> SlideGpuRecord::texture()
 {
-    return m_texture;
+  return m_texture;
 }

@@ -10,7 +10,6 @@
 #include <memory>
 #include <optional>
 
-
 namespace camera
 {
 
@@ -45,130 +44,123 @@ namespace camera
 class Camera
 {
 public:
+  /// Construct a camera with a projection (either orthographic or perspective) and a functional that
+  /// returns the transformation from the camera's start coordinate frame to the camera's anatomical
+  /// coordinate frame. If no functional is supplied, then the anatomical coordinate frame is equal
+  /// to the Start space. (i.e. anatomy_T_start is identity)
+  Camera(
+    std::unique_ptr<Projection> projection,
+    GetterType<CoordinateFrame> anatomy_T_start_provider = nullptr
+  );
 
-    /// Construct a camera with a projection (either orthographic or perspective) and a functional that
-    /// returns the transformation from the camera's start coordinate frame to the camera's anatomical
-    /// coordinate frame. If no functional is supplied, then the anatomical coordinate frame is equal
-    /// to the Start space. (i.e. anatomy_T_start is identity)
-    Camera( std::unique_ptr<Projection> projection,
-            GetterType<CoordinateFrame> anatomy_T_start_provider = nullptr );
+  Camera(ProjectionType projType, GetterType<CoordinateFrame> anatomy_T_start_provider = nullptr);
 
-    Camera( ProjectionType projType,
-            GetterType<CoordinateFrame> anatomy_T_start_provider = nullptr );
+  Camera(const Camera&);
+  const Camera& operator=(const Camera&);
 
-    Camera( const Camera& );
-    const Camera& operator=( const Camera& );
+  ~Camera() = default;
 
-    ~Camera() = default;
+  /// Set the camera projection. (Must not be null.)
+  void setProjection(std::unique_ptr<Projection> projection);
 
+  /// Get a non-owning const pointer to the camera projection.
+  /// This pointer should not be stored by the caller.
+  const Projection* projection() const;
 
-    /// Set the camera projection. (Must not be null.)
-    void setProjection( std::unique_ptr<Projection> projection );
+  /// Set the functional that defines the starting frame of reference to which the camera is linked.
+  void set_anatomy_T_start_provider(GetterType<CoordinateFrame>);
 
-    /// Get a non-owning const pointer to the camera projection.
-    /// This pointer should not be stored by the caller.
-    const Projection* projection() const;
+  /// Get the functional that defines the starting frame of reference to which the camera is linked.
+  const GetterType<CoordinateFrame>& anatomy_T_start_provider() const;
 
-    /// Set the functional that defines the starting frame of reference to which the camera is linked.
-    void set_anatomy_T_start_provider( GetterType<CoordinateFrame> );
+  /// Get the camera's starting frame, if it is linked to one. Returns std::nullopt iff the
+  /// camera is not linked to a starting frame.
+  std::optional<CoordinateFrame> startFrame() const;
 
-    /// Get the functional that defines the starting frame of reference to which the camera is linked.
-    const GetterType<CoordinateFrame>& anatomy_T_start_provider() const;
+  /// Get whether the camera is linked to a starting frame of reference. Returns true iff
+  /// the camera is linked to a starting frame. If not linked to a starting frame,
+  /// then start_T_world is identity.
+  bool isLinkedToStartFrame() const;
 
-    /// Get the camera's starting frame, if it is linked to one. Returns std::nullopt iff the
-    /// camera is not linked to a starting frame.
-    std::optional<CoordinateFrame> startFrame() const;
+  /// Get the transformation from World space to the camera's starting frame of reference.
+  /// If the camera is linked to a start frame, then this returns the linked frame transformation.
+  /// If not linked, then this returns identity.
+  glm::mat4 anatomy_T_start() const;
 
-    /// Get whether the camera is linked to a starting frame of reference. Returns true iff
-    /// the camera is linked to a starting frame. If not linked to a starting frame,
-    /// then start_T_world is identity.
-    bool isLinkedToStartFrame() const;
+  const glm::mat4& start_T_world() const;
+  void set_start_T_world(glm::mat4 start_T_world);
 
-    /// Get the transformation from World space to the camera's starting frame of reference.
-    /// If the camera is linked to a start frame, then this returns the linked frame transformation.
-    /// If not linked, then this returns identity.
-    glm::mat4 anatomy_T_start() const;
+  /// Set the matrix defining the camera's position relative to the anatomical frame of reference.
+  /// @note This must be a rigid-body matrix (i.e. orthonormal rotational component) with determinant 1.
+  void set_camera_T_anatomy(glm::mat4 camera_T_anatomy);
 
-    const glm::mat4& start_T_world() const;
-    void set_start_T_world( glm::mat4 start_T_world );
+  /// Get the transformation from the camera's anatomical frame of reference to its nominal orientation.
+  const glm::mat4& camera_T_anatomy() const;
 
+  /// Get the camera's model-view transformation. This is equal to
+  /// camera_T_startFrame() * startFrame_T_world().
+  glm::mat4 camera_T_world() const;
 
-    /// Set the matrix defining the camera's position relative to the anatomical frame of reference.
-    /// @note This must be a rigid-body matrix (i.e. orthonormal rotational component) with determinant 1.
-    void set_camera_T_anatomy( glm::mat4 camera_T_anatomy );
+  /// Get the inverse of the camera's model-view transformation. This is qual to
+  /// inverse( camera_T_world() ).
+  glm::mat4 world_T_camera() const;
 
-    /// Get the transformation from the camera's anatomical frame of reference to its nominal orientation.
-    const glm::mat4& camera_T_anatomy() const;
+  /// Get the camera's projection transformation.
+  glm::mat4 clip_T_camera() const;
 
+  /// Get the inverse of the camera's projection transformation.
+  glm::mat4 camera_T_clip() const;
 
-    /// Get the camera's model-view transformation. This is equal to
-    /// camera_T_startFrame() * startFrame_T_world().
-    glm::mat4 camera_T_world() const;
+  /// Set the aspect ratio (width/height) of the view associated with this camera.
+  /// (The aspect ratio must be positive.)
+  void setAspectRatio(float ratio);
+  float aspectRatio() const;
 
-    /// Get the inverse of the camera's model-view transformation. This is qual to
-    /// inverse( camera_T_world() ).
-    glm::mat4 world_T_camera() const;
+  /// Get whether the camera's projection is orthographic.
+  bool isOrthographic() const;
 
-    /// Get the camera's projection transformation.
-    glm::mat4 clip_T_camera() const;
+  /// Set the camera zoom factor. (Zoom factor must be positive.)
+  void setZoom(float factor);
 
-    /// Get the inverse of the camera's projection transformation.
-    glm::mat4 camera_T_clip() const;
+  /// Get the zoom factor.
+  float getZoom() const;
 
+  /// Set the default camera field of view (in x and y) for orthographic projections.
+  /// (This parameter only affects cameras with orthographic projection.)
+  void setDefaultFov(const glm::vec2& fov);
 
-    /// Set the aspect ratio (width/height) of the view associated with this camera.
-    /// (The aspect ratio must be positive.)
-    void setAspectRatio( float ratio );
-    float aspectRatio() const;
+  /// Get the frustum angle in radians. Returns 0 for orthographic projections.
+  float angle() const;
 
-    /// Get whether the camera's projection is orthographic.
-    bool isOrthographic() const;
+  /// Set the frustum near clip plane distance. (The near distance must be positive and
+  /// less than the far distance.)
+  void setNearDistance(float d);
 
+  /// Set the frustum far clip plane distance. (The far distance must be positive and
+  /// greater than the near distance.)
+  void setFarDistance(float d);
 
-    /// Set the camera zoom factor. (Zoom factor must be positive.)
-    void setZoom( float factor );
+  /// Get the frustum near plane distance.
+  float nearDistance() const;
 
-    /// Get the zoom factor.
-    float getZoom() const;
-
-    /// Set the default camera field of view (in x and y) for orthographic projections.
-    /// (This parameter only affects cameras with orthographic projection.)
-    void setDefaultFov( const glm::vec2& fov );
-
-    /// Get the frustum angle in radians. Returns 0 for orthographic projections.
-    float angle() const;
-
-    /// Set the frustum near clip plane distance. (The near distance must be positive and
-    /// less than the far distance.)
-    void setNearDistance( float d );
-
-    /// Set the frustum far clip plane distance. (The far distance must be positive and
-    /// greater than the near distance.)
-    void setFarDistance( float d );
-
-    /// Get the frustum near plane distance.
-    float nearDistance() const;
-
-    /// Get the frustum far plane distance.
-    float farDistance() const;
-
+  /// Get the frustum far plane distance.
+  float farDistance() const;
 
 private:
+  void swap(const Camera& other);
 
-    void swap( const Camera& other );
+  /// Camera projection (either perspective or orthographic)
+  std::unique_ptr<Projection> m_projection;
 
-    /// Camera projection (either perspective or orthographic)
-    std::unique_ptr<Projection> m_projection;
+  /// Functional providing the start frame of the camera relative to World space.
+  /// If null, then identity is used for anatomy_T_start.
+  GetterType<CoordinateFrame> m_anatomy_T_start_provider;
 
-    /// Functional providing the start frame of the camera relative to World space.
-    /// If null, then identity is used for anatomy_T_start.
-    GetterType<CoordinateFrame> m_anatomy_T_start_provider;
+  /// Transformation of the camera relative to its start frame.
+  /// @note This should be a rigid-body transformation!
+  glm::mat4 m_camera_T_anatomy;
 
-    /// Transformation of the camera relative to its start frame.
-    /// @note This should be a rigid-body transformation!
-    glm::mat4 m_camera_T_anatomy;
-
-    glm::mat4 m_start_T_world;
+  glm::mat4 m_start_T_world;
 };
 
 } // namespace camera

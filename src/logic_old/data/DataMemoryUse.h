@@ -10,9 +10,7 @@
 
 #include <utility>
 
-
 class DataManager;
-
 
 namespace data
 {
@@ -20,18 +18,18 @@ namespace data
 /// CPU and GPU memory use, measured in bytes
 using CpuAndGpuMemoryUse = std::pair<size_t, size_t>;
 
-CpuAndGpuMemoryUse memoryUse( const ImageColorMapRecord& );
-CpuAndGpuMemoryUse memoryUse( const ImageRecord& );
-CpuAndGpuMemoryUse memoryUse( const LabelTableRecord& );
-CpuAndGpuMemoryUse memoryUse( const MeshRecord& );
-CpuAndGpuMemoryUse memoryUse( const ParcellationRecord& );
-CpuAndGpuMemoryUse memoryUse( const SlideRecord& );
+CpuAndGpuMemoryUse memoryUse(const ImageColorMapRecord&);
+CpuAndGpuMemoryUse memoryUse(const ImageRecord&);
+CpuAndGpuMemoryUse memoryUse(const LabelTableRecord&);
+CpuAndGpuMemoryUse memoryUse(const MeshRecord&);
+CpuAndGpuMemoryUse memoryUse(const ParcellationRecord&);
+CpuAndGpuMemoryUse memoryUse(const SlideRecord&);
 
-CpuAndGpuMemoryUse imageColorMapsMemoryUse( DataManager& );
-CpuAndGpuMemoryUse imagesMemoryUse( DataManager& );
-CpuAndGpuMemoryUse labelTablesMemoryUse( DataManager& );
-CpuAndGpuMemoryUse parcellationsMemoryUse( DataManager& );
-CpuAndGpuMemoryUse slidesMemoryUse( DataManager& );
+CpuAndGpuMemoryUse imageColorMapsMemoryUse(DataManager&);
+CpuAndGpuMemoryUse imagesMemoryUse(DataManager&);
+CpuAndGpuMemoryUse labelTablesMemoryUse(DataManager&);
+CpuAndGpuMemoryUse parcellationsMemoryUse(DataManager&);
+CpuAndGpuMemoryUse slidesMemoryUse(DataManager&);
 
 } // namespace data
 

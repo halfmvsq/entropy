@@ -6,7 +6,6 @@
 class DataManager;
 class Polygon;
 
-
 /**
  * @brief Triangulate a polygon using the Earcut algorithm. This algorithm can triangulate a simple,
  * planar polygon of any winding order that includes holes. It returns a robust, acceptable solution
@@ -16,9 +15,7 @@ class Polygon;
  *
  * @param[in,out] polygon Polygon to triangulate.
  */
-void triangulatePolygon( Polygon& polygon );
-
-
+void triangulatePolygon(Polygon& polygon);
 
 /**
  * @brief Annotation layers for a given slide may not be unique. This function sets each annotation
@@ -26,18 +23,16 @@ void triangulatePolygon( Polygon& polygon );
  *
  * @param dataManager
  */
-void setUniqueSlideAnnotationLayers( DataManager& dataManager );
-
+void setUniqueSlideAnnotationLayers(DataManager& dataManager);
 
 /// Types of changes to layering
 enum class LayerChangeType
 {
-    Backwards,
-    Forwards,
-    ToBack,
-    ToFront
+  Backwards,
+  Forwards,
+  ToBack,
+  ToFront
 };
-
 
 /**
  * @brief Apply a change to an annotation's layering
@@ -46,7 +41,7 @@ enum class LayerChangeType
  * @param layerChange Change to apply to the layer
  */
 void changeSlideAnnotationLayering(
-        DataManager& dataManager, const uuids::uuid& slideAnnotUid, const LayerChangeType& layerChange );
-
+  DataManager& dataManager, const uuids::uuid& slideAnnotUid, const LayerChangeType& layerChange
+);
 
 #endif // ANNOTATION_HELPER_H

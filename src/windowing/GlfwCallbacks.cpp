@@ -33,7 +33,8 @@ static std::optional<ViewHit> s_startHit;
 // Should zooms be synchronized for all views?
 bool syncZoomsForAllViews(const ModifierState& modState)
 {
-  return (modState.shift) || ImGui::IsKeyDown(ImGuiKey_LeftShift) || ImGui::IsKeyDown(ImGuiKey_RightShift);
+  return (modState.shift) || ImGui::IsKeyDown(ImGuiKey_LeftShift)
+         || ImGui::IsKeyDown(ImGuiKey_RightShift);
 }
 
 } // namespace
@@ -303,7 +304,7 @@ void cursorPosCallback(GLFWwindow* window, double mindowCursorPosX, double mindo
         *s_prevHit,
         *currHit_withOverride,
         ZoomBehavior::ToCrosshairs,
-        syncZoomsForAllViews( s_modifierState )
+        syncZoomsForAllViews(s_modifierState)
       );
     }
     else if (s_mouseButtonState.right)
@@ -313,7 +314,7 @@ void cursorPosCallback(GLFWwindow* window, double mindowCursorPosX, double mindo
         *s_prevHit,
         *currHit_withOverride,
         ZoomBehavior::ToStartPosition,
-        syncZoomsForAllViews( s_modifierState )
+        syncZoomsForAllViews(s_modifierState)
       );
     }
     else if (s_mouseButtonState.middle)
@@ -597,7 +598,7 @@ void scrollCallback(GLFWwindow* window, double scrollOffsetX, double scrollOffse
       *hit_invalidOutsideView,
       {scrollOffsetX, scrollOffsetY},
       ZoomBehavior::ToCrosshairs,
-      syncZoomsForAllViews( s_modifierState )
+      syncZoomsForAllViews(s_modifierState)
     );
     break;
   }

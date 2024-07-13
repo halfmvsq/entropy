@@ -3,6 +3,6 @@
 
 #include "ui/GuiData.h"
 
-void renderMainMenuBar( GuiData& uiData );
+void renderMainMenuBar(GuiData& uiData);
 
 #endif // UI_MAIN_MENU_BAR_H

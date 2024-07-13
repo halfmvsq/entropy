@@ -13,7 +13,7 @@
 
 void test()
 {
-    /*
+  /*
     std::vector<double> A{0.5377,    1.8339,   -2.2588,    0.8622,    0.3188,   -1.3077,   -0.4336};
     std::sort(std::begin(A), std::end(A));
 
@@ -36,23 +36,22 @@ void test()
     if (Q7) { std::cout << "Q7: " << *Q7 << std::endl; }
 */
 
-    const std::vector<int> data{1, 2, 4, 5, 5, 6};
+  const std::vector<int> data{1, 2, 4, 5, 5, 6};
 
-    for (int i = 0; i < 8; ++i)
-    {
-        // Search for first element x such that i ≤ x
-        auto lower = std::lower_bound(data.begin(), data.end(), i);
+  for (int i = 0; i < 8; ++i)
+  {
+    // Search for first element x such that i ≤ x
+    auto lower = std::lower_bound(data.begin(), data.end(), i);
 
-        std::cout << i << " ≤ ";
-        lower != data.end()
-            ? std::cout << *lower << " at index " << std::distance(data.begin(), lower)
-            : std::cout << "not found";
-        std::cout << '\n';
-    }
+    std::cout << i << " ≤ ";
+    lower != data.end() ? std::cout << *lower << " at index " << std::distance(data.begin(), lower)
+                        : std::cout << "not found";
+    std::cout << '\n';
+  }
 
-    return;
+  return;
 
-/*
+  /*
     uint32_t Ni = 128;
     uint32_t Nj = 128;
     uint32_t Nk = 128;

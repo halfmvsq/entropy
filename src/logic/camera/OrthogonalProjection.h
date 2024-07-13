@@ -9,17 +9,16 @@ namespace camera
 class OrthographicProjection final : public Projection
 {
 public:
+  explicit OrthographicProjection();
+  ~OrthographicProjection() override = default;
 
-    explicit OrthographicProjection();
-    ~OrthographicProjection() override = default;
+  ProjectionType type() const override;
 
-    ProjectionType type() const override;
+  glm::mat4 clip_T_camera() const override;
 
-    glm::mat4 clip_T_camera() const override;
+  void setZoom(float factor) override;
 
-    void setZoom( float factor ) override;
-
-    float angle() const override;
+  float angle() const override;
 };
 
 } // namespace camera

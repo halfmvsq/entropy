@@ -3,23 +3,23 @@
 
 struct ButtonState
 {
-    void updateFromGlfwEvent( int mouseButton, int mouseButtonAction );
+  void updateFromGlfwEvent(int mouseButton, int mouseButtonAction);
 
-    bool left = false;
-    bool right = false;
-    bool middle = false;
+  bool left = false;
+  bool right = false;
+  bool middle = false;
 };
 
 struct ModifierState
 {
-    void updateFromGlfwEvent( int keyMods );
+  void updateFromGlfwEvent(int keyMods);
 
-    bool shift = false;
-    bool control = false;
-    bool alt = false;
-    bool super = false;
-    bool capsLock = false;
-    bool numLock = false;
+  bool shift = false;
+  bool control = false;
+  bool alt = false;
+  bool super = false;
+  bool capsLock = false;
+  bool numLock = false;
 };
 
 #endif // BUTTON_STATE_H

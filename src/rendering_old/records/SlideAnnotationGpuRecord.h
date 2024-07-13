@@ -8,25 +8,22 @@
 class SlideAnnotationGpuRecord
 {
 public:
+  explicit SlideAnnotationGpuRecord(std::shared_ptr<MeshGpuRecord>);
 
-    explicit SlideAnnotationGpuRecord( std::shared_ptr<MeshGpuRecord> );
+  SlideAnnotationGpuRecord(const SlideAnnotationGpuRecord&) = default;
+  SlideAnnotationGpuRecord& operator=(const SlideAnnotationGpuRecord&) = default;
 
-    SlideAnnotationGpuRecord( const SlideAnnotationGpuRecord& ) = default;
-    SlideAnnotationGpuRecord& operator=( const SlideAnnotationGpuRecord& ) = default;
+  SlideAnnotationGpuRecord(SlideAnnotationGpuRecord&&) = default;
+  SlideAnnotationGpuRecord& operator=(SlideAnnotationGpuRecord&&) = default;
 
-    SlideAnnotationGpuRecord( SlideAnnotationGpuRecord&& ) = default;
-    SlideAnnotationGpuRecord& operator=( SlideAnnotationGpuRecord&& ) = default;
+  ~SlideAnnotationGpuRecord() = default;
 
-    ~SlideAnnotationGpuRecord() = default;
+  void setMeshGpuRecord(std::shared_ptr<MeshGpuRecord>);
 
-    void setMeshGpuRecord( std::shared_ptr<MeshGpuRecord> );
-
-    std::weak_ptr<MeshGpuRecord> getMeshGpuRecord();
-
+  std::weak_ptr<MeshGpuRecord> getMeshGpuRecord();
 
 private:
-
-    std::shared_ptr<MeshGpuRecord> m_meshGpuRecord;
+  std::shared_ptr<MeshGpuRecord> m_meshGpuRecord;
 };
 
 #endif // SLIDE_ANNOTATION_GPU_RECORD_H

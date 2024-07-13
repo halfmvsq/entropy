@@ -19,5 +19,8 @@ namespace fs = ghc::filesystem;
 
 #include <spdlog/fmt/ostr.h>
 #if FMT_VERSION >= 90000
-template <> struct fmt::formatter<fs::path> : ostream_formatter{};
+template<>
+struct fmt::formatter<fs::path> : ostream_formatter
+{
+};
 #endif

@@ -10,37 +10,29 @@
 
 class MeshGpuRecord;
 
-
-class FullScreenQuad :
-    public DrawableBase,
-    public ObjectCounter<FullScreenQuad>
+class FullScreenQuad : public DrawableBase, public ObjectCounter<FullScreenQuad>
 {
 public:
+  FullScreenQuad(const std::string& name);
 
-    FullScreenQuad( const std::string& name );
+  FullScreenQuad(const FullScreenQuad&) = delete;
+  FullScreenQuad& operator=(const FullScreenQuad&) = delete;
 
-    FullScreenQuad( const FullScreenQuad& ) = delete;
-    FullScreenQuad& operator=( const FullScreenQuad& ) = delete;
+  FullScreenQuad(FullScreenQuad&&) = default;
+  FullScreenQuad& operator=(FullScreenQuad&&) = default;
 
-    FullScreenQuad( FullScreenQuad&& ) = default;
-    FullScreenQuad& operator=( FullScreenQuad&& ) = default;
-
-    ~FullScreenQuad() override;
-
+  ~FullScreenQuad() override;
 
 protected:
-
-    bool drawVao();
-
+  bool drawVao();
 
 private:
+  bool initBuffer();
+  bool initVao();
 
-    bool initBuffer();
-    bool initVao();
-
-    GLVertexArrayObject m_vao;
-    std::unique_ptr<GLVertexArrayObject::IndexedDrawParams> m_vaoParams;
-    std::unique_ptr<MeshGpuRecord> m_meshGpuRecord;
+  GLVertexArrayObject m_vao;
+  std::unique_ptr<GLVertexArrayObject::IndexedDrawParams> m_vaoParams;
+  std::unique_ptr<MeshGpuRecord> m_meshGpuRecord;
 };
 
 #endif // FULL_SCREEN_QUAD_H

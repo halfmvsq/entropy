@@ -5,6 +5,6 @@
 #include "mesh/MeshCpuRecord.h"
 #include "rendering/records/MeshGpuRecord.h"
 
-using MeshRecord = RenderableRecord< MeshCpuRecord, MeshGpuRecord >;
+using MeshRecord = RenderableRecord<MeshCpuRecord, MeshGpuRecord>;
 
 #endif // MESH_RECORD_H

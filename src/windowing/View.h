@@ -18,7 +18,6 @@
 
 class Image;
 
-
 /**
  * @brief Represents a view in the window. Each view is a visual representation of a
  * scene from a single orientation. The view holds a camera and information about the
@@ -27,8 +26,7 @@ class Image;
 class View : public ControlFrame
 {
 public:
-
-    /**
+  /**
      * @brief Construct a view
      *
      * @param[in] winClipViewport Viewport (left, bottom, width, height) of the view,
@@ -42,61 +40,62 @@ public:
      * @param[in] viewType Type of view
      * @param[in] shaderType Shader type of the view
      */
-    View( glm::vec4 winClipViewport,
-          ViewOffsetSetting offsetSetting,
-          ViewType viewType,
-          camera::ViewRenderMode renderMode,
-          camera::IntensityProjectionMode ipMode,
-          UiControls uiControls,
-          std::function< ViewConvention () > viewConventionProvider,
-          std::optional<uuids::uuid> cameraRotationSyncGroupUid,
-          std::optional<uuids::uuid> translationSyncGroup,
-          std::optional<uuids::uuid> zoomSyncGroup );
+  View(
+    glm::vec4 winClipViewport,
+    ViewOffsetSetting offsetSetting,
+    ViewType viewType,
+    camera::ViewRenderMode renderMode,
+    camera::IntensityProjectionMode ipMode,
+    UiControls uiControls,
+    std::function<ViewConvention()> viewConventionProvider,
+    std::optional<uuids::uuid> cameraRotationSyncGroupUid,
+    std::optional<uuids::uuid> translationSyncGroup,
+    std::optional<uuids::uuid> zoomSyncGroup
+  );
 
-    void setViewType( const ViewType& newViewType ) override;
+  void setViewType(const ViewType& newViewType) override;
 
-    const camera::Camera& camera() const;
-    camera::Camera& camera();
+  const camera::Camera& camera() const;
+  camera::Camera& camera();
 
-    /**
+  /**
      * @brief Update the view's camera based on the crosshairs World-space position.
      * @param[in] appData
      * @param[in] worldCrosshairs
      * @return The crosshairs position on the slice
      */
-    glm::vec3 updateImageSlice( const AppData& appData, const glm::vec3& worldCrosshairs );
+  glm::vec3 updateImageSlice(const AppData& appData, const glm::vec3& worldCrosshairs);
 
-    std::optional< intersection::IntersectionVerticesVec4 >
-    computeImageSliceIntersection( const Image* image, const CoordinateFrame& crosshairs ) const;
+  std::optional<intersection::IntersectionVerticesVec4> computeImageSliceIntersection(
+    const Image* image, const CoordinateFrame& crosshairs
+  ) const;
 
-    float clipPlaneDepth() const;
+  float clipPlaneDepth() const;
 
-    const ViewOffsetSetting& offsetSetting() const;
+  const ViewOffsetSetting& offsetSetting() const;
 
-    std::optional<uuids::uuid> cameraRotationSyncGroupUid() const;
-    std::optional<uuids::uuid> cameraTranslationSyncGroupUid() const;
-    std::optional<uuids::uuid> cameraZoomSyncGroupUid() const;
-
+  std::optional<uuids::uuid> cameraRotationSyncGroupUid() const;
+  std::optional<uuids::uuid> cameraTranslationSyncGroupUid() const;
+  std::optional<uuids::uuid> cameraZoomSyncGroupUid() const;
 
 private:
+  bool updateImageSliceIntersection(const AppData& appData, const glm::vec3& worldCrosshairs);
 
-    bool updateImageSliceIntersection( const AppData& appData, const glm::vec3& worldCrosshairs );
+  /// View offset setting
+  ViewOffsetSetting m_offset;
 
-    /// View offset setting
-    ViewOffsetSetting m_offset;
+  camera::ProjectionType m_projectionType;
+  camera::Camera m_camera;
 
-    camera::ProjectionType m_projectionType;
-    camera::Camera m_camera;
+  std::function<ViewConvention()> m_viewConventionProvider;
 
-    std::function< ViewConvention () > m_viewConventionProvider;
+  /// ID of the camera synchronization groups to which this view belongs
+  std::optional<uuids::uuid> m_cameraRotationSyncGroupUid;
+  std::optional<uuids::uuid> m_cameraTranslationSyncGroupUid;
+  std::optional<uuids::uuid> m_cameraZoomSyncGroupUid;
 
-    /// ID of the camera synchronization groups to which this view belongs
-    std::optional<uuids::uuid> m_cameraRotationSyncGroupUid;
-    std::optional<uuids::uuid> m_cameraTranslationSyncGroupUid;
-    std::optional<uuids::uuid> m_cameraZoomSyncGroupUid;
-
-    /// Depth (z component) of any point on the image plane to be rendered (defined in Clip space)
-    float m_clipPlaneDepth;
+  /// Depth (z component) of any point on the image plane to be rendered (defined in Clip space)
+  float m_clipPlaneDepth;
 };
 
 #endif // VIEW_H

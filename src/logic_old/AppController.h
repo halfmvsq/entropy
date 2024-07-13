@@ -11,7 +11,6 @@
 #include <string>
 #include <vector>
 
-
 class ActionManager;
 class AssemblyManager;
 class BlankTextures;
@@ -27,71 +26,55 @@ class ShaderProgramContainer;
 class SlideStackDataUiMapper;
 class TransformationManager;
 
-
 class AppController
 {
 public:
+  AppController(std::unique_ptr<ActionManager>, std::unique_ptr<AssemblyManager>, std::unique_ptr<ConnectionManager>, std::unique_ptr<DataManager>, std::unique_ptr<GuiManager>, std::unique_ptr<InteractionManager>, std::unique_ptr<LayoutManager>, std::unique_ptr<TransformationManager>, std::unique_ptr<ImageDataUiMapper>, std::unique_ptr<ParcellationDataUiMapper>, std::unique_ptr<SlideStackDataUiMapper>, std::unique_ptr<ShaderProgramContainer>, std::shared_ptr<BlankTextures>);
 
-    AppController( std::unique_ptr<ActionManager>,
-                   std::unique_ptr<AssemblyManager>,
-                   std::unique_ptr<ConnectionManager>,
-                   std::unique_ptr<DataManager>,
-                   std::unique_ptr<GuiManager>,
-                   std::unique_ptr<InteractionManager>,
-                   std::unique_ptr<LayoutManager>,
-                   std::unique_ptr<TransformationManager>,
-                   std::unique_ptr<ImageDataUiMapper>,
-                   std::unique_ptr<ParcellationDataUiMapper>,
-                   std::unique_ptr<SlideStackDataUiMapper>,
-                   std::unique_ptr<ShaderProgramContainer>,
-                   std::shared_ptr<BlankTextures> );
+  ~AppController();
 
-    ~AppController();
+  void showMainWindow();
 
-    void showMainWindow();
+  void loadProject(serialize::HZeeProject);
 
-    void loadProject( serialize::HZeeProject );
+  void generateIsoSurfaceMesh(double isoValue);
 
-    void generateIsoSurfaceMesh( double isoValue );
+  void generateLabelMeshes();
 
-    void generateLabelMeshes();
+  void setupCamerasAndCrosshairsForImage();
 
-    void setupCamerasAndCrosshairsForImage();
+  void loadBuiltInImageColorMaps(const std::vector<std::string>& colormapFileNames);
 
-    void loadBuiltInImageColorMaps( const std::vector< std::string >& colormapFileNames );
+  void testTransformFeedback();
 
-    void testTransformFeedback();
-
-    /// @test
-    void testAlignSlideStackToActiveImage();
-    void testCreateRefImageLandmark();
-    void testCreateSlideLandmark();
-    void testCreateSlideAnnotation();
-
+  /// @test
+  void testAlignSlideStackToActiveImage();
+  void testCreateRefImageLandmark();
+  void testCreateSlideLandmark();
+  void testCreateSlideAnnotation();
 
 private:
+  void initialize();
+  void createUiConnections();
 
-    void initialize();
-    void createUiConnections();
+  std::unique_ptr<ActionManager> m_actionManager;
+  std::unique_ptr<AssemblyManager> m_assemblyManager;
+  std::unique_ptr<ConnectionManager> m_connectionManager;
+  std::unique_ptr<DataManager> m_dataManager;
+  std::unique_ptr<GuiManager> m_guiManager;
+  std::unique_ptr<InteractionManager> m_interactionManager;
+  std::unique_ptr<LayoutManager> m_layoutManager;
+  std::unique_ptr<TransformationManager> m_transformationManager;
 
-    std::unique_ptr<ActionManager> m_actionManager;
-    std::unique_ptr<AssemblyManager> m_assemblyManager;
-    std::unique_ptr<ConnectionManager> m_connectionManager;
-    std::unique_ptr<DataManager> m_dataManager;
-    std::unique_ptr<GuiManager> m_guiManager;
-    std::unique_ptr<InteractionManager> m_interactionManager;
-    std::unique_ptr<LayoutManager> m_layoutManager;
-    std::unique_ptr<TransformationManager> m_transformationManager;
+  std::unique_ptr<ImageDataUiMapper> m_imageDataUiMapper;
+  std::unique_ptr<ParcellationDataUiMapper> m_parcelDataUiMapper;
+  std::unique_ptr<SlideStackDataUiMapper> m_slideStackDataUiMapper;
 
-    std::unique_ptr<ImageDataUiMapper> m_imageDataUiMapper;
-    std::unique_ptr<ParcellationDataUiMapper> m_parcelDataUiMapper;
-    std::unique_ptr<SlideStackDataUiMapper> m_slideStackDataUiMapper;
+  std::unique_ptr<ShaderProgramContainer> m_shaderPrograms;
+  std::shared_ptr<BlankTextures> m_blankTextures;
 
-    std::unique_ptr<ShaderProgramContainer> m_shaderPrograms;
-    std::shared_ptr<BlankTextures> m_blankTextures;
-
-    QOpenGLContext* m_globalContext;
-    QOffscreenSurface m_surface;
+  QOpenGLContext* m_globalContext;
+  QOffscreenSurface m_surface;
 };
 
 #endif // APP_CONTROLLER_H

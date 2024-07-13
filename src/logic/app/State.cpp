@@ -2,80 +2,114 @@
 //#include "logic/ipc/IPCMessage.h"
 #include "logic/states/FsmList.hpp"
 
-
 AppState::AppState()
-    :
-      m_mouseMode( MouseMode::Pointer ),
-      m_buttonState(),
-      m_recenteringMode( ImageSelection::AllLoadedImages ),
-      m_animating( false ),
-      m_worldCrosshairs(),
-      m_worldRotationCenter( std::nullopt ),
-      m_copiedAnnotation( std::nullopt ),
-      m_quitApp( false )
-      //m_ipcHandler()
-{}
-
-void AppState::setWorldRotationCenter( const std::optional< glm::vec3 >& worldRotationCenter )
+  : m_mouseMode(MouseMode::Pointer)
+  , m_buttonState()
+  , m_recenteringMode(ImageSelection::AllLoadedImages)
+  , m_animating(false)
+  , m_worldCrosshairs()
+  , m_worldRotationCenter(std::nullopt)
+  , m_copiedAnnotation(std::nullopt)
+  , m_quitApp(false)
+//m_ipcHandler()
 {
-    m_worldRotationCenter = *worldRotationCenter;
+}
+
+void AppState::setWorldRotationCenter(const std::optional<glm::vec3>& worldRotationCenter)
+{
+  m_worldRotationCenter = *worldRotationCenter;
 }
 
 glm::vec3 AppState::worldRotationCenter() const
 {
-    if ( m_worldRotationCenter )
-    {
-        return *m_worldRotationCenter;
-    }
+  if (m_worldRotationCenter)
+  {
+    return *m_worldRotationCenter;
+  }
 
-    return m_worldCrosshairs.worldOrigin();
+  return m_worldCrosshairs.worldOrigin();
 }
 
-void AppState::setWorldCrosshairsPos( const glm::vec3& worldCrosshairsPos )
+void AppState::setWorldCrosshairsPos(const glm::vec3& worldCrosshairsPos)
 {
-    m_worldCrosshairs.setWorldOrigin( worldCrosshairsPos );
-//    broadcastCrosshairsPosition();
+  m_worldCrosshairs.setWorldOrigin(worldCrosshairsPos);
+  //    broadcastCrosshairsPosition();
 }
 
 const CoordinateFrame& AppState::worldCrosshairs() const
 {
-    return m_worldCrosshairs;
+  return m_worldCrosshairs;
 }
 
-void AppState::setMouseMode( MouseMode mode )
+void AppState::setMouseMode(MouseMode mode)
 {
-    const MouseMode oldMode = m_mouseMode;
+  const MouseMode oldMode = m_mouseMode;
 
-    m_mouseMode = mode;
+  m_mouseMode = mode;
 
-    if ( MouseMode::Annotate == oldMode && MouseMode::Annotate != mode )
-    {
-        send_event( state::TurnOffAnnotationModeEvent() );
-    }
-    else if ( MouseMode::Annotate != oldMode && MouseMode::Annotate == mode )
-    {
-        send_event( state::TurnOnAnnotationModeEvent() );
-    }
+  if (MouseMode::Annotate == oldMode && MouseMode::Annotate != mode)
+  {
+    send_event(state::TurnOffAnnotationModeEvent());
+  }
+  else if (MouseMode::Annotate != oldMode && MouseMode::Annotate == mode)
+  {
+    send_event(state::TurnOnAnnotationModeEvent());
+  }
 }
 
-MouseMode AppState::mouseMode() const { return m_mouseMode; }
+MouseMode AppState::mouseMode() const
+{
+  return m_mouseMode;
+}
 
-void AppState::setButtonState( ButtonState state ) { m_buttonState = state; }
-ButtonState AppState::buttonState() const { return m_buttonState; }
+void AppState::setButtonState(ButtonState state)
+{
+  m_buttonState = state;
+}
+ButtonState AppState::buttonState() const
+{
+  return m_buttonState;
+}
 
-void AppState::setRecenteringMode( ImageSelection mode ) { m_recenteringMode = mode; }
-ImageSelection AppState::recenteringMode() const { return m_recenteringMode; }
+void AppState::setRecenteringMode(ImageSelection mode)
+{
+  m_recenteringMode = mode;
+}
+ImageSelection AppState::recenteringMode() const
+{
+  return m_recenteringMode;
+}
 
-void AppState::setAnimating( bool set ) { m_animating = set; }
-bool AppState::animating() const { return m_animating; }
+void AppState::setAnimating(bool set)
+{
+  m_animating = set;
+}
+bool AppState::animating() const
+{
+  return m_animating;
+}
 
-void AppState::setCopiedAnnotation( const Annotation& annot ) { m_copiedAnnotation = annot; }
-void AppState::clearCopiedAnnotation() { m_copiedAnnotation = std::nullopt; }
-const std::optional<Annotation>& AppState::getCopiedAnnotation() const { return m_copiedAnnotation; }
+void AppState::setCopiedAnnotation(const Annotation& annot)
+{
+  m_copiedAnnotation = annot;
+}
+void AppState::clearCopiedAnnotation()
+{
+  m_copiedAnnotation = std::nullopt;
+}
+const std::optional<Annotation>& AppState::getCopiedAnnotation() const
+{
+  return m_copiedAnnotation;
+}
 
-void AppState::setQuitApp( bool quit ) { m_quitApp = quit; }
-bool AppState::quitApp() const { return m_quitApp; }
-
+void AppState::setQuitApp(bool quit)
+{
+  m_quitApp = quit;
+}
+bool AppState::quitApp() const
+{
+  return m_quitApp;
+}
 
 /*
 void AppState::broadcastCrosshairsPosition()

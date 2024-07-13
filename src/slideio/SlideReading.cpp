@@ -1,6 +1,6 @@
 #include "slideio/SlideReading.h"
-#include "slideio/SlideCpuRecord.h"
 #include "slideio/SlideAssociatedImages.h"
+#include "slideio/SlideCpuRecord.h"
 
 #include "rendering/utility/gl/GLTexture.h"
 
@@ -28,7 +28,6 @@
 #include <utility>
 #include <vector>
 
-
 /**
  * @note Notes on proper handling of premultiplied ARGB pixel:
  * One of the less-obvious requirements of the OpenSlide C API is the need
@@ -52,7 +51,6 @@ namespace
 //static const glm::i64vec2 sk_maxSlideDimsToLoad( 4096, 4096 );
 //static const glm::i64vec2 sk_maxSlideDimsForGPU( 2048, 2048 );
 
-
 /**
  * @brief Check for an error in the OpenSlide reader. Print its text if present.
  * @param reader Non-owning pointer to reader
@@ -69,7 +67,6 @@ namespace
 //    return false;
 //}
 
-
 //bool checkValidDims( const glm::i64vec2& dims )
 //{
 //    if ( dims.x <= 0 || dims.y <= 0 )
@@ -78,7 +75,6 @@ namespace
 //    }
 //    return true;
 //}
-
 
 //glm::vec3 readSlideBackgroundColor( openslide_t* reader )
 //{
@@ -102,7 +98,6 @@ namespace
 
 //    return sk_white;
 //}
-
 
 //slideio::AssociatedImage readAssociatedImage( openslide_t* reader, const char* name )
 //{
@@ -128,7 +123,6 @@ namespace
 //    openslide_read_associated_image( reader, name, data.get()->data() );
 //    return std::make_pair( data, dims );
 //}
-
 
 //void downsample( uint32_t* srcData, const glm::i32vec2& srcSize,
 //                 uint32_t* dstData, const glm::i32vec2& dstSize )
@@ -156,7 +150,6 @@ namespace
 //    std::copy( dstImage.data, dstImage.data + 4 * dstSize.x * dstSize.y,
 //               reinterpret_cast< uint8_t* >( dstData ) );
 //}
-
 
 //slideio::SlideAssociatedImages readSlideAssociatedImages( openslide_t* reader )
 //{
@@ -188,17 +181,14 @@ namespace
 //    return images;
 //}
 
-} // anonymous
-
+} // namespace
 
 namespace slideio
 {
 
 /// @todo Break this function into pieces
-std::unique_ptr<SlideCpuRecord> readSlide(
-        const std::string& /*fileName*/,
-        const glm::vec2& /*pixelSize*/,
-        float /*thickness*/ )
+std::unique_ptr<SlideCpuRecord>
+readSlide(const std::string& /*fileName*/, const glm::vec2& /*pixelSize*/, float /*thickness*/)
 {
 #if 0
     openslide_t* reader = openslide_open( fileName.c_str() );
@@ -421,8 +411,8 @@ std::unique_ptr<SlideCpuRecord> readSlide(
 
 #endif
 
-    std::unique_ptr<SlideCpuRecord> cpuRecord = nullptr;
-    return cpuRecord;
+  std::unique_ptr<SlideCpuRecord> cpuRecord = nullptr;
+  return cpuRecord;
 }
 
 } // namespace slideio

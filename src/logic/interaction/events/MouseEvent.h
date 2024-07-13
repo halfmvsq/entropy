@@ -5,12 +5,12 @@
 
 struct MouseEvent
 {
-    float clipPosX = 0.0f;
-    float clipPosY = 0.0f;
+  float clipPosX = 0.0f;
+  float clipPosY = 0.0f;
 
-    ButtonState buttonState;
+  ButtonState buttonState;
 
-    bool accepted = false;
+  bool accepted = false;
 };
 
 #endif // MOUSE_EVENT_H

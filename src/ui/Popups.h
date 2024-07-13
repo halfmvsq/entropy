@@ -5,7 +5,6 @@
 
 class AppData;
 
-
 /**
  * @brief Modal popup window for adding a new layout
  * @param appData
@@ -13,12 +12,11 @@ class AppData;
  * @param recenterViews
  */
 void renderAddLayoutModalPopup(
-    AppData& appData,
-    bool openAddLayoutPopup,
-    const std::function< void (void) >& recenterViews );
+  AppData& appData, bool openAddLayoutPopup, const std::function<void(void)>& recenterViews
+);
 
-void renderAboutDialogModalPopup( bool open );
+void renderAboutDialogModalPopup(bool open);
 
-void renderConfirmCloseAppPopup( AppData& appData );
+void renderConfirmCloseAppPopup(AppData& appData);
 
 #endif // UI_POPUPS

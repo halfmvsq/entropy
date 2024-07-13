@@ -3,60 +3,59 @@
 namespace data
 {
 
-CpuAndGpuMemoryUse memoryUse( const ImageColorMapRecord& )
+CpuAndGpuMemoryUse memoryUse(const ImageColorMapRecord&)
 {
-    return std::make_pair( 0, 0 );
+  return std::make_pair(0, 0);
 }
 
-CpuAndGpuMemoryUse memoryUse( const ImageRecord& )
+CpuAndGpuMemoryUse memoryUse(const ImageRecord&)
 {
-    return std::make_pair( 0, 0 );
+  return std::make_pair(0, 0);
 }
 
-CpuAndGpuMemoryUse memoryUse( const LabelTableRecord& )
+CpuAndGpuMemoryUse memoryUse(const LabelTableRecord&)
 {
-    return std::make_pair( 0, 0 );
+  return std::make_pair(0, 0);
 }
 
-CpuAndGpuMemoryUse memoryUse( const MeshRecord& )
+CpuAndGpuMemoryUse memoryUse(const MeshRecord&)
 {
-    return std::make_pair( 0, 0 );
+  return std::make_pair(0, 0);
 }
 
-CpuAndGpuMemoryUse memoryUse( const ParcellationRecord& )
+CpuAndGpuMemoryUse memoryUse(const ParcellationRecord&)
 {
-    return std::make_pair( 0, 0 );
+  return std::make_pair(0, 0);
 }
 
-CpuAndGpuMemoryUse memoryUse( const SlideRecord& )
+CpuAndGpuMemoryUse memoryUse(const SlideRecord&)
 {
-    return std::make_pair( 0, 0 );
+  return std::make_pair(0, 0);
 }
 
-
-CpuAndGpuMemoryUse imageColorMapsMemoryUse( DataManager& )
+CpuAndGpuMemoryUse imageColorMapsMemoryUse(DataManager&)
 {
-    return std::make_pair( 0, 0 );
+  return std::make_pair(0, 0);
 }
 
-CpuAndGpuMemoryUse imagesMemoryUse( DataManager& )
+CpuAndGpuMemoryUse imagesMemoryUse(DataManager&)
 {
-    return std::make_pair( 0, 0 );
+  return std::make_pair(0, 0);
 }
 
-CpuAndGpuMemoryUse labelTablesMemoryUse( DataManager& )
+CpuAndGpuMemoryUse labelTablesMemoryUse(DataManager&)
 {
-    return std::make_pair( 0, 0 );
+  return std::make_pair(0, 0);
 }
 
-CpuAndGpuMemoryUse parcellationsMemoryUse( DataManager& )
+CpuAndGpuMemoryUse parcellationsMemoryUse(DataManager&)
 {
-    return std::make_pair( 0, 0 );
+  return std::make_pair(0, 0);
 }
 
-CpuAndGpuMemoryUse slidesMemoryUse( DataManager& )
+CpuAndGpuMemoryUse slidesMemoryUse(DataManager&)
 {
-    return std::make_pair( 0, 0 );
+  return std::make_pair(0, 0);
 }
 
 } // namespace data

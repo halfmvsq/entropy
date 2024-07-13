@@ -2,59 +2,56 @@
 #define GLBUFFEROBJECT_H
 
 #include "rendering/utility/gl/GLBufferTypes.h"
-#include "rendering/utility/gl/GLTextureTypes.h"
 #include "rendering/utility/gl/GLErrorChecker.h"
+#include "rendering/utility/gl/GLTextureTypes.h"
 
 #include <glad/glad.h>
 
 #include <set>
 
-
 class GLBufferObject final
 {
 public:
-
-    /**
+  /**
      * @param type Specifies the name of the buffer object
      * @param usage Specifies the expected usage pattern of the data store.
      */
-    GLBufferObject( const BufferType& type,
-                    const BufferUsagePattern& usagePattern );
+  GLBufferObject(const BufferType& type, const BufferUsagePattern& usagePattern);
 
-    GLBufferObject( const GLBufferObject& ) = delete;
-    GLBufferObject& operator=( const GLBufferObject& ) = delete;
+  GLBufferObject(const GLBufferObject&) = delete;
+  GLBufferObject& operator=(const GLBufferObject&) = delete;
 
-    GLBufferObject( GLBufferObject&& ) noexcept;
-    GLBufferObject& operator=( GLBufferObject&& ) noexcept;
+  GLBufferObject(GLBufferObject&&) noexcept;
+  GLBufferObject& operator=(GLBufferObject&&) noexcept;
 
-    /**
+  /**
      * @brief Deletes the buffer object, including storage on GPU
      */
-    ~GLBufferObject();
+  ~GLBufferObject();
 
-    /**
+  /**
      * @brief Generate buffer object name
      */
-    void generate();
+  void generate();
 
-    /**
+  /**
      * @brief Releases the buffer.
      */
-    void release();
+  void release();
 
-    /**
+  /**
      * @brief Destroys the buffer, including all data on GPU.
      */
-    void destroy();
+  void destroy();
 
-    /**
+  /**
      * @brief Bind the buffer object to the current context
      */
-    void bind();
+  void bind();
 
-    void unbind();
+  void unbind();
 
-    /**
+  /**
      * @brief allocate To create mutable storage for a buffer object, you use this API
      * (reallocates the buffer object's storage)
      *
@@ -70,9 +67,9 @@ public:
      *
      * @note This calls bind() to first bind the texture
      */
-    void allocate( std::size_t sizeInBytes, const GLvoid* data );
+  void allocate(std::size_t sizeInBytes, const GLvoid* data);
 
-    /**
+  /**
      * @brief Updates a subset of a buffer object's data store
      *
      * It is assumed that create() has been called on this buffer and that it has been bound to the current context
@@ -85,9 +82,9 @@ public:
      *
      * @note This calls bind()
      */
-    void write( std::size_t offset, std::size_t sizeInBytes, const GLvoid* data );
+  void write(std::size_t offset, std::size_t sizeInBytes, const GLvoid* data);
 
-    /**
+  /**
      * @brief returns a subset of a buffer object's data store.
      * returns some or all of the data from the buffer object currently bound to target​.
      * Data starting at byte offset offset​ and extending for size​ bytes is copied from the
@@ -101,10 +98,9 @@ public:
      * @param data Specifies a pointer to the location where buffer object data is returned
      * @return
      */
-    void read( std::size_t offset, std::size_t sizeInBytes, GLvoid* data );
+  void read(std::size_t offset, std::size_t sizeInBytes, GLvoid* data);
 
-
-    /**
+  /**
      * @brief map map all of a buffer object data store into the client's address space
      *
      * QT: Maps the contents of this buffer into the application's memory space and returns a pointer to it.
@@ -119,47 +115,50 @@ public:
      * @param access indicates the type of access to be performed
      * Specifies a combination of access flags indicating the desired access to the mapped range
      */
-    void* map( const BufferMapAccessPolicy& access );
+  void* map(const BufferMapAccessPolicy& access);
 
-    /**
+  /**
      * @brief mapRange map all or part of a buffer object's data store into the client's address space
      * @param offset Specifies the starting offset within the buffer of the range to be mapped
      * @param length Specifies the length of the range to be mapped
      * @param accessFlags Specifies a set of access flags indicating the desired access to the mapped range
      * @return
      */
-    void* mapRange( GLintptr offset, GLsizeiptr length,
-                    const std::set<BufferMapRangeAccessFlag>& accessFlags );
+  void* mapRange(
+    GLintptr offset, GLsizeiptr length, const std::set<BufferMapRangeAccessFlag>& accessFlags
+  );
 
-    /**
+  /**
      * @brief release the mapping of a buffer object's data store into the client's address space
      * @return
      */
-    bool unmap();
+  bool unmap();
 
-    /// @todo Change GLsizeiptr and GLintptr to std::size_t
-    void copyData( GLBufferObject& readBuffer, GLBufferObject& writeBuffer,
-                   GLintptr readOffset, GLintptr writeOffset,
-                   GLsizeiptr size );
+  /// @todo Change GLsizeiptr and GLintptr to std::size_t
+  void copyData(
+    GLBufferObject& readBuffer,
+    GLBufferObject& writeBuffer,
+    GLintptr readOffset,
+    GLintptr writeOffset,
+    GLsizeiptr size
+  );
 
-    GLuint id() const;
-    BufferType type() const;
-    BufferUsagePattern usagePattern() const;
+  GLuint id() const;
+  BufferType type() const;
+  BufferUsagePattern usagePattern() const;
 
-    std::size_t size() const;
-
+  std::size_t size() const;
 
 private:
+  GLErrorChecker m_errorChecker;
 
-    GLErrorChecker m_errorChecker;
+  GLuint m_id;
 
-    GLuint m_id;
+  BufferType m_type;
+  GLenum m_typeEnum;
+  BufferUsagePattern m_usagePattern;
 
-    BufferType m_type;
-    GLenum m_typeEnum;
-    BufferUsagePattern m_usagePattern;
-
-    std::size_t m_bufferSizeInBytes;
+  std::size_t m_bufferSizeInBytes;
 };
 
 #endif // GLBUFFEROBJECT_H

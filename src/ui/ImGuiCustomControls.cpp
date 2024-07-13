@@ -15,27 +15,26 @@
 namespace
 {
 
-static const ImGuiDataTypeInfo GDataTypeInfo[] =
-    {
-        { sizeof(char),             "S8",   "%d",   "%d"    },  // ImGuiDataType_S8
-        { sizeof(unsigned char),    "U8",   "%u",   "%u"    },
-        { sizeof(short),            "S16",  "%d",   "%d"    },  // ImGuiDataType_S16
-        { sizeof(unsigned short),   "U16",  "%u",   "%u"    },
-        { sizeof(int),              "S32",  "%d",   "%d"    },  // ImGuiDataType_S32
-        { sizeof(unsigned int),     "U32",  "%u",   "%u"    },
+static const ImGuiDataTypeInfo GDataTypeInfo[] = {
+  {sizeof(char), "S8", "%d", "%d"}, // ImGuiDataType_S8
+  {sizeof(unsigned char), "U8", "%u", "%u"},
+  {sizeof(short), "S16", "%d", "%d"}, // ImGuiDataType_S16
+  {sizeof(unsigned short), "U16", "%u", "%u"},
+  {sizeof(int), "S32", "%d", "%d"}, // ImGuiDataType_S32
+  {sizeof(unsigned int), "U32", "%u", "%u"},
 #ifdef _MSC_VER
-        { sizeof(ImS64),            "S64",  "%I64d","%I64d" },  // ImGuiDataType_S64
-        { sizeof(ImU64),            "U64",  "%I64u","%I64u" },
+  {sizeof(ImS64), "S64", "%I64d", "%I64d"}, // ImGuiDataType_S64
+  {sizeof(ImU64), "U64", "%I64u", "%I64u"},
 #else
-        { sizeof(ImS64),            "S64",  "%lld", "%lld"  },  // ImGuiDataType_S64
-        { sizeof(ImU64),            "U64",  "%llu", "%llu"  },
+  {sizeof(ImS64), "S64", "%lld", "%lld"}, // ImGuiDataType_S64
+  {sizeof(ImU64), "U64", "%llu", "%llu"},
 #endif
-        { sizeof(float),            "float", "%.3f","%f"    },  // ImGuiDataType_Float (float are promoted to double in va_arg)
-        { sizeof(double),           "double","%f",  "%lf"   },  // ImGuiDataType_Double
+  {sizeof(float), "float", "%.3f", "%f"
+  }, // ImGuiDataType_Float (float are promoted to double in va_arg)
+  {sizeof(double), "double", "%f", "%lf"}, // ImGuiDataType_Double
 };
 
-}
-
+} // namespace
 
 namespace ImGui
 {
@@ -51,51 +50,57 @@ namespace ImGui
  * @note Minor modifications have been made to this function for Entropy
  */
 bool paletteButton(
-    const char* label,
-    const std::vector<glm::vec4>& colors,
-    bool inverted,
-    bool quantize,
-    int quantizationLevels,
-    const glm::vec3& hsvModFactors,
-    const ImVec2& size )
+  const char* label,
+  const std::vector<glm::vec4>& colors,
+  bool inverted,
+  bool quantize,
+  int quantizationLevels,
+  const glm::vec3& hsvModFactors,
+  const ImVec2& size
+)
 {
-    ImGuiWindow* window = GetCurrentWindow();
+  ImGuiWindow* window = GetCurrentWindow();
 
-    if ( ! window ) return false;
-    if ( window->SkipItems ) return false;
-    if ( ! GImGui ) return false;
+  if (!window)
+    return false;
+  if (window->SkipItems)
+    return false;
+  if (!GImGui)
+    return false;
 
-    // const ImGuiStyle& style = GImGui->Style;
+  // const ImGuiStyle& style = GImGui->Style;
 
-    const ImGuiID id = window->GetID( label );
+  const ImGuiID id = window->GetID(label);
 
-    const float lineH = ( window->DC.CurrLineSize.y <= 0 )
-         ? ( ( window->DC.PrevLineSize.y <= 0 )
-            ? size.y
-            : window->DC.PrevLineSize.y )
-        : ( window->DC.CurrLineSize.y );
+  const float lineH = (window->DC.CurrLineSize.y <= 0)
+                        ? ((window->DC.PrevLineSize.y <= 0) ? size.y : window->DC.PrevLineSize.y)
+                        : (window->DC.CurrLineSize.y);
 
-    const ImRect bb( ImVec2( window->DC.CursorPos.x /*+ style.FramePadding.x*/,
-                             window->DC.CursorPos.y ),
-                     ImVec2( window->DC.CursorPos.x + size.x /*- 2.0f * style.FramePadding.x*/,
-                             window->DC.CursorPos.y + lineH ) );
+  const ImRect bb(
+    ImVec2(window->DC.CursorPos.x /*+ style.FramePadding.x*/, window->DC.CursorPos.y),
+    ImVec2(
+      window->DC.CursorPos.x + size.x /*- 2.0f * style.FramePadding.x*/,
+      window->DC.CursorPos.y + lineH
+    )
+  );
 
-    ItemSize( bb );
+  ItemSize(bb);
 
-    if ( ! ItemAdd( bb, id ) ) return false;
+  if (!ItemAdd(bb, id))
+    return false;
 
-    const float borderY = ( lineH < size.y ) ? 0.0f : 0.5f * ( lineH - size.y );
+  const float borderY = (lineH < size.y) ? 0.0f : 0.5f * (lineH - size.y);
 
-    const ImVec2 posMin = ImVec2( bb.Min.x, bb.Min.y + borderY );
-    const ImVec2 posMax = ImVec2( bb.Max.x, bb.Max.y - borderY );
-    const int width = static_cast<int>( posMax.x - posMin.x );
+  const ImVec2 posMin = ImVec2(bb.Min.x, bb.Min.y + borderY);
+  const ImVec2 posMax = ImVec2(bb.Max.x, bb.Max.y - borderY);
+  const int width = static_cast<int>(posMax.x - posMin.x);
 
-    ImDrawList* drawList = ImGui::GetWindowDrawList();
+  ImDrawList* drawList = ImGui::GetWindowDrawList();
 
-//    const int startIndex = ( inverted ? colors.size() - 1 : 0 );
-//    const int dir = ( inverted ? -1 : 1 );
+  //    const int startIndex = ( inverted ? colors.size() - 1 : 0 );
+  //    const int dir = ( inverted ? -1 : 1 );
 
-    /*
+  /*
     auto renderLines = [&] ( const float alpha )
     {
         const float step = static_cast<float>( colors.size() ) / static_cast<float>( width );
@@ -126,135 +131,146 @@ bool paletteButton(
     };
 */
 
-    auto renderFilledRects = [&] ( const float alpha )
+  auto renderFilledRects = [&](const float alpha)
+  {
+    const float step = static_cast<float>(width) / static_cast<float>(colors.size());
+
+    for (std::size_t i = 0; i < colors.size(); ++i)
     {
-        const float step = static_cast<float>( width ) / static_cast<float>( colors.size() );
+      const float minX = posMin.x + static_cast<float>(i) * step;
 
-        for ( std::size_t i = 0; i < colors.size(); ++i )
-        {
-            const float minX = posMin.x + static_cast<float>(i) * step;
+      std::size_t index = i;
 
-            std::size_t index = i;
+      if (quantize)
+      {
+        // Index normalized from 0 to 1:
+        const float normIndex = static_cast<float>(i) / static_cast<float>(colors.size() - 1);
 
-            if ( quantize )
-            {
-                // Index normalized from 0 to 1:
-                const float normIndex = static_cast<float>(i) / static_cast<float>( colors.size() - 1 );
+        // Index quantized from 0 to size - 1:
+        index = static_cast<std::size_t>(
+          std::min(
+            std::max(std::floor(quantizationLevels * normIndex) / (quantizationLevels - 1), 0.0f),
+            1.0f
+          )
+          * (colors.size() - 1)
+        );
+      }
 
-                // Index quantized from 0 to size - 1:
-                index = static_cast<std::size_t>(
-                    std::min( std::max( std::floor( quantizationLevels * normIndex ) / ( quantizationLevels - 1 ), 0.0f ), 1.0f ) *
-                    ( colors.size() - 1 ) );
-            }
+      if (inverted)
+      {
+        index = colors.size() - 1 - index;
+      }
 
-            if ( inverted )
-            {
-                index = colors.size() - 1 - index;
-            }
+      glm::vec3 colorHsv = glm::hsvColor(glm::vec3{colors[index]});
 
-            glm::vec3 colorHsv = glm::hsvColor( glm::vec3{ colors[index] } );
+      colorHsv[0] += 360.0f * hsvModFactors[0];
+      colorHsv[0] = std::fmod(colorHsv[0], 360.0f);
 
-            colorHsv[0] += 360.0f * hsvModFactors[0];
-            colorHsv[0] = std::fmod( colorHsv[0], 360.0f );
+      colorHsv[1] *= hsvModFactors[1];
+      colorHsv[2] *= hsvModFactors[2];
 
-            colorHsv[1] *= hsvModFactors[1];
-            colorHsv[2] *= hsvModFactors[2];
+      const glm::vec3 colorRgb = glm::rgbColor(colorHsv);
 
-            const glm::vec3 colorRgb = glm::rgbColor( colorHsv );
+      drawList->AddRectFilled(
+        ImVec2(minX, posMin.y),
+        ImVec2(minX + step, posMax.y),
 
-            drawList->AddRectFilled(
-                ImVec2( minX, posMin.y ),
-                ImVec2( minX + step, posMax.y ),
+        IM_COL32(
+          255.0f * colorRgb.r,
+          255.0f * colorRgb.g,
+          255.0f * colorRgb.b,
+          255.0f * alpha * colors[index].a
+        )
+      );
+    }
+  };
 
-                IM_COL32( 255.0f * colorRgb.r,
-                          255.0f * colorRgb.g,
-                          255.0f * colorRgb.b,
-                          255.0f * alpha * colors[index].a ) );
-        }
-    };
+  renderFilledRects(ImGui::GetStyle().Alpha);
 
-    renderFilledRects( ImGui::GetStyle().Alpha );
+  bool hovered, held;
+  bool pressed = ImGui::ButtonBehavior(bb, id, &hovered, &held, 0);
 
-    bool hovered, held;
-    bool pressed = ImGui::ButtonBehavior(bb, id, &hovered, &held, 0);
+  const ImU32 col = GetColorU32(
+    (held && hovered) ? ImGuiCol_ButtonActive
+    : hovered         ? ImGuiCol_ButtonHovered
+                      : ImGuiCol_Button
+  );
+  drawList->AddRect(posMin, posMax, col, 0.0f, 0, 0.5f);
 
-    const ImU32 col = GetColorU32((held && hovered) ? ImGuiCol_ButtonActive : hovered ? ImGuiCol_ButtonHovered : ImGuiCol_Button);
-    drawList->AddRect( posMin, posMax, col, 0.0f, 0, 0.5f );
-
-    return pressed;
+  return pressed;
 }
 
-
-std::optional< std::string > renderFileButtonDialogAndWindow(
-    const char* buttonText,
-    const char* dialogTitle,
-    const std::vector< std::string > dialogFilters )
+std::optional<std::string> renderFileButtonDialogAndWindow(
+  const char* buttonText, const char* dialogTitle, const std::vector<std::string> dialogFilters
+)
 {
-    static ImGui::FileBrowser saveDialog(
-        ImGuiFileBrowserFlags_EnterNewFilename |
-        ImGuiFileBrowserFlags_CloseOnEsc |
-        ImGuiFileBrowserFlags_CreateNewDir );
+  static ImGui::FileBrowser saveDialog(
+    ImGuiFileBrowserFlags_EnterNewFilename | ImGuiFileBrowserFlags_CloseOnEsc
+    | ImGuiFileBrowserFlags_CreateNewDir
+  );
 
-    saveDialog.SetTitle( dialogTitle );
-    saveDialog.SetTypeFilters( dialogFilters );
+  saveDialog.SetTitle(dialogTitle);
+  saveDialog.SetTypeFilters(dialogFilters);
 
-    if ( ImGui::Button( buttonText ) )
-    {
-        saveDialog.Open();
-    }
+  if (ImGui::Button(buttonText))
+  {
+    saveDialog.Open();
+  }
 
-    saveDialog.Display();
+  saveDialog.Display();
 
-    if ( saveDialog.HasSelected() )
-    {
-        const fs::path selectedFile = saveDialog.GetSelected();
-        saveDialog.ClearSelected();
-        return selectedFile.string();
-    }
+  if (saveDialog.HasSelected())
+  {
+    const fs::path selectedFile = saveDialog.GetSelected();
+    saveDialog.ClearSelected();
+    return selectedFile.string();
+  }
 
-    return std::nullopt;
+  return std::nullopt;
 }
-
 
 bool SliderScalarN_multiComp(
-    const char* label,
-    ImGuiDataType data_type,
-    void* v, int components,
-    const void** v_min, const void** v_max,
-    const char** format, ImGuiSliderFlags flags)
+  const char* label,
+  ImGuiDataType data_type,
+  void* v,
+  int components,
+  const void** v_min,
+  const void** v_max,
+  const char** format,
+  ImGuiSliderFlags flags
+)
 {
-    ImGuiWindow* window = GetCurrentWindow();
-    if (window->SkipItems)
-        return false;
+  ImGuiWindow* window = GetCurrentWindow();
+  if (window->SkipItems)
+    return false;
 
-    ImGuiContext& g = *GImGui;
-    bool value_changed = false;
-    BeginGroup();
-    PushID(label);
-    PushMultiItemsWidths(components, CalcItemWidth());
-    size_t type_size = GDataTypeInfo[data_type].Size;
-    for (int i = 0; i < components; i++)
-    {
-        PushID(i);
-        if (i > 0)
-            SameLine(0, g.Style.ItemInnerSpacing.x);
-        value_changed |= SliderScalar("", data_type, v, v_min[i], v_max[i], format[i], flags);
-        PopID();
-        PopItemWidth();
-        v = (void*)((char*)v + type_size);
-    }
+  ImGuiContext& g = *GImGui;
+  bool value_changed = false;
+  BeginGroup();
+  PushID(label);
+  PushMultiItemsWidths(components, CalcItemWidth());
+  size_t type_size = GDataTypeInfo[data_type].Size;
+  for (int i = 0; i < components; i++)
+  {
+    PushID(i);
+    if (i > 0)
+      SameLine(0, g.Style.ItemInnerSpacing.x);
+    value_changed |= SliderScalar("", data_type, v, v_min[i], v_max[i], format[i], flags);
     PopID();
+    PopItemWidth();
+    v = (void*) ((char*) v + type_size);
+  }
+  PopID();
 
-    const char* label_end = FindRenderedTextEnd(label);
-    if (label != label_end)
-    {
-        SameLine(0, g.Style.ItemInnerSpacing.x);
-        TextEx(label, label_end);
-    }
+  const char* label_end = FindRenderedTextEnd(label);
+  if (label != label_end)
+  {
+    SameLine(0, g.Style.ItemInnerSpacing.x);
+    TextEx(label, label_end);
+  }
 
-    EndGroup();
-    return value_changed;
+  EndGroup();
+  return value_changed;
 }
-
 
 } // namespace ImGui

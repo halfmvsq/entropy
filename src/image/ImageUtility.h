@@ -35,16 +35,22 @@ typename itk::ImageIOBase::Pointer createStandardImageIo(const char* fileName);
  * @param componentType
  * @return
  */
-std::pair< double, double > componentRange(const ComponentType& componentType);
+std::pair<double, double> componentRange(const ComponentType& componentType);
 
 std::pair<glm::vec3, glm::vec3> computeWorldMinMaxCornersOfImage(const Image& image);
 
 std::vector<ComponentStats> computeImageStatistics(const Image& image);
 
-double bumpQuantile(const Image& image, uint32_t comp, double currentQuantile, double attemptedQuantile, double currentValue);
+double bumpQuantile(
+  const Image& image,
+  uint32_t comp,
+  double currentQuantile,
+  double attemptedQuantile,
+  double currentValue
+);
 
 std::optional<std::size_t> computeNumHistogramBins(
-    const NumBinsComputationMethod& method,
-    std::size_t numPixels, ComponentStats stats);
+  const NumBinsComputationMethod& method, std::size_t numPixels, ComponentStats stats
+);
 
 #endif // IMAGE_UTILITY_H

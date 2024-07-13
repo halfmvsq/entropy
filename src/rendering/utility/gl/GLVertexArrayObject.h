@@ -1,11 +1,11 @@
 #ifndef GL_VERTEX_ARRAY_OBJECT_H
 #define GL_VERTEX_ARRAY_OBJECT_H
 
+#include "rendering/utility/containers/VertexAttributeInfo.h"
+#include "rendering/utility/containers/VertexIndicesInfo.h"
 #include "rendering/utility/gl/GLBufferTypes.h"
 #include "rendering/utility/gl/GLDrawTypes.h"
 #include "rendering/utility/gl/GLErrorChecker.h"
-#include "rendering/utility/containers/VertexAttributeInfo.h"
-#include "rendering/utility/containers/VertexIndicesInfo.h"
 
 #include <glm/vec4.hpp>
 
@@ -14,87 +14,84 @@
 #include <string>
 #include <unordered_map>
 
-
 class GLVertexArrayObject final
 {
 public:
+  class IndexedDrawParams
+  {
+  public:
+    IndexedDrawParams(
+      const PrimitiveMode& primitiveMode,
+      std::size_t elementCount,
+      const IndexType& indexType,
+      std::size_t indexOffset
+    );
 
-    class IndexedDrawParams
-    {
-    public:
+    IndexedDrawParams(const VertexIndicesInfo& indicesInfo);
 
-        IndexedDrawParams(
-            const PrimitiveMode& primitiveMode,
-            std::size_t elementCount,
-            const IndexType& indexType,
-            std::size_t indexOffset );
+    GLenum primitiveMode() const;
+    std::size_t elementCount() const;
+    GLenum indexType() const;
+    GLvoid* indices() const;
 
-        IndexedDrawParams( const VertexIndicesInfo& indicesInfo );
+    void setElementCount(std::size_t c);
 
-        GLenum primitiveMode() const;
-        std::size_t elementCount() const;
-        GLenum indexType() const;
-        GLvoid* indices() const;
+  private:
+    GLenum m_primitiveMode;
+    std::size_t m_elementCount;
+    GLenum m_indexType;
+    GLvoid* m_indices;
+  };
 
-        void setElementCount( std::size_t c );
+  GLVertexArrayObject();
+  ~GLVertexArrayObject();
 
+  GLVertexArrayObject(const GLVertexArrayObject&) = delete;
+  GLVertexArrayObject& operator=(const GLVertexArrayObject&) = delete;
 
-    private:
+  GLVertexArrayObject(GLVertexArrayObject&&) = default;
+  GLVertexArrayObject& operator=(GLVertexArrayObject&&) = default;
 
-        GLenum m_primitiveMode;
-        std::size_t m_elementCount;
-        GLenum m_indexType;
-        GLvoid* m_indices;
-    };
+  void generate();
+  void destroy();
 
+  void bind();
+  void release();
 
-    GLVertexArrayObject();
-    ~GLVertexArrayObject();
+  GLuint id() const;
 
-    GLVertexArrayObject( const GLVertexArrayObject& ) = delete;
-    GLVertexArrayObject& operator=( const GLVertexArrayObject& ) = delete;
+  void setAttributeBuffer(
+    GLuint index,
+    GLint size,
+    const BufferComponentType& type,
+    const BufferNormalizeValues& normalize,
+    GLsizei stride,
+    GLint offset
+  );
 
-    GLVertexArrayObject( GLVertexArrayObject&& ) = default;
-    GLVertexArrayObject& operator=( GLVertexArrayObject&& ) = default;
+  void setAttributeBuffer(GLuint index, const VertexAttributeInfo& attribInfo);
 
-    void generate();
-    void destroy();
+  void setAttributeIntegerBuffer(
+    GLuint index, GLint size, const BufferComponentType& type, GLsizei stride, GLint offset
+  );
 
-    void bind();
-    void release();
+  /// @note There is a bug in Qt:
+  /// glVertexAttrib family of functions are not defined in the Core profile functions:
+  /// @see https://stackoverflow.com/questions/24595609/why-does-qt-consider-glvertexattrib-methods-as-deprecated-compatibility-profile
 
-    GLuint id() const;
+  // This sets global context state: nothing specific to the VAO
+  //    void setGenericAttribute2f( GLuint index, const glm::vec2& values );
+  //    void setGenericAttribute4f( GLuint index, const glm::vec4& values );
 
-    void setAttributeBuffer(
-        GLuint index, GLint size, const BufferComponentType& type,
-        const BufferNormalizeValues& normalize, GLsizei stride, GLint offset );
+  void enableVertexAttribute(GLuint index);
+  void disableVertexAttribute(GLuint index);
 
-    void setAttributeBuffer(
-        GLuint index, const VertexAttributeInfo& attribInfo );
-
-    void setAttributeIntegerBuffer(
-        GLuint index, GLint size, const BufferComponentType& type,
-        GLsizei stride, GLint offset );
-
-    /// @note There is a bug in Qt:
-    /// glVertexAttrib family of functions are not defined in the Core profile functions:
-    /// @see https://stackoverflow.com/questions/24595609/why-does-qt-consider-glvertexattrib-methods-as-deprecated-compatibility-profile
-
-    // This sets global context state: nothing specific to the VAO
-    //    void setGenericAttribute2f( GLuint index, const glm::vec2& values );
-    //    void setGenericAttribute4f( GLuint index, const glm::vec4& values );
-
-    void enableVertexAttribute( GLuint index );
-    void disableVertexAttribute( GLuint index );
-
-    void drawElements( const IndexedDrawParams& params );
-
+  void drawElements(const IndexedDrawParams& params);
 
 private:
+  GLuint m_id;
 
-    GLuint m_id;
-
-    GLErrorChecker m_errorChecker;
+  GLErrorChecker m_errorChecker;
 };
 
 #endif // GL_VERTEX_ARRAY_OBJECT_H

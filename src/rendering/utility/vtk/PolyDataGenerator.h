@@ -11,9 +11,9 @@ namespace vtkutils
 
 vtkSmartPointer<vtkPolyData> generateCone();
 vtkSmartPointer<vtkPolyData> generateCube();
-vtkSmartPointer<vtkPolyData> generateCylinder( const glm::dvec3& center, double radius, double height );
+vtkSmartPointer<vtkPolyData> generateCylinder(const glm::dvec3& center, double radius, double height);
 vtkSmartPointer<vtkPolyData> generateSphere();
-vtkSmartPointer<vtkPolyData> generatePointyCylinders( double coneToCylinderLengthRatio );
+vtkSmartPointer<vtkPolyData> generatePointyCylinders(double coneToCylinderLengthRatio);
 
 } // namespace vtkutils
 

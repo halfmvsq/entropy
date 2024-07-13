@@ -22,7 +22,6 @@ const char* const SimpleLightFragmentUniforms::simpleLight_specular = "simpleLig
 const char* const DepthPeelerFragmentUniforms::depthBlenderTex = "depthBlenderTex";
 const char* const DepthPeelerFragmentUniforms::frontBlenderTex = "frontBlenderTex";
 
-
 namespace FlatProgram
 {
 const char* const name = "flat";
@@ -31,8 +30,7 @@ const char* const vert::color = "color";
 
 const char* const frag::objectId = "objectId";
 const char* const frag::opacity = "opacity";
-} // FlatProgram
-
+} // namespace FlatProgram
 
 namespace SimpleProgram
 {
@@ -43,8 +41,7 @@ const char* const vert::color = "color";
 const char* const frag::tex2D = "ttt";
 const char* const frag::objectId = "objectId";
 const char* const frag::opacity = "opacity";
-} // SimpleProgram
-
+} // namespace SimpleProgram
 
 namespace PolygonizerProgram
 {
@@ -58,18 +55,15 @@ const char* const geom::isolevel = "isolevel";
 const char* const geom::vertDecals = "vertDecals";
 const char* const geom::gradDeltas = "gradDeltas";
 const char* const geom::world_O_tex = "world_O_tex";
-} // PolygonizerProgram
-
+} // namespace PolygonizerProgram
 
 namespace BasicMeshProgram
 {
 
 const char* const name = "basic_mesh";
 
-const char* const vert::worldClipPlanes[3] = {
-    "worldClipPlanes[0]",
-    "worldClipPlanes[1]",
-    "worldClipPlanes[2]" };
+const char* const vert::worldClipPlanes[3]
+  = {"worldClipPlanes[0]", "worldClipPlanes[1]", "worldClipPlanes[2]"};
 
 const char* const frag::objectId = "objectId";
 const char* const frag::masterOpacityMultiplier = "masterOpacityMultiplier";
@@ -78,25 +72,21 @@ const char* const frag::layerOpacities = "layerOpacities";
 const char* const frag::xrayMode = "xrayMode";
 const char* const frag::xrayPower = "xrayPower";
 
-} // BasicMeshProgram
-
+} // namespace BasicMeshProgram
 
 namespace BasicMeshDualDepthPeelProgram
 {
 
 const char* const name = "basic_mesh_ddp";
 
-} // BasicMeshDualDepthPeelProgram
-
+} // namespace BasicMeshDualDepthPeelProgram
 
 namespace MeshProgram
 {
 const char* const name = "mesh";
 
-const char* const vert::worldClipPlanes[3] = {
-    "worldClipPlanes[0]",
-    "worldClipPlanes[1]",
-    "worldClipPlanes[2]" };
+const char* const vert::worldClipPlanes[3]
+  = {"worldClipPlanes[0]", "worldClipPlanes[1]", "worldClipPlanes[2]"};
 
 const char* const vert::imageTexCoords_O_world = "imageTexCoords_O_world";
 const char* const vert::labelTexCoords_O_world = "labelTexCoords_O_world";
@@ -127,41 +117,34 @@ const char* const frag::xrayMode = "xrayMode";
 const char* const frag::xrayPower = "xrayPower";
 
 //const char* const frag::labelTexCoords_O_view = "labelTexCoords_O_view";
-} // MeshProgram
-
+} // namespace MeshProgram
 
 namespace MeshDDPPeelProgram
 {
 const char* const name = "meshDDPPeel";
-} // MeshDDPPeelProgram
-
+} // namespace MeshDDPPeelProgram
 
 namespace FlatPeelProgram
 {
 const char* const name = "flatDDPPeel";
-} // FlatPeelProgram
-
+} // namespace FlatPeelProgram
 
 namespace DDPInitProgram
 {
 const char* const name = "meshDDPInit";
 
-const char* const vert::worldClipPlanes[3] = {
-    "worldClipPlanes[0]",
-    "worldClipPlanes[1]",
-    "worldClipPlanes[2]" };
+const char* const vert::worldClipPlanes[3]
+  = {"worldClipPlanes[0]", "worldClipPlanes[1]", "worldClipPlanes[2]"};
 
 const char* const frag::opaqueDepthTex = "opaqueDepthTex";
-} // DDPInitProgram
-
+} // namespace DDPInitProgram
 
 namespace DDPBlendProgram
 {
 const char* const name = "ddpBlend";
 
 const char* const frag::tempTexture = "tempTexture";
-} // DDPBlendProgram
-
+} // namespace DDPBlendProgram
 
 namespace DDPFinalProgram
 {
@@ -169,12 +152,11 @@ const char* const name = "ddpFinal";
 
 const char* const frag::frontBlenderTexture = "frontBlenderTex";
 const char* const frag::backBlenderTexture = "backBlenderTex";
-} // DDPFinalProgram
-
+} // namespace DDPFinalProgram
 
 namespace DebugProgram
 {
 const char* const name = "debugProgram";
 
 const char* const frag::debugTexture = "debugTexture";
-} // DebugProgram
+} // namespace DebugProgram

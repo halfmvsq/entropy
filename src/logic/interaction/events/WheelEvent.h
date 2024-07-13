@@ -5,13 +5,13 @@
 
 struct WheelEvent
 {
-    float deltaX = 0.0f;
-    float deltaY = 0.0f;
-    bool inverted = false;
+  float deltaX = 0.0f;
+  float deltaY = 0.0f;
+  bool inverted = false;
 
-    ButtonState buttonState;
+  ButtonState buttonState;
 
-    bool accepted = false;
+  bool accepted = false;
 };
 
 #endif // WHEEL_EVENT_H

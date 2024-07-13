@@ -3,10 +3,10 @@
 
 #include "common/PublicTypes.h"
 
-#include <glm/fwd.hpp>
-#include <uuid.h>
 #include <functional>
+#include <glm/fwd.hpp>
 #include <utility>
+#include <uuid.h>
 
 class AppData;
 class ImageColorMap;
@@ -15,11 +15,12 @@ class LandmarkGroup;
 class ParcellationLabelTable;
 
 void renderActiveImageSelectionCombo(
-    size_t numImages,
-    const std::function< std::pair<const char*, const char* >( size_t index ) >& getImageDisplayAndFileName,
-    const std::function< size_t (void) >& getActiveImageIndex,
-    const std::function< void (size_t) >& setActiveImageIndex,
-    bool showText = true );
+  size_t numImages,
+  const std::function<std::pair<const char*, const char*>(size_t index)>& getImageDisplayAndFileName,
+  const std::function<size_t(void)>& getActiveImageIndex,
+  const std::function<void(size_t)>& setActiveImageIndex,
+  bool showText = true
+);
 
 /**
  * @brief Render child window that shows the labels for a given segmentation label table
@@ -28,10 +29,11 @@ void renderActiveImageSelectionCombo(
  * @param[in] updateLabelColorTableTexture Function to update the label table texture
  */
 void renderSegLabelsChildWindow(
-    size_t tableIndex,
-    ParcellationLabelTable* labelTable,
-    const std::function< void ( size_t tableIndex ) >& updateLabelColorTableTexture,
-    const std::function< void ( size_t labelIndex ) >& moveCrosshairsToSegLabelCentroid );
+  size_t tableIndex,
+  ParcellationLabelTable* labelTable,
+  const std::function<void(size_t tableIndex)>& updateLabelColorTableTexture,
+  const std::function<void(size_t labelIndex)>& moveCrosshairsToSegLabelCentroid
+);
 
 /**
  * @brief renderLandmarkChildWindow
@@ -42,12 +44,13 @@ void renderSegLabelsChildWindow(
  * @param recenterAllViews
  */
 void renderLandmarkChildWindow(
-    const AppData& appData,
-    const ImageTransformations& imageTransformations,
-    LandmarkGroup* activeLmGroup,
-    const glm::vec3& worldCrosshairsPos,
-    const std::function< void ( const glm::vec3& worldCrosshairsPos ) >& setWorldCrosshairsPos,
-    const AllViewsRecenterType& recenterAllViews );
+  const AppData& appData,
+  const ImageTransformations& imageTransformations,
+  LandmarkGroup* activeLmGroup,
+  const glm::vec3& worldCrosshairsPos,
+  const std::function<void(const glm::vec3& worldCrosshairsPos)>& setWorldCrosshairsPos,
+  const AllViewsRecenterType& recenterAllViews
+);
 
 /**
  * @brief renderPaletteWindow
@@ -60,17 +63,18 @@ void renderLandmarkChildWindow(
  * @param updateImageUniforms
  */
 void renderPaletteWindow(
-    const char* name,
-    bool* showPaletteWindow,
-    const std::function< size_t (void) >& getNumImageColorMaps,
-    const std::function< const ImageColorMap* ( std::size_t cmapIndex ) >& getImageColorMap,
-    const std::function< size_t (void) >& getCurrentImageColorMapIndex,
-    const std::function< void ( std::size_t cmapIndex ) >& setCurrentImageColormapIndex,
-    const std::function< bool (void) >& getImageColorMapInverted,
-    const std::function< bool (void) >& getImageColorMapContinuous,
-    const std::function< int (void) >& getImageColorMapLevels,
-    const glm::vec3& hsvModFactors,
-    const std::function< void (void) >& updateImageUniforms );
+  const char* name,
+  bool* showPaletteWindow,
+  const std::function<size_t(void)>& getNumImageColorMaps,
+  const std::function<const ImageColorMap*(std::size_t cmapIndex)>& getImageColorMap,
+  const std::function<size_t(void)>& getCurrentImageColorMapIndex,
+  const std::function<void(std::size_t cmapIndex)>& setCurrentImageColormapIndex,
+  const std::function<bool(void)>& getImageColorMapInverted,
+  const std::function<bool(void)>& getImageColorMapContinuous,
+  const std::function<int(void)>& getImageColorMapLevels,
+  const glm::vec3& hsvModFactors,
+  const std::function<void(void)>& updateImageUniforms
+);
 
 void renderColorMapWindow();
 

@@ -18,188 +18,190 @@
 #include <iostream>
 #include <sstream>
 
-
 namespace
 {
 
-static const glm::mat4 sk_ident{ 1.0f };
+static const glm::mat4 sk_ident{1.0f};
 
-} // anonymous
-
+} // namespace
 
 AnnotationAssembly::AnnotationAssembly(
-        ShaderProgramActivatorType shaderProgramActivator,
-        UniformsProviderType uniformsProvider,
-        QuerierType< std::optional< std::pair<glm::mat4, glm::mat4> >, uuids::uuid > annotationToWorldTxQuerier,
-        QuerierType< std::optional<float>, uuids::uuid > annotationThicknessQuerier )
-    :
-      m_shaderActivator( shaderProgramActivator ),
-      m_uniformsProvider( uniformsProvider ),
+  ShaderProgramActivatorType shaderProgramActivator,
+  UniformsProviderType uniformsProvider,
+  QuerierType<std::optional<std::pair<glm::mat4, glm::mat4> >, uuids::uuid>
+    annotationToWorldTxQuerier,
+  QuerierType<std::optional<float>, uuids::uuid> annotationThicknessQuerier
+)
+  : m_shaderActivator(shaderProgramActivator)
+  , m_uniformsProvider(uniformsProvider)
+  ,
 
-      m_annotationToWorldTxQuerier( annotationToWorldTxQuerier ),
-      m_annotationThicknessQuerier( annotationThicknessQuerier ),
+  m_annotationToWorldTxQuerier(annotationToWorldTxQuerier)
+  , m_annotationThicknessQuerier(annotationThicknessQuerier)
+  ,
 
-      m_rootFor2dViews( nullptr ),
-      m_rootFor3dViews( nullptr ),
+  m_rootFor2dViews(nullptr)
+  , m_rootFor3dViews(nullptr)
+  ,
 
-      m_annotations(),
-      m_properties()
+  m_annotations()
+  , m_properties()
 {
 }
-
 
 void AnnotationAssembly::initialize()
 {
-//    if ( m_meshGpuRecordProvider )
-//    {
-//        m_meshRecord = std::make_shared<MeshRecord>( nullptr, m_meshGpuRecordProvider() );
-//    }
-//    else
-//    {
-//        throw_debug( "Unable to obtain mesh GPU record" );
-//    }
+  //    if ( m_meshGpuRecordProvider )
+  //    {
+  //        m_meshRecord = std::make_shared<MeshRecord>( nullptr, m_meshGpuRecordProvider() );
+  //    }
+  //    else
+  //    {
+  //        throw_debug( "Unable to obtain mesh GPU record" );
+  //    }
 
-    std::ostringstream ss;
-    ss << "AnnotationAssembly_Root2d_#" << numCreated() << std::ends;
-    m_rootFor2dViews = std::make_shared<Transformation>( ss.str(), sk_ident );
+  std::ostringstream ss;
+  ss << "AnnotationAssembly_Root2d_#" << numCreated() << std::ends;
+  m_rootFor2dViews = std::make_shared<Transformation>(ss.str(), sk_ident);
 
-    ss.str( std::string() );
-    ss << "AnnotationAssembly_Root3d_#" << numCreated() << std::ends;
-    m_rootFor3dViews = std::make_shared<Transformation>( ss.str(), sk_ident );
+  ss.str(std::string());
+  ss << "AnnotationAssembly_Root3d_#" << numCreated() << std::ends;
+  m_rootFor3dViews = std::make_shared<Transformation>(ss.str(), sk_ident);
 }
 
-
-std::weak_ptr<DrawableBase> AnnotationAssembly::getRoot( const SceneType& type )
+std::weak_ptr<DrawableBase> AnnotationAssembly::getRoot(const SceneType& type)
 {
-    switch ( type )
-    {
-    case SceneType::ReferenceImage2d:
-    case SceneType::SlideStack2d:
-    case SceneType::Registration_Image2d:
-    case SceneType::Registration_Slide2d:
-    {
-        return std::static_pointer_cast<DrawableBase>( m_rootFor2dViews );
-    }
-    case SceneType::ReferenceImage3d:
-    case SceneType::SlideStack3d:
-    {
-        return std::static_pointer_cast<DrawableBase>( m_rootFor3dViews );
-    }
-    default:
-    case SceneType::None:
-    {
-        return {};
-    }
-    }
-
+  switch (type)
+  {
+  case SceneType::ReferenceImage2d:
+  case SceneType::SlideStack2d:
+  case SceneType::Registration_Image2d:
+  case SceneType::Registration_Slide2d:
+  {
+    return std::static_pointer_cast<DrawableBase>(m_rootFor2dViews);
+  }
+  case SceneType::ReferenceImage3d:
+  case SceneType::SlideStack3d:
+  {
+    return std::static_pointer_cast<DrawableBase>(m_rootFor3dViews);
+  }
+  default:
+  case SceneType::None:
+  {
     return {};
-}
+  }
+  }
 
+  return {};
+}
 
 void AnnotationAssembly::setAnnotationToWorldTxQuerier(
-        QuerierType< std::optional< std::pair<glm::mat4, glm::mat4> >, uuids::uuid > querier )
+  QuerierType<std::optional<std::pair<glm::mat4, glm::mat4> >, uuids::uuid> querier
+)
 {
-    m_annotationToWorldTxQuerier = querier;
+  m_annotationToWorldTxQuerier = querier;
 }
-
 
 void AnnotationAssembly::setAnnotationThicknessQuerier(
-        QuerierType< std::optional<float>, uuids::uuid > querier )
+  QuerierType<std::optional<float>, uuids::uuid> querier
+)
 {
-    m_annotationThicknessQuerier = querier;
+  m_annotationThicknessQuerier = querier;
 }
 
-
-void AnnotationAssembly::setAnnotation( std::weak_ptr<SlideAnnotationRecord> annotRecord )
+void AnnotationAssembly::setAnnotation(std::weak_ptr<SlideAnnotationRecord> annotRecord)
 {
-    auto record = annotRecord.lock();
-    if ( ! record )
+  auto record = annotRecord.lock();
+  if (!record)
+  {
+    return;
+  }
+
+  // Function that provides the tranformation from annotation to World space
+  auto annotToWorldTxProvider = [this, annotRecord]() -> std::optional<glm::mat4>
+  {
+    auto r = annotRecord.lock();
+    if (!r)
     {
-        return;
+      return std::nullopt;
     }
 
-    // Function that provides the tranformation from annotation to World space
-    auto annotToWorldTxProvider = [this, annotRecord] () -> std::optional<glm::mat4>
+    if (m_annotationToWorldTxQuerier)
     {
-        auto r = annotRecord.lock();
-        if ( ! r )
-        {
-            return std::nullopt;
-        }
+      // Get the affine transformation:
+      return m_annotationToWorldTxQuerier(r->uid())->first;
+    }
 
-        if ( m_annotationToWorldTxQuerier )
-        {
-            // Get the affine transformation:
-            return m_annotationToWorldTxQuerier( r->uid() )->first;
-        }
+    return std::nullopt;
+  };
 
-        return std::nullopt;
-    };
-
-
-    // Function that provides the slide thickness of the annotation
-    auto annotThicknessProvider = [this, annotRecord] () -> std::optional<float>
+  // Function that provides the slide thickness of the annotation
+  auto annotThicknessProvider = [this, annotRecord]() -> std::optional<float>
+  {
+    auto r = annotRecord.lock();
+    if (!r)
     {
-        auto r = annotRecord.lock();
-        if ( ! r )
-        {
-            return std::nullopt;
-        }
+      return std::nullopt;
+    }
 
-        if ( m_annotationThicknessQuerier )
-        {
-            return m_annotationThicknessQuerier( r->uid() );
-        }
+    if (m_annotationThicknessQuerier)
+    {
+      return m_annotationThicknessQuerier(r->uid());
+    }
 
-        return std::nullopt;
-    };
+    return std::nullopt;
+  };
 
-    // Function that provides the scaling information for landmark drawables in landmark group
-//    auto annotScalingProvider = [this, &annotRecord] () -> std::optional<DrawableScaling>
-//    {
-//        if ( m_annotationScalingQuerier )
-//        {
-//            return m_annotationScalingQuerier( annotRecord.uid() );
-//        }
-//        return std::nullopt;
-//    };
+  // Function that provides the scaling information for landmark drawables in landmark group
+  //    auto annotScalingProvider = [this, &annotRecord] () -> std::optional<DrawableScaling>
+  //    {
+  //        if ( m_annotationScalingQuerier )
+  //        {
+  //            return m_annotationScalingQuerier( annotRecord.uid() );
+  //        }
+  //        return std::nullopt;
+  //    };
 
-//    const auto itr = m_annotations.find( record->uid() );
-//    if ( std::end( m_annotations ) != itr )
-//    {
-        // Already exists in the Assembly, so first remove it:
-//        removeAnnotation( record->uid() );
-//    }
+  //    const auto itr = m_annotations.find( record->uid() );
+  //    if ( std::end( m_annotations ) != itr )
+  //    {
+  // Already exists in the Assembly, so first remove it:
+  //        removeAnnotation( record->uid() );
+  //    }
 
-    Annotations A;
+  Annotations A;
 
-    A.m_world_O_annot_root2d = std::make_shared<DynamicTransformation>(
-                "annotTx2d", annotToWorldTxProvider );
+  A.m_world_O_annot_root2d
+    = std::make_shared<DynamicTransformation>("annotTx2d", annotToWorldTxProvider);
 
-    A.m_world_O_annot_root3d = std::make_shared<DynamicTransformation>(
-                "annotTx3d", annotToWorldTxProvider );
+  A.m_world_O_annot_root3d
+    = std::make_shared<DynamicTransformation>("annotTx3d", annotToWorldTxProvider);
 
-    A.m_annot2d = std::make_shared<AnnotationSlice>(
-                "annot2d", m_shaderActivator, m_uniformsProvider,
-                annotToWorldTxProvider, annotRecord );
+  A.m_annot2d = std::make_shared<AnnotationSlice>(
+    "annot2d", m_shaderActivator, m_uniformsProvider, annotToWorldTxProvider, annotRecord
+  );
 
-    A.m_annot3d = std::make_shared<AnnotationExtrusion>(
-                "annot3d", m_shaderActivator, m_uniformsProvider,
-                annotToWorldTxProvider, annotThicknessProvider, annotRecord );
+  A.m_annot3d = std::make_shared<AnnotationExtrusion>(
+    "annot3d",
+    m_shaderActivator,
+    m_uniformsProvider,
+    annotToWorldTxProvider,
+    annotThicknessProvider,
+    annotRecord
+  );
 
-    A.m_world_O_annot_root2d->addChild( A.m_annot2d );
-    A.m_world_O_annot_root3d->addChild( A.m_annot3d );
+  A.m_world_O_annot_root2d->addChild(A.m_annot2d);
+  A.m_world_O_annot_root3d->addChild(A.m_annot3d);
 
-    // Add point landmarks drawables to main roots
-    m_rootFor2dViews->addChild( A.m_world_O_annot_root2d );
-    m_rootFor3dViews->addChild( A.m_world_O_annot_root3d );
+  // Add point landmarks drawables to main roots
+  m_rootFor2dViews->addChild(A.m_world_O_annot_root2d);
+  m_rootFor3dViews->addChild(A.m_world_O_annot_root3d);
 
-    // Save the drawables
-    m_annotations.emplace( record->uid(), std::move( A ) );
+  // Save the drawables
+  m_annotations.emplace(record->uid(), std::move(A));
 
-    updateRenderingProperties();
+  updateRenderingProperties();
 }
-
 
 /*
 void AnnotationAssembly::removeAnnotation( const UID& annotUid )
@@ -268,39 +270,33 @@ void AnnotationAssembly::setAnnotationPoint( const UID& annotUid, const PointRec
 }
 */
 
-
-void AnnotationAssembly::setMasterOpacityMultiplier( float multiplier )
+void AnnotationAssembly::setMasterOpacityMultiplier(float multiplier)
 {
-    m_properties.m_masterOpacityMultiplier = multiplier;
-    updateRenderingProperties();
+  m_properties.m_masterOpacityMultiplier = multiplier;
+  updateRenderingProperties();
 }
 
-
-void AnnotationAssembly::setVisibleIn2dViews( bool visible )
+void AnnotationAssembly::setVisibleIn2dViews(bool visible)
 {
-    m_properties.m_visibleIn2dViews = visible;
-    updateRenderingProperties();
+  m_properties.m_visibleIn2dViews = visible;
+  updateRenderingProperties();
 }
 
-
-void AnnotationAssembly::setVisibleIn3dViews( bool visible )
+void AnnotationAssembly::setVisibleIn3dViews(bool visible)
 {
-    m_properties.m_visibleIn3dViews = visible;
-    updateRenderingProperties();
+  m_properties.m_visibleIn3dViews = visible;
+  updateRenderingProperties();
 }
 
-
-void AnnotationAssembly::setPickable( bool pickable )
+void AnnotationAssembly::setPickable(bool pickable)
 {
-    m_properties.m_pickable = pickable;
-    updateRenderingProperties();
+  m_properties.m_pickable = pickable;
+  updateRenderingProperties();
 }
 
-
-const AnnotationAssemblyRenderingProperties&
-AnnotationAssembly::getRenderingProperties() const
+const AnnotationAssemblyRenderingProperties& AnnotationAssembly::getRenderingProperties() const
 {
-    return m_properties;
+  return m_properties;
 }
 
 /*
@@ -320,25 +316,24 @@ void AnnotationAssembly::detatchAnnotations( const Landmarks& annot )
 }
 */
 
-
 void AnnotationAssembly::updateRenderingProperties()
 {
-    const auto& P = m_properties;
+  const auto& P = m_properties;
 
-    for ( auto& annot : m_annotations )
+  for (auto& annot : m_annotations)
+  {
+    if (auto& a = annot.second.m_annot2d)
     {
-        if ( auto& a = annot.second.m_annot2d )
-        {
-            a->setEnabled( P.m_visibleIn2dViews );
-            a->setMasterOpacityMultiplier( P.m_masterOpacityMultiplier );
-            a->setPickable( P.m_pickable );
-        }
-
-        if ( auto& a = annot.second.m_annot3d )
-        {
-            a->setEnabled( P.m_visibleIn3dViews );
-            a->setMasterOpacityMultiplier( P.m_masterOpacityMultiplier );
-            a->setPickable( P.m_pickable );
-        }
+      a->setEnabled(P.m_visibleIn2dViews);
+      a->setMasterOpacityMultiplier(P.m_masterOpacityMultiplier);
+      a->setPickable(P.m_pickable);
     }
+
+    if (auto& a = annot.second.m_annot3d)
+    {
+      a->setEnabled(P.m_visibleIn3dViews);
+      a->setMasterOpacityMultiplier(P.m_masterOpacityMultiplier);
+      a->setPickable(P.m_pickable);
+    }
+  }
 }

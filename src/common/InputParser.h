@@ -3,7 +3,6 @@
 
 #include "common/InputParams.h"
 
-
 /**
  * @brief Parse the command line arguments
  *
@@ -14,6 +13,6 @@
  * @return 0 iff parsing succceeded without errors
  *         1 if parsing failed
  */
-int parseCommandLine( const int argc, char* argv[], InputParams& params );
+int parseCommandLine(const int argc, char* argv[], InputParams& params);
 
 #endif // PARSER_H

@@ -17,7 +17,6 @@
 #include <utility>
 #include <vector>
 
-
 namespace math
 {
 
@@ -30,12 +29,13 @@ namespace math
  * @param seed
  * @return Vector of colors in HSV format
  */
-std::vector< glm::vec3 > generateRandomHsvSamples(
-    size_t numSamples,
-    const std::pair< float, float >& hueMinMax,
-    const std::pair< float, float >& satMinMax,
-    const std::pair< float, float >& valMinMax,
-    const std::optional<uint32_t>& seed );
+std::vector<glm::vec3> generateRandomHsvSamples(
+  size_t numSamples,
+  const std::pair<float, float>& hueMinMax,
+  const std::pair<float, float>& satMinMax,
+  const std::pair<float, float>& valMinMax,
+  const std::optional<uint32_t>& seed
+);
 
 /**
  * @brief Compute dimensions of image in Subject space
@@ -46,9 +46,8 @@ std::vector< glm::vec3 > generateRandomHsvSamples(
  * @return Vector of image dimensions in Subject space
  */
 glm::dvec3 computeSubjectImageDimensions(
-    const glm::u64vec3& pixelDimensions,
-    const glm::dvec3& pixelSpacing );
-
+  const glm::u64vec3& pixelDimensions, const glm::dvec3& pixelSpacing
+);
 
 /**
  * @brief Compute transformation from image Pixel space to Subject space.
@@ -60,10 +59,8 @@ glm::dvec3 computeSubjectImageDimensions(
  * @return 4x4 matrix transforming image Pixel to Subject space
  */
 glm::dmat4 computeImagePixelToSubjectTransformation(
-    const glm::dmat3& directions,
-    const glm::dvec3& pixelSpacing,
-    const glm::dvec3& origin );
-
+  const glm::dmat3& directions, const glm::dvec3& pixelSpacing, const glm::dvec3& origin
+);
 
 /**
  * @brief Compute transformation from image Pixel space, with coordinates (i, j, k) representing
@@ -73,22 +70,16 @@ glm::dmat4 computeImagePixelToSubjectTransformation(
  *
  * @return 4x4 matrix transforming image Pixel to Texture space
  */
-glm::dmat4 computeImagePixelToTextureTransformation(
-    const glm::u64vec3& pixelDimensions );
-
+glm::dmat4 computeImagePixelToTextureTransformation(const glm::u64vec3& pixelDimensions);
 
 /**
  * @brief computeInvPixelDimensions
  * @param pixelDimensions
  * @return
  */
-glm::vec3 computeInvPixelDimensions( const glm::u64vec3& pixelDimensions );
+glm::vec3 computeInvPixelDimensions(const glm::u64vec3& pixelDimensions);
 
-
-
-std::array< glm::vec3, 8 > computeImagePixelAABBoxCorners(
-    const glm::u64vec3& pixelDimensions );
-
+std::array<glm::vec3, 8> computeImagePixelAABBoxCorners(const glm::u64vec3& pixelDimensions);
 
 /**
  * @brief Compute the bounding box of the image in physical Subject space.
@@ -100,17 +91,16 @@ std::array< glm::vec3, 8 > computeImagePixelAABBoxCorners(
  *
  * @return Array of corners of the image bounding box in Subject space
  */
-std::array< glm::vec3, 8 > computeImageSubjectBoundingBoxCorners(
-    const glm::u64vec3& pixelDimensions,
-    const glm::mat3& directions,
-    const glm::vec3& pixelSpacing,
-    const glm::vec3& origin );
+std::array<glm::vec3, 8> computeImageSubjectBoundingBoxCorners(
+  const glm::u64vec3& pixelDimensions,
+  const glm::mat3& directions,
+  const glm::vec3& pixelSpacing,
+  const glm::vec3& origin
+);
 
-
-
-std::pair< glm::vec3, glm::vec3 > computeMinMaxCornersOfAABBox(
-    const std::array< glm::vec3, 8 >& subjectCorners );
-
+std::pair<glm::vec3, glm::vec3> computeMinMaxCornersOfAABBox(
+  const std::array<glm::vec3, 8>& subjectCorners
+);
 
 /**
  * @brief Compute the corners of an axis-aligned bounding box with given min/max corners
@@ -119,9 +109,9 @@ std::pair< glm::vec3, glm::vec3 > computeMinMaxCornersOfAABBox(
  *
  * @return All eight AABB corners
  */
-std::array< glm::vec3, 8 > computeAllAABBoxCornersFromMinMaxCorners(
-    const std::pair< glm::vec3, glm::vec3 >& boxMinMaxCorners );
-
+std::array<glm::vec3, 8> computeAllAABBoxCornersFromMinMaxCorners(
+  const std::pair<glm::vec3, glm::vec3>& boxMinMaxCorners
+);
 
 /**
  * @brief Compute the anatomical direction "SPIRAL" code of an image from its direction matrix
@@ -133,9 +123,7 @@ std::array< glm::vec3, 8 > computeAllAABBoxCornersFromMinMaxCorners(
  *
  * @todo SPIRAL CODE IS WRONG FOR hippo warp image
  */
-std::pair< std::string, bool > computeSpiralCodeFromDirectionMatrix(
-    const glm::dmat3& directions );
-
+std::pair<std::string, bool> computeSpiralCodeFromDirectionMatrix(const glm::dmat3& directions);
 
 /**
  * @brief Compute the closest orthogonal anatomical direction matrix of an image
@@ -145,9 +133,7 @@ std::pair< std::string, bool > computeSpiralCodeFromDirectionMatrix(
  * @return Pair of the three-letter direction code and boolean flag that is true when the directions are oblique
  * to the coordinate axes
  */
-glm::dmat3 computeClosestOrthogonalDirectionMatrix(
-    const glm::dmat3& directions );
-
+glm::dmat3 computeClosestOrthogonalDirectionMatrix(const glm::dmat3& directions);
 
 /**
  * @brief Apply rotation to a coordinate frame about a given world center position
@@ -156,39 +142,33 @@ glm::dmat3 computeClosestOrthogonalDirectionMatrix(
  * @param worldCenter Center of rotation in World space
  */
 void rotateFrameAboutWorldPos(
-    CoordinateFrame& frame,
-    const glm::quat& rotation,
-    const glm::vec3& worldCenter );
-
+  CoordinateFrame& frame, const glm::quat& rotation, const glm::vec3& worldCenter
+);
 
 /**
  * @brief Finds the entering intersection between a ray e1+d and the volume's bounding box.
  */
 float computeRayAABBoxIntersection(
-    const glm::vec3& start,
-    const glm::vec3& dir,
-    const glm::vec3& minCorner,
-    const glm::vec3& maxCorner );
+  const glm::vec3& start, const glm::vec3& dir, const glm::vec3& minCorner, const glm::vec3& maxCorner
+);
 
-std::pair<float,float> hits( glm::vec3 e1, glm::vec3 d, glm::vec3 uMinCorner, glm::vec3 uMaxCorner );
+std::pair<float, float> hits(glm::vec3 e1, glm::vec3 d, glm::vec3 uMinCorner, glm::vec3 uMaxCorner);
 
-std::tuple<bool, float, float> slabs(glm::vec3 rayPos, glm::vec3 rayDir, glm::vec3 boxMin, glm::vec3 boxMax);
+std::tuple<bool, float, float> slabs(
+  glm::vec3 rayPos, glm::vec3 rayDir, glm::vec3 boxMin, glm::vec3 boxMax
+);
 
-std::optional<float>
-computeRayLineSegmentIntersection(
-    const glm::vec2& rayOrigin,
-    const glm::vec2& rayDir,
-    const glm::vec2& lineA,
-    const glm::vec2& lineB );
+std::optional<float> computeRayLineSegmentIntersection(
+  const glm::vec2& rayOrigin, const glm::vec2& rayDir, const glm::vec2& lineA, const glm::vec2& lineB
+);
 
-std::vector< glm::vec2 >
-computeRayAABoxIntersections(
-    const glm::vec2& rayOrigin,
-    const glm::vec2& rayDir,
-    const glm::vec2& boxMin,
-    const glm::vec2& boxSize,
-    bool doBothRayDirections = false );
-
+std::vector<glm::vec2> computeRayAABoxIntersections(
+  const glm::vec2& rayOrigin,
+  const glm::vec2& rayDir,
+  const glm::vec2& boxMin,
+  const glm::vec2& boxSize,
+  bool doBothRayDirections = false
+);
 
 /**
  * @brief Point inclusion in polygon test
@@ -219,8 +199,7 @@ computeRayAABoxIntersections(
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-int pnpoly( const std::vector< glm::vec2 >& poly, const glm::vec2& p );
-
+int pnpoly(const std::vector<glm::vec2>& poly, const glm::vec2& p);
 
 /**
  * @brief Interpolate table at at key value
@@ -228,8 +207,7 @@ int pnpoly( const std::vector< glm::vec2 >& poly, const glm::vec2& p );
  * @param table Table of key/value pairs
  * @return Interpolated table value at x
  */
-float interpolate( float x, const std::map<float, float>& table );
-
+float interpolate(float x, const std::map<float, float>& table);
 
 namespace convert
 {
@@ -237,11 +215,11 @@ namespace convert
 /**
  * @brief Convert a 3x3 GLM matrix to a 3x3 VNL matrix
  */
-template< class T >
-vnl_matrix_fixed< T, 3, 3 > toVnlMatrixFixed( const glm::tmat3x3< T, glm::highp >& glmMatrix )
+template<class T>
+vnl_matrix_fixed<T, 3, 3> toVnlMatrixFixed(const glm::tmat3x3<T, glm::highp>& glmMatrix)
 {
-    const vnl_matrix_fixed< T, 3, 3 > vnlMatrixTransposed( glm::value_ptr( glmMatrix ) );
-    return vnlMatrixTransposed.transpose();
+  const vnl_matrix_fixed<T, 3, 3> vnlMatrixTransposed(glm::value_ptr(glmMatrix));
+  return vnlMatrixTransposed.transpose();
 }
 
 } // namespace convert

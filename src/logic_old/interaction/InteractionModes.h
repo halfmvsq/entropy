@@ -3,53 +3,47 @@
 
 enum class CameraInteractionMode
 {
-    Translate,
-    Rotate,
-    Zoom
+  Translate,
+  Rotate,
+  Zoom
 };
-
 
 /**
  * @brief Defines the point picking mode for the CrosshairsInteractionHandler
  */
 enum class CrosshairsPointPickingMode
 {
-    PlanarPicking, //!< Pick points on 2D cross-sections of images
-    DepthPicking   //!< Pick points on 3D objects using depth
+  PlanarPicking, //!< Pick points on 2D cross-sections of images
+  DepthPicking   //!< Pick points on 3D objects using depth
 };
-
 
 enum class CrosshairsInteractionMode
 {
-    Move
+  Move
 };
-
 
 enum class RefImageInteractionMode
 {
-    Translate,
-    Rotate
+  Translate,
+  Rotate
 };
-
 
 enum class SlideInteractionMode
 {
-    Rotate,
-    Stretch, // includes scale and shear
-    Translate
+  Rotate,
+  Stretch, // includes scale and shear
+  Translate
 };
-
 
 enum class StackInteractionMode
 {
-    Translate,
-    Rotate
+  Translate,
+  Rotate
 };
-
 
 enum class WindowLevelInteractionMode
 {
-    Default
+  Default
 };
 
 #endif // INTERACTION_MODES_H

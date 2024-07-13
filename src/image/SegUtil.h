@@ -12,7 +12,6 @@
 class Annotation;
 class Image;
 
-
 /**
  * @brief paintSegmentation
  * @param seg
@@ -28,35 +27,42 @@ class Image;
  * @param updateSegTexture
  */
 void paintSegmentation(
-        Image& seg,
+  Image& seg,
 
-        int64_t labelToPaint,
-        int64_t labelToReplace,
+  int64_t labelToPaint,
+  int64_t labelToReplace,
 
-        bool brushReplacesBgWithFg,
-        bool brushIsRound,
-        bool brushIs3d,
-        bool brushIsIsotropic,
-        int brushSizeInVoxels,
+  bool brushReplacesBgWithFg,
+  bool brushIsRound,
+  bool brushIs3d,
+  bool brushIsIsotropic,
+  int brushSizeInVoxels,
 
-        const glm::ivec3& roundedPixelPos,
-        const glm::vec4& voxelViewPlane,
+  const glm::ivec3& roundedPixelPos,
+  const glm::vec4& voxelViewPlane,
 
-        const std::function< void (
-            const ComponentType& memoryComponentType, const glm::uvec3& offset,
-            const glm::uvec3& size, const int64_t* data ) >& updateSegTexture );
-
+  const std::function<void(
+    const ComponentType& memoryComponentType,
+    const glm::uvec3& offset,
+    const glm::uvec3& size,
+    const int64_t* data
+  )>& updateSegTexture
+);
 
 void fillSegmentationWithPolygon(
-        Image& seg,
-        const Annotation* annot,
+  Image& seg,
+  const Annotation* annot,
 
-        int64_t labelToPaint,
-        int64_t labelToReplace,
-        bool brushReplacesBgWithFg,
+  int64_t labelToPaint,
+  int64_t labelToReplace,
+  bool brushReplacesBgWithFg,
 
-        const std::function< void (
-            const ComponentType& memoryComponentType, const glm::uvec3& offset,
-            const glm::uvec3& size, const int64_t* data ) >& updateSegTexture );
+  const std::function<void(
+    const ComponentType& memoryComponentType,
+    const glm::uvec3& offset,
+    const glm::uvec3& size,
+    const int64_t* data
+  )>& updateSegTexture
+);
 
 #endif // SEG_UTILITY_H

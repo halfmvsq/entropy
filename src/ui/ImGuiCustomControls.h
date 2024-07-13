@@ -7,7 +7,6 @@
 #include <string>
 #include <vector>
 
-
 // Custom controls added to the ImGui system
 namespace ImGui
 {
@@ -29,25 +28,28 @@ namespace ImGui
  * This software is distributed under the terms of the BSD 2-Clause license
  */
 IMGUI_API bool paletteButton(
-    const char* label,
-    const std::vector<glm::vec4>& colors,
-    bool inverted,
-    bool quantize,
-    int quantizationLevels,
-    const glm::vec3& hsvModFactors,
-    const ImVec2& size );
+  const char* label,
+  const std::vector<glm::vec4>& colors,
+  bool inverted,
+  bool quantize,
+  int quantizationLevels,
+  const glm::vec3& hsvModFactors,
+  const ImVec2& size
+);
 
-
-std::optional< std::string > renderFileButtonDialogAndWindow(
-    const char* buttonText,
-    const char* dialogTitle,
-    const std::vector< std::string > dialogFilters );
+std::optional<std::string> renderFileButtonDialogAndWindow(
+  const char* buttonText, const char* dialogTitle, const std::vector<std::string> dialogFilters
+);
 
 bool SliderScalarN_multiComp(
-    const char* label,
-    ImGuiDataType data_type,
-    void* v, int components,
-    const void** v_min, const void** v_max,
-    const char** format, ImGuiSliderFlags flags);
+  const char* label,
+  ImGuiDataType data_type,
+  void* v,
+  int components,
+  const void** v_min,
+  const void** v_max,
+  const char** format,
+  ImGuiSliderFlags flags
+);
 
 } // namespace ImGui

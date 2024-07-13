@@ -3,7 +3,6 @@
 
 #include "logic/states/AnnotationStateMachine.h"
 
-
 namespace state
 {
 
@@ -14,9 +13,9 @@ namespace state
  */
 class AnnotationOffState : public AnnotationStateMachine
 {
-    void entry() override;
+  void entry() override;
 
-    void react( const TurnOnAnnotationModeEvent& ) override;
+  void react(const TurnOnAnnotationModeEvent&) override;
 };
 
 /**
@@ -25,13 +24,13 @@ class AnnotationOffState : public AnnotationStateMachine
  */
 class ViewBeingSelectedState : public AnnotationStateMachine
 {
-    void entry() override;
+  void entry() override;
 
-    void react( const MousePressEvent& ) override;
-    void react( const MouseMoveEvent& ) override;
-    void react( const MouseReleaseEvent& ) override;
+  void react(const MousePressEvent&) override;
+  void react(const MouseMoveEvent&) override;
+  void react(const MouseReleaseEvent&) override;
 
-    void react( const TurnOffAnnotationModeEvent& ) override;
+  void react(const TurnOffAnnotationModeEvent&) override;
 };
 
 /**
@@ -42,21 +41,21 @@ class ViewBeingSelectedState : public AnnotationStateMachine
  */
 class StandbyState : public AnnotationStateMachine
 {
-    void entry() override;
-    void exit() override;
+  void entry() override;
+  void exit() override;
 
-    void react( const MousePressEvent& ) override;
-    void react( const MouseMoveEvent& ) override;
-    void react( const MouseReleaseEvent& ) override;
+  void react(const MousePressEvent&) override;
+  void react(const MouseMoveEvent&) override;
+  void react(const MouseReleaseEvent&) override;
 
-    void react( const TurnOffAnnotationModeEvent& ) override;
-    void react( const CreateNewAnnotationEvent& ) override;
-    void react( const RemoveSelectedAnnotationEvent& ) override;
-    void react( const CutSelectedAnnotationEvent& ) override;
-    void react( const CopySelectedAnnotationEvent& ) override;
-    void react( const PasteAnnotationEvent& ) override;
-    void react( const HorizontallyFlipSelectedAnnotationEvent& ) override;
-    void react( const VerticallyFlipSelectedAnnotationEvent& ) override;
+  void react(const TurnOffAnnotationModeEvent&) override;
+  void react(const CreateNewAnnotationEvent&) override;
+  void react(const RemoveSelectedAnnotationEvent&) override;
+  void react(const CutSelectedAnnotationEvent&) override;
+  void react(const CopySelectedAnnotationEvent&) override;
+  void react(const PasteAnnotationEvent&) override;
+  void react(const HorizontallyFlipSelectedAnnotationEvent&) override;
+  void react(const VerticallyFlipSelectedAnnotationEvent&) override;
 };
 
 /**
@@ -64,16 +63,16 @@ class StandbyState : public AnnotationStateMachine
  */
 class CreatingNewAnnotationState : public AnnotationStateMachine
 {
-    void entry() override;
-    void exit() override;
+  void entry() override;
+  void exit() override;
 
-    void react( const MousePressEvent& ) override;
-    void react( const MouseMoveEvent& ) override;
-    void react( const MouseReleaseEvent& ) override;
+  void react(const MousePressEvent&) override;
+  void react(const MouseMoveEvent&) override;
+  void react(const MouseReleaseEvent&) override;
 
-    void react( const TurnOffAnnotationModeEvent& ) override;
-    void react( const CompleteNewAnnotationEvent& ) override;
-    void react( const CancelNewAnnotationEvent& ) override;
+  void react(const TurnOffAnnotationModeEvent&) override;
+  void react(const CompleteNewAnnotationEvent&) override;
+  void react(const CancelNewAnnotationEvent&) override;
 };
 
 /**
@@ -81,18 +80,18 @@ class CreatingNewAnnotationState : public AnnotationStateMachine
  */
 class AddingVertexToNewAnnotationState : public AnnotationStateMachine
 {
-    void entry() override;
-    void exit() override;
+  void entry() override;
+  void exit() override;
 
-    void react( const MousePressEvent& ) override;
-    void react( const MouseMoveEvent& ) override;
-    void react( const MouseReleaseEvent& ) override;
+  void react(const MousePressEvent&) override;
+  void react(const MouseMoveEvent&) override;
+  void react(const MouseReleaseEvent&) override;
 
-    void react( const TurnOffAnnotationModeEvent& ) override;
-    void react( const CompleteNewAnnotationEvent& ) override;
-    void react( const CloseNewAnnotationEvent& ) override;
-    void react( const UndoVertexEvent& ) override;
-    void react( const CancelNewAnnotationEvent& ) override;
+  void react(const TurnOffAnnotationModeEvent&) override;
+  void react(const CompleteNewAnnotationEvent&) override;
+  void react(const CloseNewAnnotationEvent&) override;
+  void react(const UndoVertexEvent&) override;
+  void react(const CancelNewAnnotationEvent&) override;
 };
 
 /**
@@ -100,20 +99,20 @@ class AddingVertexToNewAnnotationState : public AnnotationStateMachine
  */
 class VertexSelectedState : public AnnotationStateMachine
 {
-    void entry() override;
-    void exit() override;
+  void entry() override;
+  void exit() override;
 
-    void react( const MousePressEvent& ) override;
-    void react( const MouseReleaseEvent& ) override;
-    void react( const MouseMoveEvent& ) override;
+  void react(const MousePressEvent&) override;
+  void react(const MouseReleaseEvent&) override;
+  void react(const MouseMoveEvent&) override;
 
-    void react( const TurnOffAnnotationModeEvent& ) override;
-    void react( const InsertVertexEvent& ) override;
-    void react( const RemoveSelectedVertexEvent& ) override;
-    void react( const RemoveSelectedAnnotationEvent& ) override;
-    void react( const CutSelectedAnnotationEvent& ) override;
-    void react( const CopySelectedAnnotationEvent& ) override;
-    void react( const PasteAnnotationEvent& ) override;
+  void react(const TurnOffAnnotationModeEvent&) override;
+  void react(const InsertVertexEvent&) override;
+  void react(const RemoveSelectedVertexEvent&) override;
+  void react(const RemoveSelectedAnnotationEvent&) override;
+  void react(const CutSelectedAnnotationEvent&) override;
+  void react(const CopySelectedAnnotationEvent&) override;
+  void react(const PasteAnnotationEvent&) override;
 };
 
 } // namespace state

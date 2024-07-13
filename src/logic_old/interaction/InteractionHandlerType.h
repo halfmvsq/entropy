@@ -6,14 +6,13 @@
  */
 enum class InteractionHandlerType
 {
-    Camera,
-    Crosshairs,
-    RefImageTransform,
-    SlideTransform,
-    StackTransform,
-    WindowLevel
+  Camera,
+  Crosshairs,
+  RefImageTransform,
+  SlideTransform,
+  StackTransform,
+  WindowLevel
 };
-
 
 /**
  * @brief All interaction mode types. Only one is active at a time.
@@ -21,18 +20,18 @@ enum class InteractionHandlerType
  */
 enum class InteractionModeType
 {
-    CameraTranslate,
-    CameraRotate,
-    CameraZoom,
-    CrosshairsPointer,
-    RefImageRotate,
-    RefImageTranslate,
-    RefImageWindowLevel,
-    SlideRotate,
-    SlideStretch,
-    SlideTranslate,
-    StackRotate,
-    StackTranslate
+  CameraTranslate,
+  CameraRotate,
+  CameraZoom,
+  CrosshairsPointer,
+  RefImageRotate,
+  RefImageTranslate,
+  RefImageWindowLevel,
+  SlideRotate,
+  SlideStretch,
+  SlideTranslate,
+  StackRotate,
+  StackTranslate
 };
 
 #endif // INTERACTION_HANDLER_TYPE_H

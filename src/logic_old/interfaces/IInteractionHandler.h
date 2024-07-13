@@ -20,28 +20,22 @@
 
 class QGestureEvent;
 
-
 /**
  * @brief Interface for all input event handling
  */
-class IInteractionHandler :
-        public IGestureHandler,
-        public IMouseEventHandler,
-        public ITabletEventHandler,
-        public IWheelEventHandler
+class IInteractionHandler : public IGestureHandler,
+                            public IMouseEventHandler,
+                            public ITabletEventHandler,
+                            public IWheelEventHandler
 {
 public:
+  virtual ~IInteractionHandler() = default;
 
-    virtual ~IInteractionHandler() = default;
+  virtual const InteractionHandlerType& type() const = 0;
 
-    virtual const InteractionHandlerType& type() const = 0;
-
-    /// Dispatch handling of the gesture event, since it may be either a
-    /// swipe, pan, pinch, tap, or tap-and-hold event
-    virtual bool dispatchGestureEvent(
-            QGestureEvent*,
-            const Viewport&,
-            const camera::Camera& ) = 0;
+  /// Dispatch handling of the gesture event, since it may be either a
+  /// swipe, pan, pinch, tap, or tap-and-hold event
+  virtual bool dispatchGestureEvent(QGestureEvent*, const Viewport&, const camera::Camera&) = 0;
 };
 
 #endif // I_INTERACTION_HANDLER_H

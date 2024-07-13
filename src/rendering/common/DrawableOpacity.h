@@ -8,17 +8,16 @@
  */
 enum class OpacityFlag
 {
-    /// None of the object's rasterized fragments will be transparent.
-    Opaque,
+  /// None of the object's rasterized fragments will be transparent.
+  Opaque,
 
-    /// At least one of the object's rasterized fragments is transparent.
-    Transparent,
+  /// At least one of the object's rasterized fragments is transparent.
+  Transparent,
 
-    /// The opacity of the object's rasterized is unknown, not determined, or not applicable
-    /// (e.g. for Transformations or collections of other objects).
-    Unknown
+  /// The opacity of the object's rasterized is unknown, not determined, or not applicable
+  /// (e.g. for Transformations or collections of other objects).
+  Unknown
 };
-
 
 /**
  * @brief Holds two opacity flags for a Drawable object. One flag refers to the parent Drawable
@@ -27,11 +26,11 @@ enum class OpacityFlag
  */
 struct DrawableOpacity
 {
-    /// Opacity of parent Drawable object (the object returning this struct).
-    OpacityFlag m_parentFlag = OpacityFlag::Unknown;
+  /// Opacity of parent Drawable object (the object returning this struct).
+  OpacityFlag m_parentFlag = OpacityFlag::Unknown;
 
-    /// Collective opacity of the all descendants Drawables of the parent Drawable object.
-    OpacityFlag m_descendantFlag = OpacityFlag::Unknown;
+  /// Collective opacity of the all descendants Drawables of the parent Drawable object.
+  OpacityFlag m_descendantFlag = OpacityFlag::Unknown;
 };
 
 #endif // RENDERING_DRAWABLE_OPACITY_H
