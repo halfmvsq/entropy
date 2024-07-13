@@ -2,7 +2,7 @@
 #define UI_HELPERS_H
 
 #include <cstddef>
-#include <stdint.h>
+#include <cstdint>
 
 /**
  * @brief helpMarker Helper to display a little (?) mark which shows a tooltip when hovered.
