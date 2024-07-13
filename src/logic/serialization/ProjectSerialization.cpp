@@ -598,7 +598,7 @@ bool openAffineTxFile( glm::dmat4& matrix, const fs::path& fileName )
 
             if ( 4 != row.size() )
             {
-                throw std::length_error( std::format("4x4 affine matrix row {} read with invalid length {}",
+              throw std::length_error( fmt::format("4x4 affine matrix row {} read with invalid length {}",
                     rows.size() + 1, row.size()) );
             }
 
