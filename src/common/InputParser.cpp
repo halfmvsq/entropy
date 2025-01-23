@@ -4,9 +4,10 @@
 #undef max
 
 #include <argparse/argparse.hpp>
-#include <boost/algorithm/string/predicate.hpp>
 #include <spdlog/spdlog.h>
 
+#include <algorithm> // std::equal
+#include <cctype> // std::tolower
 #include <iostream>
 #include <optional>
 #include <regex>
@@ -14,6 +15,23 @@
 
 namespace
 {
+
+/**
+ * @brief Check string case-insensitive equality
+ * @param[in] a First string
+ * @param[in] b Second string
+ * @return True iff the strings are equal (case-insensitive)
+ */
+bool iequals(const std::string& a, const std::string& b)
+{
+  auto ichar_equals = [](char a, char b) -> bool
+  {
+    return std::tolower(static_cast<unsigned char>(a))
+           == std::tolower(static_cast<unsigned char>(b));
+  };
+
+  return std::equal(a.begin(), a.end(), b.begin(), b.end(), ichar_equals);
+}
 
 /**
  * @brief Split string based on a delimiter character
@@ -191,31 +209,31 @@ int parseCommandLine(const int argc, char* argv[], InputParams& params)
   }
 
   // Set the console log level:
-  if (boost::iequals(logLevel, "trace"))
+  if (iequals(logLevel, "trace"))
   {
     params.consoleLogLevel = spdlog::level::level_enum::trace;
   }
-  else if (boost::iequals(logLevel, "debug"))
+  else if (iequals(logLevel, "debug"))
   {
     params.consoleLogLevel = spdlog::level::level_enum::debug;
   }
-  else if (boost::iequals(logLevel, "info"))
+  else if (iequals(logLevel, "info"))
   {
     params.consoleLogLevel = spdlog::level::level_enum::info;
   }
-  else if (boost::iequals(logLevel, "warn") || boost::iequals(logLevel, "warning"))
+  else if (iequals(logLevel, "warn") || iequals(logLevel, "warning"))
   {
     params.consoleLogLevel = spdlog::level::level_enum::warn;
   }
-  else if (boost::iequals(logLevel, "err") || boost::iequals(logLevel, "error"))
+  else if (iequals(logLevel, "err") || iequals(logLevel, "error"))
   {
     params.consoleLogLevel = spdlog::level::level_enum::err;
   }
-  else if (boost::iequals(logLevel, "critical"))
+  else if (iequals(logLevel, "critical"))
   {
     params.consoleLogLevel = spdlog::level::level_enum::critical;
   }
-  else if (boost::iequals(logLevel, "off"))
+  else if (iequals(logLevel, "off"))
   {
     params.consoleLogLevel = spdlog::level::level_enum::off;
   }

@@ -18,8 +18,6 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/string_cast.hpp>
 
-//#include <boost/filesystem.hpp>
-
 #include <algorithm>
 #include <cstdlib> // strtoul
 #include <iostream>
